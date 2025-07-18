@@ -793,59 +793,39 @@ include "../database.php";
 
             // Função para carregar faturas do cliente
             function loadClientFaturas(clientId) {
-                $("#clientFaturasList").html("<p>Carregando faturas...</p>");
-                $.ajax({
-                    url: 'app.php', 
-                    type: 'POST',
-                    dataType: 'json',
-                    data: {
-                        action: 'buscar_faturas_cliente',
-                        id_cliente: clientId
-                    },
-                    success: function(response) {
-                        console.log("Response from buscar_faturas_cliente:", response); 
-                        if (response.success && response.data.length > 0) {
-                            let faturaHtml = "<table><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total/Pendente</th><th>Status</th><th>Ações</th></tr></thead><tbody>"; // Título da coluna ajustado
-                            response.data.forEach(fatura => {
-                                const totalFatura = parseFloat(fatura.valor_total_fatura);
-                                const totalPagoFatura = parseFloat(fatura.total_pago_fatura || 0);
-                                const saldoDevedorFatura = totalFatura - totalPagoFatura;
-
-                                let valorExibido;
-                                if (fatura.status === 'Liquidada') {
-                                    valorExibido = totalFatura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                                } else {
-                                    valorExibido = saldoDevedorFatura.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                                }
-
-                                faturaHtml += `
-                                    <tr>
-                                        <td>${fatura.id_fatura}</td>
-                                        <td>${new Date(fatura.data_emissao).toLocaleDateString('pt-BR')}</td>
-                                        <td>${new Date(fatura.data_vencimento).toLocaleDateString('pt-BR')}</td>
-                                        <td>${valorExibido}</td> <!-- Exibe o valor ajustado -->
-                                        <td>${fatura.status}</td>
-                                        <td class="action-buttons">
-                                            <button class="btn-ver-fatura primary" data-id-fatura="${fatura.id_fatura}">Ver Detalhes</button>
-                                            <button class="btn-registrar-pagamento secondary" data-id-fatura="${fatura.id_fatura}" 
-                                                    data-cliente-nome="${$("#selectedClientName").text()}"
-                                                    data-fatura-total="${fatura.valor_total_fatura}">Registrar Pagamento</button>
-                                        </td>
-                                    </tr>
-                                `;
-                            });
-                            faturaHtml += "</tbody></table>";
-                            $("#clientFaturasList").html(faturaHtml);
-                        } else {
-                            $("#clientFaturasList").html("<p>Nenhuma fatura encontrada para este cliente.</p>");
+        $("#clientFaturasList").html("<p>Carregando faturas...</p>");
+        $.ajax({
+            url: 'app.php', type: 'POST', dataType: 'json',
+            data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
+            success: function(response) {
+                if (response.success && response.data.length > 0) {
+                    let tableHtml = '<table><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+                    response.data.forEach(fatura => {
+                        tableHtml += `
+                            <tr>
+                                <td>${fatura.id_fatura}</td>
+                                <td>${fatura.data_emissao}</td>
+                                <td>${fatura.data_vencimento}</td>
+                                <td>R$ ${parseFloat(fatura.valor_total_fatura).toFixed(2)}</td>
+                                <td>${fatura.status}</td>
+                                <td class="action-buttons">
+                                    <button class="btn-ver-fatura" data-id-fatura="${fatura.id_fatura}">Ver Detalhes</button>`;
+                        
+                        // ** CORREÇÃO 1: Só mostra o botão se a fatura não estiver liquidada **
+                        if (fatura.status !== 'Liquidada') {
+                            tableHtml += `<button class="btn-registrar-pagamento" data-id-fatura="${fatura.id_fatura}">Registrar Pagamento</button>`;
                         }
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        $("#clientFaturasList").html("<p style='color: red;'>Erro ao carregar faturas. Verifique o console para mais informações.</p>");
-                        console.error("AJAX Error (buscar_faturas_cliente):", textStatus, errorThrown, jqXHR);
-                    }
-                });
+                        
+                        tableHtml += `</td></tr>`;
+                    });
+                    tableHtml += '</tbody></table>';
+                    $("#clientFaturasList").html(tableHtml);
+                } else {
+                    $("#clientFaturasList").html("<p>Nenhuma fatura encontrada para este cliente.</p>");
+                }
             }
+        });
+    }
 
             // Botão Criar Nova Fatura
             $("#btnCriarFatura").on("click", function() {
@@ -914,8 +894,7 @@ include "../database.php";
                     <button id="btnIncorporarRecorrencias" class="secondary" style="margin-top: 10px;">Incorporar Recorrências do Mês</button>
                     <button class="primary btn-registrar-pagamento" style="margin-top: 10px; margin-left: 10px;"
                             data-id-fatura="${faturaId}" 
-                            data-cliente-id="${$("#selectedClientId").val()}" <!-- Passa o ID do cliente selecionado -->
-                    >Registrar Pagamento</button> <!-- AGORA COM DATA ATTRIBUTES -->
+                            data-cliente-id="${$("#selectedClientId").val()}">Registrar Pagamento</button>
                 `); 
                 $("#itensFaturaList tbody").html("<tr><td colspan='6'>Carregando itens...</td></tr>"); 
                 $("#pagamentosList tbody").html("<tr><td colspan='6'>Carregando pagamentos...</td></tr>"); 

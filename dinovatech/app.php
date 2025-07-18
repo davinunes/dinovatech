@@ -658,47 +658,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-        case 'registrar_pagamento': // Registrar um pagamento
-            $id_fatura = $_POST['id_fatura'] ?? '';
-            $valor_pago = $_POST['valor_pago'] ?? '';
-            $data_pagamento = $_POST['data_pagamento'] ?? date('Y-m-d');
-            $status_pagamento = $_POST['status_pagamento'] ?? 'Pendente';
-            $observacao = $_POST['observacao'] ?? NULL;
-            $itens_pagos_json = $_POST['itens_pagos_json'] ?? NULL;
+			case 'registrar_pagamento':
+			$id_fatura = $_POST['id_fatura'] ?? '';
+			$valor_pago = $_POST['valor_pago'] ?? '';
+			$data_pagamento = $_POST['data_pagamento'] ?? '';
+			$observacao = $_POST['observacao'] ?? ''; // Pode ser vazio
+			$itens_pagos_json = $_POST['itens_pagos_json'] ?? '[]';
 
-            if (empty($id_fatura) || !is_numeric($valor_pago) || $valor_pago < 0 || empty($data_pagamento) || empty($status_pagamento)) { // Valor pode ser 0 para pagamentos parciais
-                $response['message'] = "Dados obrigatórios do pagamento ausentes ou inválidos.";
-            } else {
-                $id_fatura = mysqli_real_escape_string($link, $id_fatura);
-                $valor_pago = mysqli_real_escape_string($link, $valor_pago);
-                $data_pagamento = mysqli_real_escape_string($link, $data_pagamento);
-                $status_pagamento = mysqli_real_escape_string($link, $status_pagamento);
-                $observacao = $observacao ? mysqli_real_escape_string($link, $observacao) : NULL;
-                $itens_pagos_json = $itens_pagos_json ? mysqli_real_escape_string($link, $itens_pagos_json) : "NULL"; // Garante NULL se vazio
+			if (empty($id_fatura) || empty($valor_pago) || empty($data_pagamento)) {
+				$response['message'] = "ID da Fatura, Valor e Data são obrigatórios.";
+			} else {
+				// ** CORREÇÃO: Garante que todos os valores de texto sejam escapados e colocados entre aspas **
+				// Isso evita erros de sintaxe SQL se um campo como 'observacao' estiver vazio.
+				$id_fatura_safe = mysqli_real_escape_string($link, $id_fatura);
+				$valor_pago_safe = mysqli_real_escape_string($link, $valor_pago);
+				$data_pagamento_safe = mysqli_real_escape_string($link, $data_pagamento);
+				$observacao_safe = mysqli_real_escape_string($link, $observacao);
+				$itens_pagos_json_safe = mysqli_real_escape_string($link, $itens_pagos_json);
 
-                $query_insert_pagamento = "INSERT INTO Pagamentos (id_fatura, valor_pago, data_pagamento, status_pagamento, observacao, itens_pagos_json)
-                                           VALUES ('$id_fatura', '$valor_pago', '$data_pagamento', '$status_pagamento', " . ($observacao ? "'$observacao'" : "NULL") . ", " . $itens_pagos_json . ")"; // Removido aspas simples extras
-                
-                $result_insert_pagamento = DBExecute($link, $query_insert_pagamento);
+				$query = "INSERT INTO Pagamentos (id_fatura, valor_pago, data_pagamento, status_pagamento, observacao, itens_pagos_json) 
+						  VALUES ('{$id_fatura_safe}', '{$valor_pago_safe}', '{$data_pagamento_safe}', 'Confirmado', '{$observacao_safe}', '{$itens_pagos_json_safe}')";
 
-                if ($result_insert_pagamento) {
-                    // Atualiza o status da fatura com base no total pago
-                    $query_update_fatura_status = "
-                        UPDATE Faturas F
-                        SET status = CASE
-                            WHEN (SELECT COALESCE(SUM(P.valor_pago), 0) FROM Pagamentos P WHERE P.id_fatura = F.id_fatura AND P.status_pagamento = 'Confirmado') >= F.valor_total_fatura THEN 'Liquidada'
-                            ELSE 'Em Aberto' 
-                        END
-                        WHERE F.id_fatura = '$id_fatura'";
-                    DBExecute($link, $query_update_fatura_status);
+				if (DBExecute($link, $query)) {
+					// Após registrar o pagamento, verifica se a fatura deve ser liquidada
+					$query_total_pago = "SELECT SUM(valor_pago) as total_pago FROM Pagamentos WHERE id_fatura = '{$id_fatura_safe}' AND status_pagamento = 'Confirmado'";
+					$result_total_pago = DBExecute($link, $query_total_pago);
+					$total_pago_data = mysqli_fetch_assoc($result_total_pago);
+					$total_pago = $total_pago_data['total_pago'];
 
-                    $response['success'] = true;
-                    $response['message'] = "Pagamento registrado com sucesso!";
-                } else {
-                    $response['message'] = "Erro ao registrar pagamento: " . mysqli_error($link);
-                }
-            }
-            break;
+					$query_fatura = "SELECT valor_total_fatura FROM Faturas WHERE id_fatura = '{$id_fatura_safe}'";
+					$result_fatura = DBExecute($link, $query_fatura);
+					$fatura_data = mysqli_fetch_assoc($result_fatura);
+					$valor_total_fatura = $fatura_data['valor_total_fatura'];
+
+					if ($total_pago >= $valor_total_fatura) {
+						$query_update_fatura = "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '{$id_fatura_safe}'";
+						DBExecute($link, $query_update_fatura);
+					}
+
+					$response['success'] = true;
+					$response['message'] = "Pagamento registrado com sucesso!";
+				} else {
+					$response['message'] = "Erro ao registrar pagamento: " . mysqli_error($link);
+				}
+			}
+			break;
+
 
         case 'estornar_pagamento': // Estornar um pagamento
             $id_pagamento = $_POST['id_pagamento'] ?? '';
