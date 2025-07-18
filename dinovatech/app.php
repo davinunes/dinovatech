@@ -417,67 +417,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-        case 'get_fatura_detalhes':
-            $id_fatura = $_POST['id_fatura'] ?? '';
-            $fatura_detalhes = null;
-            $itens_fatura = [];
-            $pagamentos_fatura = []; // Adicionado para pagamentos
+			case 'get_fatura_detalhes':
+				$id_fatura = $_POST['id_fatura'] ?? '';
+				// Novo: verifica se a requisição vem da área do cliente
+				$is_client_view = isset($_POST['visao_cliente']) && $_POST['visao_cliente'] === 'true';
+				
+				$fatura_detalhes = null;
+				$itens_fatura = [];
+				$pagamentos_fatura = [];
 
-            if (empty($id_fatura)) {
-                $response['message'] = "ID da fatura é obrigatório.";
-            } else {
-                $id_fatura_escaped = mysqli_real_escape_string($link, $id_fatura);
+				if (empty($id_fatura)) {
+					$response['message'] = "ID da fatura é obrigatório.";
+				} else {
+					$id_fatura_escaped = mysqli_real_escape_string($link, $id_fatura);
 
-                // Busca detalhes da fatura, incluindo o total pago
-                $query_fatura = "SELECT F.id_fatura, C.nome AS nome_cliente, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status,
-                                        COALESCE(SUM(P.valor_pago), 0) AS total_pago
-                                 FROM Faturas F
-                                 JOIN Clientes C ON F.id_cliente = C.id_cliente
-                                 LEFT JOIN Pagamentos P ON F.id_fatura = P.id_fatura AND P.status_pagamento = 'Confirmado'
-                                 WHERE F.id_fatura = '$id_fatura_escaped'
-                                 GROUP BY F.id_fatura, C.nome, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status";
-                $result_fatura = DBExecute($link, $query_fatura);
+					// A query da fatura principal não muda
+					$query_fatura = "SELECT F.id_fatura, C.nome AS nome_cliente, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status
+									 FROM Faturas F
+									 JOIN Clientes C ON F.id_cliente = C.id_cliente
+									 WHERE F.id_fatura = '$id_fatura_escaped'";
+					$result_fatura = DBExecute($link, $query_fatura);
 
-                if ($result_fatura && mysqli_num_rows($result_fatura) > 0) {
-                    $fatura_detalhes = mysqli_fetch_assoc($result_fatura);
+					if ($result_fatura && mysqli_num_rows($result_fatura) > 0) {
+						$fatura_detalhes = mysqli_fetch_assoc($result_fatura);
 
-                    // Busca itens da fatura - ALIAS 'IF' MUDADO PARA 'IFI'
-                    $query_itens = "SELECT IFI.id_item_fatura, S.nome_servico, IFI.quantidade, IFI.valor_unitario, IFI.tag, IFI.id_recorrencia
-                                     FROM ItensFatura IFI
-                                     JOIN Servicos S ON IFI.id_servico = S.id_servico
-                                     WHERE IFI.id_fatura = '$id_fatura_escaped'";
-                    $result_itens = DBExecute($link, $query_itens);
+						// A query dos itens não muda
+						$query_itens = "SELECT IFI.id_item_fatura, S.nome_servico, IFI.quantidade, IFI.valor_unitario, IFI.tag, IFI.id_recorrencia
+										FROM ItensFatura IFI
+										JOIN Servicos S ON IFI.id_servico = S.id_servico
+										WHERE IFI.id_fatura = '$id_fatura_escaped'";
+						$result_itens = DBExecute($link, $query_itens);
+						if ($result_itens) {
+							while ($row_item = mysqli_fetch_assoc($result_itens)) {
+								$itens_fatura[] = $row_item;
+							}
+						}
 
-                    if ($result_itens) {
-                        while ($row_item = mysqli_fetch_assoc($result_itens)) {
-                            $itens_fatura[] = $row_item;
-                        }
-                    }
+						// ** LÓGICA CONDICIONAL PARA PAGAMENTOS **
+						// Monta a query base
+						$query_pagamentos = "SELECT id_pagamento, valor_pago, data_pagamento, status_pagamento, observacao
+											 FROM Pagamentos
+											 WHERE id_fatura = '$id_fatura_escaped'";
+						
+						// Se for a visão do cliente, adiciona o filtro de status
+						if ($is_client_view) {
+							$query_pagamentos .= " AND status_pagamento = 'Confirmado'";
+						}
+						
+						$query_pagamentos .= " ORDER BY data_pagamento DESC";
+						
+						$result_pagamentos = DBExecute($link, $query_pagamentos);
+						if ($result_pagamentos) {
+							while ($row_pagamento = mysqli_fetch_assoc($result_pagamentos)) {
+								$pagamentos_fatura[] = $row_pagamento;
+							}
+						}
 
-                    // Busca pagamentos da fatura
-                    $query_pagamentos = "SELECT id_pagamento, valor_pago, data_pagamento, status_pagamento, observacao, itens_pagos_json
-                                         FROM Pagamentos
-                                         WHERE id_fatura = '$id_fatura_escaped'
-                                         ORDER BY data_pagamento DESC";
-                    $result_pagamentos = DBExecute($link, $query_pagamentos);
+						$response['success'] = true;
+						$response['data'] = [
+							'fatura' => $fatura_detalhes,
+							'itens' => $itens_fatura,
+							'pagamentos' => $pagamentos_fatura
+						];
+					} else {
+						$response['message'] = "Fatura não encontrada: " . mysqli_error($link);
+					}
+				}
+				break;
 
-                    if ($result_pagamentos) {
-                        while ($row_pagamento = mysqli_fetch_assoc($result_pagamentos)) {
-                            $pagamentos_fatura[] = $row_pagamento;
-                        }
-                    }
-
-                    $response['success'] = true;
-                    $response['data'] = [
-                        'fatura' => $fatura_detalhes,
-                        'itens' => $itens_fatura,
-                        'pagamentos' => $pagamentos_fatura // Inclui pagamentos na resposta
-                    ];
-                } else {
-                    $response['message'] = "Fatura não encontrada: " . mysqli_error($link);
-                }
-            }
-            break;
 
         case 'validar_cpf_cnpj': 
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
