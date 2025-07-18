@@ -114,6 +114,13 @@
                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Pague com PIX</h2>
                 <p class="text-gray-600 mb-4">Aponte a câmera do seu celular para o QR Code ou use o "Copia e Cola".</p>
                 <div id="qrcode" class="inline-block p-2 bg-white border rounded-lg shadow-sm"></div>
+                
+                <!-- ** NOVO: Div para exibir o TXID ** -->
+                <div id="pixTxidContainer" class="mt-4 text-xs text-gray-500 break-all">
+                    <strong>ID da Transação (txid):</strong><br>
+                    <span id="pixTxid"></span>
+                </div>
+
                 <div class="mt-4">
                     <textarea id="pixCopiaECola" class="w-full p-2 border rounded-md text-xs bg-gray-100" rows="3" readonly></textarea>
                     <button id="btnCopiar" class="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg text-sm">Copiar Código</button>
@@ -288,8 +295,8 @@ $(document).ready(function() {
     }
 
     $(document).on('click', '#btnPrintFatura', function() {
-        const companyName = "Digital Innovation Tecnologia";
-        const companyCnpj = "06.173.371/4000-101";
+        const companyName = "Digital Inovation Tecnologia";
+        const companyCnpj = "61.733.714/0001-01";
         const clientName = $("#detalheFaturaCliente").text();
         const faturaId = $("#detalheFaturaId").text();
         const emissao = $("#detalheFaturaEmissao").text();
@@ -321,6 +328,7 @@ $(document).ready(function() {
     const pixCopiaEColaText = document.getElementById('pixCopiaECola');
     const btnCopiar = document.getElementById('btnCopiar');
     const timerSpan = document.getElementById('timer');
+    const pixTxidSpan = document.getElementById('pixTxid'); // ** NOVO **
 
     let pollingInterval;
     let timerInterval;
@@ -348,6 +356,7 @@ $(document).ready(function() {
         qrcodeDiv.innerHTML = '';
         qrcodeDiv.appendChild(qrCodeElement);
         pixCopiaEColaText.value = pixData.pixCopiaECola;
+        pixTxidSpan.textContent = pixData.txid; // ** NOVO **
         modalLoading.classList.add('hidden');
         modalPayment.classList.remove('hidden');
     }
@@ -383,7 +392,7 @@ $(document).ready(function() {
                     if(currentClientId) loadClientFaturas(currentClientId); 
                 }
             } catch (error) { console.error("Erro na verificação:", error); }
-        }, 3000);
+        }, 10000); // Intervalo ajustado para 10 segundos
     }
 
     function abrirModalPix() {
