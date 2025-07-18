@@ -67,17 +67,22 @@ try {
                 $devedorPayload['cnpj'] = $docLimpo;
             }
 
+            // ** CORREÇÃO: Sanitiza os campos antes de enviar para a API **
+            // Remove acentos e caracteres especiais para evitar erros 500
+            $solicitacaoPagadorLimpa = "Pagamento Fatura " . $idFatura;
+            $itensStringLimpa = preg_replace('/[^\w\s\-\.;]/', '', $itensString); // Remove tudo que não for letra, número, espaço, -, ., ;
+            
             $infoAdicionais = [
                 ["nome" => "Fatura", "valor" => (string)$idFatura],
                 ["nome" => "Vencimento", "valor" => date("d/m/Y", strtotime($fatura['data_vencimento']))],
-                ["nome" => "Itens", "valor" => substr($itensString, 0, 140)]
+                ["nome" => "Itens", "valor" => substr($itensStringLimpa, 0, 140)]
             ];
             
             $dadosCobranca = [
                 'devedor' => $devedorPayload,
                 'valorOriginal' => number_format($valor, 2, '.', ''),
                 'chavePix' => $ambienteConfig['chave_pix'],
-                'solicitacaoPagador' => "Pagamento da Fatura #{$idFatura}",
+                'solicitacaoPagador' => $solicitacaoPagadorLimpa,
                 'infoAdicionais' => $infoAdicionais
             ];
 
@@ -101,14 +106,12 @@ try {
             if ($pixStatus->status === 'CONCLUIDA' && !empty($pixStatus->pix)) {
                 $e2eid = $pixStatus->pix[0]->endToEndId;
                 
-                // ** NOVO: Cria a string de observação **
                 $observacao = "Pago com pix - E2EID: {$e2eid} - TXID: {$txid}";
 
                 $e2eid_safe = mysqli_real_escape_string($link, $e2eid);
                 $txid_safe = mysqli_real_escape_string($link, $txid);
                 $observacao_safe = mysqli_real_escape_string($link, $observacao);
 
-                // ** ALTERADO: Atualiza o pagamento com a nova observação **
                 $queryUpdatePagamento = "UPDATE Pagamentos SET status_pagamento = 'Confirmado', e2eid = '{$e2eid_safe}', observacao = '{$observacao_safe}' WHERE txid = '{$txid_safe}' AND status_pagamento = 'Pendente'";
                 DBExecute($link, $queryUpdatePagamento);
                 
