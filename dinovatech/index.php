@@ -1,4 +1,14 @@
 <?php
+
+session_start();
+
+// Verifica se a sessão do usuário não está ativa.
+// Se não estiver, redireciona para a página de login.
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: login.php");
+    exit(); // Garante que o restante do script não seja executado.
+}
+
 // index.php (Painel Administrativo)
 
 // Apenas para incluir o database.php caso seja necessário para alguma informação inicial,
