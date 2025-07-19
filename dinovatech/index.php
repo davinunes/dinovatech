@@ -881,7 +881,7 @@ include "../database.php";
                 // Ajusta a largura do modal antes de abrir
                 const newWidth = Math.min($(window).width() * 0.9, 1200);
                 $("#modalFaturaDetalhes").dialog("option", "width", newWidth);
-
+				$("#itemFaturaId").val(faturaId);
                 $("#modalFaturaDetalhes").dialog("open");
                 // RECRIAÇÃO DO HEADER COM OS DADOS DA FATURA E BOTÕES COM DATA ATTRIBUTES
                 $("#faturaDetalhesHeader").html(`
