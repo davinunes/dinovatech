@@ -9,12 +9,6 @@ if (!isset($_SESSION['usuario_id'])) {
     exit(); // Garante que o restante do script não seja executado.
 }
 
-// index.php (Painel Administrativo)
-
-// Apenas para incluir o database.php caso seja necessário para alguma informação inicial,
-// mas a lógica principal será via AJAX para app.php
-// O caminho "../database.php" está correto, pois o database.php está um nível acima.
-include "../database.php"; 
 ?>
 
 <!DOCTYPE html>
@@ -124,8 +118,8 @@ include "../database.php";
         <h1>Dinovatech - Painel de Administração</h1>
 
         <div class="controls">
-            <button class="primary" id="btnCadastrarCliente">Cadastrar Cliente</button>
-            <button class="secondary" id="btnCadastrarServico">Cadastrar Serviço</button>
+            <button class="primary" onclick="window.location.href='clientes.php'">Gerenciar Clientes</button>
+            <button class="secondary" onclick="window.location.href='servicos.php'">Gerenciar Serviços</button>
         </div>
 
         <div class="search-area">
@@ -139,8 +133,8 @@ include "../database.php";
                 <h3>Cliente Selecionado: <span id="selectedClientName"></span></h3>
                 <p>CPF/CNPJ: <span id="selectedClientCpfCnpj"></span></p>
                 <input type="hidden" id="selectedClientId">
-                <button class="primary" id="btnCriarFatura">Criar Nova Fatura para este Cliente</button>
-                <button class="secondary" id="btnEditarCliente">Editar Cliente</button>
+                <button class="primary" id="btnCriarFatura">Nova Fatura</button>
+                <!--<button class="secondary" id="btnEditarCliente">Editar Cliente</button>-->
                 <button class="secondary" id="btnVincularRecorrencia">Vincular Recorrência</button>
             </div>
 
@@ -152,7 +146,7 @@ include "../database.php";
             </div>
         </div>
 
-        <!-- Área para buscar e editar serviços -->
+        <!-- Área para buscar e editar serviços 
         <div class="service-search-area">
             <label for="servicoSearchEdit">Buscar Serviço para Editar:</label>
             <input type="text" id="servicoSearchEdit" placeholder="Digite para buscar serviços...">
@@ -160,6 +154,7 @@ include "../database.php";
             <button class="secondary" id="btnEditarServico" disabled>Editar Serviço Selecionado</button>
             <div id="servicoSearchResultsEdit" style="margin-top: 10px;"></div>
         </div>
+		-->
 
 
     </div>
@@ -541,6 +536,31 @@ include "../database.php";
                 let value = $(this).val();
                 $(this).val(value.replace(/[^0-9]/g, '')); // Remove tudo que não for número
             });
+			
+			// --- LÓGICA DE AUTO-CARREGAMENTO ---
+			const urlParams = new URLSearchParams(window.location.search);
+			const clienteIdFromUrl = urlParams.get('cliente_id');
+
+			if (clienteIdFromUrl) {
+				$(".search-area").hide();
+				$.ajax({
+					url: 'app.php', type: 'POST', dataType: 'json',
+					data: { action: 'get_cliente_details', id_cliente: clienteIdFromUrl },
+					success: function(response) {
+						if (response.success && response.data) {
+							const cliente = response.data;
+							$("#selectedClientId").val(cliente.id_cliente);
+							$("#selectedClientName").text(`${cliente.nome} (${cliente.cpf_cnpj})`);
+							$("#selectedClientCpfCnpj").text(cliente.cpf_cnpj);
+							$("#clientDetailsSection").show();
+							loadClientFaturas(cliente.id_cliente);
+						} else {
+							alert("Cliente não encontrado.");
+							$(".search-area").show();
+						}
+					}
+				});
+			}
 
 
             // Formulário de Cadastro de Cliente (AJAX)
