@@ -205,9 +205,20 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success && response.data.length > 0) {
                     let faturaHtml = "<table><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>";
+					const hoje = new Date();
+					hoje.setHours(0, 0, 0, 0);
                     response.data.forEach(fatura => {
+						const dataVencimento = new Date(fatura.data_vencimento);
+						dataVencimento.setHours(0, 0, 0, 0);
+						const isVencida = dataVencimento < hoje && fatura.status !== 'Liquidada';
+						const isLiquidado = fatura.status === 'Liquidada';
+						
+						const rowClass = isLiquidado ? 'bg-green-50 hover:bg-green-100' : 
+                                      isVencida ? 'bg-red-50 hover:bg-red-100' : 
+                                      'hover:bg-gray-50';
+									  
                         const total = parseFloat(fatura.valor_total_fatura).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        faturaHtml += `<tr>
+                        faturaHtml += `<tr class="${rowClass}" >
                             <td>${fatura.id_fatura}</td>
                             <td>${new Date(fatura.data_emissao).toLocaleDateString('pt-BR')}</td>
                             <td>${new Date(fatura.data_vencimento).toLocaleDateString('pt-BR')}</td>
@@ -306,7 +317,17 @@ $(document).ready(function() {
         const itensTableHtml = $("#faturaItensTable").prop('outerHTML');
         const pagamentosTableHtml = $("#faturaPagamentosTable").prop('outerHTML');
         const printWindow = window.open('', '_blank');
-        printWindow.document.write(`<html><head><title>Fatura #${faturaId}</title><style>body{font-family:Arial,sans-serif;margin:20px}.print-container{max-width:800px;margin:auto}.header,.footer{text-align:center;margin-bottom:20px}.header h1{margin:0}.details{border:1px solid #ccc;padding:15px;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background-color:#f2f2f2}</style></head><body><div class="print-container"><div class="header"><h1>${companyName}</h1><p>${companyCnpj}</p></div><h2>Detalhes da Fatura #${faturaId}</h2><div class="details"><p><strong>Cliente:</strong> ${clientName}</p><p><strong>Emissão:</strong> ${emissao} | <strong>Vencimento:</strong> ${vencimento}</p><p><strong>Status:</strong> ${status} | <strong>Total:</strong> R$ ${total}</p></div><h3>Itens</h3>${itensTableHtml}<h3 style="margin-top:20px">Pagamentos</h3>${pagamentosTableHtml}<div class="footer"><p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div></div><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}<\/script></body></html>`);
+        printWindow.document.write(`
+		<html><head>
+		<title>Fatura #${faturaId}</title>
+		<style>body{font-family:Arial,sans-serif;margin:20px}.print-container{max-width:1000px;margin:auto}.header,.footer{text-align:center;margin-bottom:20px}.header h1{margin:0}.details{border:1px solid #ccc;padding:15px;margin-bottom:20px}table{width:100%;border-collapse:collapse;margin-top:15px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background-color:#f2f2f2}</style></head>
+		<body><div class="print-container"><div class="header">
+		<h1>${companyName}</h1>
+		<p>${companyCnpj}</p></div>
+		<h2>Fatura #${faturaId}</h2>
+		<div class="details"><p><strong>Cliente:</strong> ${clientName}</p>
+		<p><strong>Emissão:</strong> ${emissao} | <strong>Vencimento:</strong> ${vencimento}</p>
+		<p><strong>Status:</strong> ${status} | <strong>Total:</strong> R$ ${total}</p></div><h3>Itens</h3>${itensTableHtml}<h3 style="margin-top:20px">Pagamentos</h3>${pagamentosTableHtml}<div class="footer"><p>Gerado em: ${new Date().toLocaleString('pt-BR')}</p></div></div><script>window.onload=function(){window.print();window.onafterprint=function(){window.close()}}<\/script></body></html>`);
         printWindow.document.close();
     });
 

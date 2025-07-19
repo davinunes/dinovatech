@@ -111,7 +111,7 @@ try {
 
             if ($pixStatus->status === 'CONCLUIDA' && !empty($pixStatus->pix)) {
                 $e2eid = $pixStatus->pix[0]->endToEndId;
-                $observacao = "Pago com pix - E2EID: {$e2eid} - TXID: {$txid}";
+                $observacao = "E2EID: {$e2eid} - TXID: {$txid}";
                 $e2eid_safe = mysqli_real_escape_string($link, $e2eid);
                 $txid_safe = mysqli_real_escape_string($link, $txid);
                 $observacao_safe = mysqli_real_escape_string($link, $observacao);
