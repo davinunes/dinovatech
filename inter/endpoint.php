@@ -39,7 +39,9 @@ try {
                 }
             }
 
-            // 2. Se não há PIX pendente válido, cria um novo
+            // ** LÓGICA REORDENADA **
+
+            // 2. Busca os dados da fatura e itens para montar o payload
             $queryFatura = "SELECT f.valor_total_fatura, f.data_vencimento, c.nome as nome_cliente, c.cpf_cnpj FROM Faturas f JOIN Clientes c ON f.id_cliente = c.id_cliente WHERE f.id_fatura = '{$idFatura_safe}'";
             $resultFatura = DBExecute($link, $queryFatura);
             $fatura = mysqli_fetch_assoc($resultFatura);
@@ -52,13 +54,7 @@ try {
                 $itensDesc[] = $item['tag'] ?: $item['nome_servico'];
             }
             $itensString = implode('; ', $itensDesc);
-
-            $valor = $fatura['valor_total_fatura'];
-            $valor_safe = mysqli_real_escape_string($link, $valor);
-            $queryInsert = "INSERT INTO Pagamentos (id_fatura, valor_pago, data_pagamento, status_pagamento) VALUES ('{$idFatura_safe}', '{$valor_safe}', CURDATE(), 'Pendente')";
-            DBExecute($link, $queryInsert);
-            $idPagamento = mysqli_insert_id($link);
-
+            
             $docLimpo = preg_replace('/[^0-9]/', '', $fatura['cpf_cnpj']);
             $devedorPayload = ['nome' => $fatura['nome_cliente']];
             if (strlen($docLimpo) == 11) {
@@ -67,33 +63,43 @@ try {
                 $devedorPayload['cnpj'] = $docLimpo;
             }
 
-            // ** CORREÇÃO: Sanitiza os campos antes de enviar para a API **
-            // Remove acentos e caracteres especiais para evitar erros 500
-            $solicitacaoPagadorLimpa = "Pagamento Fatura " . $idFatura;
-            $itensStringLimpa = preg_replace('/[^\w\s\-\.;]/', '', $itensString); // Remove tudo que não for letra, número, espaço, -, ., ;
-            
+            $demonstrativo = iconv('UTF-8', 'ASCII//TRANSLIT', $itensString);
+            $demonstrativo = preg_replace('/[^\w\s\-\.;,]/', '', $demonstrativo);
+            $demonstrativo = substr($demonstrativo, 0, 200);
+
             $infoAdicionais = [
-                ["nome" => "Fatura", "valor" => (string)$idFatura],
+                ["nome" => "CodigoFatura", "valor" => (string)$idFatura],
                 ["nome" => "Vencimento", "valor" => date("d/m/Y", strtotime($fatura['data_vencimento']))],
-                ["nome" => "Itens", "valor" => substr($itensStringLimpa, 0, 140)]
+                ["nome" => "demonstrativo", "valor" => $demonstrativo]
             ];
             
             $dadosCobranca = [
                 'devedor' => $devedorPayload,
-                'valorOriginal' => number_format($valor, 2, '.', ''),
+                'valorOriginal' => number_format($fatura['valor_total_fatura'], 2, '.', ''),
                 'chavePix' => $ambienteConfig['chave_pix'],
-                'solicitacaoPagador' => $solicitacaoPagadorLimpa,
+                'solicitacaoPagador' => "Pagamento Fatura " . $idFatura,
                 'infoAdicionais' => $infoAdicionais
             ];
 
+            // 3. Chama a API do Inter PRIMEIRO
             $pixResponse = newInstantPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $dadosCobranca);
 
-            $txid_safe = mysqli_real_escape_string($link, $pixResponse->txid);
-            $qrcode_safe = mysqli_real_escape_string($link, $pixResponse->pixCopiaECola);
-            $calendario_safe = mysqli_real_escape_string($link, json_encode($pixResponse->calendario));
-            $queryUpdate = "UPDATE Pagamentos SET txid = '{$txid_safe}', cod_qrcode = '{$qrcode_safe}', calendario = '{$calendario_safe}' WHERE id_pagamento = {$idPagamento}";
-            DBExecute($link, $queryUpdate);
+            // 4. Se a API retornou sucesso, INSERE o registro no banco
+            if ($pixResponse && isset($pixResponse->txid)) {
+                $valor_safe = mysqli_real_escape_string($link, $fatura['valor_total_fatura']);
+                $txid_safe = mysqli_real_escape_string($link, $pixResponse->txid);
+                $qrcode_safe = mysqli_real_escape_string($link, $pixResponse->pixCopiaECola);
+                $calendario_safe = mysqli_real_escape_string($link, json_encode($pixResponse->calendario));
 
+                $queryInsert = "INSERT INTO Pagamentos (id_fatura, valor_pago, data_pagamento, status_pagamento, txid, cod_qrcode, calendario) 
+                                VALUES ('{$idFatura_safe}', '{$valor_safe}', CURDATE(), 'Pendente', '{$txid_safe}', '{$qrcode_safe}', '{$calendario_safe}')";
+                
+                DBExecute($link, $queryInsert);
+            } else {
+                throw new Exception("Falha ao obter resposta da API do Inter ou txid não encontrado.");
+            }
+
+            // 5. Retorna os dados para o frontend
             echo json_encode(['success' => true, 'data' => $pixResponse]);
             break;
 
@@ -105,9 +111,7 @@ try {
 
             if ($pixStatus->status === 'CONCLUIDA' && !empty($pixStatus->pix)) {
                 $e2eid = $pixStatus->pix[0]->endToEndId;
-                
                 $observacao = "Pago com pix - E2EID: {$e2eid} - TXID: {$txid}";
-
                 $e2eid_safe = mysqli_real_escape_string($link, $e2eid);
                 $txid_safe = mysqli_real_escape_string($link, $txid);
                 $observacao_safe = mysqli_real_escape_string($link, $observacao);

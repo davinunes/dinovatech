@@ -76,6 +76,12 @@ function newInstantPix($config, $sslCert, $sslKey, $caInfo, $bearerToken, $data)
         "chave" => $data['chavePix'],
         "solicitacaoPagador" => $data['solicitacaoPagador']
     ];
+	
+	// ** CORREÇÃO: Garante que 'infoAdicionais' seja incluído no payload se existir **
+    if (!empty($data['infoAdicionais'])) {
+        $payload['infoAdicionais'] = $data['infoAdicionais'];
+    }
+	
     $jsonData = json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     $headers = ['Authorization: Bearer ' . $bearerToken, 'Content-Type: application/json'];
 
