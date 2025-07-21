@@ -66,9 +66,9 @@ if (!isset($_SESSION['usuario_id'])) {
 
         #faturaItensTable th, #faturaItensTable td { padding: 5px; font-size: 0.9em; }
         #faturaItensTable .item-actions button { margin-right: 5px; padding: 3px 8px; font-size: 0.8em; }
-        #faturaItensTable .item-actions .btn-edit { background-color: #ffc107; color: #333; }
+        #faturaItensTable .item-actions .btn-edit { background-color: #ffffff; color: #333; }
         #faturaItensTable .item-actions .btn-edit:hover { background-color: #e0a800; }
-        #faturaItensTable .item-actions .btn-remove { background-color: #dc3545; color: white; }
+        #faturaItensTable .item-actions .btn-remove { background-color: #ffffff; color: white; }
         #faturaItensTable .item-actions .btn-remove:hover { background-color: #c82333; }
 
         .service-search-area { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #e9ecef; }
@@ -285,8 +285,9 @@ if (!isset($_SESSION['usuario_id'])) {
         <div id="itemFaturaMessage" class="mensagem"></div>
 
         <h3>Itens da Fatura</h3>
+		<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
         <div id="itensFaturaList">
-            <table id="faturaItensTable">
+            <table class='table-auto' id="faturaItensTable">
                 <thead>
                     <tr>
                         <th>Serviço</th>
@@ -302,10 +303,12 @@ if (!isset($_SESSION['usuario_id'])) {
                 </tbody>
             </table>
         </div>
+		</div>
 
         <h3>Pagamentos Recebidos</h3>
+		<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
         <div id="pagamentosList">
-            <table id="faturaPagamentosTable">
+            <table class='table-auto' id="faturaPagamentosTable">
                 <thead>
                     <tr>
                         <th>ID Pagamento</th>
@@ -322,7 +325,7 @@ if (!isset($_SESSION['usuario_id'])) {
             </table>
             <p id="noPaymentsMessage" style="text-align: center; margin-top: 10px; display: none;">Nenhum pagamento registrado para esta fatura.</p>
         </div>
-    </div>
+    </div></div>
 
     <!-- Modal de Edição de Item da Fatura -->
     <div id="modalEditarItemFatura" title="Editar Item da Fatura" style="display: none;">
@@ -829,7 +832,7 @@ if (!isset($_SESSION['usuario_id'])) {
             data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
             success: function(response) {
                 if (response.success && response.data.length > 0) {
-                    let tableHtml = '<table><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
+                    let tableHtml = '<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border"><table class="table-auto"><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
                     response.data.forEach(fatura => {
                         tableHtml += `
                             <tr>
@@ -843,12 +846,12 @@ if (!isset($_SESSION['usuario_id'])) {
                         
                         // ** CORREÇÃO 1: Só mostra o botão se a fatura não estiver liquidada **
                         if (fatura.status !== 'Liquidada') {
-                            tableHtml += `<button class="btn-registrar-pagamento" data-id-fatura="${fatura.id_fatura}">Registrar Pagamento</button>`;
+                            // tableHtml += `<button class="btn-registrar-pagamento" data-id-fatura="${fatura.id_fatura}">Registrar Pagamento</button>`;
                         }
                         
                         tableHtml += `</td></tr>`;
                     });
-                    tableHtml += '</tbody></table>';
+                    tableHtml += '</tbody></table></div>';
                     $("#clientFaturasList").html(tableHtml);
                 } else {
                     $("#clientFaturasList").html("<p>Nenhuma fatura encontrada para este cliente.</p>");
@@ -1033,10 +1036,13 @@ if (!isset($_SESSION['usuario_id'])) {
                                             data-servico-nome="${item.nome_servico}"
                                             data-quantidade="${item.quantidade}" 
                                             data-valor-unitario="${item.valor_unitario}"
-                                            data-tag="${item.tag ? item.tag : ''}">Editar</button>
-                                    <button class="btn-remove" data-id-item="${item.id_item_fatura}" 
-                                            data-id-fatura="${faturaId}">Remover</button>
+                                            data-tag="${item.tag ? item.tag : ''}">✏️</button>
+											
+									
                                 </td>
+								<td class="item-actions">
+								<button class="btn-remove" data-id-item="${item.id_item_fatura}" 
+                                            data-id-fatura="${faturaId}">💣</button><td>
                             </tr>
                         `;
                     });
@@ -1051,6 +1057,8 @@ if (!isset($_SESSION['usuario_id'])) {
                 }
                 $("#faturaItensTable tbody").html(tbodyHtml);
             }
+
+
 
             // Popula a tabela de pagamentos
             function populatePagamentosTable(faturaId, pagamentos) { // Recebe faturaId
@@ -1084,7 +1092,7 @@ if (!isset($_SESSION['usuario_id'])) {
 
             // Função para popular os itens selecionáveis no modal de pagamento
             function populateSelectableItemsForPayment(items) {
-                let tableHtml = '<table><thead><tr><th></th><th>Serviço</th><th>Qtd</th><th>Valor Unit.</th><th>Subtotal</th></tr></thead><tbody>';
+                let tableHtml = '<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border"><table class="table-auto"><thead><tr><th></th><th>Serviço</th><th>Qtd</th><th>Valor Unit.</th><th>Subtotal</th></tr></thead><tbody>';
                 if (items && items.length > 0) {
                     items.forEach(item => {
                         const subtotal = parseFloat(item.quantidade) * parseFloat(item.valor_unitario);
@@ -1103,7 +1111,7 @@ if (!isset($_SESSION['usuario_id'])) {
                 } else {
                     tableHtml += '<tr><td colspan="5">Nenhum item na fatura.</td></tr>';
                 }
-                tableHtml += '</tbody></table>';
+                tableHtml += '</tbody></table></div>';
                 $("#itensPagosSelection").html(tableHtml);
 
                 // Dispara a atualização do JSON Base64 inicial e do valor do pagamento
@@ -1400,7 +1408,7 @@ if (!isset($_SESSION['usuario_id'])) {
                     success: function(response) {
                         console.log("Recorrências do cliente:", response);
                         if (response.success && response.data.length > 0) {
-                            let recorrenciaHtml = "<table><thead><tr><th>Serviço</th><th>Qtd</th><th>Valor Sug.</th><th>Período</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead><tbody>";
+                            let recorrenciaHtml = "<div class=\"relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border\"><table class='table-auto'><thead><tr><th>Serviço</th><th>Qtd</th><th>Valor Sug.</th><th>Período</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead><tbody>";
                             response.data.forEach(rec => {
                                 const valor = parseFloat(rec.valor_sugerido_recorrencia).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                                 const dataInicio = new Date(rec.data_inicio_cobranca).toLocaleDateString('pt-BR');
@@ -1417,7 +1425,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                     </tr>
                                 `;
                             });
-                            recorrenciaHtml += "</tbody></table>";
+                            recorrenciaHtml += "</tbody></table></div>";
                             $("#recorrenciasList").html(recorrenciaHtml);
                         } else {
                             $("#recorrenciasList").html("<p>Nenhuma recorrência vinculada a este cliente.</p>");

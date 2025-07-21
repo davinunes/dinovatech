@@ -91,14 +91,14 @@
         </div>
         <h3>Itens da Fatura</h3>
         <div id="itensFaturaList">
-            <table id="faturaItensTable">
+            <table class='table-auto' id="faturaItensTable">
                 <thead><tr><th>Serviço</th><th>Qtd</th><th>Valor Unit.</th><th>Subtotal</th><th>Tag</th></tr></thead>
                 <tbody></tbody>
             </table>
         </div>
         <h3 class="mt-6">Histórico de Pagamentos</h3>
         <div id="pagamentosList">
-            <table id="faturaPagamentosTable">
+            <table class='table-auto' id="faturaPagamentosTable">
                 <thead><tr><th>Data</th><th>Valor Pago</th><th>Observação</th></tr></thead>
                 <tbody></tbody>
             </table>
@@ -204,7 +204,7 @@ $(document).ready(function() {
             data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
             success: function(response) {
                 if (response.success && response.data.length > 0) {
-                    let faturaHtml = "<table><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>";
+                    let faturaHtml = "<table class='table-auto'><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>";
 					const hoje = new Date();
 					hoje.setHours(0, 0, 0, 0);
                     response.data.forEach(fatura => {
@@ -442,13 +442,26 @@ $(document).ready(function() {
         errorMessage.textContent = msg;
         modalError.classList.remove('hidden');
     }
+	
+	
+});
 
-    btnCopiar.addEventListener('click', () => {
-        pixCopiaEColaText.select();
+$(document).on('click', '#btnCopiar', async function(){
+    const pixText = $('#pixCopiaECola').val();
+    console.log("Pix Copia E Cola", pixText);
+    
+    try {
+        await navigator.clipboard.writeText(pixText);
+        this.textContent = 'Copiado!';
+        setTimeout(() => { 
+            this.textContent = 'Copiar Código'; 
+        }, 2000);
+    } catch (err) {
+        console.error("Falha ao copiar texto:", err);
+        // Fallback para o método antigo
+        $('#pixCopiaECola').select();
         document.execCommand('copy');
-        btnCopiar.textContent = 'Copiado!';
-        setTimeout(() => { btnCopiar.textContent = 'Copiar Código'; }, 2000);
-    });
+    }
 });
 </script>
 </body>
