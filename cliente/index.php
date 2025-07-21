@@ -450,37 +450,50 @@ $(document).ready(function() {
 	
 });
 
-$(document).on('click', '#btnCopiar', function(){
-    // Verifica se o elemento existe
-    var pixInput = $('#pixCopiaECola')[0];
-    if (!pixInput) {
-        console.error("Elemento pixCopiaECola não encontrado");
+$(document).on('click', '#btnCopiar', async function() {
+    const $btn = $(this);
+    const originalText = $btn.text();
+    const textoParaCopiar = $('#pixCopiaECola').val();
+    
+    if (!textoParaCopiar) {
+        console.error("Nenhum texto para copiar encontrado");
         return;
     }
-    
-    console.log("Pix Copia E Cola", pixInput.value);
-    
+
+    // 1. Tentativa com Clipboard API (método moderno)
     try {
-        // Seleciona o texto
-        pixInput.select();
-        pixInput.setSelectionRange(0, 99999); // Para dispositivos móveis
+        await navigator.clipboard.writeText(textoParaCopiar);
+        $btn.text('Copiado!');
+        setTimeout(() => $btn.text(originalText), 2000);
+        return; // Sai se conseguir com a API
+    } catch (apiError) {
+        console.log("Clipboard API falhou, tentando método alternativo:", apiError);
+    }
+
+    // 2. Método alternativo (sem verificação)
+    try {
+        const $tempInput = $('<textarea>')
+            .css({
+                position: 'fixed',
+                left: '-9999px',
+                opacity: 0
+            })
+            .val(textoParaCopiar)
+            .appendTo($btn.parent());
         
-        // Executa o comando de cópia
-        var successful = document.execCommand('copy');
+        $tempInput[0].select();
+        document.execCommand('copy');
+        $tempInput.remove();
         
-        if (successful) {
-            // Atualiza o texto do botão
-            this.textContent = 'Copiado!';
-            setTimeout(() => { 
-                this.textContent = 'Copiar Código'; 
-            }, 2000);
-        } else {
-            console.error("Falha ao copiar texto");
-        }
-    } catch (err) {
-        console.error("Erro ao copiar texto:", err);
+        $btn.text('Copiado!');
+        setTimeout(() => $btn.text(originalText), 2000);
+    } catch (fallbackError) {
+        console.error("Método alternativo também falhou:", fallbackError);
+        $btn.text('Erro ao copiar');
+        setTimeout(() => $btn.text(originalText), 2000);
     }
 });
+
 </script>
 </body>
 </html>
