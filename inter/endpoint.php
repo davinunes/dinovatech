@@ -17,27 +17,58 @@ try {
 
     switch ($action) {
         case 'obter_ou_criar_pix_pagamento':
-            $idFatura = $requestBody['id_fatura'] ?? null;
-            if (!$idFatura) throw new Exception("ID da Fatura é obrigatório.");
-            $idFatura_safe = mysqli_real_escape_string($link, $idFatura);
+		$idFatura = $requestBody['id_fatura'] ?? null;
+		if (!$idFatura) throw new Exception("ID da Fatura é obrigatório.");
+		$idFatura_safe = mysqli_real_escape_string($link, $idFatura);
 
-            // 1. Verifica se já existe um pagamento pendente e válido
-            $queryCheck = "SELECT txid, cod_qrcode, calendario FROM Pagamentos WHERE id_fatura = '{$idFatura_safe}' AND status_pagamento = 'Pendente'";
-            $resultCheck = DBExecute($link, $queryCheck);
-            $pendingPayment = mysqli_fetch_assoc($resultCheck);
-
-            if ($pendingPayment && !empty($pendingPayment['txid'])) {
-                $calendario = json_decode($pendingPayment['calendario']);
-                if (isset($calendario->criacao) && isset($calendario->expiracao)) {
-                    $criacao = new DateTime($calendario->criacao);
-                    $expiracaoTimestamp = $criacao->getTimestamp() + $calendario->expiracao;
-                    if ($expiracaoTimestamp > time()) {
-                        $pixResponse = ["txid" => $pendingPayment['txid'], "pixCopiaECola" => $pendingPayment['cod_qrcode'], "calendario" => $calendario];
-                        echo json_encode(['success' => true, 'data' => $pixResponse]);
-                        break;
-                    }
-                }
-            }
+		// 1. Verifica todos os pagamentos pendentes
+		$queryCheck = "SELECT id_pagamento, txid, cod_qrcode, calendario FROM Pagamentos 
+					  WHERE id_fatura = '{$idFatura_safe}' AND status_pagamento = 'Pendente'";
+		$resultCheck = DBExecute($link, $queryCheck);
+		
+		$now = time();
+		$validPaymentFound = false;
+		$expiredPayments = [];
+		
+		
+		while ($payment = mysqli_fetch_assoc($resultCheck)) {
+			if (!empty($payment['txid'])) {
+				$calendario = json_decode($payment['calendario'], true);
+				
+				if (isset($calendario['criacao']) && isset($calendario['expiracao'])) {
+					$criacao = new DateTime($calendario['criacao']);
+					$expiracaoTimestamp = $criacao->getTimestamp() + $calendario['expiracao'];
+					
+					if ($expiracaoTimestamp > $now) {
+						// Pagamento válido encontrado
+						$pixResponse = [
+							"txid" => $payment['txid'],
+							"pixCopiaECola" => $payment['cod_qrcode'],
+							"calendario" => $calendario
+						];
+						$validPaymentFound = true;
+						break; // Usa o primeiro pagamento válido encontrado
+					} else {
+						// Marca pagamento expirado para atualização
+						$expiredPayments[] = $payment['id_pagamento'];
+					}
+				}
+			}
+		}
+		
+		// Atualiza todos os pagamentos expirados
+		if (!empty($expiredPayments)) {
+			$ids = implode(",", array_map('intval', $expiredPayments));
+			$queryUpdate = "UPDATE Pagamentos SET status_pagamento = 'Expirado' 
+							WHERE id_pagamento IN ({$ids})";
+			DBExecute($link, $queryUpdate);
+		}
+		
+		// Se encontrou um pagamento válido, retorna
+		if ($validPaymentFound) {
+			echo json_encode(['success' => true,'ConstavaNoBanco' => true, 'data' => $pixResponse]);
+			break;
+		}
 
             // ** LÓGICA REORDENADA **
 
@@ -100,7 +131,7 @@ try {
             }
 
             // 5. Retorna os dados para o frontend
-            echo json_encode(['success' => true, 'data' => $pixResponse]);
+            echo json_encode(['success' => true,'ConstavaNoBanco' => false, 'data' => $pixResponse]);
             break;
 
         case 'verificar_pagamento_pix':

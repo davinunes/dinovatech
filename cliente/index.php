@@ -383,12 +383,16 @@ $(document).ready(function() {
     }
 
     function iniciarVerificacao(txid, calendario) {
+		console.log('Calendario Original: ',calendario);
         if (pollingInterval) clearInterval(pollingInterval);
         if (timerInterval) clearInterval(timerInterval);
 
         const criacaoTimestamp = new Date(calendario.criacao).getTime();
+		console.log('criacaoTimestamp: ',criacaoTimestamp);
         const expiracaoTimestamp = criacaoTimestamp + (calendario.expiracao * 1000);
+		console.log('expiracaoTimestamp: ',expiracaoTimestamp);
         let tempoRestante = Math.max(0, Math.round((expiracaoTimestamp - Date.now()) / 1000));
+		console.log('Resta: ',tempoRestante);
 
         timerInterval = setInterval(() => {
             const minutos = Math.floor(tempoRestante / 60).toString().padStart(2, '0');
@@ -446,21 +450,35 @@ $(document).ready(function() {
 	
 });
 
-$(document).on('click', '#btnCopiar', async function(){
-    const pixText = $('#pixCopiaECola').val();
-    console.log("Pix Copia E Cola", pixText);
+$(document).on('click', '#btnCopiar', function(){
+    // Verifica se o elemento existe
+    var pixInput = $('#pixCopiaECola')[0];
+    if (!pixInput) {
+        console.error("Elemento pixCopiaECola não encontrado");
+        return;
+    }
+    
+    console.log("Pix Copia E Cola", pixInput.value);
     
     try {
-        await navigator.clipboard.writeText(pixText);
-        this.textContent = 'Copiado!';
-        setTimeout(() => { 
-            this.textContent = 'Copiar Código'; 
-        }, 2000);
+        // Seleciona o texto
+        pixInput.select();
+        pixInput.setSelectionRange(0, 99999); // Para dispositivos móveis
+        
+        // Executa o comando de cópia
+        var successful = document.execCommand('copy');
+        
+        if (successful) {
+            // Atualiza o texto do botão
+            this.textContent = 'Copiado!';
+            setTimeout(() => { 
+                this.textContent = 'Copiar Código'; 
+            }, 2000);
+        } else {
+            console.error("Falha ao copiar texto");
+        }
     } catch (err) {
-        console.error("Falha ao copiar texto:", err);
-        // Fallback para o método antigo
-        $('#pixCopiaECola').select();
-        document.execCommand('copy');
+        console.error("Erro ao copiar texto:", err);
     }
 });
 </script>
