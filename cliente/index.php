@@ -221,7 +221,7 @@ $(document).ready(function() {
                         faturaHtml += `<tr class="${rowClass}" >
                             <td>${fatura.id_fatura}</td>
                             <td>${new Date(fatura.data_emissao).toLocaleDateString('pt-BR')}</td>
-                            <td>${new Date(fatura.data_vencimento).toLocaleDateString('pt-BR')}</td>
+                            <td>${new Date(fatura.data_vencimento + 'T00:00:00-03:00').toLocaleDateString('pt-BR')}</td>
                             <td>${total}</td>
                             <td>${fatura.status}</td>
                             <td class="action-buttons"><button class="btn-ver-fatura" data-id-fatura="${fatura.id_fatura}">Ver Detalhes</button></td>
@@ -448,6 +448,10 @@ $(document).ready(function() {
     }
 	
 	
+});
+
+$(document).on('input', '#cpfCnpjLogin', function() {
+    $(this).val($(this).val().replace(/\D/g, ''));
 });
 
 $(document).on('click', '#btnCopiar', async function() {

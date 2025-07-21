@@ -21,7 +21,7 @@
                 Bem-vindo à <br><span class="text-cyan-600">Digital Inovation Tecnologia</span>
             </h1>
             <p class="text-gray-600 mb-8">
-                Sua solução completa para gerenciamento de faturas e serviços.
+                ...
             </p>
             <a href="./cliente/" class="block w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 text-lg">
                 Acessar Área do Cliente
