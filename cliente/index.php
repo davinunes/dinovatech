@@ -197,47 +197,119 @@ $(document).ready(function() {
         performLogin(cpfCnpj, rememberMe, false);
     });
 
-    function loadClientFaturas(clientId) {
-        $("#clientFaturasList").html("<p>Carregando faturas...</p>");
-        $.ajax({
-            url: '../dinovatech/app.php', type: 'POST', dataType: 'json',
-            data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
-            success: function(response) {
-                if (response.success && response.data.length > 0) {
-                    let faturaHtml = "<table class='table-auto'><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>";
-					const hoje = new Date();
-					hoje.setHours(0, 0, 0, 0);
-                    response.data.forEach(fatura => {
-						const dataVencimento = new Date(fatura.data_vencimento);
-						dataVencimento.setHours(0, 0, 0, 0);
-						const isVencida = dataVencimento < hoje && fatura.status !== 'Liquidada';
-						const isLiquidado = fatura.status === 'Liquidada';
-						
-						const rowClass = isLiquidado ? 'bg-green-50 hover:bg-green-100' : 
-                                      isVencida ? 'bg-red-50 hover:bg-red-100' : 
-                                      'hover:bg-gray-50';
-									  
-                        const total = parseFloat(fatura.valor_total_fatura).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                        faturaHtml += `<tr class="${rowClass}" >
-                            <td>${fatura.id_fatura}</td>
-                            <td>${new Date(fatura.data_emissao).toLocaleDateString('pt-BR')}</td>
-                            <td>${new Date(fatura.data_vencimento + 'T00:00:00-03:00').toLocaleDateString('pt-BR')}</td>
-                            <td>${total}</td>
-                            <td>${fatura.status}</td>
-                            <td class="action-buttons"><button class="btn-ver-fatura" data-id-fatura="${fatura.id_fatura}">Ver Detalhes</button></td>
-                        </tr>`;
-                    });
-                    faturaHtml += "</tbody></table>";
-                    $("#clientFaturasList").html(faturaHtml);
-                } else { $("#clientFaturasList").html("<p>Nenhuma fatura encontrada.</p>"); }
-            },
-            error: function() { $("#clientFaturasList").html("<p style='color: red;'>Erro ao carregar faturas.</p>"); }
-        });
-    }
+function loadClientFaturas(clientId) {
+    $("#clientFaturasList").html("<p>Carregando faturas...</p>");
+    $.ajax({
+        url: '../dinovatech/app.php', type: 'POST', dataType: 'json',
+        data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
+        success: function(response) {
+            if (response.success && response.data.length > 0) {
+                // Ordenar as faturas por data de vencimento (decrescente)
+                const faturasOrdenadas = response.data.sort((a, b) => {
+                    const dateA = new Date(a.data_vencimento);
+                    const dateB = new Date(b.data_vencimento);
+                    return dateB - dateA; // Ordem decrescente
+                });
 
-    $(document).on("click", ".btn-ver-fatura", function() {
-        openFaturaDetalhesModal($(this).data("id-fatura"));
+                let faturaHtml = `
+                    <div class="hidden md:block">
+                        <div class="grid grid-cols-12 gap-4 px-4 py-2 font-semibold bg-gray-100 rounded-t-lg">
+                            <div class="col-span-1">ID</div>
+                            <div class="col-span-2">Emissão</div>
+                            <div class="col-span-2">Vencimento</div>
+                            <div class="col-span-2">Total</div>
+                            <div class="col-span-2">Status</div>
+                            <div class="col-span-3">Ações</div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">`;
+                
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+                
+                faturasOrdenadas.forEach(fatura => {
+                    const dataVencimento = new Date(fatura.data_vencimento);
+                    dataVencimento.setHours(0, 0, 0, 0);
+                    const isVencida = dataVencimento < hoje && fatura.status !== 'Liquidada';
+                    const isLiquidado = fatura.status === 'Liquidada';
+                    
+                    const cardClass = isLiquidado ? 'bg-green-50 hover:bg-green-100' : 
+                                    isVencida ? 'bg-red-50 hover:bg-red-100' : 
+                                    'bg-white hover:bg-gray-50';
+                    
+                    const total = parseFloat(fatura.valor_total_fatura).toLocaleString('pt-BR', { 
+                        style: 'currency', 
+                        currency: 'BRL' 
+                    });
+                    
+                    // Formatação das datas
+                    const dataEmissao = new Date(fatura.data_emissao).toLocaleDateString('pt-BR');
+                    const dataVenc = new Date(fatura.data_vencimento + 'T00:00:00-03:00').toLocaleDateString('pt-BR');
+                    
+                    faturaHtml += `
+                        <div class="${cardClass} rounded-lg shadow-sm border border-gray-100 overflow-hidden transition-all duration-200">
+                            <!-- Versão mobile (cards) -->
+                            <div class="md:hidden p-4 space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">ID:</span>
+                                    <span>${fatura.id_fatura}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Emissão:</span>
+                                    <span>${dataEmissao}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Vencimento:</span>
+                                    <span>${dataVenc}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Total:</span>
+                                    <span>${total}</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Status:</span>
+                                    <span>${fatura.status}</span>
+                                </div>
+                                <div class="pt-2">
+                                    <button class="w-full btn-ver-fatura py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors" 
+                                            data-id-fatura="${fatura.id_fatura}">
+                                        Ver Detalhes
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Versão desktop (linhas) -->
+                            <div class="hidden md:grid md:grid-cols-12 gap-4 px-4 py-3 items-center">
+                                <div class="col-span-1">${fatura.id_fatura}</div>
+                                <div class="col-span-2">${dataEmissao}</div>
+                                <div class="col-span-2">${dataVenc}</div>
+                                <div class="col-span-2">${total}</div>
+                                <div class="col-span-2">${fatura.status}</div>
+                                <div class="col-span-3">
+                                    <button class="btn-ver-fatura py-1 px-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors" 
+                                            data-id-fatura="${fatura.id_fatura}">
+                                        Ver Detalhes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                
+                faturaHtml += `</div>`;
+                $("#clientFaturasList").html(faturaHtml);
+            } else { 
+                $("#clientFaturasList").html("<p>Nenhuma fatura encontrada.</p>"); 
+            }
+        },
+        error: function() { 
+            $("#clientFaturasList").html("<p class='text-red-500'>Erro ao carregar faturas.</p>"); 
+        }
     });
+}
+
+$(document).on("click", ".btn-ver-fatura", function() {
+	openFaturaDetalhesModal($(this).data("id-fatura"));
+});
     
     function openFaturaDetalhesModal(faturaId) {
         $("#modalFaturaDetalhes").dialog("open");
