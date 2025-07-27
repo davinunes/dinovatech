@@ -82,7 +82,7 @@
     </div>
 
     <!-- Modal de Detalhes da Fatura -->
-    <div id="modalFaturaDetalhes" title="Detalhes da Fatura" style="display: none;">
+    <div id="modalFaturaDetalhes" title="Detalhes da Fatura" style="display: none;" class="w-[70%] md:w-[85%] sm:w-[95%] max-w-full mx-auto">
         <div class="fatura-header-modal">
             <p><strong>Fatura ID:</strong> <span id="detalheFaturaId"></span></p>
             <p><strong>Cliente:</strong> <span id="detalheFaturaCliente"></span></p>
@@ -149,7 +149,13 @@
 $(document).ready(function() {
     // --- LÓGICA ORIGINAL (JQUERY) ---
     let currentClientId = null;
-    $("#modalFaturaDetalhes").dialog({ autoOpen: false, modal: true, width: 'auto', minWidth: 700, buttons: { "Fechar": function() { $(this).dialog("close"); } } });
+    $("#modalFaturaDetalhes").dialog({ 
+	autoOpen: false, 
+	modal: true, 
+	width: $(window).width() <= 640 ? '95%' : $(window).width() <= 1024 ? '85%' : '70%', 
+	minWidth: 700, 
+	buttons: { "Fechar": function() { $(this).dialog("close"); } } 
+});
     
     function performLogin(cpfCnpj, rememberMe, isAutoLogin = false) {
         if (!isAutoLogin) { $("#loginMessage").removeClass('error success').text("Verificando..."); } 
@@ -377,7 +383,8 @@ $(document).on("click", ".btn-ver-fatura", function() {
         $("#faturaPagamentosTable tbody").html(tbodyHtml);
     }
 
-    $(document).on('click', '#btnPrintFatura', function() {
+    
+	$(document).on('click', '#btnPrintFatura', function() {
         const companyName = "Digital Inovation Tecnologia";
         const companyCnpj = "61.733.714/0001-01";
         const clientName = $("#detalheFaturaCliente").text();
