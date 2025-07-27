@@ -82,7 +82,7 @@
     </div>
 
     <!-- Modal de Detalhes da Fatura -->
-    <div id="modalFaturaDetalhes" title="Detalhes da Fatura" style="display: none;" class="w-[70%] md:w-[85%] sm:w-[95%] max-w-full mx-auto">
+    <div id="modalFaturaDetalhes" title="Detalhes da Fatura" style="display: none; max-height: 90vh; overflow-y: auto;" class="w-[95%] sm:w-[85%] md:w-[70%] max-w-full mx-auto rounded-lg shadow-lg bg-white p-4">
         <div class="fatura-header-modal">
             <p><strong>Fatura ID:</strong> <span id="detalheFaturaId"></span></p>
             <p><strong>Cliente:</strong> <span id="detalheFaturaCliente"></span></p>
@@ -90,19 +90,20 @@
             <p><strong>Status:</strong> <span id="detalheFaturaStatus"></span> | <strong>Total:</strong> <span id="detalheFaturaTotal"></span></p>
         </div>
         <h3>Itens da Fatura</h3>
-        <div id="itensFaturaList">
-            <table class='table-auto' id="faturaItensTable">
-                <thead><tr><th>Serviço</th><th>Qtd</th><th>Valor Unit.</th><th>Subtotal</th><th>Tag</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        <h3 class="mt-6">Histórico de Pagamentos</h3>
-        <div id="pagamentosList">
-            <table class='table-auto' id="faturaPagamentosTable">
-                <thead><tr><th>Data</th><th>Valor Pago</th><th>Observação</th></tr></thead>
-                <tbody></tbody>
-            </table>
-        </div>
+<div id="itensFaturaList" class="space-y-4">
+    <div id="faturaItensContainer" class="flex flex-col space-y-3"></div>
+</div>
+
+
+<h3 class="mt-6">Histórico de Pagamentos</h3>
+<div id="pagamentosList">
+    <div class="space-y-3" id="faturaPagamentosCards"></div>
+</div>
+
+
+		
+		
+		
         <div id="action-buttons-container" class="mt-6 text-center flex justify-center gap-4"></div>
     </div>
 
@@ -149,13 +150,45 @@
 $(document).ready(function() {
     // --- LÓGICA ORIGINAL (JQUERY) ---
     let currentClientId = null;
-    $("#modalFaturaDetalhes").dialog({ 
-	autoOpen: false, 
-	modal: true, 
-	width: $(window).width() <= 640 ? '95%' : $(window).width() <= 1024 ? '85%' : '70%', 
-	minWidth: 700, 
-	buttons: { "Fechar": function() { $(this).dialog("close"); } } 
-});
+	
+	$("#modalFaturaDetalhes").dialog({ 
+		autoOpen: false, 
+		modal: true, 
+		width: getDialogWidth(),
+		draggable: false, // ← Desativa o arrastar
+		minWidth: getDialogWidth(),
+		buttons: {
+			"Fechar": function() {
+				$(this).dialog("close");
+			}
+		}
+	});
+	
+	    // Função que retorna a largura correta do modal conforme o tamanho da tela
+    function getDialogWidth() {
+        const winWidth = $(window).width();
+        if (winWidth <= 640) return '95%';
+        if (winWidth <= 1024) return '85%';
+        return '70%';
+    }
+	
+	    // --- Debounce para resize ---
+    let resizeTimer;
+    $(window).on('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            const $dialog = $("#modalFaturaDetalhes");
+            if ($dialog.dialog("isOpen")) {
+                $dialog.dialog("close");
+                // Aguarda o fechamento para reabrir com nova largura
+                setTimeout(() => {
+                    $dialog.dialog("option", "width", getDialogWidth());
+                    $dialog.dialog("open");
+                }, 100);
+            }
+        }, 250); // 250ms após parar de redimensionar
+    });
+
     
     function performLogin(cpfCnpj, rememberMe, isAutoLogin = false) {
         if (!isAutoLogin) { $("#loginMessage").removeClass('error success').text("Verificando..."); } 
@@ -317,71 +350,130 @@ $(document).on("click", ".btn-ver-fatura", function() {
 	openFaturaDetalhesModal($(this).data("id-fatura"));
 });
     
-    function openFaturaDetalhesModal(faturaId) {
-        $("#modalFaturaDetalhes").dialog("open");
-        $.ajax({
-            url: '../dinovatech/app.php', type: 'POST', dataType: 'json',
-            data: { 
-                action: 'get_fatura_detalhes', 
-                id_fatura: faturaId,
-                visao_cliente: 'true'
-            },
-            success: function(response) {
-                if (response.success && response.data.fatura) {
-                    const fatura = response.data.fatura;
-                    $("#detalheFaturaId").text(fatura.id_fatura);
-                    $("#detalheFaturaCliente").text(fatura.nome_cliente);
-                    $("#detalheFaturaEmissao").text(new Date(fatura.data_emissao).toLocaleDateString('pt-BR'));
-                    $("#detalheFaturaVencimento").text(new Date(fatura.data_vencimento).toLocaleDateString('pt-BR'));
-                    $("#detalheFaturaStatus").text(fatura.status);
-                    $("#detalheFaturaTotal").text(parseFloat(fatura.valor_total_fatura).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
-                    
-                    let itensHtml = '';
-                    response.data.itens.forEach(item => {
-                        const subtotal = parseFloat(item.quantidade) * parseFloat(item.valor_unitario);
-                        itensHtml += `<tr><td>${item.nome_servico}</td><td>${item.quantidade}</td><td>R$ ${parseFloat(item.valor_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td><td>R$ ${subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td><td>${item.tag || ''}</td></tr>`;
-                    });
-                    $("#faturaItensTable tbody").html(itensHtml);
+function openFaturaDetalhesModal(faturaId) {
+	$("#modalFaturaDetalhes").dialog("open");
+	$.ajax({
+		url: '../dinovatech/app.php', type: 'POST', dataType: 'json',
+		data: { 
+			action: 'get_fatura_detalhes', 
+			id_fatura: faturaId,
+			visao_cliente: 'true'
+		},
+		success: function(response) {
+			if (response.success && response.data.fatura) {
+				const fatura = response.data.fatura;
+				$("#detalheFaturaId").text(fatura.id_fatura);
+				$("#detalheFaturaCliente").text(fatura.nome_cliente);
+				$("#detalheFaturaEmissao").text(new Date(fatura.data_emissao).toLocaleDateString('pt-BR'));
+				$("#detalheFaturaVencimento").text(new Date(fatura.data_vencimento).toLocaleDateString('pt-BR'));
+				$("#detalheFaturaStatus").text(fatura.status);
+				$("#detalheFaturaTotal").text(parseFloat(fatura.valor_total_fatura).toLocaleString('pt-BR', { minimumFractionDigits: 2 }));
+				
+let itensHtml = '';
 
-                    populatePagamentosTable(response.data.pagamentos);
+// Cabeçalho simulado (só em telas grandes)
+itensHtml += `
+    <div class="hidden lg:grid grid-cols-6 font-semibold text-sm text-gray-600 px-4">
+        <div class="col-span-1 text-left">Qtd</div>
+        <div class="col-span-3">Serviço</div>
+        <div class="col-span-1 text-right">Valor</div>
+        <div class="col-span-1 text-right">Subtotal</div>
+    </div>
+`;
 
-                    const actionContainer = $("#action-buttons-container");
-                    actionContainer.empty();
+response.data.itens.forEach(item => {
+    const subtotal = parseFloat(item.quantidade) * parseFloat(item.valor_unitario);
+    const valorUnitario = parseFloat(item.valor_unitario).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+    const subtotalFormatado = subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
 
-                    const printButton = $('<button />', {
-                        text: 'Imprimir Fatura', id: 'btnPrintFatura',
-                        'class': 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300'
-                    });
-                    actionContainer.append(printButton);
-                    
-                    if (fatura.status === 'Em Aberto') {
-                        const payButton = $('<button />', {
-                            text: 'Pagar com PIX', id: 'btnPagarFaturaComPix',
-                            'class': 'bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300',
-                            'data-id-fatura': fatura.id_fatura
-                        });
-                        actionContainer.append(payButton);
-                    }
-                }
-            }
-        });
-    }
+    itensHtml += `
+        <div class="border rounded-xl shadow-sm px-4 py-3 bg-white 
+                    flex flex-col space-y-2 lg:grid lg:grid-cols-6 lg:items-center lg:gap-4 text-sm">
 
-    function populatePagamentosTable(pagamentos) {
-        let tbodyHtml = '';
-        if (pagamentos && pagamentos.length > 0) {
-            pagamentos.forEach(pgto => {
-                tbodyHtml += `<tr>
-                    <td>${new Date(pgto.data_pagamento).toLocaleDateString('pt-BR')}</td>
-                    <td>${parseFloat(pgto.valor_pago).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>
-                    <td>${pgto.observacao || ''}</td>
-                </tr>`;
+            <div class="col-span-1 font-semibold text-gray-700 lg:text-left">${item.quantidade}</div>
+
+            <div class="col-span-3 text-gray-900">${item.nome_servico}</div>
+
+            <div class="col-span-1 text-right text-gray-700">R$ ${valorUnitario}</div>
+
+            <div class="col-span-1 text-right font-semibold text-gray-900">R$ ${subtotalFormatado}</div>
+
+            ${item.tag ? `
+            <div class="col-span-6">
+                <span class="inline-block text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md mt-2">
+                    ${item.tag}
+                </span>
+            </div>` : ''}
+        </div>
+    `;
+});
+
+$("#faturaItensContainer").html(itensHtml);
+
+
+
+
+populatePagamentosTable(response.data.pagamentos);
+
+				const actionContainer = $("#action-buttons-container");
+				actionContainer.empty();
+
+				const printButton = $('<button />', {
+					text: 'Imprimir Fatura', id: 'btnPrintFatura',
+					'class': 'bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300'
+				});
+			//	actionContainer.append(printButton);
+				
+				if (fatura.status === 'Em Aberto') {
+					const payButton = $('<button />', {
+						text: 'Pagar com PIX', id: 'btnPagarFaturaComPix',
+						'class': 'bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300',
+						'data-id-fatura': fatura.id_fatura
+					});
+					actionContainer.append(payButton);
+				}
+			}
+		}
+	});
+}
+
+function populatePagamentosTable(pagamentos) {
+    let cardsHtml = '';
+
+    if (pagamentos && pagamentos.length > 0) {
+        pagamentos.forEach(pgto => {
+            const data = new Date(pgto.data_pagamento).toLocaleDateString('pt-BR');
+            const valor = parseFloat(pgto.valor_pago).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
             });
-        } else {
-            tbodyHtml = '<tr><td colspan="3">Nenhum pagamento confirmado para esta fatura.</td></tr>';
-        }
-        $("#faturaPagamentosTable tbody").html(tbodyHtml);
+            const observacao = pgto.observacao || '';
+
+            cardsHtml += `
+                <div class="border border-gray-200 rounded-xl bg-white p-4 shadow-sm w-full">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">${data}</span>
+                        <span class="text-sm font-semibold text-green-700">${valor}</span>
+                    </div>
+                    ${observacao ? `
+                        <div class="bg-blue-50 text-blue-800 text-xs rounded-md px-3 py-2 whitespace-pre-wrap break-words">
+                            ${observacao}
+                        </div>` : ''
+                    }
+                </div>
+            `;
+        });
+    } else {
+        cardsHtml = `
+            <div class="text-sm text-gray-500 italic">
+                Nenhum pagamento confirmado para esta fatura.
+            </div>`;
     }
+
+    $("#faturaPagamentosCards").html(cardsHtml);
+}
+
+
 
     
 	$(document).on('click', '#btnPrintFatura', function() {
