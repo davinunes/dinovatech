@@ -1,6 +1,6 @@
 <?php
 
 
-echo password_hash('yuk11nn4', PASSWORD_DEFAULT);
+echo password_hash('#########', PASSWORD_DEFAULT);
 
 ?>

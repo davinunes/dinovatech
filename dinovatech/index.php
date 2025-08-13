@@ -22,6 +22,8 @@ if (!isset($_SESSION['usuario_id'])) {
     <!-- Inclua jQuery UI para autocomplete e dialog (modal) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.css">
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
@@ -110,6 +112,82 @@ if (!isset($_SESSION['usuario_id'])) {
             font-weight: bold;
             color: #d9534f; /* Cor para saldo devedor */
         }
+		
+.fatura-cards {
+    display: grid;
+    gap: 10px;
+}
+
+.card-fatura {
+    display: flex;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 15px;
+    align-items: center;
+    transition: 0.2s ease-in-out;
+    box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
+}
+
+.card-fatura.header {
+    background: #f2f2f2;
+    font-weight: bold;
+    box-shadow: none;
+}
+
+.card-fatura .campo {
+    flex: 1 1 150px;
+    padding: 5px 10px;
+}
+
+.card-fatura .botoes {
+    display: flex;
+    gap: 12px;
+}
+
+.icon-acao {
+    font-size: 1.2em;
+    cursor: pointer;
+    color: #007bff;
+    transition: color 0.2s;
+}
+
+.icon-acao:hover {
+    color: #0056b3;
+}
+
+.icon-acao.verde {
+    color: #28a745;
+}
+
+.icon-acao.verde:hover {
+    color: #1e7e34;
+}
+
+@media (max-width: 768px) {
+    .card-fatura.header {
+        display: none;
+    }
+    .card-fatura {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .card-fatura .campo {
+        flex: none;
+        width: 100%;
+    }
+    .card-fatura .botoes {
+        margin-top: 10px;
+    }
+}
+
+.card-fatura.liquidada {
+    background-color: #e6f9e6; /* verde claro */
+    border-left: 4px solid #28a745;
+}
+
+
 
     </style>
 </head>
@@ -160,78 +238,6 @@ if (!isset($_SESSION['usuario_id'])) {
     </div>
 
     <!-- Modais -->
-
-    <!-- Modal de Cadastro de Cliente -->
-    <div id="modalCadastrarCliente" title="Cadastrar Novo Cliente" style="display: none;">
-        <form id="formCadastrarCliente">
-            <label for="clienteNome">Nome:</label>
-            <input type="text" id="clienteNome" name="nome" required>
-
-            <label for="clienteCpfCnpj">CPF/CNPJ:</label>
-            <input type="text" id="clienteCpfCnpj" name="cpf_cnpj" required>
-
-            <label for="clienteTelefone">Telefone:</label>
-            <input type="text" id="clienteTelefone" name="telefone">
-
-            <label for="clienteEmail">E-mail:</label>
-            <input type="email" id="clienteEmail" name="email">
-
-            <button type="submit" class="submit">Salvar Cliente</button>
-        </form>
-        <div id="clienteMessage" class="mensagem"></div>
-    </div>
-
-    <!-- Modal de Edição de Cliente -->
-    <div id="modalEditarCliente" title="Editar Cliente" style="display: none;">
-        <form id="formEditarCliente">
-            <input type="hidden" id="editClienteId" name="id_cliente">
-            <label for="editClienteNome">Nome:</label>
-            <input type="text" id="editClienteNome" name="nome" required>
-
-            <label for="editClienteCpfCnpj">CPF/CNPJ:</label>
-            <input type="text" id="editClienteCpfCnpj" name="cpf_cnpj" required>
-
-            <label for="editClienteTelefone">Telefone:</label>
-            <input type="text" id="editClienteTelefone" name="telefone">
-
-            <label for="editClienteEmail">E-mail:</label>
-            <input type="email" id="editClienteEmail" name="email">
-
-            <button type="submit" class="submit">Salvar Alterações</button>
-        </form>
-        <div id="editClienteMessage" class="mensagem"></div>
-    </div>
-
-
-    <!-- Modal de Cadastro de Serviço -->
-    <div id="modalCadastrarServico" title="Cadastrar Novo Serviço" style="display: none;">
-        <form id="formCadastrarServico">
-            <label for="servicoNome">Nome do Serviço:</label>
-            <input type="text" id="servicoNome" name="nome_servico" required>
-
-            <label for="servicoValorSugerido">Valor Sugerido (R$):</label>
-            <input type="number" id="servicoValorSugerido" name="valor_sugerido" step="0.01" min="0.01" required>
-
-            <button type="submit" class="submit">Salvar Serviço</button>
-        </form>
-        <div id="servicoMessage" class="mensagem"></div>
-    </div>
-
-    <!-- Modal de Edição de Serviço -->
-    <div id="modalEditarServico" title="Editar Serviço" style="display: none;">
-        <form id="formEditarServico">
-            <input type="hidden" id="editServicoId" name="id_servico">
-            <label for="editServicoNome">Nome do Serviço:</label>
-            <input type="text" id="editServicoNome" name="nome_servico" required>
-
-            <label for="editServicoValorSugerido">Valor Sugerido (R$):</label>
-            <input type="number" id="editServicoValorSugerido" name="valor_sugerido" step="0.01" min="0.01" required>
-
-            <button type="submit" class="submit">Salvar Alterações</button>
-        </form>
-        <div id="editServicoMessage" class="mensagem"></div>
-    </div>
-
 
     <!-- Modal de Criar Fatura -->
     <div id="modalCriarFatura" title="Criar Nova Fatura" style="display: none;">
@@ -824,41 +830,62 @@ if (!isset($_SESSION['usuario_id'])) {
                 }
             });
 
-            // Função para carregar faturas do cliente
-            function loadClientFaturas(clientId) {
-        $("#clientFaturasList").html("<p>Carregando faturas...</p>");
-        $.ajax({
-            url: 'app.php', type: 'POST', dataType: 'json',
-            data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
-            success: function(response) {
-                if (response.success && response.data.length > 0) {
-                    let tableHtml = '<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border"><table class="table-auto"><thead><tr><th>ID</th><th>Emissão</th><th>Vencimento</th><th>Total</th><th>Status</th><th>Ações</th></tr></thead><tbody>';
-                    response.data.forEach(fatura => {
-                        tableHtml += `
-                            <tr>
-                                <td>${fatura.id_fatura}</td>
-                                <td>${fatura.data_emissao}</td>
-                                <td>${fatura.data_vencimento}</td>
-                                <td>R$ ${parseFloat(fatura.valor_total_fatura).toFixed(2)}</td>
-                                <td>${fatura.status}</td>
-                                <td class="action-buttons">
-                                    <button class="btn-ver-fatura" data-id-fatura="${fatura.id_fatura}">Ver Detalhes</button>`;
+// Função para carregar faturas do cliente
+function loadClientFaturas(clientId) {
+    $("#clientFaturasList").html("<p>Carregando faturas...</p>");
+    $.ajax({
+        url: 'app.php', type: 'POST', dataType: 'json',
+        data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
+        success: function(response) {
+            if (response.success && response.data.length > 0) {
+				
+			// Ordena por data de vencimento (mais recente primeiro)
+			response.data.sort((a, b) => {
+				return new Date(b.data_vencimento) - new Date(a.data_vencimento);
+			}); 
+		
+                let html = `<div class="fatura-cards">`;
+
+                // Cabeçalho
+                html += `
+                    <div class="card-fatura header">
+                        <div class="campo"><strong>ID</strong></div>
                         
-                        // ** CORREÇÃO 1: Só mostra o botão se a fatura não estiver liquidada **
-                        if (fatura.status !== 'Liquidada') {
-                            // tableHtml += `<button class="btn-registrar-pagamento" data-id-fatura="${fatura.id_fatura}">Registrar Pagamento</button>`;
-                        }
-                        
-                        tableHtml += `</td></tr>`;
-                    });
-                    tableHtml += '</tbody></table></div>';
-                    $("#clientFaturasList").html(tableHtml);
-                } else {
-                    $("#clientFaturasList").html("<p>Nenhuma fatura encontrada para este cliente.</p>");
-                }
+                        <div class="campo"><strong>Vencimento</strong></div>
+                        <div class="campo"><strong>Total</strong></div>
+                        <div class="campo"><strong>Status</strong></div>
+                        <div class="campo"><strong>Ações</strong></div>
+                    </div>
+                `;
+
+                // Faturas
+                response.data.forEach(fatura => {
+                    html += `
+                        <div class="card-fatura${fatura.status === 'Liquidada' ? ' liquidada' : ''}">
+                            <div class="campo">${fatura.id_fatura}</div>
+                            
+                            <div class="campo">${formatarDataBR(fatura.data_vencimento)}</div>
+                            <div class="campo">R$ ${parseFloat(fatura.valor_total_fatura).toFixed(2)}</div>
+                            <div class="campo">${fatura.status}</div>
+                            <div class="flex justify-end space-x-2">
+                                <button class="btn-ver-fatura" data-id-fatura="${fatura.id_fatura}">♻️ Detalhar</button>
+                                 
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div>`;
+                $("#clientFaturasList").html(html);
+            } else {
+                $("#clientFaturasList").html("<p>Nenhuma fatura encontrada para este cliente.</p>");
             }
-        });
-    }
+        }
+    });
+}
+
+
+
 
             // Botão Criar Nova Fatura
             $("#btnCriarFatura").on("click", function() {
@@ -1618,6 +1645,17 @@ if (!isset($_SESSION['usuario_id'])) {
             });
 
         });
+		
+function formatarDataBR(dataISO) {
+    const data = new Date(dataISO);
+    if (isNaN(data)) return dataISO;
+    const dia = String(data.getDate()).padStart(2, '0');
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const ano = data.getFullYear();
+    return `${dia}/${mes}/${ano}`;
+}
+
+		
     </script>
 </body>
 </html>

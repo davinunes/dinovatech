@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link rel="shortcut icon" href="favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -17,6 +18,7 @@
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="container mx-auto p-8 max-w-lg text-center">
         <div class="bg-white p-10 rounded-xl shadow-lg">
+		
             <h1 class="text-3xl font-bold text-gray-800 mb-4">
                 Bem-vindo à <br><span class="text-cyan-600">Digital Inovation Tecnologia</span>
             </h1>
@@ -30,6 +32,12 @@
         <div class="mt-6 text-center">
             <a href="./dinovatech/login.php" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">
                 Acesso Restrito
+            </a></br>
+            <a href="termos.html" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">
+                Termos de Uso
+            </a></br>
+            <a href="privacidade.html" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">
+                Politica de Privacidade
             </a>
         </div>
     </div>

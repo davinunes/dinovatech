@@ -593,70 +593,88 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-        case 'incorporar_recorrencias_na_fatura': // Incorporar recorrências em uma fatura
-            $id_fatura = $_POST['id_fatura'] ?? '';
-            $id_cliente = $_POST['id_cliente'] ?? '';
-            $mes_ano_fatura = $_POST['mes_ano_fatura'] ?? ''; // Formato YYYY-MM
+			case 'incorporar_recorrencias_na_fatura': // Incorporar recorrências em uma fatura
+				$id_fatura = $_POST['id_fatura'] ?? '';
+				$id_cliente = $_POST['id_cliente'] ?? '';
+				$mes_ano_fatura = $_POST['mes_ano_fatura'] ?? ''; // Formato YYYY-MM
 
-            if (empty($id_fatura) || empty($id_cliente) || empty($mes_ano_fatura)) {
-                $response['message'] = "Dados insuficientes para incorporar recorrências.";
-            } else {
-                $id_fatura = mysqli_real_escape_string($link, $id_fatura);
-                $id_cliente = mysqli_real_escape_string($link, $id_cliente);
-                $mes_ano_fatura = mysqli_real_escape_string($link, $mes_ano_fatura);
+				if (empty($id_fatura) || empty($id_cliente) || empty($mes_ano_fatura)) {
+					$response['message'] = "Dados insuficientes para incorporar recorrências.";
+					break;
+				}
 
-                // 1. Buscar recorrências ativas para o cliente e para o mês/ano da fatura
-                // E que AINDA NÃO ESTEJAM NESSA FATURA
-                $query_recorrencias = "SELECT R.id_recorrencia, R.id_servico, R.quantidade, R.valor_sugerido_recorrencia, S.nome_servico
-                                       FROM Recorrencias R
-                                       JOIN Servicos S ON R.id_servico = S.id_servico
-                                       WHERE R.id_cliente = '$id_cliente'
-                                         AND R.data_inicio_cobranca <= '$mes_ano_fatura-31' 
-                                         AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= '$mes_ano_fatura-01')
-                                         AND NOT EXISTS (SELECT 1 FROM ItensFatura WHERE id_fatura = '$id_fatura' AND id_recorrencia = R.id_recorrencia)"; // CORRIGIDO: Verifica se o item da recorrência já existe na fatura
-                
-                $result_recorrencias = DBExecute($link, $query_recorrencias);
-                $itens_incorporados = 0;
+				// Validação do formato do mês/ano
+				if (!preg_match('/^\d{4}-\d{2}$/', $mes_ano_fatura)) {
+					$response['message'] = "Formato de mês/ano inválido. Use YYYY-MM.";
+					break;
+				}
 
-                if ($result_recorrencias) {
-                    while ($rec = mysqli_fetch_assoc($result_recorrencias)) {
-                        $servico_id = mysqli_real_escape_string($link, $rec['id_servico']);
-                        $quantidade = mysqli_real_escape_string($link, $rec['quantidade']);
-                        $valor_unitario = mysqli_real_escape_string($link, $rec['valor_sugerido_recorrencia']);
-                        $tag = mysqli_real_escape_string($link, "Recorrência - " . $rec['nome_servico'] . " (" . $mes_ano_fatura . ")");
-                        $id_recorrencia_original = mysqli_real_escape_string($link, $rec['id_recorrencia']);
+				// Função para obter o último dia válido do mês
+				function getLastValidDayOfMonth($yearMonth) {
+					$date = new DateTime($yearMonth . '-01');
+					return $date->format('t'); // 't' retorna o número de dias no mês
+				}
 
-                        // 2. Inserir o item na fatura
-                        $query_insert_item = "INSERT INTO ItensFatura (id_fatura, id_servico, quantidade, valor_unitario, tag, id_recorrencia)
-                                              VALUES ('$id_fatura', '$servico_id', '$quantidade', '$valor_unitario', '$tag', '$id_recorrencia_original')"; // AGORA SALVA id_recorrencia
-                        
-                        $item_inserted = DBExecute($link, $query_insert_item);
+				// Obtém o último dia válido do mês
+				$lastValidDay = getLastValidDayOfMonth($mes_ano_fatura);
+				$dataInicioMes = $mes_ano_fatura . '-01';
+				$dataFimMes = $mes_ano_fatura . '-' . $lastValidDay;
 
-                        if ($item_inserted) {
-                            $itens_incorporados++;
-                            // 3. Atualizar a recorrência com a última fatura gerada (para evitar duplicação em futuras execuções em NOVAS FATURAS)
-                            $query_update_recorrencia = "UPDATE Recorrencias SET ultima_fatura_gerada_mes_ano = '$mes_ano_fatura' WHERE id_recorrencia = '$id_recorrencia_original'"; 
-                            DBExecute($link, $query_update_recorrencia);
-                        } else {
-                            error_log("Erro ao incorporar item recorrente (Fatura ID: $id_fatura, Recorrência ID: $id_recorrencia_original): " . mysqli_error($link));
-                        }
-                    }
+				$id_fatura = mysqli_real_escape_string($link, $id_fatura);
+				$id_cliente = mysqli_real_escape_string($link, $id_cliente);
+				$dataInicioMes = mysqli_real_escape_string($link, $dataInicioMes);
+				$dataFimMes = mysqli_real_escape_string($link, $dataFimMes);
 
-                    // 4. Recalcular o total da fatura após todas as inserções
-                    if ($itens_incorporados > 0) {
-                        $query_update_total = "UPDATE Faturas
-                                               SET valor_total_fatura = (SELECT COALESCE(SUM(quantidade * valor_unitario), 0) FROM ItensFatura WHERE id_fatura = '$id_fatura')
-                                               WHERE id_fatura = '$id_fatura'";
-                        DBExecute($link, $query_update_total);
-                    }
+				// 1. Buscar recorrências ativas para o cliente e para o mês/ano da fatura
+				$query_recorrencias = "SELECT R.id_recorrencia, R.id_servico, R.quantidade, R.valor_sugerido_recorrencia, S.nome_servico
+									   FROM Recorrencias R
+									   JOIN Servicos S ON R.id_servico = S.id_servico
+									   WHERE R.id_cliente = '$id_cliente'
+										 AND R.data_inicio_cobranca <= '$dataFimMes' 
+										 AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= '$dataInicioMes')
+										 AND NOT EXISTS (SELECT 1 FROM ItensFatura WHERE id_fatura = '$id_fatura' AND id_recorrencia = R.id_recorrencia)";
+				
+				$result_recorrencias = DBExecute($link, $query_recorrencias);
+				$itens_incorporados = 0;
 
-                    $response['success'] = true;
-                    $response['message'] = "Incorporados $itens_incorporados serviços recorrentes na fatura!";
-                } else {
-                    $response['message'] = "Erro ao buscar recorrências para incorporação: " . mysqli_error($link);
-                }
-            }
-            break;
+				if ($result_recorrencias) {
+					while ($rec = mysqli_fetch_assoc($result_recorrencias)) {
+						$servico_id = mysqli_real_escape_string($link, $rec['id_servico']);
+						$quantidade = mysqli_real_escape_string($link, $rec['quantidade']);
+						$valor_unitario = mysqli_real_escape_string($link, $rec['valor_sugerido_recorrencia']);
+						$tag = mysqli_real_escape_string($link, "Recorrência - " . $rec['nome_servico'] . " (" . $mes_ano_fatura . ")");
+						$id_recorrencia_original = mysqli_real_escape_string($link, $rec['id_recorrencia']);
+
+						// 2. Inserir o item na fatura
+						$query_insert_item = "INSERT INTO ItensFatura (id_fatura, id_servico, quantidade, valor_unitario, tag, id_recorrencia)
+											  VALUES ('$id_fatura', '$servico_id', '$quantidade', '$valor_unitario', '$tag', '$id_recorrencia_original')";
+						
+						$item_inserted = DBExecute($link, $query_insert_item);
+
+						if ($item_inserted) {
+							$itens_incorporados++;
+							// 3. Atualizar a recorrência com a última fatura gerada
+							$query_update_recorrencia = "UPDATE Recorrencias SET ultima_fatura_gerada_mes_ano = '$mes_ano_fatura' WHERE id_recorrencia = '$id_recorrencia_original'"; 
+							DBExecute($link, $query_update_recorrencia);
+						} else {
+							error_log("Erro ao incorporar item recorrente (Fatura ID: $id_fatura, Recorrência ID: $id_recorrencia_original): " . mysqli_error($link));
+						}
+					}
+
+					// 4. Recalcular o total da fatura após todas as inserções
+					if ($itens_incorporados > 0) {
+						$query_update_total = "UPDATE Faturas
+											   SET valor_total_fatura = (SELECT COALESCE(SUM(quantidade * valor_unitario), 0) FROM ItensFatura WHERE id_fatura = '$id_fatura')
+											   WHERE id_fatura = '$id_fatura'";
+						DBExecute($link, $query_update_total);
+					}
+
+					$response['success'] = true;
+					$response['message'] = "Incorporados $itens_incorporados serviços recorrentes na fatura!";
+				} else {
+					$response['message'] = "Erro ao buscar recorrências para incorporação: " . mysqli_error($link);
+				}
+				break;
 
 			case 'registrar_pagamento':
 			$id_fatura = $_POST['id_fatura'] ?? '';

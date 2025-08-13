@@ -59,43 +59,113 @@ if ($link) {
         .controls button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
         .controls button:hover { background-color: #218838; }
         .ui-dialog-titlebar-close { background: none; border: none; }
+		
+		.card-list {
+    display: grid;
+    gap: 15px;
+}
+
+.card-cliente {
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease-in-out;
+}
+
+.card-cliente:hover {
+    box-shadow: 2px 4px 12px rgba(0,0,0,0.1);
+}
+
+.card-cliente .linha {
+    margin-bottom: 8px;
+}
+
+.card-acoes {
+    margin-top: 10px;
+}
+
+.card-acoes button {
+    padding: 6px 12px;
+    margin-right: 5px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.btn-edit {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-details {
+    background-color: #17a2b8;
+    color: white;
+}
+
+/* Layout em grid para telas largas */
+@media (min-width: 768px) {
+    .card-list {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Layout estilo tabela em telas grandes */
+@media (min-width: 1024px) {
+    .card-list {
+        display: table;
+        width: 100%;
+    }
+    .card-cliente {
+        display: table-row;
+        border: none;
+        background: none;
+        padding: 0;
+        box-shadow: none;
+    }
+    .card-cliente .linha, .card-cliente .card-acoes {
+        display: table-cell;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        vertical-align: middle;
+    }
+    .card-cliente .linha:first-child {
+        font-weight: bold;
+    }
+}
+
+
     </style>
 </head>
 <body>
     <div class="container">
         <div class="controls">
+            <button id="btnVoltar">Voltar</button>
             <button id="btnNovoCliente">Novo Cliente</button>
         </div>
         <h2>Clientes Cadastrados</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>CPF/CNPJ</th>
-                    <th>Email</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($clientes)): ?>
-                    <?php foreach ($clientes as $cliente): ?>
-                        <tr>
-                            <td><?= htmlspecialchars($cliente['nome']) ?></td>
-                            <td><?= htmlspecialchars($cliente['cpf_cnpj']) ?></td>
-                            <td><?= htmlspecialchars($cliente['email']) ?></td>
-                            <td class="actions">
-                                <button class="btn-edit" data-id-cliente="<?= $cliente['id_cliente'] ?>">Editar</button>
-                                <button class="btn-details" onclick="window.location.href='index.php?cliente_id=<?= $cliente['id_cliente'] ?>'">Detalhar</button>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="4" style="text-align: center;">Nenhum cliente cadastrado.</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+		
+<div class="card-list">
+    <?php if (!empty($clientes)): ?>
+        <?php foreach ($clientes as $cliente): ?>
+            <div class="card-cliente">
+                <div class="linha"><strong></strong> <?= htmlspecialchars($cliente['nome']) ?></div>
+                <div class="linha"><strong>CPF/CNPJ:</strong> <?= htmlspecialchars($cliente['cpf_cnpj']) ?></div>
+                <div class="linha"><strong>Email:</strong> <?= htmlspecialchars($cliente['email']) ?></div>
+                <div class="card-acoes">
+                    <button class="btn-edit" data-id-cliente="<?= $cliente['id_cliente'] ?>">Editar</button>
+                    <button class="btn-details" onclick="window.location.href='index.php?cliente_id=<?= $cliente['id_cliente'] ?>'">Detalhar</button>
+                </div>
+            </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p style="text-align: center;">Nenhum cliente cadastrado.</p>
+    <?php endif; ?>
+</div>
 
         <!-- Controles de Paginação -->
         <?php if ($total_pages > 1): ?>
@@ -161,6 +231,11 @@ $(document).ready(function() {
         $("#formCadastrarCliente")[0].reset();
         $("#cadastroMensagem").html("");
         $("#modalCadastrarCliente").dialog("open");
+    });
+	
+	$("#btnVoltar").on("click", function() {
+        window.location.href = "index.php";
+
     });
 
     // Submete cadastro via AJAX

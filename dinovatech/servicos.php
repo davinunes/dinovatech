@@ -66,6 +66,7 @@ if ($link) {
 <body>
     <div class="container">
         <div class="controls">
+            <button id="btnVoltar">Voltar</button>
             <button id="btnNovoServico">Novo Serviço</button>
         </div>
         <h2>Serviços Cadastrados</h2>
@@ -211,6 +212,11 @@ $(document).ready(function() {
                 alert("Erro ao buscar dados do serviço.");
             }
         });
+    });
+	
+	$("#btnVoltar").on("click", function() {
+		window.location.href = "index.php";
+
     });
 
     // Submete o formulário de edição via AJAX
