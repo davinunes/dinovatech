@@ -832,6 +832,7 @@ if (!isset($_SESSION['usuario_id'])) {
 
 // Função para carregar faturas do cliente
 function loadClientFaturas(clientId) {
+	
     $("#clientFaturasList").html("<p>Carregando faturas...</p>");
     $.ajax({
         url: 'app.php', type: 'POST', dataType: 'json',
@@ -860,11 +861,12 @@ function loadClientFaturas(clientId) {
 
                 // Faturas
                 response.data.forEach(fatura => {
+					const dataVenc = new Date(fatura.data_vencimento + 'T00:00:00-03:00').toLocaleDateString('pt-BR');
                     html += `
                         <div class="card-fatura${fatura.status === 'Liquidada' ? ' liquidada' : ''}">
                             <div class="campo">${fatura.id_fatura}</div>
                             
-                            <div class="campo">${formatarDataBR(fatura.data_vencimento)}</div>
+                            <div class="campo">${dataVenc}</div>
                             <div class="campo">R$ ${parseFloat(fatura.valor_total_fatura).toFixed(2)}</div>
                             <div class="campo">${fatura.status}</div>
                             <div class="flex justify-end space-x-2">
