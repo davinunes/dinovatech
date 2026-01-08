@@ -262,77 +262,90 @@ if ($id_fatura) {
 
                 </div>
 
-                <!-- Payment Action Bar (Bottom) -->
-                <?php if ($saldo_devedor > 0): ?>
-                    <div
-                        class="bg-gray-50 px-8 py-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center no-print">
-                        <p class="text-gray-600 mb-4 md:mb-0 text-sm">
-                            <span class="material-icons text-base align-middle mr-1">security</span>
-                            Pagamento seguro via PIX
-                        </p>
-                        <button id="btnPagarPix"
-                            class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:scale-105 flex items-center justify-center">
-                            <span class="material-icons mr-2">qr_code_2</span>
-                            Pagar com PIX
-                        </button>
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <!-- Modal PIX -->
-            <div id="modalPix" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 hidden">
-                <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 text-center relative">
-                    <button onclick="$('#modalPix').addClass('hidden')"
-                        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                        <span class="material-icons">close</span>
-                    </button>
-
-                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Pagamento via PIX</h2>
-                    <div id="pixLoading" class="py-8">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto"></div>
-                        <p class="mt-4 text-gray-600">Gerando QR Code...</p>
-                    </div>
-
-                    <div id="pixContent" class="hidden">
-                        <p class="text-sm text-gray-600 mb-6">Escaneie o QR Code ou use o código Copia e Cola.</p>
-
-                        <div id="qrcodeDisplay"
-                            class="mx-auto inline-block p-4 border border-gray-200 rounded-lg mb-6 shadow-sm"></div>
-
-                        <div class="mb-6">
-                            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-left">Pix
-                                Copia e Cola</label>
-                            <div class="flex">
-                                <input type="text" id="pixCopiaColaInput" readonly
-                                    class="flex-1 p-2 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg text-xs text-gray-600 focus:outline-none">
-                                <button onclick="copiarPix()"
-                                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-r-lg font-medium text-xs transition-colors">Copiar</button>
-                            </div>
-                            <p id="msgCopia" class="text-green-600 text-xs mt-1 hidden font-bold">Copiado!</p>
-                        </div>
-
-                        <div class="bg-blue-50 text-blue-700 p-4 rounded-lg text-sm">
-                            <p class="font-bold flex items-center justify-center mb-1"><span
-                                    class="material-icons text-sm mr-1">sync</span> Aguardando pagamento...</p>
-                            <p class="text-xs">Após pagar, a fatura será baixada automaticamente em instantes.</p>
-                        </div>
-                    </div>
-
-                    <div id="pixSuccess" class="hidden py-8">
-                        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-                            <span class="material-icons text-green-600 text-3xl">check</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-800 mb-2">Pagamento Confirmado!</h3>
-                        <p class="text-gray-600 mb-6">Obrigado. Sua fatura foi liquidada.</p>
-                        <button onclick="window.location.reload()"
-                            class="bg-gray-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-900">Fechar</button>
-                    </div>
-
+                <!-- Attachments Section -->
+                <div class="border-t border-gray-100 pt-8 mt-8">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Anexos da Fatura</h3>
+                    <ul id="listaAnexosCliente" class="space-y-3">
+                        <li class="text-sm text-gray-500">Carregando anexos...</li>
+                    </ul>
                 </div>
+
             </div>
 
-            <script>
+            <!-- Payment Action Bar (Bottom) -->
+            <?php if ($saldo_devedor > 0): ?>
+                <div
+                    class="bg-gray-50 px-8 py-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center no-print">
+                    <p class="text-gray-600 mb-4 md:mb-0 text-sm">
+                        <span class="material-icons text-base align-middle mr-1">security</span>
+                        Pagamento seguro via PIX
+                    </p>
+                    <button id="btnPagarPix"
+                        class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:scale-105 flex items-center justify-center">
+                        <span class="material-icons mr-2">qr_code_2</span>
+                        Pagar com PIX
+                    </button>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Modal PIX -->
+        <div id="modalPix" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 hidden">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 text-center relative">
+                <button onclick="$('#modalPix').addClass('hidden')"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Pagamento via PIX</h2>
+                <div id="pixLoading" class="py-8">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600 mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Gerando QR Code...</p>
+                </div>
+
+                <div id="pixContent" class="hidden">
+                    <p class="text-sm text-gray-600 mb-6">Escaneie o QR Code ou use o código Copia e Cola.</p>
+
+                    <div id="qrcodeDisplay"
+                        class="mx-auto inline-block p-4 border border-gray-200 rounded-lg mb-6 shadow-sm"></div>
+
+                    <div class="mb-6">
+                        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-left">Pix
+                            Copia e Cola</label>
+                        <div class="flex">
+                            <input type="text" id="pixCopiaColaInput" readonly
+                                class="flex-1 p-2 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg text-xs text-gray-600 focus:outline-none">
+                            <button onclick="copiarPix()"
+                                class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-r-lg font-medium text-xs transition-colors">Copiar</button>
+                        </div>
+                        <p id="msgCopia" class="text-green-600 text-xs mt-1 hidden font-bold">Copiado!</p>
+                    </div>
+
+                    <div class="bg-blue-50 text-blue-700 p-4 rounded-lg text-sm">
+                        <p class="font-bold flex items-center justify-center mb-1"><span
+                                class="material-icons text-sm mr-1">sync</span> Aguardando pagamento...</p>
+                        <p class="text-xs">Após pagar, a fatura será baixada automaticamente em instantes.</p>
+                    </div>
+                </div>
+
+                <div id="pixSuccess" class="hidden py-8">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                        <span class="material-icons text-green-600 text-3xl">check</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Pagamento Confirmado!</h3>
+                    <p class="text-gray-600 mb-6">Obrigado. Sua fatura foi liquidada.</p>
+                    <button onclick="window.location.reload()"
+                        class="bg-gray-800 text-white px-6 py-2 rounded-lg font-medium hover:bg-gray-900">Fechar</button>
+                </div>
+
+            </div>
+        </div>
+
+                <script>
                 $(document).ready(function () {
+                    // Load Attachments
+                    carregarAnexos();
+
                     let pollingInterval;
 
                     $('#btnPagarPix').click(function () {
@@ -404,9 +417,50 @@ if ($id_fatura) {
                         setTimeout(() => $('#msgCopia').addClass('hidden'), 2000);
                     }
                 });
+
+                function carregarAnexos() {
+                    // Note path to app.php is relative to cliente/fatura.php
+                    $.post('../dinovatech/app.php', { action: 'get_fatura_arquivos', id_fatura: <?= $id_fatura ?> }, function(res){
+                        if(res.success) {
+                            let html = '';
+                            if(res.data.length > 0) {
+                                res.data.forEach(arq => {
+                                    // Format bytes to KB/MB
+                                    let sizeStr = '';
+                                    if(arq.tamanho_bytes < 1024) sizeStr = arq.tamanho_bytes + ' B';
+                                    else if(arq.tamanho_bytes < 1024*1024) sizeStr = (arq.tamanho_bytes/1024).toFixed(1) + ' KB';
+                                    else sizeStr = (arq.tamanho_bytes/(1024*1024)).toFixed(1) + ' MB';
+
+                                    html += `
+                                        <li class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center overflow-hidden">
+                                                <span class="material-icons text-red-500 mr-3 text-2xl">description</span>
+                                                <div class="truncate">
+                                                    <a href="${arq.url_publica}" target="_blank" class="text-sm font-semibold text-gray-700 hover:text-blue-600 block truncate" title="${arq.nome_original}">
+                                                        ${arq.nome_original}
+                                                    </a>
+                                                    <span class="text-xs text-gray-400 font-medium">${sizeStr}</span>
+                                                </div>
+                                            </div>
+                                            <a href="${arq.url_publica}" target="_blank" class="ml-4 text-cyan-600 hover:text-cyan-800 text-sm font-medium flex items-center">
+                                                <span class="material-icons text-base mr-1">download</span> Baixar
+                                            </a>
+                                        </li>
+                                    `;
+                                });
+                            } else {
+                                html = '<li class="text-sm text-gray-400 italic">Nenhum arquivo anexado a esta fatura.</li>';
+                            }
+                            $('#listaAnexosCliente').html(html);
+                        } else {
+                            $('#listaAnexosCliente').html('<li class="text-sm text-red-500">Erro ao carregar anexos.</li>');
+                        }
+                    }, 'json');
+                }
             </script>
 
-        <?php endif; ?>
+
+    <?php endif; ?>
     </div>
 </body>
 
