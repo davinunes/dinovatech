@@ -84,6 +84,11 @@ if ($id_fatura) {
                 display: none !important;
             }
         }
+
+        /* Fix for jQuery UI Autocomplete z-index in Modals */
+        .ui-autocomplete {
+            z-index: 9999 !important;
+        }
     </style>
 </head>
 
