@@ -751,7 +751,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $servico_id = mysqli_real_escape_string($link, $rec['id_servico']);
                     $quantidade = mysqli_real_escape_string($link, $rec['quantidade']);
                     $valor_unitario = mysqli_real_escape_string($link, $rec['valor_sugerido_recorrencia']);
-                    $tag = mysqli_real_escape_string($link, "Recorrência - " . $rec['nome_servico'] . " (" . $mes_ano_fatura . ")");
+                    $tag = mysqli_real_escape_string($link, "Mensalidade - " . $rec['nome_servico'] . " (" . $mes_ano_fatura . ")");
                     $id_recorrencia_original = mysqli_real_escape_string($link, $rec['id_recorrencia']);
 
                     // 2. Inserir o item na fatura
