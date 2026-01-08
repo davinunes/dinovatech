@@ -1,4 +1,5 @@
 <?php
+session_set_cookie_params(0, '/');
 session_start();
 $cliente_logado = isset($_SESSION['cliente_id']);
 $nome_cliente = $_SESSION['cliente_nome'] ?? '';
@@ -166,23 +167,23 @@ $nome_cliente = $_SESSION['cliente_nome'] ?? '';
 
             // Load Faturas if logged in
             <?php if ($cliente_logado): ?>
-                    loadFaturas();
+                loadFaturas();
             <?php endif; ?>
 
-                function loadFaturas() {
-                    $.ajax({
-                        url: '../dinovatech/app.php', type: 'POST', dataType: 'json',
-                        data: { action: 'buscar_faturas_cliente', id_cliente: '<?= $_SESSION['cliente_id'] ?? '' ?>' },
-                        success: function (response) {
-                            if (response.success && response.data.length > 0) {
-                                renderFaturas(response.data);
-                            } else {
-                                $('#listAbertas').html('<p class="col-span-full text-center py-8 text-gray-500">Nenhuma fatura em aberto.</p>');
-                                $('#listPagas').html('<p class="col-span-full text-center py-8 text-gray-500">Nenhuma fatura paga.</p>');
-                            }
+            function loadFaturas() {
+                $.ajax({
+                    url: '../dinovatech/app.php', type: 'POST', dataType: 'json',
+                    data: { action: 'buscar_faturas_cliente', id_cliente: '<?= $_SESSION['cliente_id'] ?? '' ?>' },
+                    success: function (response) {
+                        if (response.success && response.data.length > 0) {
+                            renderFaturas(response.data);
+                        } else {
+                            $('#listAbertas').html('<p class="col-span-full text-center py-8 text-gray-500">Nenhuma fatura em aberto.</p>');
+                            $('#listPagas').html('<p class="col-span-full text-center py-8 text-gray-500">Nenhuma fatura paga.</p>');
                         }
-                    });
-                }
+                    }
+                });
+            }
 
             function renderFaturas(faturas) {
                 const abertasContainer = $('#listAbertas');

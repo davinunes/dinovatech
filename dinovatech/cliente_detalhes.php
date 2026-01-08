@@ -131,12 +131,20 @@ if ($id_cliente) {
                                         </tr>
                                     <?php else: ?>
                                         <?php foreach ($faturas as $fatura):
-                                            $statusClass = match ($fatura['status']) {
-                                                'Liquidada' => 'text-green-600 bg-green-100',
-                                                'Em Aberto' => (strtotime($fatura['data_vencimento']) < time()) ? 'text-red-600 bg-red-100' : 'text-yellow-600 bg-yellow-100',
-                                                default => 'text-gray-600 bg-gray-100'
-                                            };
-                                            $statusLabel = ($fatura['status'] == 'Em Aberto' && strtotime($fatura['data_vencimento']) < time()) ? 'Atrasada' : $fatura['status'];
+                                            $statusClass = 'text-gray-600 bg-gray-100';
+                                            $hoje = date('Y-m-d');
+
+                                            if ($fatura['status'] === 'Liquidada') {
+                                                $statusClass = 'text-green-600 bg-green-100';
+                                            } elseif ($fatura['status'] === 'Em Aberto') {
+                                                if ($fatura['data_vencimento'] < $hoje) {
+                                                    $statusClass = 'text-red-600 bg-red-100';
+                                                } else {
+                                                    $statusClass = 'text-yellow-600 bg-yellow-100';
+                                                }
+                                            }
+
+                                            $statusLabel = ($fatura['status'] == 'Em Aberto' && $fatura['data_vencimento'] < $hoje) ? 'Atrasada' : $fatura['status'];
                                             ?>
                                             <tr class="border-b border-gray-50 hover:bg-gray-50">
                                                 <td class="p-4">#

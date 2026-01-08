@@ -1,6 +1,7 @@
 <?php
-session_start();
 // app.php
+session_set_cookie_params(0, '/');
+session_start();
 
 include "../database.php"; // Seu arquivo com DBConnect, DBExecute, etc.
 header('Content-Type: application/json'); // Sempre retorna JSON

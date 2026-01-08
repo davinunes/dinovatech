@@ -123,12 +123,15 @@ if ($id_fatura) {
                             <!-- Status Badge -->
                             <div class="absolute top-8 right-8 no-print">
                                 <?php
-                                $statusColor = match ($fatura['status']) {
-                                    'Liquidada' => 'bg-green-100 text-green-700 border-green-200',
-                                    'Em Aberto' => 'bg-yellow-100 text-yellow-700 border-yellow-200',
-                                    'Atrasada' => 'bg-red-100 text-red-700 border-red-200',
-                                    default => 'bg-gray-100 text-gray-700 border-gray-200'
-                                };
+                                $statusColor = 'bg-gray-100 text-gray-700 border-gray-200';
+
+                                if ($fatura['status'] === 'Liquidada') {
+                                    $statusColor = 'bg-green-100 text-green-700 border-green-200';
+                                } elseif ($fatura['status'] === 'Em Aberto') {
+                                    $statusColor = 'bg-yellow-100 text-yellow-700 border-yellow-200';
+                                } elseif ($fatura['status'] === 'Atrasada') {
+                                    $statusColor = 'bg-red-100 text-red-700 border-red-200';
+                                }
                                 // Override for visual consistency if overdue
                                 if ($fatura['status'] == 'Em Aberto' && strtotime($fatura['data_vencimento']) < time()) {
                                     $fatura['status'] = 'Atrasada';
