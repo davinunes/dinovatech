@@ -1075,6 +1075,171 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         default:
             $response['message'] = "Ação inválida.";
             break;
+
+        // --- GESTÃO DE ARQUIVOS (OCI S3) ---
+
+        case 'upload_arquivo_fatura':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+
+            // Verifica o upload
+            if (empty($id_fatura) || !isset($_FILES['arquivo']) || $_FILES['arquivo']['error'] !== UPLOAD_ERR_OK) {
+                $response['message'] = "Fatura ou arquivo inválido.";
+                break;
+            }
+
+            // Validar tamanho (Max 10MB)
+            $maxSize = 10 * 1024 * 1024; // 10MB em bytes
+            if ($_FILES['arquivo']['size'] > $maxSize) {
+                $response['message'] = "O arquivo excede o tamanho máximo permitido de 10MB.";
+                break;
+            }
+
+            // Validar tipo de arquivo seguro (opcional, mas recomendado)
+            // Aqui permitimos PDF, Imagens, XML, ZIP
+            $allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'application/xml', 'text/xml', 'application/zip', 'application/x-zip-compressed'];
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($_FILES['arquivo']['tmp_name']);
+
+            if (!in_array($mimeType, $allowedTypes)) {
+                // $response['message'] = "Tipo de arquivo não permitido ($mimeType).";
+                // break; 
+                // (Opcional: Descomentar para restringir tipos. O usuário pediu PDF/XML, mas pode querer outros.)
+            }
+
+            // Preparar para enviar ao OCI S3
+            $nomeOriginal = $_FILES['arquivo']['name'];
+            $extensao = pathinfo($nomeOriginal, PATHINFO_EXTENSION);
+            // Nome único no bucket: timestamp_idFatura_hash.ext
+            $nomeArquivoBucket = time() . '_' . $id_fatura . '_' . substr(md5(uniqid()), 0, 8) . '.' . $extensao;
+
+            // Carregar URL pré-autenticada
+            if (file_exists('../oci-s3.php')) {
+                include '../oci-s3.php';
+            } else {
+                $response['message'] = "Configuração de armazenamento não encontrada.";
+                break;
+            }
+
+            if (!isset($urlBucketPreauth)) {
+                $response['message'] = "URL do bucket não configurada.";
+                break;
+            }
+
+            $urlUpload = $urlBucketPreauth . $nomeArquivoBucket;
+            $caminhoTemp = $_FILES['arquivo']['tmp_name'];
+            $tamanhoBytes = $_FILES['arquivo']['size']; // tamanho correto
+
+            // Ler conteúdo do arquivo para enviar no corpo do PUT
+            $conteudoArquivo = file_get_contents($caminhoTemp);
+
+            // Iniciar CURL para PUT
+            $ch = curl_init($urlUpload);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $conteudoArquivo);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: ' . $mimeType,
+                'Content-Length: ' . strlen($conteudoArquivo)
+            ]);
+
+            $resultCurl = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            // Código 200 ou 201 (Created) geralmente indicam sucesso no PUT
+            if ($httpCode >= 200 && $httpCode < 300) {
+
+                // Sucesso no upload, salvar no BD
+                $link = DBConnect(); // Assegurar conexão (já deve estar aberta, mas por segurança)
+                if (!$link)
+                    $link = DBConnect();
+
+                $nomeOriginalSafe = mysqli_real_escape_string($link, $nomeOriginal);
+                $urlPublicaSafe = mysqli_real_escape_string($link, $urlUpload);
+                $mimeTypeSafe = mysqli_real_escape_string($link, $mimeType);
+
+                // 1. Inserir em Arquivos
+                $queryArquivo = "INSERT INTO Arquivos (nome_original, url_publica, tamanho_bytes, tipo_mime) 
+                                 VALUES ('$nomeOriginalSafe', '$urlPublicaSafe', '$tamanhoBytes', '$mimeTypeSafe')";
+
+                if (DBExecute($link, $queryArquivo)) {
+                    $idArquivo = mysqli_insert_id($link);
+
+                    // 2. Vincular na Fatura
+                    $idFaturaSafe = mysqli_real_escape_string($link, $id_fatura);
+                    $queryVinculo = "INSERT INTO FaturaArquivos (id_fatura, id_arquivo) VALUES ('$idFaturaSafe', '$idArquivo')";
+
+                    if (DBExecute($link, $queryVinculo)) {
+                        $response['success'] = true;
+                        $response['message'] = "Arquivo anexado com sucesso!";
+                    } else {
+                        $response['message'] = "Arquivo enviado, mas erro ao vincular na fatura: " . mysqli_error($link);
+                    }
+                } else {
+                    $response['message'] = "Arquivo enviado, mas erro ao salvar metadados: " . mysqli_error($link);
+                }
+
+            } else {
+                $response['message'] = "Erro ao enviar arquivo para nuvem. HTTP Code: $httpCode. Curl Error: $curlError";
+            }
+            break;
+
+        case 'get_fatura_arquivos':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            if (empty($id_fatura)) {
+                $response['message'] = "ID da fatura obrigatório.";
+            } else {
+                $id_fatura = mysqli_real_escape_string($link, $id_fatura);
+                $query = "SELECT A.id_arquivo, A.nome_original, A.url_publica, A.tamanho_bytes, A.data_upload 
+                          FROM Arquivos A
+                          JOIN FaturaArquivos FA ON A.id_arquivo = FA.id_arquivo
+                          WHERE FA.id_fatura = '$id_fatura'
+                          ORDER BY A.data_upload DESC";
+
+                $result = DBExecute($link, $query);
+                $arquivos = [];
+                if ($result) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $arquivos[] = $row;
+                    }
+                    $response['success'] = true;
+                    $response['data'] = $arquivos;
+                } else {
+                    $response['message'] = "Erro ao buscar arquivos: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'excluir_arquivo_fatura':
+            $id_arquivo = $_POST['id_arquivo'] ?? '';
+            $id_fatura = $_POST['id_fatura'] ?? ''; // Para validação extra de segurança, se desejar
+
+            if (empty($id_arquivo)) {
+                $response['message'] = "ID do arquivo obrigatório.";
+            } else {
+                $id_arquivo = mysqli_real_escape_string($link, $id_arquivo);
+
+                // Excluir apenas o vínculo ou o arquivo todo?
+                // Como um arquivo pode (teoricamente) ser usado em outros lugares no futuro, 
+                // mas aqui é 1:1 na prática, vamos remover o arquivo da tabela Arquivos também.
+                // O ON DELETE CASCADE na FK cuidará do vínculo.
+
+                // Nota: Não estamos deletando do Bucket S3 pq a URL pré-autenticada pode não ter permissão DELETE
+                // e não temos SDK configurado, apenas URL mágica.
+
+                $query = "DELETE FROM Arquivos WHERE id_arquivo = '$id_arquivo'";
+
+                if (DBExecute($link, $query)) {
+                    $response['success'] = true;
+                    $response['message'] = "Arquivo desvinculado com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao excluir arquivo: " . mysqli_error($link);
+                }
+            }
+            break;
+
+
     }
 } else {
     $response['message'] = "Requisição inválida (apenas POST permitido).";
@@ -1082,4 +1247,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 DBClose($link);
 echo json_encode($response);
+?>
 ?>

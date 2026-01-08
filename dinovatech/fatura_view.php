@@ -342,6 +342,21 @@ if ($id_fatura) {
                             </div>
                         </div>
 
+                        <!-- Attachments Card -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-800">Anexos</h3>
+                                <button onclick="openUploadModal()"
+                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                    + Adicionar
+                                </button>
+                            </div>
+
+                            <ul id="listaAnexos" class="space-y-3">
+                                <li class="text-center text-gray-400 text-sm py-2">Carregando anexos...</li>
+                            </ul>
+                        </div>
+
                     </div>
                 </div>
 
@@ -460,11 +475,85 @@ if ($id_fatura) {
     </div>
 
 
+    <!--  Upload Modal -->
+    <div id="modalUpload"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden no-print">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-sm p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Anexar Arquivo</h3>
+            <form id="formUpload" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="upload_arquivo_fatura">
+                <input type="hidden" name="id_fatura" value="<?= $id_fatura ?>">
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Selecione o arquivo (Max 10MB)</label>
+                    <input type="file" name="arquivo" required
+                        class="w-full text-sm text-gray-500
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-full file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-blue-50 file:text-blue-700
+                        hover:file:bg-blue-100">
+                    <p class="text-xs text-gray-500 mt-1">PDF, Imagens, XML, ZIP</p>
+                </div>
+
+                <!-- Progress Bar (Initially Hidden) -->
+                <div id="uploadProgress" class="hidden mb-4">
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p class="text-xs text-center text-gray-500 mt-1">Enviando...</p>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="$('#modalUpload').addClass('hidden')"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancelar</button>
+                    <button type="submit" id="btnUploadSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+
     <?php include 'components/layout_scripts.php'; ?>
     <script>
         function openAddItemModal() { $('#modalAddItem').removeClass('hidden'); }
         function openPagamentoModal() { $('#modalPagamento').removeClass('hidden'); }
         function openIncorporarModal() { $('#modalIncorporar').removeClass('hidden'); }
+        function openUploadModal() { $('#modalUpload').removeClass('hidden'); }
+
+        // Generic Toast Function
+        function showToast(message, type = 'success') {
+            const colorClass = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const icon = type === 'success' ? 'check_circle' : 'error';
+            
+            const toast = $(`
+                <div class="flex items-center w-full max-w-xs p-4 mb-4 text-white rounded-lg shadow ${colorClass} transition-opacity duration-300 opacity-0" role="alert">
+                    <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-white rounded-lg">
+                        <span class="material-icons">${icon}</span>
+                    </div>
+                    <div class="ml-3 text-sm font-normal">${message}</div>
+                    <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-transparent text-white hover:text-gray-100 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 inline-flex h-8 w-8" aria-label="Close" onclick="$(this).parent().remove()">
+                        <span class="material-icons text-sm">close</span>
+                    </button>
+                </div>
+            `);
+
+            $('#toast-container').append(toast);
+            
+            // Trigger reflow/animation
+            requestAnimationFrame(() => {
+                toast.removeClass('opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.addClass('opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
 
         function deleteItem(id) {
             if (confirm('Tem certeza que deseja remover este item?')) {
@@ -482,7 +571,60 @@ if ($id_fatura) {
             }
         }
 
+        function carregarAnexos() {
+            $.post('app.php', { action: 'get_fatura_arquivos', id_fatura: <?= $id_fatura ?> }, function(res){
+                if(res.success) {
+                    let html = '';
+                    if(res.data.length > 0) {
+                        res.data.forEach(arq => {
+                            // Format bytes to KB/MB
+                            let sizeStr = '';
+                            if(arq.tamanho_bytes < 1024) sizeStr = arq.tamanho_bytes + ' B';
+                            else if(arq.tamanho_bytes < 1024*1024) sizeStr = (arq.tamanho_bytes/1024).toFixed(1) + ' KB';
+                            else sizeStr = (arq.tamanho_bytes/(1024*1024)).toFixed(1) + ' MB';
+
+                            html += `
+                                <li class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-100">
+                                    <div class="flex items-center overflow-hidden">
+                                        <span class="material-icons text-gray-500 mr-2 text-xl">description</span>
+                                        <div class="truncate">
+                                            <a href="${arq.url_publica}" target="_blank" class="text-sm font-medium text-blue-600 hover:underline block truncate" title="${arq.nome_original}">${arq.nome_original}</a>
+                                            <span class="text-xs text-gray-400">${sizeStr}</span>
+                                        </div>
+                                    </div>
+                                    <button onclick="excluirAnexo(${arq.id_arquivo})" class="ml-2 text-gray-400 hover:text-red-500" title="Excluir anexo">
+                                        <span class="material-icons text-lg">delete</span>
+                                    </button>
+                                </li>
+                            `;
+                        });
+                    } else {
+                        html = '<li class="text-center text-gray-400 text-sm py-2">Nenhum anexo.</li>';
+                    }
+                    $('#listaAnexos').html(html);
+                } else {
+                    $('#listaAnexos').html('<li class="text-center text-red-400 text-sm py-2">Erro ao carregar.</li>');
+                }
+            }, 'json');
+        }
+
+        function excluirAnexo(id) {
+            if(confirm('Deseja desvincular este arquivo da fatura?')) {
+                $.post('app.php', { action: 'excluir_arquivo_fatura', id_arquivo: id, id_fatura: <?= $id_fatura ?> }, function(res){
+                    if(res.success) {
+                        showToast(res.message, 'success');
+                        carregarAnexos();
+                    } else {
+                        showToast(res.message, 'error');
+                    }
+                }, 'json');
+            }
+        }
+
         $(document).ready(function () {
+            // Load Attachments
+            carregarAnexos();
+
             // Autocomplete for services
             $("#servicoSearch").autocomplete({
                 source: function (request, response) {
@@ -505,7 +647,7 @@ if ($id_fatura) {
                 e.preventDefault();
                 $.post('app.php', $(this).serialize(), function (res) {
                     if (res.success) location.reload();
-                    else alert(res.message);
+                    else showToast(res.message, 'error');
                 }, 'json');
             });
 
@@ -513,7 +655,7 @@ if ($id_fatura) {
                 e.preventDefault();
                 $.post('app.php', $(this).serialize(), function (res) {
                     if (res.success) location.reload();
-                    else alert(res.message);
+                    else showToast(res.message, 'error');
                 }, 'json');
             });
 
@@ -521,11 +663,47 @@ if ($id_fatura) {
                 e.preventDefault();
                 $.post('app.php', $(this).serialize(), function (res) {
                     if (res.success) {
-                        alert(res.message);
-                        location.reload();
+                        showToast(res.message, 'success');
+                        setTimeout(() => location.reload(), 1500);
                     }
-                    else alert(res.message);
+                    else showToast(res.message, 'error');
                 }, 'json');
+            });
+
+            // Upload Form
+            $('#formUpload').on('submit', function(e){
+                e.preventDefault();
+                var formData = new FormData(this);
+                
+                $('#uploadProgress').removeClass('hidden');
+                $('#btnUploadSubmit').prop('disabled', true).addClass('opacity-50');
+
+                $.ajax({
+                    url: 'app.php',
+                    type: 'POST',
+                    data: formData,
+                    success: function (res) {
+                        if (res.success) {
+                            showToast(res.message, 'success');
+                            $('#modalUpload').addClass('hidden');
+                            $('#formUpload')[0].reset();
+                            carregarAnexos();
+                        } else {
+                            showToast(res.message, 'error');
+                        }
+                    },
+                    error: function() {
+                         showToast('Erro de comunicação no upload.', 'error');
+                    },
+                    complete: function() {
+                        $('#uploadProgress').addClass('hidden');
+                        $('#btnUploadSubmit').prop('disabled', false).removeClass('opacity-50');
+                    },
+                    cache: false,
+                    contentType: false,
+                    processData: false,
+                    dataType: 'json'
+                });
             });
         });
     </script>
