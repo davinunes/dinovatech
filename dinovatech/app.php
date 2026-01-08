@@ -1113,10 +1113,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nomeArquivoBucket = time() . '_' . $id_fatura . '_' . substr(md5(uniqid()), 0, 8) . '.' . $extensao;
 
             // Carregar URL pré-autenticada
-            if (file_exists('../oci-s3.php')) {
-                include '../oci-s3.php';
+            $pathConfig = __DIR__ . '/../oci-s3.php';
+            if (file_exists($pathConfig)) {
+                include $pathConfig;
             } else {
-                $response['message'] = "Configuração de armazenamento não encontrada.";
+                $response['message'] = "Configuração de armazenamento não encontrada em: " . $pathConfig;
                 break;
             }
 
@@ -1125,6 +1126,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
+            // Nome único no bucket com pasta 'arquivos/': arquivos/timestamp_idFatura_hash.ext
+            $nomeArquivoBucket = 'arquivos/' . time() . '_' . $id_fatura . '_' . substr(md5(uniqid()), 0, 8) . '.' . $extensao;
             $urlUpload = $urlBucketPreauth . $nomeArquivoBucket;
             $caminhoTemp = $_FILES['arquivo']['tmp_name'];
             $tamanhoBytes = $_FILES['arquivo']['size']; // tamanho correto
@@ -1247,5 +1250,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 DBClose($link);
 echo json_encode($response);
-?>
 ?>
