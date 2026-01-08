@@ -64,7 +64,7 @@ if (!isset($_SESSION['usuario_id'])) {
                         <span class="material-icons text-3xl">attach_money</span>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">Total Recebido (Mês)</p>
+                        <p class="text-gray-500 text-sm font-medium" id="lblTotalFaturado">Total Recebido (Mês)</p>
                         <h3 class="text-2xl font-bold text-gray-800" id="statTotalFaturado">R$ 0,00</h3>
                     </div>
                 </div>
@@ -75,7 +75,7 @@ if (!isset($_SESSION['usuario_id'])) {
                         <span class="material-icons text-3xl">pending_actions</span>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-sm font-medium">A Receber (Mês)</p>
+                        <p class="text-gray-500 text-sm font-medium" id="lblTotalAberto">A Receber (Mês)</p>
                         <h3 class="text-2xl font-bold text-gray-800" id="statTotalAberto">R$ 0,00</h3>
                     </div>
                 </div>
@@ -229,6 +229,10 @@ if (!isset($_SESSION['usuario_id'])) {
                             $('#statTotalFaturado').text(formatCurrency(data.total_faturado));
                             $('#statTotalAberto').text(formatCurrency(data.total_aberto));
                             $('#statTotalAtrasado').text(formatCurrency(data.total_atrasado));
+
+                            // Update Titles if available
+                            if(data.titulo_faturado) $('#lblTotalFaturado').text(data.titulo_faturado);
+                            if(data.titulo_aberto) $('#lblTotalAberto').text(data.titulo_aberto);
 
                             // Render List
                             let html = '';

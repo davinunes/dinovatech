@@ -896,7 +896,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         case 'get_dashboard_stats':
             // Filtros Dashboard
-            $mes = $_POST['mes'] ?? date('Y-m'); // YYYY-MM
+            $mes = $_POST['mes'] ?? ''; // Default empty if not provided/cleared
+            // If strictly needed default to current month only if explicitly NOT interaction? 
+            // The user wants to allow clearing it. So if it is empty, we don't filter.
+            // But if it is null (first load), usually we want current month. 
+            // Frontend passes value='<?= date('Y-m') ?>' on load, so $_POST['mes'] will be set.
+            // If user clears it, it comes as empty string.
+
             $id_cliente = $_POST['id_cliente'] ?? '';
             $id_servico = $_POST['id_servico'] ?? '';
 
@@ -911,32 +917,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $where_fatura_base .= " AND f.id_fatura IN (SELECT id_fatura FROM ItensFatura WHERE id_servico = '$id_servico_safe')";
             }
 
-            // 1. Total Faturado (Recebido no Mês)
-            // Filtra pagamentos onde a fatura obedece aos filtros de cliente/serviço E o pagamento foi no mês
-            $mes_safe = mysqli_real_escape_string($link, $mes);
+            // Cláusula de Mês (Opcional)
+            $where_mes_pagamento = "1=1";
+            $where_mes_vencimento = "1=1";
+            $titulo_faturado = "Total Recebido (Geral)";
+            $titulo_aberto = "A Receber (Geral)";
+
+            if (!empty($mes)) {
+                $mes_safe = mysqli_real_escape_string($link, $mes);
+                $where_mes_pagamento = "DATE_FORMAT(p.data_pagamento, '%Y-%m') = '$mes_safe'";
+                $where_mes_vencimento = "DATE_FORMAT(f.data_vencimento, '%Y-%m') = '$mes_safe'";
+                $titulo_faturado = "Total Recebido (Mês)";
+                $titulo_aberto = "A Receber (Mês)";
+            }
+
+            // 1. Total Faturado
             $query_faturado = "SELECT SUM(p.valor_pago) as total 
                                FROM Pagamentos p 
                                JOIN Faturas f ON p.id_fatura = f.id_fatura 
                                WHERE p.status_pagamento = 'Confirmado' 
-                               AND DATE_FORMAT(p.data_pagamento, '%Y-%m') = '$mes_safe'
+                               AND $where_mes_pagamento
                                AND $where_fatura_base";
             $result_faturado = DBExecute($link, $query_faturado);
             $total_faturado = mysqli_fetch_assoc($result_faturado)['total'] ?? 0;
 
-            // 2. Total a Receber (Vencimento no Mês, Em Aberto)
+            // 2. Total a Receber (Em Aberto) -- Se tem filtro de mês, considera vencimento no mês. Se não, considera TUDO em aberto.
             $query_aberto = "SELECT SUM(f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) as total 
                              FROM Faturas f 
                              WHERE f.status = 'Em Aberto' 
-                             AND DATE_FORMAT(f.data_vencimento, '%Y-%m') = '$mes_safe'
+                             AND $where_mes_vencimento
                              AND $where_fatura_base";
             $result_aberto = DBExecute($link, $query_aberto);
             $total_aberto = mysqli_fetch_assoc($result_aberto)['total'] ?? 0;
 
-            // 3. Total Atrasado (Vencimento ANTERIOR a hoje, Em Aberto) - Ignora filtro de mês para mostrar acumulado geral de problemas
-            // Se o usuário filtrar por cliente, mostra tudo que aquele cliente deve.
-            // Se filtrar por mês, mostra o que venceu NAQUELE mês e continua aberto? Ou tudo atrasado?
-            // "Em Atraso" geralmente é um alerta de tudo que está ruim. Vamos manter o comportamento padrão (tudo atrasado até hoje)
-            // mas respeitando cliente/serviço. Se quiser filtrar atrasados de um mês específico, o usuario olha "A Receber" de um mês passado.
+            // 3. Total Atrasado (Sempre histórico, até hoje)
             $hoje = date('Y-m-d');
             $query_atrasado = "SELECT SUM(f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) as total 
                                FROM Faturas f 
@@ -946,7 +960,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result_atrasado = DBExecute($link, $query_atrasado);
             $total_atrasado = mysqli_fetch_assoc($result_atrasado)['total'] ?? 0;
 
-            // 4. Faturas Recentes (Respeitando filtros)
+            // 4. Faturas Recentes
             $query_recentes = "SELECT f.id_fatura, c.nome, f.valor_total_fatura, f.status, f.data_vencimento 
                                FROM Faturas f 
                                JOIN Clientes c ON f.id_cliente = c.id_cliente 
@@ -958,8 +972,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $recentes[] = $row;
             }
 
-            // 5. Gráfico: Faturamento Últimos 6 meses
-            // Respeita filtro de cliente/serviço, mas ignora o filtro de $mes (mostra janela fixa)
+            // 5. Gráfico (Sempre 6 meses ou Todo o período se mês vazio? O pedido era "Faturamento dos ultimos 6 meses". 
+            // Manter fixo 6 meses parece fazer mais sentido para um gráfico de evolução, independente do filtro de mês "pontual".
+            // Mas se o usuário filtra Cliente X, quer ver evolução do Cliente X.
+            // Vamos manter 6 meses fixos para o gráfico para consistência visual.)
             $query_grafico = "SELECT DATE_FORMAT(p.data_pagamento, '%Y-%m') as mes, SUM(p.valor_pago) as total
                               FROM Pagamentos p 
                               JOIN Faturas f ON p.id_fatura = f.id_fatura
@@ -972,12 +988,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $grafico_data = [];
             $labels = [];
             $values = [];
-
-            // Preenche array para garantir que meses zerados apareçam? O ChartJS lida bem, mas melhor garantir.
-            // Simplificado: retorna o que tem.
-            while ($row = mysqli_fetch_assoc($result_grafico)) {
+            
+            while($row = mysqli_fetch_assoc($result_grafico)) {
                 $labels[] = date('m/Y', strtotime($row['mes'] . '-01'));
-                $values[] = (float) $row['total'];
+                $values[] = (float)$row['total'];
             }
 
             $response['success'] = true;
@@ -989,7 +1003,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'grafico' => [
                     'labels' => $labels,
                     'values' => $values
-                ]
+                ],
+                // Extra info para UI atualizar labels se quiser
+                'titulo_faturado' => $titulo_faturado,
+                'titulo_aberto' => $titulo_aberto
             ];
             break;
 
