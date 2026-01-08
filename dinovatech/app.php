@@ -900,7 +900,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // If strictly needed default to current month only if explicitly NOT interaction? 
             // The user wants to allow clearing it. So if it is empty, we don't filter.
             // But if it is null (first load), usually we want current month. 
-            // Frontend passes value='<?= date('Y-m') ?>' on load, so $_POST['mes'] will be set.
+            // Frontend passes value='date(Y-m)' on load, so $_POST['mes'] will be set.
             // If user clears it, it comes as empty string.
 
             $id_cliente = $_POST['id_cliente'] ?? '';
@@ -988,10 +988,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $grafico_data = [];
             $labels = [];
             $values = [];
-            
-            while($row = mysqli_fetch_assoc($result_grafico)) {
+
+            while ($row = mysqli_fetch_assoc($result_grafico)) {
                 $labels[] = date('m/Y', strtotime($row['mes'] . '-01'));
-                $values[] = (float)$row['total'];
+                $values[] = (float) $row['total'];
             }
 
             $response['success'] = true;
