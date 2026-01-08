@@ -369,7 +369,10 @@ if ($id_fatura) {
                         $('#pixContent').removeClass('hidden');
 
                         // Generate QR
-                        const el = kjua({ text: data.pixCopiaECola, size: 200, fill: '#000', back: '#fff', quiet: 1 });
+                        // Generate QR - Higher resolution, scaled down by CSS
+                        const el = kjua({ text: data.pixCopiaECola, size: 400, fill: '#000', back: '#fff', quiet: 1 });
+                        // Make responsive
+                        $(el).css({ 'max-width': '100%', 'height': 'auto' });
                         $('#qrcodeDisplay').html('').append(el);
                         $('#pixCopiaColaInput').val(data.pixCopiaECola);
 
