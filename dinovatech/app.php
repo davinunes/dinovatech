@@ -488,7 +488,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
 
 
-        case 'validar_cpf_cnpj':
+        case 'validar_cpf_cnpj_DELETED':
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
 
             if (empty($cpf_cnpj)) {
@@ -799,7 +799,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-        case 'validar_cpf_cnpj_FIX':
+        case 'validar_cpf_cnpj':
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
 
             if (empty($cpf_cnpj)) {
