@@ -149,7 +149,7 @@ if (!isset($_SESSION['usuario_id'])) {
                         success: function (data) {
                             response($.map(data, function (item) {
                                 return {
-                                    label: item.nome + (item.empresa ? ' (' + item.empresa + ')' : ''),
+                                    label: item.nome + (item.cpf_cnpj ? ' (' + item.cpf_cnpj + ')' : ''),
                                     value: item.nome,
                                     id: item.id_cliente
                                 };
@@ -180,8 +180,8 @@ if (!isset($_SESSION['usuario_id'])) {
                         success: function (data) {
                             response($.map(data, function (item) {
                                 return {
-                                    label: item.nome,
-                                    value: item.nome,
+                                    label: item.nome_servico,
+                                    value: item.nome_servico,
                                     id: item.id_servico
                                 };
                             }));
