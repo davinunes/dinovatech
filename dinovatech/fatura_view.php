@@ -298,11 +298,15 @@ if ($id_fatura) {
                                         if ($pag['status_pagamento'] != 'Confirmado' && !empty($pag['calendario'])) {
                                             $cal = json_decode($pag['calendario'], true);
                                             if (isset($cal['criacao']) && isset($cal['expiracao'])) {
-                                                $criacaoTimestamp = strtotime($cal['criacao']);
-                                                $expiracaoTimestamp = $criacaoTimestamp + $cal['expiracao'];
-                                                $expString = date('d/m/Y H:i', $expiracaoTimestamp);
+                                                // Fix Timezone to America/Sao_Paulo
+                                                $dtCriacao = new DateTime($cal['criacao']);
+                                                $dtCriacao->modify("+{$cal['expiracao']} seconds");
+                                                $dtCriacao->setTimezone(new DateTimeZone('America/Sao_Paulo'));
 
-                                                if (time() > $expiracaoTimestamp) {
+                                                $expString = $dtCriacao->format('d/m/Y H:i');
+                                                $now = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+
+                                                if ($now > $dtCriacao) {
                                                     $expInfo = "<span class='block text-[10px] text-red-400'>Expirou em: $expString</span>";
                                                 } else {
                                                     $expInfo = "<span class='block text-[10px] text-blue-400'>Expira em: $expString</span>";
