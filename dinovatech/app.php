@@ -23,6 +23,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
+        case 'fazer_backup':
+            // 1. Configurações
+            $pathEstrutura = '../estrutura.sql';
+            $pathDados = '../dados.sql';
+
+            // 2. Apaga arquivos anteriores se existirem (opcional, mas bom pra garantir limpeza)
+            if (file_exists($pathEstrutura))
+                unlink($pathEstrutura);
+            if (file_exists($pathDados))
+                unlink($pathDados);
+
+            $estruturaContent = "";
+            $dadosContent = "";
+
+            // 3. Obtém todas as tabelas
+            $tables = [];
+            $result = DBExecute($link, "SHOW TABLES");
+            while ($row = mysqli_fetch_row($result)) {
+                $tables[] = $row[0];
+            }
+
+            foreach ($tables as $table) {
+                // --- ESTRUTURA ---
+                $resultCreate = DBExecute($link, "SHOW CREATE TABLE $table");
+                $rowCreate = mysqli_fetch_row($resultCreate);
+                $estruturaContent .= "\n\n" . $rowCreate[1] . ";\n\n";
+
+                // --- DADOS ---
+                $resultSelect = DBExecute($link, "SELECT * FROM $table");
+                $numFields = mysqli_num_fields($resultSelect);
+
+                $dadosContent .= "\n\n-- Dumping data for table `$table` --\n";
+                // Desabilita checagem de chave estrangeira pra facilitar import
+                // $dadosContent .= "/*!40000 ALTER TABLE `$table` DISABLE KEYS */;\n"; 
+
+                while ($row = mysqli_fetch_row($resultSelect)) {
+                    $dadosContent .= "INSERT INTO `$table` VALUES(";
+                    for ($j = 0; $j < $numFields; $j++) {
+                        $row[$j] = addslashes($row[$j]);
+                        $row[$j] = str_replace("\n", "\\n", $row[$j]);
+                        if (isset($row[$j])) {
+                            $dadosContent .= '"' . $row[$j] . '"';
+                        } else {
+                            $dadosContent .= '""';
+                        }
+                        if ($j < ($numFields - 1)) {
+                            $dadosContent .= ',';
+                        }
+                    }
+                    $dadosContent .= ");\n";
+                }
+                // $dadosContent .= "/*!40000 ALTER TABLE `$table` ENABLE KEYS */;\n";
+            }
+
+            // 4. Salva os arquivos
+            $resEstrutura = file_put_contents($pathEstrutura, "-- Estrutura do Banco de Dados - Gerado em " . date('Y-m-d H:i:s') . "\n" . $estruturaContent);
+            $resDados = file_put_contents($pathDados, "-- Dados do Banco de Dados - Gerado em " . date('Y-m-d H:i:s') . "\n" . $dadosContent);
+
+            if ($resEstrutura !== false && $resDados !== false) {
+                $response['success'] = true;
+                $response['message'] = "Backup realizado com sucesso! Arquivos salvos na raiz.";
+            } else {
+                $response['message'] = "Erro ao gravar arquivos de backup no disco. Verifique permissões.";
+            }
+            break;
+
         case 'criar_cliente':
             $nome = $_POST['nome'] ?? '';
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';

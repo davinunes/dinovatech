@@ -53,6 +53,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span class="font-medium">Financeiro</span>
         </a>
         -->
+        <a href="#" onclick="fazerBackup(event)"
+            class="flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group">
+            <span class="material-icons text-xl mr-3 text-slate-400 group-hover:text-white">backup</span>
+            <span class="font-medium">Backup BD</span>
+        </a>
     </nav>
 
     <!-- User Profile / Logout -->
@@ -75,3 +80,35 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <span class="ml-4 font-bold text-gray-800">Dinovatech</span>
     </div>
 </header>
+
+<script>
+    function fazerBackup(e) {
+        e.preventDefault();
+        if (!confirm('Deseja gerar um backup completo do banco de dados?\n\nIsso criará os arquivos "estrutura.sql" e "dados.sql" na raiz do sistema, substituindo versões anteriores.')) return;
+
+        const btn = e.currentTarget;
+        const iconSpan = btn.querySelector('.material-icons');
+        const textSpan = btn.querySelector('.font-medium');
+        const originalIcon = iconSpan.innerText;
+
+        iconSpan.innerText = 'refresh';
+        iconSpan.classList.add('animate-spin');
+        textSpan.innerText = 'Gerando...';
+
+        $.post('app.php', { action: 'fazer_backup' }, function (res) {
+            if (res.success) {
+                alert(res.message);
+            } else {
+                alert('Erro: ' + res.message);
+            }
+        }, 'json')
+            .fail(function () {
+                alert('Erro de comunicação ao gerar backup.');
+            })
+            .always(function () {
+                iconSpan.innerText = originalIcon;
+                iconSpan.classList.remove('animate-spin');
+                textSpan.innerText = 'Backup BD';
+            });
+    }
+</script>
