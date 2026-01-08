@@ -1,0 +1,109 @@
+-- Estrutura do Banco de Dados - Gerado em 2026-01-08 10:42:19
+
+
+CREATE TABLE `Clientes` (
+  `id_cliente` int NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `cpf_cnpj` varchar(18) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `telefone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id_cliente`),
+  UNIQUE KEY `cpf_cnpj` (`cpf_cnpj`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `Faturas` (
+  `id_fatura` int NOT NULL AUTO_INCREMENT,
+  `id_cliente` int NOT NULL,
+  `data_emissao` date NOT NULL,
+  `data_vencimento` date NOT NULL,
+  `valor_total_fatura` decimal(10,2) DEFAULT '0.00',
+  `status` enum('Em Aberto','Liquidada','Atrasada','Cancelada') COLLATE utf8mb4_unicode_ci DEFAULT 'Em Aberto',
+  PRIMARY KEY (`id_fatura`),
+  KEY `id_cliente` (`id_cliente`),
+  CONSTRAINT `Faturas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `Clientes` (`id_cliente`)
+) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `ItensFatura` (
+  `id_item_fatura` int NOT NULL AUTO_INCREMENT,
+  `id_fatura` int NOT NULL,
+  `id_servico` int NOT NULL,
+  `quantidade` int NOT NULL,
+  `valor_unitario` decimal(10,2) NOT NULL,
+  `tag` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `id_recorrencia` int DEFAULT NULL,
+  PRIMARY KEY (`id_item_fatura`),
+  KEY `id_fatura` (`id_fatura`),
+  KEY `id_servico` (`id_servico`),
+  KEY `fk_itensfatura_recorrencia` (`id_recorrencia`),
+  CONSTRAINT `fk_itensfatura_recorrencia` FOREIGN KEY (`id_recorrencia`) REFERENCES `Recorrencias` (`id_recorrencia`),
+  CONSTRAINT `ItensFatura_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE,
+  CONSTRAINT `ItensFatura_ibfk_2` FOREIGN KEY (`id_servico`) REFERENCES `Servicos` (`id_servico`)
+) ENGINE=InnoDB AUTO_INCREMENT=94 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `Pagamentos` (
+  `id_pagamento` int NOT NULL AUTO_INCREMENT,
+  `id_fatura` int NOT NULL,
+  `valor_pago` decimal(10,2) NOT NULL,
+  `data_pagamento` date NOT NULL,
+  `status_pagamento` enum('Pendente','Confirmado','Cancelado','Expirado') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'Pendente',
+  `observacao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `itens_pagos_json` text COLLATE utf8mb4_unicode_ci,
+  `cod_qrcode` text COLLATE utf8mb4_unicode_ci,
+  `txid` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `e2eid` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `calendario` json DEFAULT NULL,
+  PRIMARY KEY (`id_pagamento`),
+  UNIQUE KEY `txid` (`txid`),
+  UNIQUE KEY `e2eid` (`e2eid`),
+  KEY `id_fatura` (`id_fatura`),
+  CONSTRAINT `Pagamentos_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`)
+) ENGINE=InnoDB AUTO_INCREMENT=116 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `Recorrencias` (
+  `id_recorrencia` int NOT NULL AUTO_INCREMENT,
+  `id_cliente` int NOT NULL,
+  `id_servico` int NOT NULL,
+  `quantidade` int NOT NULL,
+  `valor_sugerido_recorrencia` decimal(10,2) NOT NULL,
+  `tipo_periodo` enum('diario','semanal','mensal','anual') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `intervalo` int NOT NULL,
+  `data_inicio_cobranca` date NOT NULL,
+  `data_fim_cobranca` date DEFAULT NULL,
+  `ultima_fatura_gerada_mes_ano` varchar(7) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  PRIMARY KEY (`id_recorrencia`),
+  UNIQUE KEY `id_cliente` (`id_cliente`,`id_servico`,`tipo_periodo`,`intervalo`,`data_inicio_cobranca`),
+  KEY `id_servico` (`id_servico`),
+  CONSTRAINT `Recorrencias_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `Clientes` (`id_cliente`),
+  CONSTRAINT `Recorrencias_ibfk_2` FOREIGN KEY (`id_servico`) REFERENCES `Servicos` (`id_servico`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `Servicos` (
+  `id_servico` int NOT NULL AUTO_INCREMENT,
+  `nome_servico` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `valor_sugerido` decimal(10,2) NOT NULL,
+  PRIMARY KEY (`id_servico`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `Usuarios` (
+  `id_usuario` int NOT NULL AUTO_INCREMENT,
+  `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `senha` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nivel_acesso` enum('admin','colaborador') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'colaborador',
+  PRIMARY KEY (`id_usuario`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
