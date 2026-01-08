@@ -7,7 +7,7 @@ if (!isset($_SESSION['cliente_id'])) {
     exit();
 }
 
-include "../dinovatech/database.php"; // Using backend database connection
+include "../database.php"; // Using backend database connection
 $cliente_id = $_SESSION['cliente_id'];
 $id_fatura = $_GET['id'] ?? null;
 $fatura = null;
