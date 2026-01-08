@@ -1,4 +1,5 @@
 <?php
+session_start();
 // app.php
 
 include "../database.php"; // Seu arquivo com DBConnect, DBExecute, etc.
@@ -34,10 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cpf_cnpj = mysqli_real_escape_string($link, $cpf_cnpj);
                 $telefone = mysqli_real_escape_string($link, $telefone);
                 $email = mysqli_real_escape_string($link, $email);
-                
+
                 $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email) 
                           VALUES ('$nome', '$cpf_cnpj', '$telefone', '$email')";
-                
+
                 $result = mysqli_query($link, $query);
 
                 if ($result) {
@@ -46,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response['id_cliente'] = mysqli_insert_id($link);
                 } else {
                     $mysql_error_code = mysqli_errno($link);
-                    
+
                     if ($mysql_error_code == 1062) {
                         if (strpos(mysqli_error($link), 'cpf_cnpj') !== false) {
                             $response['message'] = "Erro: CPF/CNPJ já cadastrado para outro cliente.";
@@ -130,7 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $query = "INSERT INTO Servicos (nome_servico, valor_sugerido) 
                           VALUES ('$nome_servico', '$valor_sugerido')";
-                
+
                 $result = DBExecute($link, $query);
 
                 if ($result) {
@@ -183,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'criar_fatura':
             $id_cliente = $_POST['id_cliente'] ?? '';
             $data_emissao = $_POST['data_emissao'] ?? date('Y-m-d');
@@ -198,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $query = "INSERT INTO Faturas (id_cliente, data_emissao, data_vencimento, status) 
                           VALUES ('$id_cliente', '$data_emissao', '$data_vencimento', 'Em Aberto')";
-                
+
                 $result = DBExecute($link, $query);
 
                 if ($result) {
@@ -231,7 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $query_insert_item = "INSERT INTO ItensFatura (id_fatura, id_servico, quantidade, valor_unitario, tag) 
                                       VALUES ('$id_fatura', '$id_servico', '$quantidade', '$valor_unitario', " . ($tag ? "'$tag'" : "NULL") . ")";
-                
+
                 $result_insert_item = DBExecute($link, $query_insert_item);
 
                 if ($result_insert_item) {
@@ -248,10 +249,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
-        case 'editar_item_fatura': 
+
+        case 'editar_item_fatura':
             $id_item_fatura = $_POST['id_item_fatura'] ?? '';
-            $id_fatura = $_POST['id_fatura'] ?? ''; 
+            $id_fatura = $_POST['id_fatura'] ?? '';
             $quantidade = $_POST['quantidade'] ?? '';
             $valor_unitario = $_POST['valor_unitario'] ?? '';
             $tag = $_POST['tag'] ?? NULL; // Novo campo tag
@@ -268,7 +269,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $query_update_item = "UPDATE ItensFatura
                                       SET quantidade = '$quantidade', valor_unitario = '$valor_unitario', tag = " . ($tag ? "'$tag'" : "NULL") . "
                                       WHERE id_item_fatura = '$id_item_fatura'";
-                
+
                 $result_update_item = DBExecute($link, $query_update_item);
 
                 if ($result_update_item) {
@@ -286,9 +287,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-        case 'remover_item_fatura': 
+        case 'remover_item_fatura':
             $id_item_fatura = $_POST['id_item_fatura'] ?? '';
-            $id_fatura = $_POST['id_fatura'] ?? ''; 
+            $id_fatura = $_POST['id_fatura'] ?? '';
 
             if (empty($id_item_fatura) || empty($id_fatura)) {
                 $response['message'] = "ID do item da fatura ou ID da fatura inválido para remoção.";
@@ -306,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 $query_delete_item = "DELETE FROM ItensFatura WHERE id_item_fatura = '$id_item_fatura'";
-                
+
                 $result_delete_item = DBExecute($link, $query_delete_item);
 
                 if ($result_delete_item) {
@@ -332,7 +333,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'buscar_clientes':
             $termo = $_POST['termo'] ?? '';
             $clientes = [];
@@ -340,7 +341,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $query = "SELECT id_cliente, nome, cpf_cnpj FROM Clientes WHERE nome LIKE '%$termo%' OR cpf_cnpj LIKE '%$termo%' LIMIT 10";
             $result = DBExecute($link, $query);
-            
+
             if ($result) {
                 while ($row = mysqli_fetch_assoc($result)) {
                     $clientes[] = $row;
@@ -359,7 +360,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $query = "SELECT id_servico, nome_servico, valor_sugerido FROM Servicos WHERE nome_servico LIKE '%$termo%' LIMIT 10";
             $result = DBExecute($link, $query);
-            
+
             if ($result) {
                 while ($row = mysqli_fetch_assoc($result)) {
                     $servicos[] = $row;
@@ -401,7 +402,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
             break;
-            
+
         case 'get_servicos': // Este é o get_servicos original, que retorna TODOS os serviços
             $servicos = [];
             $query = "SELECT id_servico, nome_servico, valor_sugerido FROM Servicos ORDER BY nome_servico ASC";
@@ -417,76 +418,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-			case 'get_fatura_detalhes':
-				$id_fatura = $_POST['id_fatura'] ?? '';
-				// Novo: verifica se a requisição vem da área do cliente
-				$is_client_view = isset($_POST['visao_cliente']) && $_POST['visao_cliente'] === 'true';
-				
-				$fatura_detalhes = null;
-				$itens_fatura = [];
-				$pagamentos_fatura = [];
+        case 'get_fatura_detalhes':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            // Novo: verifica se a requisição vem da área do cliente
+            $is_client_view = isset($_POST['visao_cliente']) && $_POST['visao_cliente'] === 'true';
 
-				if (empty($id_fatura)) {
-					$response['message'] = "ID da fatura é obrigatório.";
-				} else {
-					$id_fatura_escaped = mysqli_real_escape_string($link, $id_fatura);
+            $fatura_detalhes = null;
+            $itens_fatura = [];
+            $pagamentos_fatura = [];
 
-					// A query da fatura principal não muda
-					$query_fatura = "SELECT F.id_fatura, C.nome AS nome_cliente, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status
+            if (empty($id_fatura)) {
+                $response['message'] = "ID da fatura é obrigatório.";
+            } else {
+                $id_fatura_escaped = mysqli_real_escape_string($link, $id_fatura);
+
+                // A query da fatura principal não muda
+                $query_fatura = "SELECT F.id_fatura, C.nome AS nome_cliente, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status
 									 FROM Faturas F
 									 JOIN Clientes C ON F.id_cliente = C.id_cliente
 									 WHERE F.id_fatura = '$id_fatura_escaped'";
-					$result_fatura = DBExecute($link, $query_fatura);
+                $result_fatura = DBExecute($link, $query_fatura);
 
-					if ($result_fatura && mysqli_num_rows($result_fatura) > 0) {
-						$fatura_detalhes = mysqli_fetch_assoc($result_fatura);
+                if ($result_fatura && mysqli_num_rows($result_fatura) > 0) {
+                    $fatura_detalhes = mysqli_fetch_assoc($result_fatura);
 
-						// A query dos itens não muda
-						$query_itens = "SELECT IFI.id_item_fatura, S.nome_servico, IFI.quantidade, IFI.valor_unitario, IFI.tag, IFI.id_recorrencia
+                    // A query dos itens não muda
+                    $query_itens = "SELECT IFI.id_item_fatura, S.nome_servico, IFI.quantidade, IFI.valor_unitario, IFI.tag, IFI.id_recorrencia
 										FROM ItensFatura IFI
 										JOIN Servicos S ON IFI.id_servico = S.id_servico
 										WHERE IFI.id_fatura = '$id_fatura_escaped'";
-						$result_itens = DBExecute($link, $query_itens);
-						if ($result_itens) {
-							while ($row_item = mysqli_fetch_assoc($result_itens)) {
-								$itens_fatura[] = $row_item;
-							}
-						}
+                    $result_itens = DBExecute($link, $query_itens);
+                    if ($result_itens) {
+                        while ($row_item = mysqli_fetch_assoc($result_itens)) {
+                            $itens_fatura[] = $row_item;
+                        }
+                    }
 
-						// ** LÓGICA CONDICIONAL PARA PAGAMENTOS **
-						// Monta a query base
-						$query_pagamentos = "SELECT id_pagamento, valor_pago, data_pagamento, status_pagamento, observacao
+                    // ** LÓGICA CONDICIONAL PARA PAGAMENTOS **
+                    // Monta a query base
+                    $query_pagamentos = "SELECT id_pagamento, valor_pago, data_pagamento, status_pagamento, observacao
 											 FROM Pagamentos
 											 WHERE id_fatura = '$id_fatura_escaped'";
-						
-						// Se for a visão do cliente, adiciona o filtro de status
-						if ($is_client_view) {
-							$query_pagamentos .= " AND status_pagamento = 'Confirmado'";
-						}
-						
-						$query_pagamentos .= " ORDER BY data_pagamento DESC";
-						
-						$result_pagamentos = DBExecute($link, $query_pagamentos);
-						if ($result_pagamentos) {
-							while ($row_pagamento = mysqli_fetch_assoc($result_pagamentos)) {
-								$pagamentos_fatura[] = $row_pagamento;
-							}
-						}
 
-						$response['success'] = true;
-						$response['data'] = [
-							'fatura' => $fatura_detalhes,
-							'itens' => $itens_fatura,
-							'pagamentos' => $pagamentos_fatura
-						];
-					} else {
-						$response['message'] = "Fatura não encontrada: " . mysqli_error($link);
-					}
-				}
-				break;
+                    // Se for a visão do cliente, adiciona o filtro de status
+                    if ($is_client_view) {
+                        $query_pagamentos .= " AND status_pagamento = 'Confirmado'";
+                    }
+
+                    $query_pagamentos .= " ORDER BY data_pagamento DESC";
+
+                    $result_pagamentos = DBExecute($link, $query_pagamentos);
+                    if ($result_pagamentos) {
+                        while ($row_pagamento = mysqli_fetch_assoc($result_pagamentos)) {
+                            $pagamentos_fatura[] = $row_pagamento;
+                        }
+                    }
+
+                    $response['success'] = true;
+                    $response['data'] = [
+                        'fatura' => $fatura_detalhes,
+                        'itens' => $itens_fatura,
+                        'pagamentos' => $pagamentos_fatura
+                    ];
+                } else {
+                    $response['message'] = "Fatura não encontrada: " . mysqli_error($link);
+                }
+            }
+            break;
 
 
-        case 'validar_cpf_cnpj': 
+        case 'validar_cpf_cnpj':
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
 
             if (empty($cpf_cnpj)) {
@@ -534,7 +535,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, data_inicio_cobranca, data_fim_cobranca)
                           VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', '$data_inicio_cobranca', $data_fim_cobranca)";
-                
+
                 $result = DBExecute($link, $query);
 
                 if ($result) {
@@ -593,134 +594,175 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-			case 'incorporar_recorrencias_na_fatura': // Incorporar recorrências em uma fatura
-				$id_fatura = $_POST['id_fatura'] ?? '';
-				$id_cliente = $_POST['id_cliente'] ?? '';
-				$mes_ano_fatura = $_POST['mes_ano_fatura'] ?? ''; // Formato YYYY-MM
+        case 'editar_recorrencia':
+            $id_recorrencia = $_POST['id_recorrencia'] ?? '';
+            $id_cliente = $_POST['id_cliente'] ?? '';
+            $id_servico = $_POST['id_servico'] ?? '';
+            $quantidade = $_POST['quantidade'] ?? '';
+            $valor_sugerido_recorrencia = $_POST['valor_sugerido_recorrencia'] ?? '';
+            $tipo_periodo = $_POST['tipo_periodo'] ?? '';
+            $intervalo = $_POST['intervalo'] ?? '';
+            $data_inicio_cobranca = $_POST['data_inicio_cobranca'] ?? '';
+            $data_fim_cobranca = $_POST['data_fim_cobranca'] ?? NULL;
 
-				if (empty($id_fatura) || empty($id_cliente) || empty($mes_ano_fatura)) {
-					$response['message'] = "Dados insuficientes para incorporar recorrências.";
-					break;
-				}
+            if (empty($id_recorrencia) || empty($id_cliente) || empty($id_servico) || !is_numeric($quantidade) || $quantidade <= 0 || !is_numeric($valor_sugerido_recorrencia) || $valor_sugerido_recorrencia <= 0 || empty($tipo_periodo) || !is_numeric($intervalo) || $intervalo <= 0 || empty($data_inicio_cobranca)) {
+                $response['message'] = "Preencha todos os campos obrigatórios da recorrência corretamente para edição.";
+            } else {
+                $id_recorrencia = mysqli_real_escape_string($link, $id_recorrencia);
+                $id_cliente = mysqli_real_escape_string($link, $id_cliente);
+                $id_servico = mysqli_real_escape_string($link, $id_servico);
+                $quantidade = mysqli_real_escape_string($link, $quantidade);
+                $valor_sugerido_recorrencia = mysqli_real_escape_string($link, $valor_sugerido_recorrencia);
+                $tipo_periodo = mysqli_real_escape_string($link, $tipo_periodo);
+                $intervalo = mysqli_real_escape_string($link, $intervalo);
+                $data_inicio_cobranca = mysqli_real_escape_string($link, $data_inicio_cobranca);
+                $data_fim_cobranca = $data_fim_cobranca ? "'" . mysqli_real_escape_string($link, $data_fim_cobranca) . "'" : "NULL";
 
-				// Validação do formato do mês/ano
-				if (!preg_match('/^\d{4}-\d{2}$/', $mes_ano_fatura)) {
-					$response['message'] = "Formato de mês/ano inválido. Use YYYY-MM.";
-					break;
-				}
+                $query = "UPDATE Recorrencias 
+                          SET id_cliente='$id_cliente', id_servico='$id_servico', quantidade='$quantidade', valor_sugerido_recorrencia='$valor_sugerido_recorrencia', 
+                              tipo_periodo='$tipo_periodo', intervalo='$intervalo', data_inicio_cobranca='$data_inicio_cobranca', data_fim_cobranca=$data_fim_cobranca
+                          WHERE id_recorrencia='$id_recorrencia'";
 
-				// Função para obter o último dia válido do mês
-				function getLastValidDayOfMonth($yearMonth) {
-					$date = new DateTime($yearMonth . '-01');
-					return $date->format('t'); // 't' retorna o número de dias no mês
-				}
+                $result = DBExecute($link, $query);
 
-				// Obtém o último dia válido do mês
-				$lastValidDay = getLastValidDayOfMonth($mes_ano_fatura);
-				$dataInicioMes = $mes_ano_fatura . '-01';
-				$dataFimMes = $mes_ano_fatura . '-' . $lastValidDay;
+                if ($result) {
+                    $response['success'] = true;
+                    $response['message'] = "Recorrência atualizada com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao atualizar recorrência: " . mysqli_error($link);
+                }
+            }
+            break;
 
-				$id_fatura = mysqli_real_escape_string($link, $id_fatura);
-				$id_cliente = mysqli_real_escape_string($link, $id_cliente);
-				$dataInicioMes = mysqli_real_escape_string($link, $dataInicioMes);
-				$dataFimMes = mysqli_real_escape_string($link, $dataFimMes);
+        case 'incorporar_recorrencias_na_fatura': // Incorporar recorrências em uma fatura
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            $id_cliente = $_POST['id_cliente'] ?? '';
+            $mes_ano_fatura = $_POST['mes_ano_fatura'] ?? ''; // Formato YYYY-MM
 
-				// 1. Buscar recorrências ativas para o cliente e para o mês/ano da fatura
-				$query_recorrencias = "SELECT R.id_recorrencia, R.id_servico, R.quantidade, R.valor_sugerido_recorrencia, S.nome_servico
+            if (empty($id_fatura) || empty($id_cliente) || empty($mes_ano_fatura)) {
+                $response['message'] = "Dados insuficientes para incorporar recorrências.";
+                break;
+            }
+
+            // Validação do formato do mês/ano
+            if (!preg_match('/^\d{4}-\d{2}$/', $mes_ano_fatura)) {
+                $response['message'] = "Formato de mês/ano inválido. Use YYYY-MM.";
+                break;
+            }
+
+            // Função para obter o último dia válido do mês
+            function getLastValidDayOfMonth($yearMonth)
+            {
+                $date = new DateTime($yearMonth . '-01');
+                return $date->format('t'); // 't' retorna o número de dias no mês
+            }
+
+            // Obtém o último dia válido do mês
+            $lastValidDay = getLastValidDayOfMonth($mes_ano_fatura);
+            $dataInicioMes = $mes_ano_fatura . '-01';
+            $dataFimMes = $mes_ano_fatura . '-' . $lastValidDay;
+
+            $id_fatura = mysqli_real_escape_string($link, $id_fatura);
+            $id_cliente = mysqli_real_escape_string($link, $id_cliente);
+            $dataInicioMes = mysqli_real_escape_string($link, $dataInicioMes);
+            $dataFimMes = mysqli_real_escape_string($link, $dataFimMes);
+
+            // 1. Buscar recorrências ativas para o cliente e para o mês/ano da fatura
+            $query_recorrencias = "SELECT R.id_recorrencia, R.id_servico, R.quantidade, R.valor_sugerido_recorrencia, S.nome_servico
 									   FROM Recorrencias R
 									   JOIN Servicos S ON R.id_servico = S.id_servico
 									   WHERE R.id_cliente = '$id_cliente'
 										 AND R.data_inicio_cobranca <= '$dataFimMes' 
 										 AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= '$dataInicioMes')
 										 AND NOT EXISTS (SELECT 1 FROM ItensFatura WHERE id_fatura = '$id_fatura' AND id_recorrencia = R.id_recorrencia)";
-				
-				$result_recorrencias = DBExecute($link, $query_recorrencias);
-				$itens_incorporados = 0;
 
-				if ($result_recorrencias) {
-					while ($rec = mysqli_fetch_assoc($result_recorrencias)) {
-						$servico_id = mysqli_real_escape_string($link, $rec['id_servico']);
-						$quantidade = mysqli_real_escape_string($link, $rec['quantidade']);
-						$valor_unitario = mysqli_real_escape_string($link, $rec['valor_sugerido_recorrencia']);
-						$tag = mysqli_real_escape_string($link, "Recorrência - " . $rec['nome_servico'] . " (" . $mes_ano_fatura . ")");
-						$id_recorrencia_original = mysqli_real_escape_string($link, $rec['id_recorrencia']);
+            $result_recorrencias = DBExecute($link, $query_recorrencias);
+            $itens_incorporados = 0;
 
-						// 2. Inserir o item na fatura
-						$query_insert_item = "INSERT INTO ItensFatura (id_fatura, id_servico, quantidade, valor_unitario, tag, id_recorrencia)
+            if ($result_recorrencias) {
+                while ($rec = mysqli_fetch_assoc($result_recorrencias)) {
+                    $servico_id = mysqli_real_escape_string($link, $rec['id_servico']);
+                    $quantidade = mysqli_real_escape_string($link, $rec['quantidade']);
+                    $valor_unitario = mysqli_real_escape_string($link, $rec['valor_sugerido_recorrencia']);
+                    $tag = mysqli_real_escape_string($link, "Recorrência - " . $rec['nome_servico'] . " (" . $mes_ano_fatura . ")");
+                    $id_recorrencia_original = mysqli_real_escape_string($link, $rec['id_recorrencia']);
+
+                    // 2. Inserir o item na fatura
+                    $query_insert_item = "INSERT INTO ItensFatura (id_fatura, id_servico, quantidade, valor_unitario, tag, id_recorrencia)
 											  VALUES ('$id_fatura', '$servico_id', '$quantidade', '$valor_unitario', '$tag', '$id_recorrencia_original')";
-						
-						$item_inserted = DBExecute($link, $query_insert_item);
 
-						if ($item_inserted) {
-							$itens_incorporados++;
-							// 3. Atualizar a recorrência com a última fatura gerada
-							$query_update_recorrencia = "UPDATE Recorrencias SET ultima_fatura_gerada_mes_ano = '$mes_ano_fatura' WHERE id_recorrencia = '$id_recorrencia_original'"; 
-							DBExecute($link, $query_update_recorrencia);
-						} else {
-							error_log("Erro ao incorporar item recorrente (Fatura ID: $id_fatura, Recorrência ID: $id_recorrencia_original): " . mysqli_error($link));
-						}
-					}
+                    $item_inserted = DBExecute($link, $query_insert_item);
 
-					// 4. Recalcular o total da fatura após todas as inserções
-					if ($itens_incorporados > 0) {
-						$query_update_total = "UPDATE Faturas
+                    if ($item_inserted) {
+                        $itens_incorporados++;
+                        // 3. Atualizar a recorrência com a última fatura gerada
+                        $query_update_recorrencia = "UPDATE Recorrencias SET ultima_fatura_gerada_mes_ano = '$mes_ano_fatura' WHERE id_recorrencia = '$id_recorrencia_original'";
+                        DBExecute($link, $query_update_recorrencia);
+                    } else {
+                        error_log("Erro ao incorporar item recorrente (Fatura ID: $id_fatura, Recorrência ID: $id_recorrencia_original): " . mysqli_error($link));
+                    }
+                }
+
+                // 4. Recalcular o total da fatura após todas as inserções
+                if ($itens_incorporados > 0) {
+                    $query_update_total = "UPDATE Faturas
 											   SET valor_total_fatura = (SELECT COALESCE(SUM(quantidade * valor_unitario), 0) FROM ItensFatura WHERE id_fatura = '$id_fatura')
 											   WHERE id_fatura = '$id_fatura'";
-						DBExecute($link, $query_update_total);
-					}
+                    DBExecute($link, $query_update_total);
+                }
 
-					$response['success'] = true;
-					$response['message'] = "Incorporados $itens_incorporados serviços recorrentes na fatura!";
-				} else {
-					$response['message'] = "Erro ao buscar recorrências para incorporação: " . mysqli_error($link);
-				}
-				break;
+                $response['success'] = true;
+                $response['message'] = "Incorporados $itens_incorporados serviços recorrentes na fatura!";
+            } else {
+                $response['message'] = "Erro ao buscar recorrências para incorporação: " . mysqli_error($link);
+            }
+            break;
 
-			case 'registrar_pagamento':
-			$id_fatura = $_POST['id_fatura'] ?? '';
-			$valor_pago = $_POST['valor_pago'] ?? '';
-			$data_pagamento = $_POST['data_pagamento'] ?? '';
-			$observacao = $_POST['observacao'] ?? ''; // Pode ser vazio
-			$itens_pagos_json = $_POST['itens_pagos_json'] ?? '[]';
+        case 'registrar_pagamento':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            $valor_pago = $_POST['valor_pago'] ?? '';
+            $data_pagamento = $_POST['data_pagamento'] ?? '';
+            $observacao = $_POST['observacao'] ?? ''; // Pode ser vazio
+            $itens_pagos_json = $_POST['itens_pagos_json'] ?? '[]';
 
-			if (empty($id_fatura) || empty($valor_pago) || empty($data_pagamento)) {
-				$response['message'] = "ID da Fatura, Valor e Data são obrigatórios.";
-			} else {
-				// ** CORREÇÃO: Garante que todos os valores de texto sejam escapados e colocados entre aspas **
-				// Isso evita erros de sintaxe SQL se um campo como 'observacao' estiver vazio.
-				$id_fatura_safe = mysqli_real_escape_string($link, $id_fatura);
-				$valor_pago_safe = mysqli_real_escape_string($link, $valor_pago);
-				$data_pagamento_safe = mysqli_real_escape_string($link, $data_pagamento);
-				$observacao_safe = mysqli_real_escape_string($link, $observacao);
-				$itens_pagos_json_safe = mysqli_real_escape_string($link, $itens_pagos_json);
+            if (empty($id_fatura) || empty($valor_pago) || empty($data_pagamento)) {
+                $response['message'] = "ID da Fatura, Valor e Data são obrigatórios.";
+            } else {
+                // ** CORREÇÃO: Garante que todos os valores de texto sejam escapados e colocados entre aspas **
+                // Isso evita erros de sintaxe SQL se um campo como 'observacao' estiver vazio.
+                $id_fatura_safe = mysqli_real_escape_string($link, $id_fatura);
+                $valor_pago_safe = mysqli_real_escape_string($link, $valor_pago);
+                $data_pagamento_safe = mysqli_real_escape_string($link, $data_pagamento);
+                $observacao_safe = mysqli_real_escape_string($link, $observacao);
+                $itens_pagos_json_safe = mysqli_real_escape_string($link, $itens_pagos_json);
 
-				$query = "INSERT INTO Pagamentos (id_fatura, valor_pago, data_pagamento, status_pagamento, observacao, itens_pagos_json) 
+                $query = "INSERT INTO Pagamentos (id_fatura, valor_pago, data_pagamento, status_pagamento, observacao, itens_pagos_json) 
 						  VALUES ('{$id_fatura_safe}', '{$valor_pago_safe}', '{$data_pagamento_safe}', 'Confirmado', '{$observacao_safe}', '{$itens_pagos_json_safe}')";
 
-				if (DBExecute($link, $query)) {
-					// Após registrar o pagamento, verifica se a fatura deve ser liquidada
-					$query_total_pago = "SELECT SUM(valor_pago) as total_pago FROM Pagamentos WHERE id_fatura = '{$id_fatura_safe}' AND status_pagamento = 'Confirmado'";
-					$result_total_pago = DBExecute($link, $query_total_pago);
-					$total_pago_data = mysqli_fetch_assoc($result_total_pago);
-					$total_pago = $total_pago_data['total_pago'];
+                if (DBExecute($link, $query)) {
+                    // Após registrar o pagamento, verifica se a fatura deve ser liquidada
+                    $query_total_pago = "SELECT SUM(valor_pago) as total_pago FROM Pagamentos WHERE id_fatura = '{$id_fatura_safe}' AND status_pagamento = 'Confirmado'";
+                    $result_total_pago = DBExecute($link, $query_total_pago);
+                    $total_pago_data = mysqli_fetch_assoc($result_total_pago);
+                    $total_pago = $total_pago_data['total_pago'];
 
-					$query_fatura = "SELECT valor_total_fatura FROM Faturas WHERE id_fatura = '{$id_fatura_safe}'";
-					$result_fatura = DBExecute($link, $query_fatura);
-					$fatura_data = mysqli_fetch_assoc($result_fatura);
-					$valor_total_fatura = $fatura_data['valor_total_fatura'];
+                    $query_fatura = "SELECT valor_total_fatura FROM Faturas WHERE id_fatura = '{$id_fatura_safe}'";
+                    $result_fatura = DBExecute($link, $query_fatura);
+                    $fatura_data = mysqli_fetch_assoc($result_fatura);
+                    $valor_total_fatura = $fatura_data['valor_total_fatura'];
 
-					if ($total_pago >= $valor_total_fatura) {
-						$query_update_fatura = "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '{$id_fatura_safe}'";
-						DBExecute($link, $query_update_fatura);
-					}
+                    if ($total_pago >= $valor_total_fatura) {
+                        $query_update_fatura = "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '{$id_fatura_safe}'";
+                        DBExecute($link, $query_update_fatura);
+                    }
 
-					$response['success'] = true;
-					$response['message'] = "Pagamento registrado com sucesso!";
-				} else {
-					$response['message'] = "Erro ao registrar pagamento: " . mysqli_error($link);
-				}
-			}
-			break;
+                    $response['success'] = true;
+                    $response['message'] = "Pagamento registrado com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao registrar pagamento: " . mysqli_error($link);
+                }
+            }
+            break;
 
 
         case 'estornar_pagamento': // Estornar um pagamento
@@ -756,7 +798,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
-        case 'validar_cpf_cnpj': 
+        case 'validar_cpf_cnpj':
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
 
             if (empty($cpf_cnpj)) {
@@ -768,6 +810,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($result && mysqli_num_rows($result) > 0) {
                     $cliente_info = mysqli_fetch_assoc($result);
+
+                    // Set Session for Client
+                    $_SESSION['cliente_id'] = $cliente_info['id_cliente'];
+                    $_SESSION['cliente_nome'] = $cliente_info['nome'];
+
                     $response['success'] = true;
                     $response['message'] = "Login bem-sucedido!";
                     $response['data'] = [
@@ -778,6 +825,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response['message'] = "CPF/CNPJ não encontrado ou inválido.";
                 }
             }
+            break;
+
+        case 'get_dashboard_stats':
+            // Total Faturado (Pagamentos Confirmados)
+            $query_faturado = "SELECT SUM(valor_pago) as total FROM Pagamentos WHERE status_pagamento = 'Confirmado'";
+            $result_faturado = DBExecute($link, $query_faturado);
+            $total_faturado = mysqli_fetch_assoc($result_faturado)['total'] ?? 0;
+
+            // Total a Receber (Faturas Em Aberto)
+            $query_aberto = "SELECT SUM(valor_total_fatura - (SELECT COALESCE(SUM(p.valor_pago),0) FROM Pagamentos p WHERE p.id_fatura = f.id_fatura AND p.status_pagamento = 'Confirmado')) as total 
+                             FROM Faturas f WHERE status = 'Em Aberto'";
+            $result_aberto = DBExecute($link, $query_aberto);
+            $total_aberto = mysqli_fetch_assoc($result_aberto)['total'] ?? 0;
+
+            // Total Atrasado
+            $hoje = date('Y-m-d');
+            $query_atrasado = "SELECT SUM(valor_total_fatura - (SELECT COALESCE(SUM(p.valor_pago),0) FROM Pagamentos p WHERE p.id_fatura = f.id_fatura AND p.status_pagamento = 'Confirmado')) as total 
+                               FROM Faturas f WHERE status = 'Em Aberto' AND data_vencimento < '$hoje'";
+            $result_atrasado = DBExecute($link, $query_atrasado);
+            $total_atrasado = mysqli_fetch_assoc($result_atrasado)['total'] ?? 0;
+
+            // Faturas Recentes
+            $query_recentes = "SELECT f.id_fatura, c.nome, f.valor_total_fatura, f.status, f.data_vencimento 
+                               FROM Faturas f JOIN Clientes c ON f.id_cliente = c.id_cliente 
+                               ORDER BY f.id_fatura DESC LIMIT 5";
+            $result_recentes = DBExecute($link, $query_recentes);
+            $recentes = [];
+            while ($row = mysqli_fetch_assoc($result_recentes)) {
+                $recentes[] = $row;
+            }
+
+            $response['success'] = true;
+            $response['data'] = [
+                'total_faturado' => $total_faturado,
+                'total_aberto' => $total_aberto,
+                'total_atrasado' => $total_atrasado,
+                'faturas_recentes' => $recentes
+            ];
             break;
 
         default:

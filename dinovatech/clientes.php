@@ -1,24 +1,35 @@
 <?php
+session_start();
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: login.php");
+    exit();
+}
 include "../database.php";
 
-// Lógica para buscar e paginar clientes (executa em GET)
 $clientes = [];
 $total_pages = 0;
 $current_page = 1;
 
 $link = DBConnect();
 if ($link) {
-    $limit = 5;
+    $limit = 10;
     $current_page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
     if ($current_page < 1) $current_page = 1;
+    
+    // Search logic
+    $search = isset($_GET['search']) ? mysqli_real_escape_string($link, $_GET['search']) : '';
+    $where_clause = "";
+    if ($search) {
+        $where_clause = "WHERE nome LIKE '%$search%' OR cpf_cnpj LIKE '%$search%'";
+    }
 
-    $query_total = "SELECT COUNT(id_cliente) AS total FROM Clientes";
+    $query_total = "SELECT COUNT(id_cliente) AS total FROM Clientes $where_clause";
     $result_total = DBExecute($link, $query_total);
     $total_records = mysqli_fetch_assoc($result_total)['total'];
     $total_pages = ceil($total_records / $limit);
 
     $offset = ($current_page - 1) * $limit;
-    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email FROM Clientes ORDER BY nome ASC LIMIT $limit OFFSET $offset";
+    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email, telefone FROM Clientes $where_clause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
     $result_clientes = DBExecute($link, $query_clientes);
     if ($result_clientes) {
         while ($row = mysqli_fetch_assoc($result_clientes)) {
@@ -31,256 +42,100 @@ if ($link) {
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciamento de Clientes</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
-    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.css">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .container { max-width: 800px; margin: 0 auto 20px auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); background-color: #fff; }
-        h2 { text-align: center; color: #333; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input[type="text"], input[type="email"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
-        .mensagem { text-align: center; margin: 15px 0; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .actions button { padding: 5px 10px; margin-right: 5px; border-radius: 4px; border: 1px solid transparent; cursor: pointer; }
-        .btn-edit { background-color: #ffc107; color: #212529; }
-        .btn-details { background-color: #17a2b8; color: white; }
-        .pagination { text-align: center; margin-top: 20px; }
-        .pagination a, .pagination span { margin: 0 5px; padding: 8px 12px; border: 1px solid #ddd; text-decoration: none; color: #007bff; }
-        .pagination a:hover { background-color: #f2f2f2; }
-        .pagination .current-page { background-color: #007bff; color: white; border-color: #007bff; }
-        .pagination .disabled { color: #ccc; pointer-events: none; }
-        .controls { text-align: right; margin-bottom: 20px; }
-        .controls button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; }
-        .controls button:hover { background-color: #218838; }
-        .ui-dialog-titlebar-close { background: none; border: none; }
-		
-		.card-list {
-    display: grid;
-    gap: 15px;
-}
-
-.card-cliente {
-    background: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 2px 2px 8px rgba(0,0,0,0.05);
-    transition: all 0.3s ease-in-out;
-}
-
-.card-cliente:hover {
-    box-shadow: 2px 4px 12px rgba(0,0,0,0.1);
-}
-
-.card-cliente .linha {
-    margin-bottom: 8px;
-}
-
-.card-acoes {
-    margin-top: 10px;
-}
-
-.card-acoes button {
-    padding: 6px 12px;
-    margin-right: 5px;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
-    font-size: 0.9em;
-}
-
-.btn-edit {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.btn-details {
-    background-color: #17a2b8;
-    color: white;
-}
-
-/* Layout em grid para telas largas */
-@media (min-width: 768px) {
-    .card-list {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-/* Layout estilo tabela em telas grandes */
-@media (min-width: 1024px) {
-    .card-list {
-        display: table;
-        width: 100%;
-    }
-    .card-cliente {
-        display: table-row;
-        border: none;
-        background: none;
-        padding: 0;
-        box-shadow: none;
-    }
-    .card-cliente .linha, .card-cliente .card-acoes {
-        display: table-cell;
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-        vertical-align: middle;
-    }
-    .card-cliente .linha:first-child {
-        font-weight: bold;
-    }
-}
-
-
-    </style>
+    <title>Clientes - Dinovatech</title>
+    <?php include 'components/layout_head.php'; ?>
 </head>
-<body>
-    <div class="container">
-        <div class="controls">
-            <button id="btnVoltar">Voltar</button>
-            <button id="btnNovoCliente">Novo Cliente</button>
-        </div>
-        <h2>Clientes Cadastrados</h2>
-		
-<div class="card-list">
-    <?php if (!empty($clientes)): ?>
-        <?php foreach ($clientes as $cliente): ?>
-            <div class="card-cliente">
-                <div class="linha"><strong></strong> <?= htmlspecialchars($cliente['nome']) ?></div>
-                <div class="linha"><strong>CPF/CNPJ:</strong> <?= htmlspecialchars($cliente['cpf_cnpj']) ?></div>
-                <div class="linha"><strong>Email:</strong> <?= htmlspecialchars($cliente['email']) ?></div>
-                <div class="card-acoes">
-                    <button class="btn-edit" data-id-cliente="<?= $cliente['id_cliente'] ?>">Editar</button>
-                    <button class="btn-details" onclick="window.location.href='index.php?cliente_id=<?= $cliente['id_cliente'] ?>'">Detalhar</button>
+<body class="bg-gray-50 flex"> 
+
+    <?php include 'components/sidebar.php'; ?>
+
+    <div class="flex-1 flex flex-col lg:ml-64 min-h-screen transition-all duration-300">
+        <main class="flex-1 p-6 mt-16 lg:mt-0">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">Clientes</h2>
+                    <p class="text-gray-500">Gerencie sua base de clientes.</p>
                 </div>
+                <a href="cliente_form.php" class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors">
+                    <span class="material-icons mr-2">add</span>
+                    Novo Cliente
+                </a>
             </div>
-        <?php endforeach; ?>
-    <?php else: ?>
-        <p style="text-align: center;">Nenhum cliente cadastrado.</p>
-    <?php endif; ?>
-</div>
 
-        <!-- Controles de Paginação -->
-        <?php if ($total_pages > 1): ?>
-            <div class="pagination">
-                <?php if ($current_page > 1): ?> <a href="?page=<?= $current_page - 1 ?>">Anterior</a> <?php else: ?> <span class="disabled">Anterior</span> <?php endif; ?>
-                <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                    <?php if ($i == $current_page): ?> <span class="current-page"><?= $i ?></span> <?php else: ?> <a href="?page=<?= $i ?>"><?= $i ?></a> <?php endif; ?>
-                <?php endfor; ?>
-                <?php if ($current_page < $total_pages): ?> <a href="?page=<?= $current_page + 1 ?>">Próximo</a> <?php else: ?> <span class="disabled">Próximo</span> <?php endif; ?>
+            <!-- Search Bar -->
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
+                <form method="GET" class="flex gap-2">
+                    <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <span class="material-icons">search</span>
+                        </span>
+                        <input type="text" name="search" value="<?= htmlspecialchars($search) ?>" placeholder="Buscar por Nome ou CPF/CNPJ..." class="w-full py-2 pl-10 pr-4 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-cyan-500 focus:bg-white focus:ring-0">
+                    </div>
+                    <button type="submit" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg font-medium transition-colors">Buscar</button>
+                    <?php if($search): ?>
+                        <a href="clientes.php" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center">Limpar</a>
+                    <?php endif; ?>
+                </form>
             </div>
-        <?php endif; ?>
+
+            <!-- Clientes List -->
+             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
+                                <th class="p-4 font-medium">Nome</th>
+                                <th class="p-4 font-medium">CPF/CNPJ</th>
+                                <th class="p-4 font-medium hidden md:table-cell">Email</th>
+                                <th class="p-4 font-medium hidden md:table-cell">Telefone</th>
+                                <th class="p-4 font-medium text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-700 text-sm">
+                            <?php if (!empty($clientes)): ?>
+                                <?php foreach ($clientes as $cliente): ?>
+                                    <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                                        <td class="p-4 font-medium text-gray-900"><?= htmlspecialchars($cliente['nome']) ?></td>
+                                        <td class="p-4"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></td>
+                                        <td class="p-4 hidden md:table-cell"><?= htmlspecialchars($cliente['email']) ?></td>
+                                        <td class="p-4 hidden md:table-cell"><?= htmlspecialchars($cliente['telefone']) ?></td>
+                                        <td class="p-4 text-right">
+                                            <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>" class="text-cyan-600 hover:text-cyan-800 mr-3 font-medium text-sm">Detalhes</a>
+                                            <a href="cliente_form.php?id=<?= $cliente['id_cliente'] ?>" class="text-gray-500 hover:text-gray-700 font-medium text-sm">Editar</a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr><td colspan="5" class="p-8 text-center text-gray-500">Nenhum cliente encontrado.</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <?php if ($total_pages > 1): ?>
+                <div class="p-4 border-t border-gray-100 flex justify-center">
+                    <nav class="flex gap-1">
+                        <?php if ($current_page > 1): ?> 
+                            <a href="?page=<?= $current_page - 1 ?>&search=<?= urlencode($search) ?>" class="px-3 py-1 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">Anterior</a> 
+                        <?php endif; ?>
+                        
+                        <?php for ($i = 1; $i <= $total_pages; $i++): ?>
+                            <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>" class="px-3 py-1 rounded border <?= $i == $current_page ? 'bg-cyan-600 text-white border-cyan-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' ?>"><?= $i ?></a>
+                        <?php endfor; ?>
+                        
+                        <?php if ($current_page < $total_pages): ?> 
+                            <a href="?page=<?= $current_page + 1 ?>&search=<?= urlencode($search) ?>" class="px-3 py-1 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-50">Próximo</a> 
+                        <?php endif; ?>
+                    </nav>
+                </div>
+                <?php endif; ?>
+            </div>
+
+        </main>
     </div>
 
-    <!-- Modal de Cadastro de Cliente -->
-    <div id="modalCadastrarCliente" title="Cadastrar Novo Cliente" style="display: none;">
-        <form id="formCadastrarCliente">
-            <label for="nome">Nome:</label>
-            <input type="text" id="nome" name="nome" required>
-            <label for="cpf_cnpj">CPF/CNPJ:</label>
-            <input type="text" id="cpf_cnpj" name="cpf_cnpj" required>
-            <label for="telefone">Telefone:</label>
-            <input type="text" id="telefone" name="telefone">
-            <label for="email">E-mail:</label>
-            <input type="email" id="email" name="email">
-        </form>
-        <div class="mensagem" id="cadastroMensagem"></div>
-    </div>
-
-    <!-- Modal de Edição de Cliente -->
-    <div id="modalEditarCliente" title="Editar Cliente" style="display: none;">
-        <form id="formEditarCliente">
-            <input type="hidden" id="editClienteId" name="id_cliente">
-            <label for="editNome">Nome:</label>
-            <input type="text" id="editNome" name="nome" required>
-            <label for="editCpfCnpj">CPF/CNPJ:</label>
-            <input type="text" id="editCpfCnpj" name="cpf_cnpj" required>
-            <label for="editTelefone">Telefone:</label>
-            <input type="text" id="editTelefone" name="telefone">
-            <label for="editEmail">E-mail:</label>
-            <input type="email" id="editEmail" name="email">
-        </form>
-        <div class="mensagem" id="editMensagem"></div>
-    </div>
-
-<script>
-$(document).ready(function() {
-    // Inicializa os modais
-    $("#modalCadastrarCliente, #modalEditarCliente").dialog({
-        autoOpen: false, modal: true, width: 500,
-        buttons: { "Cancelar": function() { $(this).dialog("close"); } }
-    });
-    $("#modalCadastrarCliente").dialog("option", "buttons", {
-        "Salvar Cliente": function() { $("#formCadastrarCliente").submit(); },
-        "Cancelar": function() { $(this).dialog("close"); }
-    });
-    $("#modalEditarCliente").dialog("option", "buttons", {
-        "Salvar Alterações": function() { $("#formEditarCliente").submit(); },
-        "Cancelar": function() { $(this).dialog("close"); }
-    });
-
-    // Abre modal de cadastro
-    $("#btnNovoCliente").on("click", function() {
-        $("#formCadastrarCliente")[0].reset();
-        $("#cadastroMensagem").html("");
-        $("#modalCadastrarCliente").dialog("open");
-    });
-	
-	$("#btnVoltar").on("click", function() {
-        window.location.href = "index.php";
-
-    });
-
-    // Submete cadastro via AJAX
-    $("#formCadastrarCliente").on("submit", function(e) {
-        e.preventDefault();
-        $.ajax({
-            url: 'app.php', type: 'POST', data: $(this).serialize() + "&action=criar_cliente", dataType: 'json',
-            success: function(response) {
-                $("#cadastroMensagem").html(response.message);
-                if (response.success) { setTimeout(() => location.reload(), 1500); }
-            }
-        });
-    });
-
-    // Abre e preenche modal de edição
-    $(document).on("click", ".btn-edit", function() {
-        const clienteId = $(this).data("id-cliente");
-        $.ajax({
-            url: 'app.php', type: 'POST', data: { action: 'get_cliente_details', id_cliente: clienteId }, dataType: 'json',
-            success: function(response) {
-                if (response.success) {
-                    $("#editClienteId").val(response.data.id_cliente);
-                    $("#editNome").val(response.data.nome);
-                    $("#editCpfCnpj").val(response.data.cpf_cnpj);
-                    $("#editTelefone").val(response.data.telefone);
-                    $("#editEmail").val(response.data.email);
-                    $("#editMensagem").html("");
-                    $("#modalEditarCliente").dialog("open");
-                } else { alert(response.message); }
-            }
-        });
-    });
-
-    // Submete edição via AJAX
-    $("#formEditarCliente").on("submit", function(e) {
-        e.preventDefault();
-        $.ajax({
-            url: 'app.php', type: 'POST', data: $(this).serialize() + "&action=editar_cliente", dataType: 'json',
-            success: function(response) {
-                $("#editMensagem").html(response.message);
-                if (response.success) { setTimeout(() => location.reload(), 1500); }
-            }
-        });
-    });
-});
-</script>
+    <?php include 'components/layout_scripts.php'; ?>
 </body>
 </html>
