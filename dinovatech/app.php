@@ -896,13 +896,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         case 'get_dashboard_stats':
             // Filtros Dashboard
-            $mes = $_POST['mes'] ?? ''; // Default empty if not provided/cleared
-            // If strictly needed default to current month only if explicitly NOT interaction? 
-            // The user wants to allow clearing it. So if it is empty, we don't filter.
-            // But if it is null (first load), usually we want current month. 
-            // Frontend passes value='date(Y-m)' on load, so $_POST['mes'] will be set.
-            // If user clears it, it comes as empty string.
-
+            $mes = $_POST['mes'] ?? '';
             $id_cliente = $_POST['id_cliente'] ?? '';
             $id_servico = $_POST['id_servico'] ?? '';
 
@@ -912,6 +906,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $id_cliente_safe = mysqli_real_escape_string($link, $id_cliente);
                 $where_fatura_base .= " AND f.id_cliente = '$id_cliente_safe'";
             }
+
+            // Se filtra serviço, precisamos garantir que as faturas contenham o serviço
+            // (Isso já filtra a lista de faturas relevantes)
             if (!empty($id_servico)) {
                 $id_servico_safe = mysqli_real_escape_string($link, $id_servico);
                 $where_fatura_base .= " AND f.id_fatura IN (SELECT id_fatura FROM ItensFatura WHERE id_servico = '$id_servico_safe')";
@@ -931,36 +928,113 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $titulo_aberto = "A Receber (Mês)";
             }
 
-            // 1. Total Faturado
-            $query_faturado = "SELECT SUM(p.valor_pago) as total 
-                               FROM Pagamentos p 
-                               JOIN Faturas f ON p.id_fatura = f.id_fatura 
-                               WHERE p.status_pagamento = 'Confirmado' 
-                               AND $where_mes_pagamento
-                               AND $where_fatura_base";
+            // --- LÓGICA DE CÁLCULO ---
+            // Se tiver filtro de serviço, fazemos cálculo proporcional.
+            // Se NÃO tiver, usamos o valor total da fatura/pagamento.
+
+            if (!empty($id_servico)) {
+                $id_servico_safe = mysqli_real_escape_string($link, $id_servico);
+
+                // Subquery para obter o valor total deste serviço específico dentro de uma fatura
+                $sql_servico_valor = "(SELECT COALESCE(SUM(it.quantidade * it.valor_unitario), 0) 
+                                       FROM ItensFatura it 
+                                       WHERE it.id_fatura = f.id_fatura AND it.id_servico = '$id_servico_safe')";
+
+                // Fórmula da Proporção: (ValorServico / ValorTotalFatura)
+                // Usamos GREATEST(..., 1) para evitar divisão por zero se fatura estiver zerada (improvável, mas seguro)
+                $sql_proporcao = "($sql_servico_valor / GREATEST(f.valor_total_fatura, 1))";
+
+
+                // 1. Total Faturado (Proporcional ao serviço)
+                $query_faturado = "SELECT SUM(p.valor_pago * $sql_proporcao) as total 
+                                   FROM Pagamentos p 
+                                   JOIN Faturas f ON p.id_fatura = f.id_fatura 
+                                   WHERE p.status_pagamento = 'Confirmado' 
+                                   AND $where_mes_pagamento
+                                   AND $where_fatura_base";
+
+                // 2. Total a Receber (Em Aberto - Proporcional ao saldo devedor)
+                // SaldoDevedor = (FaturaTotal - TotalPago)
+                // ValorServicoReceber = SaldoDevedor * Proporcao
+                $query_aberto = "SELECT SUM(
+                                    (f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) 
+                                    * $sql_proporcao
+                                 ) as total 
+                                 FROM Faturas f 
+                                 WHERE f.status = 'Em Aberto' 
+                                 AND $where_mes_vencimento
+                                 AND $where_fatura_base";
+
+                // 3. Total Atrasado (Proporcional)
+                $hoje = date('Y-m-d');
+                $query_atrasado = "SELECT SUM(
+                                    (f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) 
+                                    * $sql_proporcao
+                                   ) as total 
+                                   FROM Faturas f 
+                                   WHERE f.status = 'Em Aberto' 
+                                   AND f.data_vencimento < '$hoje'
+                                   AND $where_fatura_base";
+
+                // 5. Gráfico (Proporcional)
+                $query_grafico = "SELECT DATE_FORMAT(p.data_pagamento, '%Y-%m') as mes, 
+                                         SUM(p.valor_pago * $sql_proporcao) as total
+                                  FROM Pagamentos p 
+                                  JOIN Faturas f ON p.id_fatura = f.id_fatura
+                                  WHERE p.status_pagamento = 'Confirmado' 
+                                  AND p.data_pagamento >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                                  AND $where_fatura_base
+                                  GROUP BY mes 
+                                  ORDER BY mes ASC";
+
+            } else {
+                // --- LÓGICA PADRÃO (SEM FILTRO DE SERVIÇO) ---
+
+                // 1. Total Faturado
+                $query_faturado = "SELECT SUM(p.valor_pago) as total 
+                                   FROM Pagamentos p 
+                                   JOIN Faturas f ON p.id_fatura = f.id_fatura 
+                                   WHERE p.status_pagamento = 'Confirmado' 
+                                   AND $where_mes_pagamento
+                                   AND $where_fatura_base";
+
+                // 2. Total a Receber (Em Aberto)
+                $query_aberto = "SELECT SUM(f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) as total 
+                                 FROM Faturas f 
+                                 WHERE f.status = 'Em Aberto' 
+                                 AND $where_mes_vencimento
+                                 AND $where_fatura_base";
+
+                // 3. Total Atrasado
+                $hoje = date('Y-m-d');
+                $query_atrasado = "SELECT SUM(f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) as total 
+                                   FROM Faturas f 
+                                   WHERE f.status = 'Em Aberto' 
+                                   AND f.data_vencimento < '$hoje'
+                                   AND $where_fatura_base";
+
+                // 5. Gráfico
+                $query_grafico = "SELECT DATE_FORMAT(p.data_pagamento, '%Y-%m') as mes, SUM(p.valor_pago) as total
+                                  FROM Pagamentos p 
+                                  JOIN Faturas f ON p.id_fatura = f.id_fatura
+                                  WHERE p.status_pagamento = 'Confirmado' 
+                                  AND p.data_pagamento >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                                  AND $where_fatura_base
+                                  GROUP BY mes 
+                                  ORDER BY mes ASC";
+            }
+
+            // Executa as queries calculadas acima
             $result_faturado = DBExecute($link, $query_faturado);
             $total_faturado = mysqli_fetch_assoc($result_faturado)['total'] ?? 0;
 
-            // 2. Total a Receber (Em Aberto) -- Se tem filtro de mês, considera vencimento no mês. Se não, considera TUDO em aberto.
-            $query_aberto = "SELECT SUM(f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) as total 
-                             FROM Faturas f 
-                             WHERE f.status = 'Em Aberto' 
-                             AND $where_mes_vencimento
-                             AND $where_fatura_base";
             $result_aberto = DBExecute($link, $query_aberto);
             $total_aberto = mysqli_fetch_assoc($result_aberto)['total'] ?? 0;
 
-            // 3. Total Atrasado (Sempre histórico, até hoje)
-            $hoje = date('Y-m-d');
-            $query_atrasado = "SELECT SUM(f.valor_total_fatura - (SELECT COALESCE(SUM(p2.valor_pago),0) FROM Pagamentos p2 WHERE p2.id_fatura = f.id_fatura AND p2.status_pagamento = 'Confirmado')) as total 
-                               FROM Faturas f 
-                               WHERE f.status = 'Em Aberto' 
-                               AND f.data_vencimento < '$hoje'
-                               AND $where_fatura_base";
             $result_atrasado = DBExecute($link, $query_atrasado);
             $total_atrasado = mysqli_fetch_assoc($result_atrasado)['total'] ?? 0;
 
-            // 4. Faturas Recentes
+            // 4. Faturas Recentes (A query de seleção de lista é a mesma, pois já filtramos pelo WHERE base)
             $query_recentes = "SELECT f.id_fatura, c.nome, f.valor_total_fatura, f.status, f.data_vencimento 
                                FROM Faturas f 
                                JOIN Clientes c ON f.id_cliente = c.id_cliente 
@@ -972,18 +1046,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $recentes[] = $row;
             }
 
-            // 5. Gráfico (Sempre 6 meses ou Todo o período se mês vazio? O pedido era "Faturamento dos ultimos 6 meses". 
-            // Manter fixo 6 meses parece fazer mais sentido para um gráfico de evolução, independente do filtro de mês "pontual".
-            // Mas se o usuário filtra Cliente X, quer ver evolução do Cliente X.
-            // Vamos manter 6 meses fixos para o gráfico para consistência visual.)
-            $query_grafico = "SELECT DATE_FORMAT(p.data_pagamento, '%Y-%m') as mes, SUM(p.valor_pago) as total
-                              FROM Pagamentos p 
-                              JOIN Faturas f ON p.id_fatura = f.id_fatura
-                              WHERE p.status_pagamento = 'Confirmado' 
-                              AND p.data_pagamento >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-                              AND $where_fatura_base
-                              GROUP BY mes 
-                              ORDER BY mes ASC";
+            // Executa Gráfico
             $result_grafico = DBExecute($link, $query_grafico);
             $grafico_data = [];
             $labels = [];
@@ -1004,7 +1067,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'labels' => $labels,
                     'values' => $values
                 ],
-                // Extra info para UI atualizar labels se quiser
                 'titulo_faturado' => $titulo_faturado,
                 'titulo_aberto' => $titulo_aberto
             ];
