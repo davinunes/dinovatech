@@ -292,18 +292,39 @@ if ($id_fatura) {
                                 <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Histórico</h4>
                                 <ul class="space-y-2">
                                     <?php foreach ($pagamentos as $pag): ?>
+                                        <?php
+                                        // Calculate expiration info if available
+                                        $expInfo = "";
+                                        if ($pag['status_pagamento'] != 'Confirmado' && !empty($pag['calendario'])) {
+                                            $cal = json_decode($pag['calendario'], true);
+                                            if (isset($cal['criacao']) && isset($cal['expiracao'])) {
+                                                $criacaoTimestamp = strtotime($cal['criacao']);
+                                                $expiracaoTimestamp = $criacaoTimestamp + $cal['expiracao'];
+                                                $expString = date('d/m/Y H:i', $expiracaoTimestamp);
+
+                                                if (time() > $expiracaoTimestamp) {
+                                                    $expInfo = "<span class='block text-[10px] text-red-400'>Expirou em: $expString</span>";
+                                                } else {
+                                                    $expInfo = "<span class='block text-[10px] text-blue-400'>Expira em: $expString</span>";
+                                                }
+                                            }
+                                        }
+                                        ?>
                                         <li class="text-sm bg-gray-50 p-2 rounded border border-gray-100">
                                             <div class="flex justify-between mb-1">
                                                 <span class="font-medium text-gray-800">R$
                                                     <?= number_format($pag['valor_pago'], 2, ',', '.') ?>
                                                 </span>
-                                                <span class="text-gray-500 text-xs">
-                                                    <?= date('d/m', strtotime($pag['data_pagamento'])) ?>
-                                                </span>
+                                                <div class="text-right">
+                                                    <span class="text-gray-500 text-xs block">
+                                                        <?= date('d/m', strtotime($pag['data_pagamento'])) ?>
+                                                    </span>
+                                                    <?= $expInfo ?>
+                                                </div>
                                             </div>
                                             <div class="flex justify-between items-center text-xs">
                                                 <span
-                                                    class="<?= $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600' : 'text-red-500' ?>">
+                                                    class="<?= $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600' : ($pag['status_pagamento'] == 'Expirado' ? 'text-gray-400' : 'text-yellow-600') ?>">
                                                     <?= $pag['status_pagamento'] ?>
                                                 </span>
                                                 <?php if ($pag['status_pagamento'] == 'Confirmado'): ?>
