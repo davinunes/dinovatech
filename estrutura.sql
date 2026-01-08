@@ -1,4 +1,16 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-08 10:42:19
+-- Estrutura do Banco de Dados - Gerado em 2026-01-08 13:28:01
+
+
+CREATE TABLE `Arquivos` (
+  `id_arquivo` int NOT NULL AUTO_INCREMENT,
+  `nome_original` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `url_publica` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tamanho_bytes` int DEFAULT NULL,
+  `tipo_mime` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `data_upload` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_arquivo`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 
 CREATE TABLE `Clientes` (
@@ -11,6 +23,19 @@ CREATE TABLE `Clientes` (
   UNIQUE KEY `cpf_cnpj` (`cpf_cnpj`),
   UNIQUE KEY `email` (`email`)
 ) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `FaturaArquivos` (
+  `id_vinculo` int NOT NULL AUTO_INCREMENT,
+  `id_fatura` int NOT NULL,
+  `id_arquivo` int NOT NULL,
+  PRIMARY KEY (`id_vinculo`),
+  KEY `id_fatura` (`id_fatura`),
+  KEY `id_arquivo` (`id_arquivo`),
+  CONSTRAINT `FaturaArquivos_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE,
+  CONSTRAINT `FaturaArquivos_ibfk_2` FOREIGN KEY (`id_arquivo`) REFERENCES `Arquivos` (`id_arquivo`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 

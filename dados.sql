@@ -1,4 +1,8 @@
--- Dados do Banco de Dados - Gerado em 2026-01-08 10:42:19
+-- Dados do Banco de Dados - Gerado em 2026-01-08 13:28:01
+
+
+-- Dumping data for table `Arquivos` --
+INSERT INTO `Arquivos` VALUES("1","nfse-19.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1767878218_34_13c7d09f.pdf","50484","application/pdf","2026-01-08 13:16:58");
 
 
 -- Dumping data for table `Clientes` --
@@ -8,6 +12,10 @@ INSERT INTO `Clientes` VALUES("6","Davi Nunes","01691128104","61996757676","davi
 INSERT INTO `Clientes` VALUES("8","MARIANA ","70521212120","","mariana@gmail.com");
 INSERT INTO `Clientes` VALUES("9","Condomínio Residencial Top Life II Taguatinga - Long Beach Bloco B","23196654000138","","blocob.longbeach@gmail.com");
 INSERT INTO `Clientes` VALUES("10","Condomínio Residencial Top Life II Taguatinga - Long Beach Bloco A","23196523000150","","longbeach.blocoa@gmail.com");
+
+
+-- Dumping data for table `FaturaArquivos` --
+INSERT INTO `FaturaArquivos` VALUES("1","34","1");
 
 
 -- Dumping data for table `Faturas` --
