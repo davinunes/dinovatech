@@ -137,7 +137,7 @@ if (!isset($_SESSION['usuario_id'])) {
 
             // Initialize Autocompletes
             $("#filtroClienteNome").autocomplete({
-                source: function (request, response) {
+                source: function(request, response) {
                     $.ajax({
                         url: "app.php",
                         type: "POST",
@@ -146,21 +146,25 @@ if (!isset($_SESSION['usuario_id'])) {
                             action: "buscar_clientes",
                             termo: request.term
                         },
-                        success: function (data) {
-                            response($.map(data, function (item) {
-                                return {
-                                    label: item.nome + (item.cpf_cnpj ? ' (' + item.cpf_cnpj + ')' : ''),
-                                    value: item.nome,
-                                    id: item.id_cliente
-                                };
-                            }));
+                        success: function(resp) {
+                            if(resp.success && resp.data) {
+                                response($.map(resp.data, function(item) {
+                                    return {
+                                        label: item.nome + (item.cpf_cnpj ? ' (' + item.cpf_cnpj + ')' : ''),
+                                        value: item.nome,
+                                        id: item.id_cliente
+                                    };
+                                }));
+                            } else {
+                                response([]); // No results
+                            }
                         }
                     });
                 },
-                select: function (event, ui) {
+                select: function(event, ui) {
                     $("#filtroClienteId").val(ui.item.id);
                 },
-                change: function (event, ui) {
+                change: function(event, ui) {
                     if (!ui.item) {
                         $("#filtroClienteId").val(""); // Clear ID if text cleared
                     }
@@ -168,7 +172,7 @@ if (!isset($_SESSION['usuario_id'])) {
             });
 
             $("#filtroServicoNome").autocomplete({
-                source: function (request, response) {
+                source: function(request, response) {
                     $.ajax({
                         url: "app.php",
                         type: "POST",
@@ -177,21 +181,25 @@ if (!isset($_SESSION['usuario_id'])) {
                             action: "buscar_servicos",
                             termo: request.term
                         },
-                        success: function (data) {
-                            response($.map(data, function (item) {
-                                return {
-                                    label: item.nome_servico,
-                                    value: item.nome_servico,
-                                    id: item.id_servico
-                                };
-                            }));
+                        success: function(resp) {
+                            if(resp.success && resp.data) {
+                                response($.map(resp.data, function(item) {
+                                    return {
+                                        label: item.nome_servico,
+                                        value: item.nome_servico, // Correct property
+                                        id: item.id_servico
+                                    };
+                                }));
+                            } else {
+                                response([]);
+                            }
                         }
                     });
                 },
-                select: function (event, ui) {
+                select: function(event, ui) {
                     $("#filtroServicoId").val(ui.item.id);
                 },
-                change: function (event, ui) {
+                change: function(event, ui) {
                     if (!ui.item) {
                         $("#filtroServicoId").val("");
                     }
