@@ -151,11 +151,20 @@ if ($id_fatura) {
                 </div>
 
                 <div class="p-8 md:p-12">
+                    <!-- Watermark/Stamp if Paid -->
+                    <?php if ($fatura['status'] === 'Liquidada'): ?>
+                        <div
+                            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-[6px] border-green-600 text-green-600 font-bold text-8xl px-8 py-2 rounded-xl opacity-20 rotate-[-15deg] pointer-events-none select-none z-0 whitespace-nowrap">
+                            PAGO
+                        </div>
+                    <?php endif; ?>
+
                     <!-- Invoice Header -->
-                    <div class="border-b border-gray-100 pb-8 mb-8">
+                    <div class="border-b border-gray-100 pb-8 mb-8 relative z-10">
                         <div class="w-full">
-                            <h1 class="text-3xl font-bold text-gray-900 mb-2">Dinovatech Tecnologia</h1>
-                            <p class="text-gray-500 text-sm uppercase tracking-wide">Fatura #
+                            <h1 class="text-3xl font-bold text-gray-900 mb-1">Digital Inovation Tecnologia</h1>
+                            <p class="text-gray-500 text-sm mb-2">CNPJ: 61.733.714/0001-01</p>
+                            <p class="text-gray-400 text-xs uppercase tracking-wide">Fatura #
                                 <?= $id_fatura ?>
                             </p>
                         </div>
@@ -341,97 +350,97 @@ if ($id_fatura) {
             </div>
         </div>
 
-                <script>
-                $(document).ready(function () {
-                    // Load Attachments
-                    carregarAnexos();
+        <script>
+            $(document).ready(function () {
+                // Load Attachments
+                carregarAnexos();
 
-                    let pollingInterval;
+                let pollingInterval;
 
-                    $('#btnPagarPix').click(function () {
-                        $('#modalPix').removeClass('hidden');
-                        generatePix();
-                    });
-
-                    function generatePix() {
-                        // Use existing logic from original index.php but adapted
-                        // We need to call the INTER endpoint logic
-                        $.ajax({
-                            url: '../inter/endpoint.php?action=obter_ou_criar_pix_pagamento',
-                            type: 'POST',
-                            data: JSON.stringify({ id_fatura: <?= $id_fatura ?> }),
-                            contentType: 'application/json',
-                            dataType: 'json',
-                            success: function (response) {
-                                if (response.success) {
-                                    renderPix(response.data);
-                                } else {
-                                    alert('Erro ao gerar PIX: ' + response.message);
-                                    $('#modalPix').addClass('hidden');
-                                }
-                            },
-                            error: function () {
-                                alert('Erro de comunicação.');
-                                $('#modalPix').addClass('hidden');
-                            }
-                        });
-                    }
-
-                    function renderPix(data) {
-                        $('#pixLoading').addClass('hidden');
-                        $('#pixContent').removeClass('hidden');
-
-                        // Generate QR
-                        // Generate QR - Higher resolution, scaled down by CSS
-                        const el = kjua({ text: data.pixCopiaECola, size: 400, fill: '#000', back: '#fff', quiet: 1 });
-                        // Make responsive
-                        $(el).css({ 'max-width': '100%', 'height': 'auto' });
-                        $('#qrcodeDisplay').html('').append(el);
-                        $('#pixCopiaColaInput').val(data.pixCopiaECola);
-
-                        // Start Polling
-                        startPolling(data.txid);
-                    }
-
-                    function startPolling(txid) {
-                        if (pollingInterval) clearInterval(pollingInterval);
-                        pollingInterval = setInterval(function () {
-                            $.getJSON(`../inter/endpoint.php?action=verificar_pagamento_pix&txid=${txid}`, function (res) {
-                                if (res.success && res.data.status === 'CONCLUIDA') {
-                                    clearInterval(pollingInterval);
-                                    $('#pixContent').addClass('hidden');
-                                    $('#pixSuccess').removeClass('hidden');
-                                }
-                            });
-                        }, 5000);
-                    }
-
-                    window.copiarPix = function () {
-                        const copyText = document.getElementById("pixCopiaColaInput");
-                        copyText.select();
-                        document.execCommand("copy"); // Fallback
-                        // Or Clipboard API
-                        if (navigator.clipboard) navigator.clipboard.writeText(copyText.value);
-
-                        $('#msgCopia').removeClass('hidden');
-                        setTimeout(() => $('#msgCopia').addClass('hidden'), 2000);
-                    }
+                $('#btnPagarPix').click(function () {
+                    $('#modalPix').removeClass('hidden');
+                    generatePix();
                 });
 
-                function carregarAnexos() {
-                    // Note path to app.php is relative to cliente/fatura.php
-                    $.post('../dinovatech/app.php', { action: 'get_fatura_arquivos', id_fatura: <?= $id_fatura ?> }, function(res){
-                        if(res.success) {
-                            let html = '';
-                            if(res.data.length > 0) {
-                                res.data.forEach(arq => {
-                                    // Format bytes to KB/MB
-                                    let sizeStr = '';
-                                    if(arq.tamanho_bytes < 1024) sizeStr = arq.tamanho_bytes + ' B';
-                                    else if(arq.tamanho_bytes < 1024*1024) sizeStr = (arq.tamanho_bytes/1024).toFixed(1) + ' KB';
-                                    else sizeStr = (arq.tamanho_bytes/(1024*1024)).toFixed(1) + ' MB';
+                function generatePix() {
+                    // Use existing logic from original index.php but adapted
+                    // We need to call the INTER endpoint logic
+                    $.ajax({
+                        url: '../inter/endpoint.php?action=obter_ou_criar_pix_pagamento',
+                        type: 'POST',
+                        data: JSON.stringify({ id_fatura: <?= $id_fatura ?> }),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        success: function (response) {
+                            if (response.success) {
+                                renderPix(response.data);
+                            } else {
+                                alert('Erro ao gerar PIX: ' + response.message);
+                                $('#modalPix').addClass('hidden');
+                            }
+                        },
+                        error: function () {
+                            alert('Erro de comunicação.');
+                            $('#modalPix').addClass('hidden');
+                        }
+                    });
+                }
 
-                                    html += `
+                function renderPix(data) {
+                    $('#pixLoading').addClass('hidden');
+                    $('#pixContent').removeClass('hidden');
+
+                    // Generate QR
+                    // Generate QR - Higher resolution, scaled down by CSS
+                    const el = kjua({ text: data.pixCopiaECola, size: 400, fill: '#000', back: '#fff', quiet: 1 });
+                    // Make responsive
+                    $(el).css({ 'max-width': '100%', 'height': 'auto' });
+                    $('#qrcodeDisplay').html('').append(el);
+                    $('#pixCopiaColaInput').val(data.pixCopiaECola);
+
+                    // Start Polling
+                    startPolling(data.txid);
+                }
+
+                function startPolling(txid) {
+                    if (pollingInterval) clearInterval(pollingInterval);
+                    pollingInterval = setInterval(function () {
+                        $.getJSON(`../inter/endpoint.php?action=verificar_pagamento_pix&txid=${txid}`, function (res) {
+                            if (res.success && res.data.status === 'CONCLUIDA') {
+                                clearInterval(pollingInterval);
+                                $('#pixContent').addClass('hidden');
+                                $('#pixSuccess').removeClass('hidden');
+                            }
+                        });
+                    }, 5000);
+                }
+
+                window.copiarPix = function () {
+                    const copyText = document.getElementById("pixCopiaColaInput");
+                    copyText.select();
+                    document.execCommand("copy"); // Fallback
+                    // Or Clipboard API
+                    if (navigator.clipboard) navigator.clipboard.writeText(copyText.value);
+
+                    $('#msgCopia').removeClass('hidden');
+                    setTimeout(() => $('#msgCopia').addClass('hidden'), 2000);
+                }
+            });
+
+            function carregarAnexos() {
+                // Note path to app.php is relative to cliente/fatura.php
+                $.post('../dinovatech/app.php', { action: 'get_fatura_arquivos', id_fatura: <?= $id_fatura ?> }, function (res) {
+                    if (res.success) {
+                        let html = '';
+                        if (res.data.length > 0) {
+                            res.data.forEach(arq => {
+                                // Format bytes to KB/MB
+                                let sizeStr = '';
+                                if (arq.tamanho_bytes < 1024) sizeStr = arq.tamanho_bytes + ' B';
+                                else if (arq.tamanho_bytes < 1024 * 1024) sizeStr = (arq.tamanho_bytes / 1024).toFixed(1) + ' KB';
+                                else sizeStr = (arq.tamanho_bytes / (1024 * 1024)).toFixed(1) + ' MB';
+
+                                html += `
                                         <li class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors">
                                             <div class="flex items-center overflow-hidden">
                                                 <span class="material-icons text-red-500 mr-3 text-2xl">description</span>
@@ -447,17 +456,17 @@ if ($id_fatura) {
                                             </a>
                                         </li>
                                     `;
-                                });
-                            } else {
-                                html = '<li class="text-sm text-gray-400 italic">Nenhum arquivo anexado a esta fatura.</li>';
-                            }
-                            $('#listaAnexosCliente').html(html);
+                            });
                         } else {
-                            $('#listaAnexosCliente').html('<li class="text-sm text-red-500">Erro ao carregar anexos.</li>');
+                            html = '<li class="text-sm text-gray-400 italic">Nenhum arquivo anexado a esta fatura.</li>';
                         }
-                    }, 'json');
-                }
-            </script>
+                        $('#listaAnexosCliente').html(html);
+                    } else {
+                        $('#listaAnexosCliente').html('<li class="text-sm text-red-500">Erro ao carregar anexos.</li>');
+                    }
+                }, 'json');
+            }
+        </script>
 
 
     <?php endif; ?>

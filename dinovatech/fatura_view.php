@@ -149,9 +149,18 @@ if ($id_fatura) {
                                 </span>
                             </div>
 
-                            <div class="mb-8 border-b pb-6">
-                                <h1 class="text-2xl font-bold text-gray-800 mb-2">Dinovatech Tecnologia</h1>
-                                <p class="text-sm text-gray-500">Documento Auxiliar de Cobrança</p>
+                            <!-- Watermark/Stamp if Paid -->
+                            <?php if ($fatura['status'] === 'Liquidada'): ?>
+                                <div
+                                    class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-[6px] border-green-600 text-green-600 font-bold text-8xl px-8 py-2 rounded-xl opacity-20 rotate-[-15deg] pointer-events-none select-none z-0 whitespace-nowrap">
+                                    PAGO
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="mb-8 border-b pb-6 relative z-10">
+                                <h1 class="text-2xl font-bold text-gray-800 mb-1">Digital Inovation Tecnologia</h1>
+                                <p class="text-sm text-gray-500 mb-1">CNPJ: 61.733.714/0001-01</p>
+                                <p class="text-sm text-gray-400">Documento Auxiliar de Cobrança</p>
                             </div>
 
                             <div class="grid grid-cols-2 gap-8 mb-8">
@@ -486,8 +495,7 @@ if ($id_fatura) {
 
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Selecione o arquivo (Max 10MB)</label>
-                    <input type="file" name="arquivo" required
-                        class="w-full text-sm text-gray-500
+                    <input type="file" name="arquivo" required class="w-full text-sm text-gray-500
                         file:mr-4 file:py-2 file:px-4
                         file:rounded-full file:border-0
                         file:text-sm file:font-semibold
@@ -507,7 +515,8 @@ if ($id_fatura) {
                 <div class="flex justify-end gap-2">
                     <button type="button" onclick="$('#modalUpload').addClass('hidden')"
                         class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancelar</button>
-                    <button type="submit" id="btnUploadSubmit" class="px-4 py-2 bg-blue-600 text-white rounded-lg">Enviar</button>
+                    <button type="submit" id="btnUploadSubmit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg">Enviar</button>
                 </div>
             </form>
         </div>
@@ -527,7 +536,7 @@ if ($id_fatura) {
         function showToast(message, type = 'success') {
             const colorClass = type === 'success' ? 'bg-green-500' : 'bg-red-500';
             const icon = type === 'success' ? 'check_circle' : 'error';
-            
+
             const toast = $(`
                 <div class="flex items-center w-full max-w-xs p-4 mb-4 text-white rounded-lg shadow ${colorClass} transition-opacity duration-300 opacity-0" role="alert">
                     <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-white rounded-lg">
@@ -541,7 +550,7 @@ if ($id_fatura) {
             `);
 
             $('#toast-container').append(toast);
-            
+
             // Trigger reflow/animation
             requestAnimationFrame(() => {
                 toast.removeClass('opacity-0');
@@ -572,16 +581,16 @@ if ($id_fatura) {
         }
 
         function carregarAnexos() {
-            $.post('app.php', { action: 'get_fatura_arquivos', id_fatura: <?= $id_fatura ?> }, function(res){
-                if(res.success) {
+            $.post('app.php', { action: 'get_fatura_arquivos', id_fatura: <?= $id_fatura ?> }, function (res) {
+                if (res.success) {
                     let html = '';
-                    if(res.data.length > 0) {
+                    if (res.data.length > 0) {
                         res.data.forEach(arq => {
                             // Format bytes to KB/MB
                             let sizeStr = '';
-                            if(arq.tamanho_bytes < 1024) sizeStr = arq.tamanho_bytes + ' B';
-                            else if(arq.tamanho_bytes < 1024*1024) sizeStr = (arq.tamanho_bytes/1024).toFixed(1) + ' KB';
-                            else sizeStr = (arq.tamanho_bytes/(1024*1024)).toFixed(1) + ' MB';
+                            if (arq.tamanho_bytes < 1024) sizeStr = arq.tamanho_bytes + ' B';
+                            else if (arq.tamanho_bytes < 1024 * 1024) sizeStr = (arq.tamanho_bytes / 1024).toFixed(1) + ' KB';
+                            else sizeStr = (arq.tamanho_bytes / (1024 * 1024)).toFixed(1) + ' MB';
 
                             html += `
                                 <li class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-100">
@@ -609,9 +618,9 @@ if ($id_fatura) {
         }
 
         function excluirAnexo(id) {
-            if(confirm('Deseja desvincular este arquivo da fatura?')) {
-                $.post('app.php', { action: 'excluir_arquivo_fatura', id_arquivo: id, id_fatura: <?= $id_fatura ?> }, function(res){
-                    if(res.success) {
+            if (confirm('Deseja desvincular este arquivo da fatura?')) {
+                $.post('app.php', { action: 'excluir_arquivo_fatura', id_arquivo: id, id_fatura: <?= $id_fatura ?> }, function (res) {
+                    if (res.success) {
                         showToast(res.message, 'success');
                         carregarAnexos();
                     } else {
@@ -671,10 +680,10 @@ if ($id_fatura) {
             });
 
             // Upload Form
-            $('#formUpload').on('submit', function(e){
+            $('#formUpload').on('submit', function (e) {
                 e.preventDefault();
                 var formData = new FormData(this);
-                
+
                 $('#uploadProgress').removeClass('hidden');
                 $('#btnUploadSubmit').prop('disabled', true).addClass('opacity-50');
 
@@ -692,10 +701,10 @@ if ($id_fatura) {
                             showToast(res.message, 'error');
                         }
                     },
-                    error: function() {
-                         showToast('Erro de comunicação no upload.', 'error');
+                    error: function () {
+                        showToast('Erro de comunicação no upload.', 'error');
                     },
-                    complete: function() {
+                    complete: function () {
                         $('#uploadProgress').addClass('hidden');
                         $('#btnUploadSubmit').prop('disabled', false).removeClass('opacity-50');
                     },
