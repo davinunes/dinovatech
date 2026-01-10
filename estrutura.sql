@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-09 01:43:37
+-- Estrutura do Banco de Dados - Gerado em 2026-01-10 03:04:15
 
 
 CREATE TABLE `Arquivos` (
@@ -9,7 +9,7 @@ CREATE TABLE `Arquivos` (
   `tipo_mime` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `data_upload` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_arquivo`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -35,7 +35,7 @@ CREATE TABLE `FaturaArquivos` (
   KEY `id_arquivo` (`id_arquivo`),
   CONSTRAINT `FaturaArquivos_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE,
   CONSTRAINT `FaturaArquivos_ibfk_2` FOREIGN KEY (`id_arquivo`) REFERENCES `Arquivos` (`id_arquivo`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -89,7 +89,7 @@ CREATE TABLE `Pagamentos` (
   UNIQUE KEY `e2eid` (`e2eid`),
   KEY `id_fatura` (`id_fatura`),
   CONSTRAINT `Pagamentos_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`)
-) ENGINE=InnoDB AUTO_INCREMENT=116 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=117 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 

@@ -1,8 +1,28 @@
--- Dados do Banco de Dados - Gerado em 2026-01-09 01:43:37
+-- Dados do Banco de Dados - Gerado em 2026-01-10 03:04:15
 
 
 -- Dumping data for table `Arquivos` --
 INSERT INTO `Arquivos` VALUES("1","nfse-19.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1767878218_34_13c7d09f.pdf","50484","application/pdf","2026-01-08 13:16:58");
+INSERT INTO `Arquivos` VALUES("2","nfse-18.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013262_35_4334d13d.pdf","50775","application/pdf","2026-01-10 02:47:42");
+INSERT INTO `Arquivos` VALUES("3","nfse-17.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013291_36_6bc1acf9.pdf","50797","application/pdf","2026-01-10 02:48:11");
+INSERT INTO `Arquivos` VALUES("4","nfse-16.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013367_32_4b459ea5.pdf","50637","application/pdf","2026-01-10 02:49:27");
+INSERT INTO `Arquivos` VALUES("5","nfse-15.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013399_30_6eb4bf2c.pdf","50787","application/pdf","2026-01-10 02:49:59");
+INSERT INTO `Arquivos` VALUES("6","nfse-14.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013439_28_a9d88583.pdf","50418","application/pdf","2026-01-10 02:50:39");
+INSERT INTO `Arquivos` VALUES("7","nfse-13.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013502_29_7e8c4d69.pdf","50940","application/pdf","2026-01-10 02:51:43");
+INSERT INTO `Arquivos` VALUES("8","nfse-12.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013574_26_dd25e363.pdf","50514","application/pdf","2026-01-10 02:52:54");
+INSERT INTO `Arquivos` VALUES("9","nfse-11.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013622_24_302f97a6.pdf","50578","application/pdf","2026-01-10 02:53:42");
+INSERT INTO `Arquivos` VALUES("10","nfse-10.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013665_25_36be6596.pdf","50642","application/pdf","2026-01-10 02:54:25");
+INSERT INTO `Arquivos` VALUES("11","nfse-9.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013747_22_fcb6ee1c.pdf","51065","application/pdf","2026-01-10 02:55:47");
+INSERT INTO `Arquivos` VALUES("12","nfse-8.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013780_21_058e216c.pdf","51066","application/pdf","2026-01-10 02:56:20");
+INSERT INTO `Arquivos` VALUES("13","nfse-7.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013844_20_b5f350c5.pdf","46921","application/pdf","2026-01-10 02:57:24");
+INSERT INTO `Arquivos` VALUES("14","nfse-6.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013887_17_524af57b.pdf","46886","application/pdf","2026-01-10 02:58:08");
+INSERT INTO `Arquivos` VALUES("15","nfse-5.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013928_16_7341a15c.pdf","50995","application/pdf","2026-01-10 02:58:48");
+INSERT INTO `Arquivos` VALUES("16","nfse-4.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013957_15_a8dec874.pdf","50993","application/pdf","2026-01-10 02:59:17");
+INSERT INTO `Arquivos` VALUES("17","nfse-3.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768013991_11_01ffb0f6.pdf","50948","application/pdf","2026-01-10 02:59:51");
+INSERT INTO `Arquivos` VALUES("18","nfse-2.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768014043_13_782f62b5.pdf","46890","application/pdf","2026-01-10 03:00:43");
+INSERT INTO `Arquivos` VALUES("19","nfse-1.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768014072_9_2fc306c0.pdf","47120","application/pdf","2026-01-10 03:01:12");
+INSERT INTO `Arquivos` VALUES("20","5455435779.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768014190_37_fa74c2ce.pdf","96446","application/pdf","2026-01-10 03:03:10");
+INSERT INTO `Arquivos` VALUES("21","5424966294.pdf","https://objectstorage.sa-saopaulo-1.oraclecloud.com/p/fCekySPNABsteEopo01-97p2VYTeKedlNVD5AFWr46ZwOkY6BO4ZLmm41VdA_wqo/n/grpam7uhjxzp/b/meu-balde/o/arquivos/1768014244_31_91171dee.pdf","96071","application/pdf","2026-01-10 03:04:04");
 
 
 -- Dumping data for table `Clientes` --
@@ -16,6 +36,26 @@ INSERT INTO `Clientes` VALUES("10","Condomínio Residencial Top Life II Taguatin
 
 -- Dumping data for table `FaturaArquivos` --
 INSERT INTO `FaturaArquivos` VALUES("1","34","1");
+INSERT INTO `FaturaArquivos` VALUES("2","35","2");
+INSERT INTO `FaturaArquivos` VALUES("3","36","3");
+INSERT INTO `FaturaArquivos` VALUES("4","32","4");
+INSERT INTO `FaturaArquivos` VALUES("5","30","5");
+INSERT INTO `FaturaArquivos` VALUES("6","28","6");
+INSERT INTO `FaturaArquivos` VALUES("7","29","7");
+INSERT INTO `FaturaArquivos` VALUES("8","26","8");
+INSERT INTO `FaturaArquivos` VALUES("9","24","9");
+INSERT INTO `FaturaArquivos` VALUES("10","25","10");
+INSERT INTO `FaturaArquivos` VALUES("11","22","11");
+INSERT INTO `FaturaArquivos` VALUES("12","21","12");
+INSERT INTO `FaturaArquivos` VALUES("13","20","13");
+INSERT INTO `FaturaArquivos` VALUES("14","17","14");
+INSERT INTO `FaturaArquivos` VALUES("15","16","15");
+INSERT INTO `FaturaArquivos` VALUES("16","15","16");
+INSERT INTO `FaturaArquivos` VALUES("17","11","17");
+INSERT INTO `FaturaArquivos` VALUES("18","13","18");
+INSERT INTO `FaturaArquivos` VALUES("19","9","19");
+INSERT INTO `FaturaArquivos` VALUES("20","37","20");
+INSERT INTO `FaturaArquivos` VALUES("21","31","21");
 
 
 -- Dumping data for table `Faturas` --
@@ -163,11 +203,12 @@ INSERT INTO `Pagamentos` VALUES("107","35","200.00","2026-01-07","Confirmado","P
 INSERT INTO `Pagamentos` VALUES("108","30","200.00","2026-01-07","Confirmado","Pago no PIX CNPJ","W3siaWRfaXRlbSI6NzIsInZhbG9yIjoyMDB9XQ==","","","","");
 INSERT INTO `Pagamentos` VALUES("109","38","4500.00","2026-01-08","Expirado","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/0d4b24effae44f3d8d0a03046390f2cc52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***630405CC","crti7sjt5j5r1zy6hilfbst41kqnghqvp2m","","{\"criacao\": \"2026-01-08T01:00:41.569Z\", \"expiracao\": 3600}");
 INSERT INTO `Pagamentos` VALUES("110","39","4500.00","2026-01-08","Pendente","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/98a3a135fa194500b9e478e4982f651c52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***630403B0","bw2n8zp2a8d35tuk2i301fjwwhewq8tzzda","","{\"criacao\": \"2026-01-08T01:03:43.555Z\", \"expiracao\": 3600}");
-INSERT INTO `Pagamentos` VALUES("111","33","4500.00","2026-01-08","Pendente","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/538cdd8327fa4c229680bf3e6e1c4a5f52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***63044D3D","d6bctxl3q3osw2q1j3vfvzv74zed1undvui","","{\"criacao\": \"2026-01-08T01:06:55.129Z\", \"expiracao\": 3600}");
+INSERT INTO `Pagamentos` VALUES("111","33","4500.00","2026-01-08","Expirado","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/538cdd8327fa4c229680bf3e6e1c4a5f52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***63044D3D","d6bctxl3q3osw2q1j3vfvzv74zed1undvui","","{\"criacao\": \"2026-01-08T01:06:55.129Z\", \"expiracao\": 3600}");
 INSERT INTO `Pagamentos` VALUES("112","42","0.15","2026-01-08","Confirmado","E2EID: E18236120202601080115s004c3e1bea - TXID: rjzjv62q0m8qe8tmb8ybpw4u1vq6afjbejb","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/a07c161f355d45ba90eec8161050b8fd52040000530398654040.155802BR5901*6008BRASILIA61087213524062070503***63044D88","rjzjv62q0m8qe8tmb8ybpw4u1vq6afjbejb","E18236120202601080115s004c3e1bea","{\"criacao\": \"2026-01-08T01:15:32.229Z\", \"expiracao\": 3600}");
 INSERT INTO `Pagamentos` VALUES("113","43","0.10","2026-01-08","Expirado","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/789e32feacbc4b8492f6769f6abcc56c52040000530398654040.105802BR5901*6008BRASILIA61087213524062070503***6304073C","3prdhnepl858lr14zzinjk4irkwb46cbio8","","{\"criacao\": \"2026-01-08T01:27:47.832Z\", \"expiracao\": 3600}");
 INSERT INTO `Pagamentos` VALUES("114","43","0.10","2026-01-08","Confirmado","E2EID: E0000000020260108022939065742130 - TXID: zbmrd4nfcpljp40pn3ada976ls3xpi7il3t","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/a690591a4c8a48da84c7020e5cc08f9b52040000530398654040.105802BR5901*6008BRASILIA61087213524062070503***6304874D","zbmrd4nfcpljp40pn3ada976ls3xpi7il3t","E0000000020260108022939065742130","{\"criacao\": \"2026-01-08T02:28:15.857Z\", \"expiracao\": 3600}");
 INSERT INTO `Pagamentos` VALUES("115","38","4500.00","2026-01-08","Pendente","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/dff43e17bb1a4f829d616207bda1d71a52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***63041A1D","650nwiarl2vmvy47qakcmuexfimuvni1ong","","{\"criacao\": \"2026-01-08T02:56:53.588Z\", \"expiracao\": 3600}");
+INSERT INTO `Pagamentos` VALUES("116","33","4500.00","2026-01-10","Pendente","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/145fa3f5f5174feb80206d57ae7dfd4f52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***63046633","om8pxgh94d8wy8mbgcsfsjwf3qxi8i8ymxy","","{\"criacao\": \"2026-01-10T02:23:22.502Z\", \"expiracao\": 3600}");
 
 
 -- Dumping data for table `Recorrencias` --
