@@ -1,8 +1,13 @@
 <?php
 
 // Basic configuration
+// URL 1: Homologação Dados Oficiais (Try this first)
 $wsdl_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx?wsdl';
 $endpoint_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
+
+// URL 2: Homologação Fictícia (Uncomment if URL 1 fails with Cloudflare block, though both might be protected)
+// $endpoint_homolog = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+
 $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
 
 // Load password from external file
@@ -34,11 +39,6 @@ $numeroNota = '1';
 $dataCompetencia = '2026-01-11'; // Using the date from your XML
 
 // XML Structure for ConsultarNfseServicoPrestadoEnvio (ABRASF 2.04)
-// Note: Some cities require signing the 'Pedido', others don't for consultation.
-// We will start without signing the XML body, but using the Certificate for SSL Auth.
-// If it fails requiring signature, we will implement the signer.
-// ABRASF 2.04 usually asks for signature in 'ConsultarNfseServicoPrestadoEnvio'.
-
 $xmlEnvio = <<<XML
 <ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
     <Prestador>
@@ -67,7 +67,7 @@ $soapEnvelope = <<<XML
 </soap:Envelope>
 XML;
 
-echo "Sending SOAP Request...\n";
+echo "Sending SOAP Request to $endpoint_homolog ...\n";
 
 // Save temporary PEM files for cURL
 $certPemFile = tempnam(sys_get_temp_dir(), 'cert');
@@ -86,16 +86,12 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Length: ' . strlen($soapEnvelope)
 ]);
 
+// IMPORTANT: Set User-Agent to mimic a browser or valid client to bypass some WAFs
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
 // Client Certificate Settings
 curl_setopt($ch, CURLOPT_SSLCERT, $certPemFile);
 curl_setopt($ch, CURLOPT_SSLKEY, $keyPemFile);
-// If key is encrypted, provide password again? Usually openssl_pkcs12_read decrypts it into pkey string.
-// If pkey string is unencrypted, no pass needed for curl.
-// If pkey string is encrypted, we need CURLOPT_KEYPASSWD.
-// Usually openssl_export would make it encrypted, but the array from read usually has it raw or we can check.
-// Let's assume it works without pass first, or retry.
-// Actually, usually we can just provide the PFX directly to CURL if supported, but separate PEMs is safer x-platform.
-
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For testing locally/homolog
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
