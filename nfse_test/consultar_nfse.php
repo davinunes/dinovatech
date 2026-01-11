@@ -52,8 +52,11 @@ $rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/n
 $signedXml = assinarRoot($rootXml, $certs);
 
 // Remove XML Declaration from Signed XML if present, because CDATA + <?xml?> inside Body is risky
-$signedXml = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $signedXml);
-$signedXml = str_replace('<?xml version="1.0"?>', '', $signedXml);
+// Splitting string to avoid short_open_tag issues on server
+$search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
+$search2 = '<' . '?xml version="1.0"?' . '>';
+$signedXml = str_replace($search1, '', $signedXml);
+$signedXml = str_replace($search2, '', $signedXml);
 $signedXml = trim($signedXml);
 
 // SOAP Envelope
