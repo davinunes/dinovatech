@@ -1,0 +1,121 @@
+<ConsultarNfseServicoPrestadoResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <ListaNfse>
+    <CompNfse>
+      <Nfse versao="2.04">
+        <InfNfse>
+          <Numero>1</Numero>
+          <CodigoVerificacao>2258E4BC4</CodigoVerificacao>
+          <DataEmissao>2026-01-11T07:39:56.777</DataEmissao>
+          <OutrasInformacoes>NFSE EMITIDA EM AMBIENTE DE HOMOLOGAÇÃO. SEM VALOR LEGAL.</OutrasInformacoes>
+          <ValoresNfse>
+            <BaseCalculo>10.00</BaseCalculo>
+            <ValorLiquidoNfse>10.00</ValorLiquidoNfse>
+          </ValoresNfse>
+          <DescricaoCodigoTributacaoMunicípio>Atividade - 3 %</DescricaoCodigoTributacaoMunicípio>
+          <ValorCredito>0.00</ValorCredito>
+          <PrestadorServico>
+            <RazaoSocial>Davi Nunes de Franca Tecnologia da Informacao Ltda</RazaoSocial>
+            <NomeFantasia>Digital Inovation Tecnologia</NomeFantasia>
+            <Endereco>
+              <Endereco>QI 24 Lotes 1 a 13 (Residencial Miami Beach)</Endereco>
+              <Numero>1</Numero>
+              <Complemento>104e</Complemento>
+              <Bairro>Setor Industrial (Taguatinga)</Bairro>
+              <CodigoMunicipio>5300108</CodigoMunicipio>
+              <Uf>DF</Uf>
+              <Cep>72135902</Cep>
+            </Endereco>
+            <Contato>
+              <Telefone>61996757676</Telefone>
+              <Email>DAVI.NUNES@GMAIL.COM</Email>
+            </Contato>
+          </PrestadorServico>
+          <OrgaoGerador>
+            <CodigoMunicipio>5002704</CodigoMunicipio>
+            <Uf>MS</Uf>
+          </OrgaoGerador>
+          <DeclaracaoPrestacaoServico>
+            <InfDeclaracaoPrestacaoServico Id="1">
+              <Competencia>2026-01-11</Competencia>
+              <Servico>
+                <Valores>
+                  <ValorServicos>10.00</ValorServicos>
+                  <ValorDeducoes>0.00</ValorDeducoes>
+                  <ValorPis>0.00</ValorPis>
+                  <ValorCofins>0.00</ValorCofins>
+                  <ValorInss>0.00</ValorInss>
+                  <ValorIr>0.00</ValorIr>
+                  <ValorCsll>0.00</ValorCsll>
+                  <OutrasRetencoes>0.00</OutrasRetencoes>
+                  <ValorIss>0.00</ValorIss>
+                  <Aliquota>0</Aliquota>
+                  <DescontoIncondicionado>0.00</DescontoIncondicionado>
+                  <DescontoCondicionado>0.00</DescontoCondicionado>
+                </Valores>
+                <IssRetido>2</IssRetido>
+                <ItemListaServico>01.07</ItemListaServico>
+                <CodigoCnae>6204000</CodigoCnae>
+                <CodigoTributacaoMunicipio>7</CodigoTributacaoMunicipio>
+                <CodigoNbs>115080000</CodigoNbs>
+                <Discriminacao>Teste emitido via interface web</Discriminacao>
+                <CodigoMunicipio>5300108</CodigoMunicipio>
+                <ExigibilidadeISS>1</ExigibilidadeISS>
+                <MunicipioIncidencia>5300108</MunicipioIncidencia>
+              </Servico>
+              <Prestador>
+                <CpfCnpj>
+                  <Cnpj>61733714000101</Cnpj>
+                </CpfCnpj>
+                <InscricaoMunicipal>0841147200111</InscricaoMunicipal>
+              </Prestador>
+              <TomadorServico>
+                <IdentificacaoTomador>
+                  <CpfCnpj>
+                    <Cpf>01691128104</Cpf>
+                  </CpfCnpj>
+                </IdentificacaoTomador>
+                <RazaoSocial>Davi Nunes de França</RazaoSocial>
+                <Endereco>
+                  <Endereco>QI 24 Lotes 1 a 13 (Residencial Miami Beach)</Endereco>
+                  <Numero>1</Numero>
+                  <Complemento>104E</Complemento>
+                  <Bairro>Setor Industrial (Taguatinga)</Bairro>
+                  <CodigoMunicipio>5300108</CodigoMunicipio>
+                  <Uf>DF</Uf>
+                  <Cep>72135902</Cep>
+                </Endereco>
+                <Contato>
+                  <Telefone>61996757676</Telefone>
+                  <Email>davi.nunes@gmail.com</Email>
+                </Contato>
+              </TomadorServico>
+              <OptanteSimplesNacional>2</OptanteSimplesNacional>
+              <IncentivoFiscal>2</IncentivoFiscal>
+            </InfDeclaracaoPrestacaoServico>
+            <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+              <SignedInfo>
+                <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+                <SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1" />
+                <Reference URI="#1">
+                  <Transforms>
+                    <Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature" />
+                    <Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315" />
+                  </Transforms>
+                  <DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" />
+                  <DigestValue>6ZcVM9w4QJZWqTB2ECVn25Jpmz0=</DigestValue>
+                </Reference>
+              </SignedInfo>
+              <SignatureValue>iFCVCi57NkjEpcvzokimRWfCaFJEaSU65XTXmrHKdfTQpdtVBul2LZgpvIqgJ+aY6dhqNaXMVQX4Rq8s5015UHgP8WqKtpJxc5RBVEwfWSltzUflveR9e1wio6iH9MMOzU5BX/OPJlaJFu+ly2VfmIX1UH3Uxzon2OdmnHdZlIH81RJU5Re/JOgXPcB+aX+bihy6LpErXSYDqqX72yX/hv/G6J1P0pGILPWNzE1nrIHErhlW2bZUAYR01wqkdEf6WQy+2Ir26Q9GIUdgjs02C8umWKNNEjOfwl1nHSfM8X6fLfb0LdYHvyGoWWGtTZez3mYNcIygpC3hN97gGElNyg==</SignatureValue>
+              <KeyInfo>
+                <X509Data>
+                  <X509Certificate>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</X509Certificate>
+                </X509Data>
+              </KeyInfo>
+            </Signature>
+          </DeclaracaoPrestacaoServico>
+        </InfNfse>
+      </Nfse>
+    </CompNfse>
+    <Pagina>1</Pagina>
+  </ListaNfse>
+</ConsultarNfseServicoPrestadoResposta>
