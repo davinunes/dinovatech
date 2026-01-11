@@ -28,8 +28,9 @@ $inscricaoMunicipal = '0841147200111';
 $numeroNota = '1';
 
 // NAMESPACE STRATEGY:
-// Inner XML (Payload): Must match the XSD Model provided (http://www.abrasf.org.br/nfse.xsd)
-// Outer XML (SOAP Action): Must match the Service expectation from error (http://nfse.abrasf.org.br)
+// Inner XML (Payload): http://www.abrasf.org.br/nfse.xsd
+// Outer XML (SOAP Action): http://nfse.abrasf.org.br
+// Header Version: 1.00 (per cabecalho.xml) NOT 2.04
 
 $pedidoContent = <<<XML
 <Pedido>
@@ -45,19 +46,23 @@ $pedidoContent = <<<XML
 XML;
 
 // Structure to be signed (Root Element)
-// Using Standard XSD Namespace for the Payload
 $rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">' . $pedidoContent . '</ConsultarNfseServicoPrestadoEnvio>';
 
 // Sign the Root Element
 $signedXml = assinarRoot($rootXml, $certs);
 
+// Remove XML Declaration from Signed XML if present, because CDATA + <?xml?> inside Body is risky
+$signedXml = str_replace('<?xml version="1.0" encoding="UTF-8"?>', '', $signedXml);
+$signedXml = str_replace('<?xml version="1.0"?>', '', $signedXml);
+$signedXml = trim($signedXml);
+
 // SOAP Envelope
-// Using Service Namespace for the Method Wrapper
+// Note 'versao="1.00"' in cabecalho, matching the sample file found.
 $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
-      <nfseCabecMsg><![CDATA[<?xml version="1.0" encoding="UTF-8"?><cabecalho versao="2.04" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
+      <nfseCabecMsg><![CDATA[<?xml version="1.0" encoding="UTF-8"?><cabecalho versao="1.00" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
       <nfseDadosMsg><![CDATA[$signedXml]]></nfseDadosMsg>
     </ConsultarNfseServicoPrestado>
   </soap:Body>
@@ -108,15 +113,14 @@ unlink($certPemFile);
 unlink($keyPemFile);
 
 
-function assinarRoot($xmlString, $certs)
-{
+function assinarRoot($xmlString, $certs) {
     $dom = new DOMDocument('1.0', 'UTF-8');
     $dom->loadXML($xmlString);
-
+    
     // Canonicalize
     $canonicalized = $dom->C14N(false, false, null, null);
     $digestValue = base64_encode(sha1($canonicalized, true));
-
+    
     $signedInfo = <<<XML
 <SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
 <CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>
@@ -135,13 +139,13 @@ XML;
     $domSignedInfo = new DOMDocument();
     $domSignedInfo->loadXML($signedInfo);
     $canonicalSignedInfo = $domSignedInfo->C14N(false, false, null, null);
-
+    
     $signatureValue = '';
     openssl_sign($canonicalSignedInfo, $signatureValue, $certs['pkey'], OPENSSL_ALGO_SHA1);
     $signatureValueContent = base64_encode($signatureValue);
-
+    
     $x509 = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r", "\n"], '', $certs['cert']);
-
+    
     $signatureXml = <<<XML
 <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
 $canonicalSignedInfo
@@ -158,7 +162,7 @@ XML;
     $signatureFragment = $dom->createDocumentFragment();
     $signatureFragment->appendXML($signatureXml);
     $dom->documentElement->appendChild($signatureFragment);
-
+    
     return $dom->saveXML();
 }
 ?>
