@@ -1,18 +1,18 @@
 <?php
 
 // Basic configuration
-// URL 1: Homologação Dados Oficiais (Blocked by Cloudflare)
-// $wsdl_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx?wsdl';
+// URL 1: Homologação Dados Oficiais (Trying to bypass Cloudflare again)
+$endpoint_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
 
-// URL 2: Homologação Fictícia (Bypass WAF)
-$endpoint_homolog = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+// URL 2: Homologação Fictícia (Gives generic 500 error, likely no data)
+// $endpoint_homolog = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
 $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
 
 // Load password from external file
 require __DIR__ . '/../certificado/certificado.php';
 
-echo "--- STARTING DEBUG SCRIPT ---\n";
+echo "--- STARTING DEBUG SCRIPT (Official Endpoint) ---\n";
 
 if (!file_exists($certificado_pfx)) {
     die("Error: Certificate file not found at $certificado_pfx\n");
@@ -77,9 +77,6 @@ $soapEnvelope = <<<XML
 XML;
 
 echo "Sending SOAP Request to $endpoint_homolog ...\n";
-echo "--- SOAP ENVELOPE (PREVIEW) ---\n";
-// echo $soapEnvelope . "\n"; // Uncomment to see full request
-echo "-------------------------------\n";
 
 $certPemFile = tempnam(sys_get_temp_dir(), 'cert');
 $keyPemFile = tempnam(sys_get_temp_dir(), 'key');
@@ -91,12 +88,26 @@ curl_setopt($ch, CURLOPT_URL, $endpoint_homolog);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $soapEnvelope);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
+
+// STANDARD HTTP HEADERS (Simulating browser/standard client)
+$headers = [
     'Content-Type: text/xml; charset=utf-8',
     'SOAPAction: "http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado"',
-    'Content-Length: ' . strlen($soapEnvelope)
-]);
-curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+    'Content-Length: ' . strlen($soapEnvelope),
+    'Accept: text/xml', // Explicit accept
+    'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+    'Connection: keep-alive',
+    'Cache-Control: no-cache'
+];
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+// IMPORTANT: User-Agent
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+// FORCE HTTP/1.1 (Cloudflare sometimes blocks HTTP/2 from non-browsers)
+curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
+// SSL CERTIFICATES
 curl_setopt($ch, CURLOPT_SSLCERT, $certPemFile);
 curl_setopt($ch, CURLOPT_SSLKEY, $keyPemFile);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -108,7 +119,7 @@ curl_setopt($ch, CURLOPT_VERBOSE, true);
 // CAPTURE HEADERS
 $responseHeaders = [];
 curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$responseHeaders) {
-    echo "RX HEADER: " . trim($header) . "\n"; // Print header real-time
+    echo "RX HEADER: " . trim($header) . "\n";
     return strlen($header);
 });
 
@@ -146,6 +157,7 @@ function assinarRoot($xmlString, $certs)
     $canonicalized = $dom->C14N(false, false, null, null);
     $digestValue = base64_encode(sha1($canonicalized, true));
 
+    // SignedInfo constructed carefully manually
     $signedInfo = '<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">' .
         '<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>' .
         '<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>' .
