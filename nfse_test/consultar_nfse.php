@@ -1,12 +1,14 @@
 <?php
 
 // Basic configuration
-// URL 1: Homologação Dados Oficiais (Try this first)
-$wsdl_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx?wsdl';
-$endpoint_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
+// Basic configuration
+// URL 1: Homologação Dados Oficiais (Blocked by Cloudflare)
+// $wsdl_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx?wsdl';
+// $endpoint_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
 
-// URL 2: Homologação Fictícia (Uncomment if URL 1 fails with Cloudflare block, though both might be protected)
-// $endpoint_homolog = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+// URL 2: Homologação Fictícia (Trying this to bypass WAF)
+$endpoint_homolog = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+
 
 $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
 
