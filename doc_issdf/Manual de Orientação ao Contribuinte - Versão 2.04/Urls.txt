@@ -1,0 +1,7 @@
+WebService de Homologação (Dados Oficiais): https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx
+WebService de Produção: https://df.issnetonline.com.br/webservicenfse204/nfse.asmx
+Série RPS:  3
+
+Webservice Homologação (Fictício): https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx
+Série RPS: 8 
+
