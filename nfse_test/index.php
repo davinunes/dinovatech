@@ -85,6 +85,16 @@
                             <!-- A1 Specific -->
                             <div class="tab-pane fade show active" id="content-a1">
                                 <div class="mb-3">
+                                    <label class="form-label fw-bold text-danger">Variação de Protocolo (Debug)</label>
+                                    <select class="form-select" id="variation">
+                                        <option value="standard" selected>Padrão (ds:, URI=#ID)</option>
+                                        <option value="uri_empty">URI Vazia (URI="")</option>
+                                        <option value="no_prefix">Sem Prefixo (ds: removido)</option>
+                                        <option value="no_cdata">Sem CDATA (Escaped XML)</option>
+                                    </select>
+                                    <div class="form-text">Teste diferentes formatos para contornar o erro 'Client Error'.</div>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label">CPF (Opcional)</label>
                                     <input type="text" class="form-control form-control-sm" id="cpf" placeholder="Apenas números">
                                 </div>
@@ -103,6 +113,9 @@
                                 <div class="mb-3">
                                     <label class="form-label">CPF (Opcional - A3)</label>
                                     <input type="text" class="form-control form-control-sm" id="cpf_a3" placeholder="Apenas números">
+                                </div>
+                                <div class="alert alert-secondary small">
+                                    Requer licença WebPKI em domínio remoto. Funciona localmente.
                                 </div>
                                 <button type="button" class="btn btn-primary w-100 mt-3" onclick="doTestA3()">Assinar e Enviar (A3)</button>
                             </div>
@@ -181,7 +194,8 @@
                     });
                 },
                 defaultError: function (message, error, origin, code) {
-                    alert('Web PKI Error: ' + message);
+                    // alert('Web PKI Error: ' + message);
+                    console.error('Web PKI: ' + message);
                 }
             });
         }
@@ -208,6 +222,7 @@
             showLoader("Consultando via Servidor (A1)...");
             const payload = getCommonData(false);
             payload.action = 'direct_a1';
+            payload.variation = document.getElementById('variation').value; // Get Variation
             
             try {
                 const req = await fetch('api.php', {
@@ -234,6 +249,7 @@
             showLoader("Preparando XML e Hash (Servidor)...");
             
             try {
+                // ... (Existing A3 Logic - kept the same)
                 // 1. Get Cert Content (Public Key)
                 const certContent = await new Promise((resolve, reject) => {
                     pki.readCertificate({
