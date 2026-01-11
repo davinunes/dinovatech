@@ -100,6 +100,10 @@
                                     </select>
                                     <button class="btn btn-sm btn-outline-secondary mt-2 w-100" onclick="initWebPKI()">Recarregar Certificados</button>
                                 </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CPF (Opcional - A3)</label>
+                                    <input type="text" class="form-control form-control-sm" id="cpf_a3" placeholder="Apenas números">
+                                </div>
                                 <button type="button" class="btn btn-primary w-100 mt-3" onclick="doTestA3()">Assinar e Enviar (A3)</button>
                             </div>
                         </div>
@@ -155,20 +159,15 @@
         // --- UI ---
         document.querySelectorAll('input[name="filterType"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
-                if(e.target.value === 'NUMBER') {
-                    document.getElementById('groupNumber').classList.remove('d-none');
-                    document.getElementById('groupPeriod').classList.add('d-none');
-                } else {
-                    document.getElementById('groupNumber').classList.add('d-none');
-                    document.getElementById('groupPeriod').classList.remove('d-none');
-                }
+                const isNumber = e.target.value === 'NUMBER';
+                document.getElementById('groupNumber').classList.toggle('d-none', !isNumber);
+                document.getElementById('groupPeriod').classList.toggle('d-none', isNumber);
             });
         });
 
         // --- WEB PKI (A3) ---
         let pki = new LacunaWebPKI();
-        let selectedCertThumbprint = null;
-
+        
         function initWebPKI() {
             pki.init({
                 ready: function () {
@@ -178,7 +177,6 @@
                             return cert.subjectName + ' (Exp: ' + new Date(cert.validityEnd).toLocaleDateString() + ')';
                         }
                     }).success(function (certs) {
-                        // Certs loaded
                         console.log("Certificates loaded.");
                     });
                 },
@@ -188,16 +186,17 @@
             });
         }
         
-        // Auto init on load
         window.addEventListener('load', initWebPKI);
 
         // --- EXECUTION ---
 
-        function getCommonData() {
+        function getCommonData(isA3 = false) {
+             const cpfVal = isA3 ? document.getElementById('cpf_a3').value : document.getElementById('cpf').value;
+             
             return {
                 endpoint: document.getElementById('endpoint').value,
                 cnpj: document.getElementById('cnpj').value,
-                cpf: document.getElementById('cpf').value,
+                cpf: cpfVal,
                 im: document.getElementById('im').value,
                 numero: document.getElementById('numero').value,
                 dataInicial: document.querySelector('input[name="filterType"]:checked').value === 'PERIOD' ? document.getElementById('dataInicial').value : '',
@@ -207,84 +206,108 @@
 
         async function doTestA1() {
             showLoader("Consultando via Servidor (A1)...");
-            const payload = getCommonData();
+            const payload = getCommonData(false);
+            payload.action = 'direct_a1';
             
-            // A1 uses server-side signing, no xml_signed param needed
-            sendToApi(payload);
-        }
-
-        async function doTestA3() {
-            // 1. Get Selected Cert
-            const thumbprint = document.getElementById('certificateSelect').value;
-            if(!thumbprint) {
-                alert("Selecione um certificado!");
-                return;
-            }
-
-            showLoader("Gerando XML e Solicitando Assinatura...");
-
-            // 2. Build XML (Client Side)
-            const data = getCommonData();
-            let pedidoContent = `<Pedido><Prestador><CpfCnpj>`;
-            if(data.cpf) {
-                pedidoContent += `<Cpf>${data.cpf}</Cpf>`;
-            } else {
-                pedidoContent += `<Cnpj>${data.cnpj}</Cnpj>`;
-            }
-            pedidoContent += `</CpfCnpj><InscricaoMunicipal>${data.im}</InscricaoMunicipal></Prestador>`;
-            
-            if(data.dataInicial) {
-                pedidoContent += `<PeriodoCompetencia><DataInicial>${data.dataInicial}</DataInicial><DataFinal>${data.dataFinal}</DataFinal></PeriodoCompetencia>`;
-            } else {
-                pedidoContent += `<NumeroNfse>${data.numero}</NumeroNfse>`;
-            }
-            pedidoContent += `<Pagina>1</Pagina></Pedido>`;
-
-            const rootId = "ConsultarNfseServicoPrestadoEnvio";
-            // Important: Matches server-side structure exactly
-            const xmlToSign = `<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="${rootId}">${pedidoContent}</ConsultarNfseServicoPrestadoEnvio>`;
-
-            // 3. Sign using WebPKI
-            pki.signXml({
-                thumbprint: thumbprint,
-                xml: xmlToSign,
-                elementId: rootId
-            }).success(function (signedXml) {
-                showLoader("Assinatura OK! Enviando para API...");
-                
-                // 4. Send Signed XML to backend proxy
-                data.xml_signed = signedXml; // This triggers A3 mode in api.php
-                sendToApi(data);
-
-            }).error(function (message, error, origin, code) {
-                hideLoader();
-                alert('Erro na assinatura: ' + message);
-            });
-        }
-
-        async function sendToApi(payload) {
             try {
                 const req = await fetch('api.php', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(payload)
                 });
-                
                 const res = await req.json();
-                
-                // Render Response
-                document.getElementById('resStatus').innerText = res.http_code;
-                document.getElementById('resStatus').className = 'badge ' + (res.http_code == 200 ? 'bg-success' : 'bg-danger');
-                
-                document.getElementById('bodyContent').innerText = res.response_body || res.curl_error || 'No response';
-                document.getElementById('headersContent').innerText = res.headers ? res.headers.join('\n') : 'No headers';
-                document.getElementById('requestContent').innerText = res.request_envelope || 'No request generated';
-
+                renderResponse(res);
             } catch (err) {
-                document.getElementById('bodyContent').innerText = 'Fatal JS Error: ' + err.message;
+                renderError(err);
             } finally {
                 hideLoader();
             }
+        }
+
+        async function doTestA3() {
+            const thumbprint = document.getElementById('certificateSelect').value;
+            if(!thumbprint) {
+                alert("Selecione um certificado!");
+                return;
+            }
+
+            showLoader("Preparando XML e Hash (Servidor)...");
+            
+            try {
+                // 1. Get Cert Content (Public Key)
+                const certContent = await new Promise((resolve, reject) => {
+                    pki.readCertificate({
+                        thumbprint: thumbprint
+                    }).success(resolve).error(reject);
+                });
+
+                // 2. Request Hash from API
+                const payload = getCommonData(true);
+                payload.action = 'prepare_hash';
+                
+                const reqHash = await fetch('api.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                const resHash = await reqHash.json();
+                
+                if(resHash.status !== 'success') {
+                    throw new Error('Erro ao preparar XML: ' + (resHash.message || JSON.stringify(resHash)));
+                }
+
+                showLoader("Assinando Hash (Token A3)...");
+
+                // 3. Sign Hash in Browser
+                const signature = await new Promise((resolve, reject) => {
+                    pki.signHash({
+                        thumbprint: thumbprint,
+                        hash: resHash.hash_to_sign_b64,
+                        digestAlgorithm: 'SHA-1'
+                    }).success(resolve).error(reject);
+                });
+
+                showLoader("Enviando XML Assinado...");
+
+                // 4. Send Signed Data to API
+                const finalPayload = {
+                    action: 'send_signed',
+                    endpoint: payload.endpoint,
+                    signature_b64: signature,
+                    cert_b64: certContent,
+                    signed_info_xml: resHash.signed_info_xml,
+                    original_xml: resHash.original_xml
+                };
+
+                const reqFinal = await fetch('api.php', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(finalPayload)
+                });
+                const resFinal = await reqFinal.json();
+                renderResponse(resFinal);
+
+            } catch (err) {
+                console.error(err);
+                if (err.message) alert('Erro: ' + err.message);
+                else if (typeof err === 'string') alert('Erro: ' + err);
+                else alert('Erro desconhecido. Veja o console.');
+            } finally {
+                hideLoader();
+            }
+        }
+
+        function renderResponse(res) {
+            document.getElementById('resStatus').innerText = res.http_code;
+            document.getElementById('resStatus').className = 'badge ' + (res.http_code == 200 ? 'bg-success' : 'bg-danger');
+            
+            document.getElementById('bodyContent').innerText = res.response_body || res.curl_error || 'No response';
+            document.getElementById('headersContent').innerText = res.headers ? res.headers.join('\n') : 'No headers';
+            document.getElementById('requestContent').innerText = res.request_envelope || 'No request generated';
+        }
+
+        function renderError(err) {
+            document.getElementById('bodyContent').innerText = 'Fatal JS Error: ' + err.message;
         }
 
         function showLoader(msg) {
