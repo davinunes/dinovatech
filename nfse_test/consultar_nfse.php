@@ -28,8 +28,8 @@ $inscricaoMunicipal = '0841147200111';
 $numeroNota = '1';
 
 // Step 1: Create the Inner XML (Pedido)
-// Note: We are not adding 'Id' attribute because XSD schema for ConsultarNfseServicoPrestadoEnvio -> Pedido doesn't specify one.
-// We will sign the entire empty-URI reference.
+// Correct Namespace: http://nfse.abrasf.org.br
+// STRUCTURE: ConsultarNfseServicoPrestadoEnvio -> Pedido, Signature
 $pedidoXml = <<<XML
 <Pedido xmlns="http://nfse.abrasf.org.br">
     <Prestador>
@@ -44,12 +44,106 @@ $pedidoXml = <<<XML
 XML;
 
 // Step 2: Sign the Pedido (XML Signature)
-$signedXml = assinarId($pedidoXml, $certs);
+// IMPORTANT: We need to sign content, but typically the signature is enveloped or detached.
+// XSD says: Sequence { Pedido, Signature }. This usually means "Detached" or "Enveloping" depending on URI.
+// If URI="", it signs the whole doc relative to Signature.
+// If Signature is a sibling, it cannot sign the parent without ID.
+// However, standard ABRASF 2.04 often uses Enveloped signature where Signature is INSIDE the root.
+// Wait, my XSD check showed Signature as SIBLING of Pedido.
+// <ConsultarNfseServicoPrestadoEnvio> -> Sequence { Pedido, Signature }
+// In this case, Signature typically signs 'Pedido'. To do that, Pedido needs an ID.
+// But XSD for Pedido has no optional ID attribute?
+// Let's assume the Signature must be *Enveloped* by the main element, but physically placed after Pedido?
+// No, Enveloped means Signature is a child of the signed element.
+// If valid structure is <Envio><Pedido/><Signature/></Envio>, then Signature is partial.
+// It usually signs #Pedido.
+// Since we don't have ID on Pedido, we might try signing the whole Envio, but that creates circular ref if Enveloped.
+// Let's try signing the 'Pedido' content by value? No, XMLSig signs by Reference URI.
+// Maybe the server expects the Signature to be INSIDE Pedido despite my reading?
+// No, the XSD was clear: element 'Pedido', then element 'Signature'.
+// Let's try to add an ID to Pedido manually even if schema strictly doesn't show it (sometimes it's allowed by anyAttribute).
+// OR, common pattern: URI="" signs the containing document key.
+// Let's construct the "SignedInfo" to reference the Pedido if possible.
+// For now, I will construct the <ConsultarNfseServicoPrestadoEnvio> containing Pedido, and then append the Signature.
 
-// Step 3: Wrap correctly
-$xmlEnvio = "<ConsultarNfseServicoPrestadoEnvio xmlns=\"http://nfse.abrasf.org.br\">" . $signedXml . "</ConsultarNfseServicoPrestadoEnvio>";
+// To sign 'Pedido', we need to canonicalize IT.
+$dom = new DOMDocument('1.0', 'UTF-8');
+$dom->loadXML($pedidoXml);
+$canonicalPedido = $dom->C14N(false, false, null, null);
+$digestValue = base64_encode(sha1($canonicalPedido, true));
 
-// Step 4: SOAP Envelope
+// We will simulate a Reference to the Pedido logic, but without URI (or URI="").
+// If URI="", it validates the whole root.
+// If the server validates "ConsultarNfseServicoPrestadoEnvio", then URI="" works if Signature is child of it.
+// Let's build the Signature block detached/sibling but referenced.
+// Actually, if I cannot put ID, I cannot reference it specifically by URI="#id".
+// Let's assume URI="" and the Signature is a child of EnvÃo.
+
+$signedInfo = <<<XML
+<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>
+<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>
+<Reference URI="">
+<Transforms>
+<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>
+<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>
+</Transforms>
+<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>
+<DigestValue>$digestValue</DigestValue>
+</Reference>
+</SignedInfo>
+XML;
+
+// Recalculate digest? No, URI="" means "the document containing this signature".
+// So digest must be of the "ConsultarNfseServicoPrestadoEnvio" content *excluding* the Signature itself.
+// This is circular.
+// Approach 2: Sign the 'Pedido' explicitly and add Id in PHP even if XSD didn't explicitly show it (it often inherits attributes).
+$pedidoXmlWithId = str_replace('<Pedido', '<Pedido Id="pedido1"', $pedidoXml);
+$domPedido = new DOMDocument();
+$domPedido->loadXML($pedidoXmlWithId);
+$canonicalPedido = $domPedido->C14N(false, false, null, null);
+$digestValue = base64_encode(sha1($canonicalPedido, true));
+
+$signedInfo = <<<XML
+<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>
+<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>
+<Reference URI="#pedido1">
+<Transforms>
+<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>
+</Transforms>
+<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>
+<DigestValue>$digestValue</DigestValue>
+</Reference>
+</SignedInfo>
+XML;
+
+$domSignedInfo = new DOMDocument();
+$domSignedInfo->loadXML($signedInfo);
+$canonicalSignedInfo = $domSignedInfo->C14N(false, false, null, null);
+
+$signatureValue = '';
+openssl_sign($canonicalSignedInfo, $signatureValue, $certs['pkey'], OPENSSL_ALGO_SHA1);
+$signatureValueContent = base64_encode($signatureValue);
+
+$x509 = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r", "\n"], '', $certs['cert']);
+
+$signatureXml = <<<XML
+<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+$canonicalSignedInfo
+<SignatureValue>$signatureValueContent</SignatureValue>
+<KeyInfo>
+<X509Data>
+<X509Certificate>$x509</X509Certificate>
+</X509Data>
+</KeyInfo>
+</Signature>
+XML;
+
+// Final assembly: Envio -> Pedido + Signature
+$xmlEnvio = "<ConsultarNfseServicoPrestadoEnvio xmlns=\"http://nfse.abrasf.org.br\">" . $pedidoXmlWithId . $signatureXml . "</ConsultarNfseServicoPrestadoEnvio>";
+// Remove the XML Declaration from internal parts if any
+
 $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -63,7 +157,6 @@ XML;
 
 echo "Sending SOAP Request to $endpoint_homolog ...\n";
 
-// Save temporary PEM files for cURL
 $certPemFile = tempnam(sys_get_temp_dir(), 'cert');
 $keyPemFile = tempnam(sys_get_temp_dir(), 'key');
 file_put_contents($certPemFile, $certs['cert']);
@@ -104,75 +197,4 @@ if (curl_errno($ch)) {
 curl_close($ch);
 unlink($certPemFile);
 unlink($keyPemFile);
-
-
-// Helper function to Sign the XML
-function assinarId($xmlString, $certs)
-{
-    $dom = new DOMDocument('1.0', 'UTF-8');
-    $dom->loadXML($xmlString);
-
-    // We assume the root element is what we want to sign.
-    // Since Pedido has no ID in this XSD context, we will sign the whole document (URI="")
-    // BUT we need to check if we can add an ID. Usually ABRASF schemas DON'T allow arbitrary attributes unless 'anyAttribute' is present.
-    // The XSD checked earlier DOES NOT show anyAttribute on Pedido.
-    // So we must use an empty URI reference <Reference URI=""> which means "the containing resource".
-    // However, when embedding the signature INSIDE the element (Enveloped Signature), URI="" refers to the document containing the signature.
-
-    // Canonicalize the document (C14N)
-    $canonicalized = $dom->C14N(false, false, null, null);
-
-    // Calculate Digest (SHA1)
-    $digestValue = base64_encode(sha1($canonicalized, true));
-
-    // Prepare SignedInfo
-    // Note: We use the namespace prefixes strictly as required by typically strict servers
-    $signedInfo = <<<XML
-<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
-<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>
-<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>
-<Reference URI="">
-<Transforms>
-<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>
-<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>
-</Transforms>
-<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>
-<DigestValue>$digestValue</DigestValue>
-</Reference>
-</SignedInfo>
-XML;
-
-    // Canonicalize SignedInfo for signing
-    $signedInfoDom = new DOMDocument('1.0', 'UTF-8');
-    $signedInfoDom->loadXML($signedInfo);
-    $canonicalSignedInfo = $signedInfoDom->C14N(false, false, null, null);
-
-    // Sign using Private Key
-    $signatureValue = '';
-    openssl_sign($canonicalSignedInfo, $signatureValue, $certs['pkey'], OPENSSL_ALGO_SHA1);
-    $signatureValue = base64_encode($signatureValue);
-
-    // Get X509 Certificate (clean headers)
-    $x509 = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r", "\n"], '', $certs['cert']);
-
-    // Construct valid Signature Block
-    $signatureXml = <<<XML
-<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
-$canonicalSignedInfo
-<SignatureValue>$signatureValue</SignatureValue>
-<KeyInfo>
-<X509Data>
-<X509Certificate>$x509</X509Certificate>
-</X509Data>
-</KeyInfo>
-</Signature>
-XML;
-
-    // Append Signature to the root element
-    $signatureFragment = $dom->createDocumentFragment();
-    $signatureFragment->appendXML($signatureXml);
-    $dom->documentElement->appendChild($signatureFragment);
-
-    return $dom->saveXML($dom->documentElement);
-}
 ?>
