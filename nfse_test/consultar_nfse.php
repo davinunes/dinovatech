@@ -12,6 +12,8 @@ $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
 // Load password from external file
 require __DIR__ . '/../certificado/certificado.php';
 
+echo "--- STARTING DEBUG SCRIPT ---\n";
+
 if (!file_exists($certificado_pfx)) {
     die("Error: Certificate file not found at $certificado_pfx\n");
 }
@@ -22,6 +24,8 @@ if (!openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado)) {
     die("Error requesting certificate. Check the password.\n");
 }
 
+echo "Certificate Loaded.\n";
+
 // --- XML Construction ---
 $cnpj = '61733714000101';
 $inscricaoMunicipal = '0841147200111';
@@ -30,7 +34,7 @@ $numeroNota = '1';
 // NAMESPACE STRATEGY:
 // Inner XML (Payload): http://www.abrasf.org.br/nfse.xsd
 // Outer XML (SOAP Action): http://nfse.abrasf.org.br
-// Header Version: 1.00 (per cabecalho.xml)
+// Header Version: 1.00
 
 $pedidoContent = <<<XML
 <Pedido>
@@ -51,9 +55,7 @@ $rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/n
 // Sign the Root Element
 $signedXml = assinarRoot($rootXml, $certs);
 
-// Remove XML Declaration from Signed XML if present
-// Splitting strings to avoid short_open_tag parse errors
-// We search for the literal tags and remove them
+// Remove XML Declaration
 $search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
 $search2 = '<' . '?xml version="1.0"?' . '>';
 $signedXml = str_replace($search1, '', $signedXml);
@@ -61,8 +63,6 @@ $signedXml = str_replace($search2, '', $signedXml);
 $signedXml = trim($signedXml);
 
 // SOAP Envelope
-// Note 'versao="1.00"' in cabecalho, matching the sample file found.
-// Using variable for XML Decl to avoid parse error inside Heredoc
 $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
 
 $soapEnvelope = <<<XML
@@ -77,6 +77,9 @@ $soapEnvelope = <<<XML
 XML;
 
 echo "Sending SOAP Request to $endpoint_homolog ...\n";
+echo "--- SOAP ENVELOPE (PREVIEW) ---\n";
+// echo $soapEnvelope . "\n"; // Uncomment to see full request
+echo "-------------------------------\n";
 
 $certPemFile = tempnam(sys_get_temp_dir(), 'cert');
 $keyPemFile = tempnam(sys_get_temp_dir(), 'key');
@@ -90,7 +93,7 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $soapEnvelope);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: text/xml; charset=utf-8',
-    'SOAPAction: "http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado"', // Service Namespace
+    'SOAPAction: "http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado"',
     'Content-Length: ' . strlen($soapEnvelope)
 ]);
 curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
@@ -99,12 +102,26 @@ curl_setopt($ch, CURLOPT_SSLKEY, $keyPemFile);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
+// ENABLE VERBOSE DEBUGGING
+curl_setopt($ch, CURLOPT_VERBOSE, true);
+
+// CAPTURE HEADERS
+$responseHeaders = [];
+curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$responseHeaders) {
+    echo "RX HEADER: " . trim($header) . "\n"; // Print header real-time
+    return strlen($header);
+});
+
 $response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+echo "\n--- REQUEST ENDED ---\n";
+echo "HTTP STATUS: $httpCode\n";
 
 if (curl_errno($ch)) {
     echo 'Curl Error: ' . curl_error($ch) . "\n";
 } else {
-    echo "Response received:\n";
+    echo "Response Body:\n";
     $dom = new DOMDocument;
     $dom->preserveWhiteSpace = false;
     $dom->formatOutput = true;
@@ -128,10 +145,6 @@ function assinarRoot($xmlString, $certs)
     // Canonicalize
     $canonicalized = $dom->C14N(false, false, null, null);
     $digestValue = base64_encode(sha1($canonicalized, true));
-
-    // Construct SignedInfo
-    // Split the XML tag to avoid parser error here too just in case
-    // Though it is inside a string, better safe than sorry if parser gets confused again
 
     $signedInfo = '<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">' .
         '<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>' .
@@ -166,7 +179,6 @@ function assinarRoot($xmlString, $certs)
         '</KeyInfo>' .
         '</Signature>';
 
-    // Append Signature to Root
     $signatureFragment = $dom->createDocumentFragment();
     $signatureFragment->appendXML($signatureXml);
     $dom->documentElement->appendChild($signatureFragment);
