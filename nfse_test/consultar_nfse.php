@@ -1,18 +1,17 @@
 <?php
 
 // Basic configuration
-// URL 1: Homologação Dados Oficiais (Trying to bypass Cloudflare again)
-$endpoint_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
+// URL 1: Homologação Dados Oficiais (Blocked 403)
+// $endpoint_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
 
-// URL 2: Homologação Fictícia (Gives generic 500 error, likely no data)
-// $endpoint_homolog = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+// URL 2: Homologação Fictícia (Returns 500 Client Error - likely structure)
+$endpoint_homolog = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
 $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
 
-// Load password from external file
 require __DIR__ . '/../certificado/certificado.php';
 
-echo "--- STARTING DEBUG SCRIPT (Official Endpoint) ---\n";
+echo "--- STARTING DEBUG SCRIPT (Fictitious Endpoint - Standardized Prefixes) ---\n";
 
 if (!file_exists($certificado_pfx)) {
     die("Error: Certificate file not found at $certificado_pfx\n");
@@ -26,15 +25,12 @@ if (!openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado)) {
 
 echo "Certificate Loaded.\n";
 
-// --- XML Construction ---
 $cnpj = '61733714000101';
 $inscricaoMunicipal = '0841147200111';
 $numeroNota = '1';
 
-// NAMESPACE STRATEGY:
-// Inner XML (Payload): http://www.abrasf.org.br/nfse.xsd
-// Outer XML (SOAP Action): http://nfse.abrasf.org.br
-// Header Version: 1.00
+// XML Construction with precise Namespace management
+// Payload uses http://www.abrasf.org.br/nfse.xsd (Default)
 
 $pedidoContent = <<<XML
 <Pedido>
@@ -49,20 +45,20 @@ $pedidoContent = <<<XML
 </Pedido>
 XML;
 
-// Structure to be signed (Root Element)
+// Construct Root
 $rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">' . $pedidoContent . '</ConsultarNfseServicoPrestadoEnvio>';
 
-// Sign the Root Element
+// Sign Root with 'ds' prefix
 $signedXml = assinarRoot($rootXml, $certs);
 
-// Remove XML Declaration
+// Remove headers just in case
 $search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
 $search2 = '<' . '?xml version="1.0"?' . '>';
 $signedXml = str_replace($search1, '', $signedXml);
 $signedXml = str_replace($search2, '', $signedXml);
 $signedXml = trim($signedXml);
 
-// SOAP Envelope
+// Envelope
 $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
 
 $soapEnvelope = <<<XML
@@ -88,40 +84,20 @@ curl_setopt($ch, CURLOPT_URL, $endpoint_homolog);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $soapEnvelope);
-
-// STANDARD HTTP HEADERS (Simulating browser/standard client)
-$headers = [
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: text/xml; charset=utf-8',
     'SOAPAction: "http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado"',
     'Content-Length: ' . strlen($soapEnvelope),
-    'Accept: text/xml', // Explicit accept
-    'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-    'Connection: keep-alive',
-    'Cache-Control: no-cache'
-];
-curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-// IMPORTANT: User-Agent
-curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-
-// FORCE HTTP/1.1 (Cloudflare sometimes blocks HTTP/2 from non-browsers)
-curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-
-// SSL CERTIFICATES
+    'Accept: text/xml',
+    'Accept-Language: pt-BR',
+    'Connection: keep-alive'
+]);
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
 curl_setopt($ch, CURLOPT_SSLCERT, $certPemFile);
 curl_setopt($ch, CURLOPT_SSLKEY, $keyPemFile);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-
-// ENABLE VERBOSE DEBUGGING
 curl_setopt($ch, CURLOPT_VERBOSE, true);
-
-// CAPTURE HEADERS
-$responseHeaders = [];
-curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($curl, $header) use (&$responseHeaders) {
-    echo "RX HEADER: " . trim($header) . "\n";
-    return strlen($header);
-});
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -157,19 +133,22 @@ function assinarRoot($xmlString, $certs)
     $canonicalized = $dom->C14N(false, false, null, null);
     $digestValue = base64_encode(sha1($canonicalized, true));
 
-    // SignedInfo constructed carefully manually
-    $signedInfo = '<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">' .
-        '<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>' .
-        '<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>' .
-        '<Reference URI="">' .
-        '<Transforms>' .
-        '<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>' .
-        '<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>' .
-        '</Transforms>' .
-        '<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>' .
-        '<DigestValue>' . $digestValue . '</DigestValue>' .
-        '</Reference>' .
-        '</SignedInfo>';
+    // Construct SignedInfo with 'ds' Prefix
+    // VERY IMPORTANT: XML Digital Signature standard often requires prefixes 'ds'
+    // and the declarations xmlns:ds="http://www.w3.org/2000/09/xmldsig#"
+
+    $signedInfo = '<ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">' .
+        '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>' .
+        '<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>' .
+        '<ds:Reference URI="">' .
+        '<ds:Transforms>' .
+        '<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>' .
+        '<ds:Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:Transform>' .
+        '</ds:Transforms>' .
+        '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>' .
+        '<ds:DigestValue>' . $digestValue . '</ds:DigestValue>' .
+        '</ds:Reference>' .
+        '</ds:SignedInfo>';
 
     $domSignedInfo = new DOMDocument();
     $domSignedInfo->loadXML($signedInfo);
@@ -178,18 +157,19 @@ function assinarRoot($xmlString, $certs)
     $signatureValue = '';
     openssl_sign($canonicalSignedInfo, $signatureValue, $certs['pkey'], OPENSSL_ALGO_SHA1);
     $signatureValueContent = base64_encode($signatureValue);
+    $signatureValueContent = chunk_split($signatureValueContent, 76, "\n"); // Some strict validations require wrapping
 
     $x509 = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r", "\n"], '', $certs['cert']);
 
-    $signatureXml = '<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">' .
+    $signatureXml = '<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">' .
         $canonicalSignedInfo .
-        '<SignatureValue>' . $signatureValueContent . '</SignatureValue>' .
-        '<KeyInfo>' .
-        '<X509Data>' .
-        '<X509Certificate>' . $x509 . '</X509Certificate>' .
-        '</X509Data>' .
-        '</KeyInfo>' .
-        '</Signature>';
+        '<ds:SignatureValue>' . $signatureValueContent . '</ds:SignatureValue>' .
+        '<ds:KeyInfo>' .
+        '<ds:X509Data>' .
+        '<ds:X509Certificate>' . $x509 . '</ds:X509Certificate>' .
+        '</ds:X509Data>' .
+        '</ds:KeyInfo>' .
+        '</ds:Signature>';
 
     $signatureFragment = $dom->createDocumentFragment();
     $signatureFragment->appendXML($signatureXml);
