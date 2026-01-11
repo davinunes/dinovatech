@@ -1,7 +1,6 @@
 <?php
 
 // Basic configuration
-// Basic configuration
 // URL 1: Homologação Dados Oficiais (Blocked by Cloudflare)
 // $wsdl_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx?wsdl';
 // $endpoint_homolog = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
@@ -41,8 +40,9 @@ $numeroNota = '1';
 $dataCompetencia = '2026-01-11'; // Using the date from your XML
 
 // XML Structure for ConsultarNfseServicoPrestadoEnvio (ABRASF 2.04)
+// FIXED: Server expects http://nfse.abrasf.org.br and NOT http://www.abrasf.org.br/nfse.xsd
 $xmlEnvio = <<<XML
-<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
+<ConsultarNfseServicoPrestadoEnvio xmlns="http://nfse.abrasf.org.br">
     <Prestador>
         <CpfCnpj>
             <Cnpj>$cnpj</Cnpj>
@@ -61,8 +61,8 @@ XML;
 $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
-    <ConsultarNfseServicoPrestado xmlns="http://www.abrasf.org.br/nfse.xsd">
-      <nfseCabecMsg><![CDATA[<?xml version="1.0" encoding="UTF-8"?><cabecalho versao="2.04" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
+    <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
+      <nfseCabecMsg><![CDATA[<?xml version="1.0" encoding="UTF-8"?><cabecalho versao="2.04" xmlns="http://nfse.abrasf.org.br"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
       <nfseDadosMsg><![CDATA[$xmlEnvio]]></nfseDadosMsg>
     </ConsultarNfseServicoPrestado>
   </soap:Body>
@@ -84,7 +84,7 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $soapEnvelope);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: text/xml; charset=utf-8',
-    'SOAPAction: "http://www.abrasf.org.br/nfse.xsd/ConsultarNfseServicoPrestado"',
+    'SOAPAction: "http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado"',
     'Content-Length: ' . strlen($soapEnvelope)
 ]);
 
