@@ -30,7 +30,7 @@ $numeroNota = '1';
 // NAMESPACE STRATEGY:
 // Inner XML (Payload): http://www.abrasf.org.br/nfse.xsd
 // Outer XML (SOAP Action): http://nfse.abrasf.org.br
-// Header Version: 1.00 (per cabecalho.xml) NOT 2.04
+// Header Version: 1.00 (per cabecalho.xml)
 
 $pedidoContent = <<<XML
 <Pedido>
@@ -51,8 +51,9 @@ $rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/n
 // Sign the Root Element
 $signedXml = assinarRoot($rootXml, $certs);
 
-// Remove XML Declaration from Signed XML if present, because CDATA + <?xml?> inside Body is risky
-// Splitting string to avoid short_open_tag issues on server
+// Remove XML Declaration from Signed XML if present
+// Splitting strings to avoid short_open_tag parse errors
+// We search for the literal tags and remove them
 $search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
 $search2 = '<' . '?xml version="1.0"?' . '>';
 $signedXml = str_replace($search1, '', $signedXml);
@@ -61,8 +62,9 @@ $signedXml = trim($signedXml);
 
 // SOAP Envelope
 // Note 'versao="1.00"' in cabecalho, matching the sample file found.
-// Escaping <?xml to avoid short_open_tag parse error
+// Using variable for XML Decl to avoid parse error inside Heredoc
 $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
+
 $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
@@ -118,56 +120,57 @@ unlink($certPemFile);
 unlink($keyPemFile);
 
 
-function assinarRoot($xmlString, $certs) {
+function assinarRoot($xmlString, $certs)
+{
     $dom = new DOMDocument('1.0', 'UTF-8');
     $dom->loadXML($xmlString);
-    
+
     // Canonicalize
     $canonicalized = $dom->C14N(false, false, null, null);
     $digestValue = base64_encode(sha1($canonicalized, true));
-    
-    $signedInfo = <<<XML
-<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
-<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>
-<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>
-<Reference URI="">
-<Transforms>
-<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>
-<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>
-</Transforms>
-<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>
-<DigestValue>$digestValue</DigestValue>
-</Reference>
-</SignedInfo>
-XML;
+
+    // Construct SignedInfo
+    // Split the XML tag to avoid parser error here too just in case
+    // Though it is inside a string, better safe than sorry if parser gets confused again
+
+    $signedInfo = '<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">' .
+        '<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod>' .
+        '<SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod>' .
+        '<Reference URI="">' .
+        '<Transforms>' .
+        '<Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform>' .
+        '<Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform>' .
+        '</Transforms>' .
+        '<DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod>' .
+        '<DigestValue>' . $digestValue . '</DigestValue>' .
+        '</Reference>' .
+        '</SignedInfo>';
 
     $domSignedInfo = new DOMDocument();
     $domSignedInfo->loadXML($signedInfo);
     $canonicalSignedInfo = $domSignedInfo->C14N(false, false, null, null);
-    
+
     $signatureValue = '';
     openssl_sign($canonicalSignedInfo, $signatureValue, $certs['pkey'], OPENSSL_ALGO_SHA1);
     $signatureValueContent = base64_encode($signatureValue);
-    
+
     $x509 = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r", "\n"], '', $certs['cert']);
-    
-    $signatureXml = <<<XML
-<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
-$canonicalSignedInfo
-<SignatureValue>$signatureValueContent</SignatureValue>
-<KeyInfo>
-<X509Data>
-<X509Certificate>$x509</X509Certificate>
-</X509Data>
-</KeyInfo>
-</Signature>
-XML;
+
+    $signatureXml = '<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">' .
+        $canonicalSignedInfo .
+        '<SignatureValue>' . $signatureValueContent . '</SignatureValue>' .
+        '<KeyInfo>' .
+        '<X509Data>' .
+        '<X509Certificate>' . $x509 . '</X509Certificate>' .
+        '</X509Data>' .
+        '</KeyInfo>' .
+        '</Signature>';
 
     // Append Signature to Root
     $signatureFragment = $dom->createDocumentFragment();
     $signatureFragment->appendXML($signatureXml);
     $dom->documentElement->appendChild($signatureFragment);
-    
+
     return $dom->saveXML();
 }
 ?>
