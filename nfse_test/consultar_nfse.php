@@ -61,11 +61,13 @@ $signedXml = trim($signedXml);
 
 // SOAP Envelope
 // Note 'versao="1.00"' in cabecalho, matching the sample file found.
+// Escaping <?xml to avoid short_open_tag parse error
+$xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
 $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
-      <nfseCabecMsg><![CDATA[<?xml version="1.0" encoding="UTF-8"?><cabecalho versao="1.00" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
+      <nfseCabecMsg><![CDATA[$xmlDecl<cabecalho versao="1.00" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
       <nfseDadosMsg><![CDATA[$signedXml]]></nfseDadosMsg>
     </ConsultarNfseServicoPrestado>
   </soap:Body>
