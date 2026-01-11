@@ -25,8 +25,8 @@ if (!openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado)) {
 
 // --- VARIATION SETTINGS ---
 // USER: Change the values below to test with CPF if needed.
-$useCpf = false; // Set to true to use CPF instead of CNPJ
-$userCpf = '00000000000'; // PUT THE CPF HERE IF TESTING
+$useCpf = true; // Set to true to use CPF instead of CNPJ
+$userCpf = '01691128104'; // PUT THE CPF HERE IF TESTING
 
 $queryType = 'PERIOD'; // Options: 'NUMBER' or 'PERIOD'
 
