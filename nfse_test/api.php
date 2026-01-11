@@ -20,60 +20,71 @@ if ($endpoint_type === 'official') {
 $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
 $senha_arquivo = __DIR__ . '/../certificado/certificado.php';
 
-if (!file_exists($certificado_pfx)) {
-    echo json_encode(['status' => 'error', 'message' => "Certificate not found at $certificado_pfx"]);
-    exit;
-}
-
-require $senha_arquivo; // Sets $senhaCertificado
-
-$pfxContent = file_get_contents($certificado_pfx);
+// Check if we are in A3 mode (Pre-signed XML provided) or A1 mode
+$signedXml = $input['xml_signed'] ?? null;
 $certs = [];
-if (!openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado)) {
-    echo json_encode(['status' => 'error', 'message' => "Certificate password invalid"]);
+
+// For A1, we need to load the cert to sign.
+// For A3, we usually still need a CLIENT CERT for SSL (Mutual TLS).
+// If the user uses A3, we technically can't do Mutual TLS from the server using the A3 cert (it's on the client).
+// However, the "Fictitious" environment often implies HTTP or doesn't mandate Client Auth if the message is signed.
+// OR, we can use the A1 cert just for the Transport Layer (Tunnel) and the A3 cert for the Message Layer (Signature).
+// Let's assume we use the A1 cert for transport if available, or try without if not.
+
+if (file_exists($certificado_pfx)) {
+    require $senha_arquivo;
+    $pfxContent = file_get_contents($certificado_pfx);
+    openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado);
+} else if (!$signedXml) {
+    echo json_encode(['status' => 'error', 'message' => "Certificate not found at $certificado_pfx and no signed XML provided."]);
     exit;
 }
 
-// Parameters
-$cnpj = $input['cnpj'] ?? '';
-$cpf = $input['cpf'] ?? '';
-$im = $input['im'] ?? '';
-$numero = $input['numero'] ?? '';
-$dataInicial = $input['dataInicial'] ?? '';
-$dataFinal = $input['dataFinal'] ?? '';
 
-// Build Pedido
-$pedidoContent = "<Pedido>";
-$pedidoContent .= "<Prestador>";
-$pedidoContent .= "<CpfCnpj>";
-if (!empty($cpf)) {
-    $pedidoContent .= "<Cpf>$cpf</Cpf>";
-} else {
-    $pedidoContent .= "<Cnpj>$cnpj</Cnpj>";
+if (!$signedXml) {
+    // --- MODE A1: SERVER SIDE SIGNING ---
+
+    // Parameters
+    $cnpj = $input['cnpj'] ?? '';
+    $cpf = $input['cpf'] ?? '';
+    $im = $input['im'] ?? '';
+    $numero = $input['numero'] ?? '';
+    $dataInicial = $input['dataInicial'] ?? '';
+    $dataFinal = $input['dataFinal'] ?? '';
+
+    // Build Pedido
+    $pedidoContent = "<Pedido>";
+    $pedidoContent .= "<Prestador>";
+    $pedidoContent .= "<CpfCnpj>";
+    if (!empty($cpf)) {
+        $pedidoContent .= "<Cpf>$cpf</Cpf>";
+    } else {
+        $pedidoContent .= "<Cnpj>$cnpj</Cnpj>";
+    }
+    $pedidoContent .= "</CpfCnpj>";
+    $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
+    $pedidoContent .= "</Prestador>";
+
+    if (!empty($dataInicial) && !empty($dataFinal)) {
+        $pedidoContent .= "<PeriodoCompetencia>";
+        $pedidoContent .= "<DataInicial>$dataInicial</DataInicial>";
+        $pedidoContent .= "<DataFinal>$dataFinal</DataFinal>";
+        $pedidoContent .= "</PeriodoCompetencia>";
+    } else {
+        $pedidoContent .= "<NumeroNfse>$numero</NumeroNfse>";
+    }
+    $pedidoContent .= "<Pagina>1</Pagina>";
+    $pedidoContent .= "</Pedido>";
+
+    // Construct Root
+    // The previous manual construction was fine.
+    // For consistency with WebPKI, we might want to ensure the template matches what frontend generates.
+
+    $rootId = "ConsultarNfseServicoPrestadoEnvio";
+    $rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarNfseServicoPrestadoEnvio>';
+
+    $signedXml = assinarRoot($rootXml, $certs, "#" . $rootId);
 }
-$pedidoContent .= "</CpfCnpj>";
-$pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
-$pedidoContent .= "</Prestador>";
-
-if (!empty($dataInicial) && !empty($dataFinal)) {
-    $pedidoContent .= "<PeriodoCompetencia>";
-    $pedidoContent .= "<DataInicial>$dataInicial</DataInicial>";
-    $pedidoContent .= "<DataFinal>$dataFinal</DataFinal>";
-    $pedidoContent .= "</PeriodoCompetencia>";
-} else {
-    $pedidoContent .= "<NumeroNfse>$numero</NumeroNfse>";
-}
-$pedidoContent .= "<Pagina>1</Pagina>";
-$pedidoContent .= "</Pedido>";
-
-// Construct Root and Sign (ID-based Reference logic)
-// To reference by ID, we need to add Id="..." to root and reference it in URI="#..."
-// However, server error "Error" might also mean "I don't support URI=''"
-// Let's try adding Id to root.
-$rootId = "ConsultarNfseServicoPrestadoEnvio";
-$rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarNfseServicoPrestadoEnvio>';
-
-$signedXml = assinarRoot($rootXml, $certs, "#" . $rootId);
 
 // Remove headers
 $search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
@@ -96,11 +107,6 @@ $soapEnvelope = <<<XML
 XML;
 
 // Request
-$certPemFile = tempnam(sys_get_temp_dir(), 'cert');
-$keyPemFile = tempnam(sys_get_temp_dir(), 'key');
-file_put_contents($certPemFile, $certs['cert']);
-file_put_contents($keyPemFile, $certs['pkey']);
-
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $endpoint_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -116,8 +122,18 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
 ]);
 curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
 curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-curl_setopt($ch, CURLOPT_SSLCERT, $certPemFile);
-curl_setopt($ch, CURLOPT_SSLKEY, $keyPemFile);
+
+// Client Auth (Transport) - Use A1 cert if available
+if (!empty($certs)) {
+    $certPemFile = tempnam(sys_get_temp_dir(), 'cert');
+    $keyPemFile = tempnam(sys_get_temp_dir(), 'key');
+    file_put_contents($certPemFile, $certs['cert']);
+    file_put_contents($keyPemFile, $certs['pkey']);
+
+    curl_setopt($ch, CURLOPT_SSLCERT, $certPemFile);
+    curl_setopt($ch, CURLOPT_SSLKEY, $keyPemFile);
+}
+
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 curl_setopt($ch, CURLOPT_VERBOSE, true);
@@ -135,8 +151,10 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 
 curl_close($ch);
-unlink($certPemFile);
-unlink($keyPemFile);
+if (!empty($certs)) {
+    @unlink($certPemFile);
+    @unlink($keyPemFile);
+}
 
 // Return JSON
 echo json_encode([
@@ -149,7 +167,7 @@ echo json_encode([
     'curl_error' => $curlError
 ]);
 
-// Signing Function
+// Signing Function (A1)
 function assinarRoot($xmlString, $certs, $uriRef = "")
 {
     $dom = new DOMDocument('1.0', 'UTF-8');
