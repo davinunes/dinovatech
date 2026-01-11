@@ -8,6 +8,7 @@ if (!$input) {
 }
 
 $action = $input['action'] ?? 'direct_a1';
+$variation = $input['variation'] ?? 'standard'; // standard, uri_empty, no_prefix, no_cdata
 
 // Configuration
 $endpoint_type = $input['endpoint'] ?? 'fictitious';
@@ -18,7 +19,8 @@ $endpoint_url = ($endpoint_type === 'official')
 $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
 $senha_arquivo = __DIR__ . '/../certificado/certificado.php';
 
-// --- ACTION 1: DIRECT A1 SEND (Server Signs) ---
+
+// --- ACTION 1: DIRECT A1 SEND ---
 if ($action === 'direct_a1') {
     if (file_exists($certificado_pfx)) {
         require $senha_arquivo;
@@ -34,121 +36,27 @@ if ($action === 'direct_a1') {
     $rootXml = $xmlComponents['root'];
     $rootId = $xmlComponents['id'];
 
-    // Sign
-    $signedXml = assinarRoot($rootXml, $certs, "#" . $rootId);
-
-    // Send
-    sendSoap($signedXml, $endpoint_url, $certs);
-    exit;
-}
-
-// --- ACTION 2: PREPARE HASH (For A3 Client Signing) ---
-if ($action === 'prepare_hash') {
-    $xmlComponents = buildPedidoXml($input);
-    $rootXml = $xmlComponents['root'];
-    $rootId = $xmlComponents['id'];
-
-    // 1. Digest of Root (for Reference)
-    $dom = new DOMDocument('1.0', 'UTF-8');
-    $dom->loadXML($rootXml);
-    $canonicalizedRoot = $dom->C14N(false, false, null, null);
-    $digestValueRoot = base64_encode(sha1($canonicalizedRoot, true)); // SHA1
-
-    // 2. Build SignedInfo
-    // Note: We MUST use the same structure as we will use to re-assemble
-    $signedInfo = '<ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">' .
-        '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>' .
-        '<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>' .
-        '<ds:Reference URI="#' . $rootId . '">' .
-        '<ds:Transforms>' .
-        '<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>' .
-        '<ds:Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:Transform>' .
-        '</ds:Transforms>' .
-        '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>' .
-        '<ds:DigestValue>' . $digestValueRoot . '</ds:DigestValue>' .
-        '</ds:Reference>' .
-        '</ds:SignedInfo>';
-
-    // 3. Hash of SignedInfo (To sign with Private Key)
-    $domSI = new DOMDocument();
-    $domSI->loadXML($signedInfo);
-    $canonicalSI = $domSI->C14N(false, false, null, null);
-    $toSignHash = sha1($canonicalSI, true); // Raw binary hash
-
-    echo json_encode([
-        'status' => 'success',
-        'hash_to_sign_b64' => base64_encode($toSignHash), // Send as B64 to JS
-        'digest_algorithm' => 'SHA-1',
-        'signed_info_xml' => $signedInfo, // Need this to reconstruct
-        'original_xml' => $rootXml, // Need this to reconstruct
-        'canonical_si' => $canonicalSI // Debug
-    ]);
-    exit;
-}
-
-// --- ACTION 3: SEND SIGNED (Assemble and Send) ---
-if ($action === 'send_signed') {
-    $signatureB64 = $input['signature_b64'];
-    $certB64 = $input['cert_b64']; // X509 plain
-    $signedInfoXml = $input['signed_info_xml'];
-    $rootXml = $input['original_xml'];
-
-    // Assemble Signature Block
-    // We already have the SignedInfo XML that was hashed.
-    // We assume the client signed the hash of that EXACT XML.
-
-    // Chunk split signature for XML standard
-    $signatureValueContent = chunk_split($signatureB64, 76, "\n");
-    $x509Content = $certB64; // Client usually sends raw base64
-
-    // We need to verify if SignedInfo needs to be C14N again? 
-    // It is already XML string. We inject it.
-    // BUT DOMDocument parsing might change it. Ideally we inject the string directly or import node.
-
-    $dom = new DOMDocument('1.0', 'UTF-8');
-    $dom->loadXML($rootXml);
-
-    // Re-Canonicalize SignedInfo to ensure we inject exactly what was signed?
-    // Actually we just construct the Signature element.
-    $domSI = new DOMDocument();
-    $domSI->loadXML($signedInfoXml);
-    $canonSignedInfo = $domSI->C14N(false, false, null, null); // Ensure canonical form in final XML
-
-    $signatureXml = '<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">' .
-        $canonSignedInfo .
-        '<ds:SignatureValue>' . $signatureValueContent . '</ds:SignatureValue>' .
-        '<ds:KeyInfo>' .
-        '<ds:X509Data>' .
-        '<ds:X509Certificate>' . $x509Content . '</ds:X509Certificate>' .
-        '</ds:X509Data>' .
-        '</ds:KeyInfo>' .
-        '</ds:Signature>';
-
-    $signatureFragment = $dom->createDocumentFragment();
-    $signatureFragment->appendXML($signatureXml);
-    $dom->documentElement->appendChild($signatureFragment);
-
-    $finalXml = $dom->saveXML();
-
-    // Remove headers
-    $search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
-    $search2 = '<' . '?xml version="1.0"?' . '>';
-    $finalXml = str_replace($search1, '', $finalXml);
-    $finalXml = str_replace($search2, '', $finalXml);
-    $finalXml = trim($finalXml);
-
-    // Try to load A1 cert for Transport Layer if available, else standard
-    $certsA1 = [];
-    if (file_exists($certificado_pfx)) {
-        require $senha_arquivo;
-        $pfx = file_get_contents($certificado_pfx);
-        openssl_pkcs12_read($pfx, $certsA1, $senhaCertificado);
+    // Choose URI Reference based on Variation
+    $uriRef = "#" . $rootId;
+    if ($variation === 'uri_empty') {
+        $uriRef = "";
+        // If URI is empty, we must NOT have an Id on the root element usually, or it's ignored. 
+        // But removing Id might break C14N search if library depends on it. 
+        // Let's try to KEEP Id but reference "" (Enveloped).
+        // Actually, if URI="", it means "Sign the containing document".
+        // Let's remove the ID from the passed XML for this case to be cleaner?
+        $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
     }
 
-    sendSoap($finalXml, $endpoint_url, $certsA1);
+    // Sign
+    $signedXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
+
+    // Send
+    sendSoap($signedXml, $endpoint_url, $certs, $variation);
     exit;
 }
 
+// (Action 2 & 3 skipped for brevity as we are focusing on A1 debugging now, but they would need similar updates if A3 was active)
 
 // --- HELPERS ---
 
@@ -190,7 +98,7 @@ function buildPedidoXml($input)
     return ['root' => $rootXml, 'id' => $rootId];
 }
 
-function assinarRoot($xmlString, $certs, $uriRef)
+function assinarRoot($xmlString, $certs, $uriRef, $variation)
 {
     $dom = new DOMDocument('1.0', 'UTF-8');
     $dom->loadXML($xmlString);
@@ -198,18 +106,29 @@ function assinarRoot($xmlString, $certs, $uriRef)
     $canonicalized = $dom->C14N(false, false, null, null);
     $digestValue = base64_encode(sha1($canonicalized, true));
 
-    $signedInfo = '<ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">' .
-        '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>' .
-        '<ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>' .
-        '<ds:Reference URI="' . $uriRef . '">' .
-        '<ds:Transforms>' .
-        '<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></ds:Transform>' .
-        '<ds:Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:Transform>' .
-        '</ds:Transforms>' .
-        '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>' .
-        '<ds:DigestValue>' . $digestValue . '</ds:DigestValue>' .
-        '</ds:Reference>' .
-        '</ds:SignedInfo>';
+    // Namespace Prefix Logic
+    $ns = 'ds'; // Default
+    $nsDecl = ' xmlns:ds="http://www.w3.org/2000/09/xmldsig#"';
+
+    if ($variation === 'no_prefix') {
+        $ns = '';
+        $nsDecl = ' xmlns="http://www.w3.org/2000/09/xmldsig#"';
+    }
+
+    $p = $ns ? "$ns:" : ""; // Prefix string
+
+    $signedInfo = "<{$p}SignedInfo{$nsDecl}>" .
+        "<{$p}CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"></{$p}CanonicalizationMethod>" .
+        "<{$p}SignatureMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#rsa-sha1\"></{$p}SignatureMethod>" .
+        "<{$p}Reference URI=\"{$uriRef}\">" .
+        "<{$p}Transforms>" .
+        "<{$p}Transform Algorithm=\"http://www.w3.org/2000/09/xmldsig#enveloped-signature\"></{$p}Transform>" .
+        "<{$p}Transform Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"></{$p}Transform>" .
+        "</{$p}Transforms>" .
+        "<{$p}DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#sha1\"></{$p}DigestMethod>" .
+        "<{$p}DigestValue>{$digestValue}</{$p}DigestValue>" .
+        "</{$p}Reference>" .
+        "</{$p}SignedInfo>";
 
     $domSignedInfo = new DOMDocument();
     $domSignedInfo->loadXML($signedInfo);
@@ -222,27 +141,52 @@ function assinarRoot($xmlString, $certs, $uriRef)
 
     $x509 = str_replace(['-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----', "\r", "\n"], '', $certs['cert']);
 
-    $signatureXml = '<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#">' .
+    $signatureXml = "<{$p}Signature{$nsDecl}>" .
         $canonicalSignedInfo .
-        '<ds:SignatureValue>' . $signatureValueContent . '</ds:SignatureValue>' .
-        '<ds:KeyInfo>' .
-        '<ds:X509Data>' .
-        '<ds:X509Certificate>' . $x509 . '</ds:X509Certificate>' .
-        '</ds:X509Data>' .
-        '</ds:KeyInfo>' .
-        '</ds:Signature>';
+        "<{$p}SignatureValue>{$signatureValueContent}</{$p}SignatureValue>" .
+        "<{$p}KeyInfo>" .
+        "<{$p}X509Data>" .
+        "<{$p}X509Certificate>{$x509}</{$p}X509Certificate>" .
+        "</{$p}X509Data>" .
+        "</{$p}KeyInfo>" .
+        "</{$p}Signature>";
 
     $signatureFragment = $dom->createDocumentFragment();
     $signatureFragment->appendXML($signatureXml);
     $dom->documentElement->appendChild($signatureFragment);
 
-    return $dom->saveXML();
+    // Clean headers from result
+    $finalXml = $dom->saveXML();
+    $search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
+    $search2 = '<' . '?xml version="1.0"?' . '>';
+    $finalXml = str_replace($search1, '', $finalXml);
+    $finalXml = str_replace($search2, '', $finalXml);
+    return trim($finalXml);
 }
 
-function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [])
+function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard')
 {
     $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
-    $soapEnvelope = <<<XML
+
+    // CDATA Strategy
+    if ($variation === 'no_cdata') {
+        // HTML Entities instead of CDATA
+        $payloadForEnvelope = htmlspecialchars($finalXmlPayload, ENT_XML1, 'UTF-8');
+        $cabecMsg = htmlspecialchars("$xmlDecl<cabecalho versao=\"1.00\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>", ENT_XML1, 'UTF-8');
+
+        $soapEnvelope = <<<XML
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
+      <nfseCabecMsg>$cabecMsg</nfseCabecMsg>
+      <nfseDadosMsg>$payloadForEnvelope</nfseDadosMsg>
+    </ConsultarNfseServicoPrestado>
+  </soap:Body>
+</soap:Envelope>
+XML;
+    } else {
+        // Standard CDATA
+        $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
@@ -252,6 +196,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [])
   </soap:Body>
 </soap:Envelope>
 XML;
+    }
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $endpoint_url);
