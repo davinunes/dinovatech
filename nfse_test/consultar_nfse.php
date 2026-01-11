@@ -27,10 +27,9 @@ $cnpj = '61733714000101';
 $inscricaoMunicipal = '0841147200111';
 $numeroNota = '1';
 
-// MATCHING "RESOLVED" XML MODEL STRUCTURE:
-// Root: ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd"
-// Children: Pedido, Signature
-// Signature Reference URI="" (Signs the Root)
+// NAMESPACE STRATEGY:
+// Inner XML (Payload): Must match the XSD Model provided (http://www.abrasf.org.br/nfse.xsd)
+// Outer XML (SOAP Action): Must match the Service expectation from error (http://nfse.abrasf.org.br)
 
 $pedidoContent = <<<XML
 <Pedido>
@@ -46,17 +45,18 @@ $pedidoContent = <<<XML
 XML;
 
 // Structure to be signed (Root Element)
-// Note: We construct it without Signature first to calculate digest
+// Using Standard XSD Namespace for the Payload
 $rootXml = '<ConsultarNfseServicoPrestadoEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">' . $pedidoContent . '</ConsultarNfseServicoPrestadoEnvio>';
 
-// Sign the Root Element (URI="")
+// Sign the Root Element
 $signedXml = assinarRoot($rootXml, $certs);
 
 // SOAP Envelope
+// Using Service Namespace for the Method Wrapper
 $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
-    <ConsultarNfseServicoPrestado xmlns="http://www.abrasf.org.br/nfse.xsd">
+    <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
       <nfseCabecMsg><![CDATA[<?xml version="1.0" encoding="UTF-8"?><cabecalho versao="2.04" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
       <nfseDadosMsg><![CDATA[$signedXml]]></nfseDadosMsg>
     </ConsultarNfseServicoPrestado>
@@ -78,7 +78,7 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $soapEnvelope);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: text/xml; charset=utf-8',
-    'SOAPAction: "http://www.abrasf.org.br/nfse.xsd/ConsultarNfseServicoPrestado"', // Reverted Action to match standard namespace
+    'SOAPAction: "http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado"', // Service Namespace
     'Content-Length: ' . strlen($soapEnvelope)
 ]);
 curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
@@ -113,13 +113,9 @@ function assinarRoot($xmlString, $certs)
     $dom = new DOMDocument('1.0', 'UTF-8');
     $dom->loadXML($xmlString);
 
-    // Canonicalize the whole document (Root) for Digest calculation
-    // Enveloped signature transform will remove the Signature element itself later, but for digest of "what is being signed" (the doc content), we digest the current content.
+    // Canonicalize
     $canonicalized = $dom->C14N(false, false, null, null);
     $digestValue = base64_encode(sha1($canonicalized, true));
-
-    // Validate URI="" logic: 
-    // It signs the document containing the Signature.
 
     $signedInfo = <<<XML
 <SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
