@@ -105,18 +105,18 @@ function buildGerarNfseXml($input)
 {
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
     $imPrestador = $input['im'] ?? '0841147200111';
-    $numeroRps = rand(2000, 9999); // Random RPS to avoid duplication error
+    $numeroRps = rand(2000, 9999);
     $dataHoje = date('Y-m-d');
 
-    // TOMADOR GENERICO (Test)
-    // Using a valid sample CPF or the User's CPF if available, otherwise just use the Prestador's own CNPJ as Tomador (Self-invoice for test)
-    $cpfTomador = $input['cpf_tomador'] ?? '00000000191'; // Banco do Brasil test or similar
-    // Actually, let's use a dummy CPF unless provided
+    // Using Data from Successful Note
+    $cpfTomador = $input['cpf_tomador'] ?? '01691128104';
+    $rpsId = "rps" . $numeroRps;
 
-    // Content structure matching Support Example
-    $rpsContent = <<<XML
-<Rps>
-    <InfDeclaracaoPrestacaoServico>
+    // Content structure matching Successful Note (DeclaracaoPrestacaoServico -> InfDeclaracaoPrestacaoServico)
+    // In RPS context: Rps -> InfDeclaracaoPrestacaoServico
+
+    $infRps = <<<XML
+    <InfDeclaracaoPrestacaoServico Id="$rpsId">
         <Rps>
             <IdentificacaoRps>
                 <Numero>$numeroRps</Numero>
@@ -129,24 +129,24 @@ function buildGerarNfseXml($input)
         <Competencia>$dataHoje</Competencia>
         <Servico>
             <Valores>
-                <ValorServicos>1.00</ValorServicos>
-                <ValorDeducoes>0</ValorDeducoes>
-                <ValorPis>0</ValorPis>
-                <ValorCofins>0</ValorCofins>
-                <ValorInss>0</ValorInss>
-                <ValorIr>0</ValorIr>
-                <ValorCsll>0</ValorCsll>
-                <OutrasRetencoes>0</OutrasRetencoes>
-                <ValTotTributos>0</ValTotTributos>
-                <ValorIss>0.05</ValorIss>
-                <Aliquota>5.00</Aliquota>
-                <DescontoIncondicionado>0</DescontoIncondicionado>
-                <DescontoCondicionado>0</DescontoCondicionado>
+                <ValorServicos>10.00</ValorServicos>
+                <ValorDeducoes>0.00</ValorDeducoes>
+                <ValorPis>0.00</ValorPis>
+                <ValorCofins>0.00</ValorCofins>
+                <ValorInss>0.00</ValorInss>
+                <ValorIr>0.00</ValorIr>
+                <ValorCsll>0.00</ValorCsll>
+                <OutrasRetencoes>0.00</OutrasRetencoes>
+                <ValTotTributos>0.00</ValTotTributos>
+                <ValorIss>0.00</ValorIss>
+                <Aliquota>0.00</Aliquota>
+                <DescontoIncondicionado>0.00</DescontoIncondicionado>
+                <DescontoCondicionado>0.00</DescontoCondicionado>
             </Valores>
             <IssRetido>2</IssRetido>
             <ItemListaServico>01.07</ItemListaServico>
-            <CodigoCnae>6203100</CodigoCnae>
-            <CodigoTributacaoMunicipio>620310000</CodigoTributacaoMunicipio>
+            <CodigoCnae>6204000</CodigoCnae>
+            <CodigoTributacaoMunicipio>7</CodigoTributacaoMunicipio>
             <Discriminacao>Teste de Integracao via WebService - RPS $numeroRps</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
             <ExigibilidadeISS>1</ExigibilidadeISS>
@@ -161,48 +161,41 @@ function buildGerarNfseXml($input)
         <TomadorServico>
             <IdentificacaoTomador>
                 <CpfCnpj>
-                    <Cpf>01691128104</Cpf>
+                    <Cpf>$cpfTomador</Cpf>
                 </CpfCnpj>
             </IdentificacaoTomador>
-            <RazaoSocial>TOMADOR DE TESTE</RazaoSocial>
+            <RazaoSocial>Davi Nunes de França</RazaoSocial>
+            <Endereco>
+                <Endereco>QI 24 Lotes 1 a 13 (Residencial Miami Beach)</Endereco>
+                <Numero>1</Numero>
+                <Complemento>104E</Complemento>
+                <Bairro>Setor Industrial (Taguatinga)</Bairro>
+                <CodigoMunicipio>5300108</CodigoMunicipio>
+                <Uf>DF</Uf>
+                <Cep>72135902</Cep>
+            </Endereco>
+            <Contato>
+                <Telefone>61996757676</Telefone>
+                <Email>davi.nunes@gmail.com</Email>
+            </Contato>
         </TomadorServico>
         <OptanteSimplesNacional>2</OptanteSimplesNacional>
         <IncentivoFiscal>2</IncentivoFiscal>
     </InfDeclaracaoPrestacaoServico>
-</Rps>
 XML;
 
-    $rootId = "GerarNfseEnvio"; // Not standard ID usage in support example, but they used root signing
-    // Actually the support example signed the Rps element inside?
-    // Let's look at the file: <GerarNfseEnvio> <Rps> ... <Signature> ... </Rps> </GerarNfseEnvio>
-    // Wait, the Signature is INSIDE <Rps> ? 
-    // Checking file line 261: <Rps> ... <Signature> ... </Rps>
-    // YES. The signature is inside Rps.
-    // So we are signing the RPS content, not the Envelope.
-    // And InfDeclaracaoPrestacaoServico is what is likely signed or the whole Rps.
-    // But usually Rps contains InfDeclaracaoPrestacaoServico AND Signature.
+    // Structure for Signature: Wrapper <Rps> contains <Inf...> and <Signature>
+    $rootXml = "<Rps>$infRps</Rps>";
 
-    // Correction: We need to sign InfDeclaracaoPrestacaoServico? Or Rps? 
-    // If Reference URI="", it signs the parent (Rps).
-    // So structure is: <GerarNfseEnvio> <Rps> [Content] [Signature] </Rps> </GerarNfseEnvio>
+    // We want to sign the inner ID, but our assinarRoot appends signature to the END.
+    // If we pass the whole <Rps>...</Rps> to assinarRoot, it will append Signature at the end of Rps content
+    // Check assinarRoot logic: it appends to documentElement. 
+    // If documentElement is <Rps>, it becomes <Rps> <Inf...> <Signature> </Rps>
+    // This is CORRECT structure.
 
-    // IMPORTANT: The Support Example `GerarNfseEnvio` has `xmlns` on the root.
-    // The previous implementation signed the ROOT of the payload.
-    // Here, we have `GerarNfseEnvio` -> `Rps`
+    // However, we need to make sure the Reference URI matches the ID we put in Inf...
 
-    // I will construct the `Rps` content, sign it (wrap in Rps), and then wrap in GerarNfseEnvio.
-    // Actually, `assinarRoot` appends signature to the end.
-    // So if I pass `<Rps>...</Rps>`, it will become `<Rps>...<Signature>...</Signature></Rps>`.
-    // Then I wrap that in `GerarNfseEnvio`.
-
-    $rootXml = $rpsContent;
-    $rootId = "Rps"; // Conceptual ID, though we use URI=""
-
-    // Wait, `assinarRoot` expects a full XML string. 
-    // If I pass `<Rps>...`, it returns signed `<Rps>...`.
-    // Then I just need to Wrap it.
-
-    return ['root' => $rootXml, 'id' => $rootId, 'wrapper' => 'GerarNfseEnvio'];
+    return ['root' => $rootXml, 'id' => $rpsId, 'wrapper' => 'GerarNfseEnvio'];
 }
 
 function assinarRoot($xmlString, $certs, $uriRef, $variation)
@@ -215,6 +208,20 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     $dom->loadXML($xmlString);
 
     $canonicalized = $dom->C14N(false, false, null, null);
+    // CRITICAL: If signing a specific ID, we must canonicalize ONLY the target node?
+    // No, Reference URI="#ID" means the signature transforms will pick that element.
+    // BUT, the DigestValue MUST be calculated over the Canonicalized Target Element.
+
+    if ($uriRef !== "" && $uriRef[0] === '#') {
+        // Signing specific ID
+        $idToSign = substr($uriRef, 1);
+        $xpath = new DOMXPath($dom);
+        $node = $xpath->query("//*[@Id='$idToSign']")->item(0);
+        if ($node) {
+            $canonicalized = $node->C14N(false, false, null, null);
+        }
+    }
+
     $digestValue = base64_encode(sha1($canonicalized, true));
 
     // Namespace Prefix Logic
@@ -290,7 +297,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     $methodTag = ($method === 'gerar') ? 'GerarNfse' : 'ConsultarNfseServicoPrestado';
 
     // Strategy for Envelope CDATA vs Entities
-    $nfseCabecMsg = "<cabecalho versao=\"1.00\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>";
+    $nfseCabecMsg = "<cabecalho versao=\"2.04\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>";
 
     if ($variation === 'no_cdata') {
         $payloadForEnvelope = htmlspecialchars($finalXmlPayload, ENT_XML1, 'UTF-8');
