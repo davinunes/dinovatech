@@ -299,7 +299,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     // Strategy for Envelope CDATA vs Entities
     $nfseCabecMsg = "<cabecalho versao=\"2.04\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>";
 
-    if ($variation === 'no_cdata') {
+    if ($variation === 'no_cdata' || $variation === 'support_combo') {
         $payloadForEnvelope = htmlspecialchars($finalXmlPayload, ENT_XML1, 'UTF-8');
         $cabecForEnvelope = htmlspecialchars($nfseCabecMsg, ENT_XML1, 'UTF-8');
 
