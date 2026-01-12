@@ -290,7 +290,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     $methodTag = ($method === 'gerar') ? 'GerarNfse' : 'ConsultarNfseServicoPrestado';
 
     // Strategy for Envelope CDATA vs Entities
-    $nfseCabecMsg = "<cabecalho versao=\"1.00\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>";
+    $nfseCabecMsg = "<cabecalho versao=\"2.04\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>";
 
     if ($variation === 'no_cdata') {
         $payloadForEnvelope = htmlspecialchars($finalXmlPayload, ENT_XML1, 'UTF-8');
