@@ -1,0 +1,108 @@
+Prezada equipe de Suporte ISSNET,
+
+Espero que estejam bem.
+
+Estamos enfrentando dificuldades persistentes na integração com o ambiente de Homologação (Fictícia) de Brasília, recebendo constantemente os erros **E183** e **E160**, mesmo após ajustarmos nosso XML para espelhar exatamente a estrutura de notas emitidas com sucesso pelo painel web e pelo exemplo fornecido por vocês.
+
+**Contexto:**
+- **Método:** `GerarNfse`
+- **Ambiente:** Homologação Fictícia (`https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx`)
+- **Certificado:** A1 (e-CNPJ)
+- **Erro Recebido:** E183 (Cabeçalho fora do padrão) e E160 (Arquivo em desacordo com Schema)
+
+**O que já fizemos:**
+1.  Ajustamos a versão do cabeçalho para `2.04` (conforme notas de sucesso).
+2.  Assinamos digitalmente o elemento `InfDeclaracaoPrestacaoServico` referenciando seu ID exato (URI="#rps...").
+3.  Removemos declarações XML desnecessárias (`<?xml ...?>`) que poderiam causar erro de parse.
+4.  Utilizamos dados (CNAE 6204000, Tributação 7, etc.) idênticos a uma nota emitida com sucesso hoje pelo painel web.
+
+Mesmo assim, o servico retorna **E183**.
+
+**Pedido:**
+Poderiam, por favor, validar o **Envelope SOAP de Requisição** anexo e nos apontar o que especificamente está "fora do padrão" no cabeçalho ou na estrutura?
+
+Segue abaixo o XML que estamos enviando:
+
+--- INICIO XML REQUISICAO ---
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <GerarNfse xmlns="http://nfse.abrasf.org.br">
+      <nfseCabecMsg><![CDATA[<cabecalho versao="2.04" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
+      <nfseDadosMsg><![CDATA[<GerarNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd"><Rps>    <InfDeclaracaoPrestacaoServico>
+        <Rps>
+            <IdentificacaoRps>
+                <Numero>6936</Numero>
+                <Serie>A</Serie>
+                <Tipo>1</Tipo>
+            </IdentificacaoRps>
+            <DataEmissao>2026-01-12</DataEmissao>
+            <Status>1</Status>
+        </Rps>
+        <Competencia>2026-01-12</Competencia>
+        <Servico>
+            <Valores>
+                <ValorServicos>10.00</ValorServicos>
+                <ValorDeducoes>0.00</ValorDeducoes>
+                <ValorPis>0.00</ValorPis>
+                <ValorCofins>0.00</ValorCofins>
+                <ValorInss>0.00</ValorInss>
+                <ValorIr>0.00</ValorIr>
+                <ValorCsll>0.00</ValorCsll>
+                <OutrasRetencoes>0.00</OutrasRetencoes>
+                <ValTotTributos>0.00</ValTotTributos>
+                <ValorIss>0.00</ValorIss>
+                <Aliquota>0.00</Aliquota>
+                <DescontoIncondicionado>0.00</DescontoIncondicionado>
+                <DescontoCondicionado>0.00</DescontoCondicionado>
+            </Valores>
+            <IssRetido>2</IssRetido>
+            <ItemListaServico>01.07</ItemListaServico>
+            <CodigoCnae>6204000</CodigoCnae>
+            <CodigoTributacaoMunicipio>7</CodigoTributacaoMunicipio>
+            <Discriminacao>Teste de Integracao via WebService - RPS 6936</Discriminacao>
+            <CodigoMunicipio>5300108</CodigoMunicipio>
+            <ExigibilidadeISS>1</ExigibilidadeISS>
+            <MunicipioIncidencia>5300108</MunicipioIncidencia>
+        </Servico>
+        <Prestador>
+            <CpfCnpj>
+                <Cnpj>61733714000101</Cnpj>
+            </CpfCnpj>
+            <InscricaoMunicipal>0841147200111</InscricaoMunicipal>
+        </Prestador>
+        <TomadorServico>
+            <IdentificacaoTomador>
+                <CpfCnpj>
+                    <Cpf>01691128104</Cpf>
+                </CpfCnpj>
+            </IdentificacaoTomador>
+            <RazaoSocial>Davi Nunes de Fran&#xE7;a</RazaoSocial>
+            <Endereco>
+                <Endereco>QI 24 Lotes 1 a 13 (Residencial Miami Beach)</Endereco>
+                <Numero>1</Numero>
+                <Complemento>104E</Complemento>
+                <Bairro>Setor Industrial (Taguatinga)</Bairro>
+                <CodigoMunicipio>5300108</CodigoMunicipio>
+                <Uf>DF</Uf>
+                <Cep>72135902</Cep>
+            </Endereco>
+            <Contato>
+                <Telefone>61996757676</Telefone>
+                <Email>davi.nunes@gmail.com</Email>
+            </Contato>
+        </TomadorServico>
+        <OptanteSimplesNacional>2</OptanteSimplesNacional>
+        <IncentivoFiscal>2</IncentivoFiscal>
+    </InfDeclaracaoPrestacaoServico><Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#"><CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><Reference URI=""><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/><DigestValue>a01/Q2B7+upzZvTvTi0DJUKVMXU=</DigestValue></Reference></SignedInfo><SignatureValue>j07kgErySU08OegoakJuNhej9Os1jEsthFeLETUCHg9sw19XvGWqmcmJxuZScrJLOHGGVtPInEJ0
+JoysdpD4ctMzFD04vuz5AwkfMFGcv5UURTXDt8eLhYp1iZ/CwKOkB9ZamBCkc6GHO6hGPSeTFoB7
+HQFpl4lWN01SD+jWbVHJQxbX2M9rjiMrJyOMQy1WPDCuSiC5SAiI+drTZNldOp6AtL2lbAv3sTLF
+hWc2qj7k82IumPlc4K+6M2wyqGgwCdfrrkfQZgP94bthtQsfVeRPXvSTBGW2DhRUN5/kEgsCo96X
+cCkUBk0cY1EwBciieq/cLCowl52YNXe3ymOktg==
+</SignatureValue><KeyInfo><X509Data><X509Certificate>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</X509Certificate></X509Data></KeyInfo></Signature></Rps></GerarNfseEnvio>]]></nfseDadosMsg>
+    </GerarNfse>
+  </soap:Body>
+</soap:Envelope>
+--- FIM XML REQUISICAO ---
+
+Atenciosamente,
+Davi Nunes
