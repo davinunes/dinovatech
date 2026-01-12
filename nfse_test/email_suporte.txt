@@ -2,47 +2,75 @@ Assunto: Dificuldades na Integração NFS-e WebService 2.04 (Erro Genérico e Bl
 
 Prezados,
 
-Estamos em processo de desenvolvimento da integração com o WebService da NFS-e do Distrito Federal (Padrão ABRASF 2.04), utilizando PHP/cURL e Certificado Digital A1, mas encontramos barreiras técnicas impeditivas tanto no ambiente de Homologação Oficial quanto no Fictício.
+Estamos em processo de desenvolvimento da integração com o WebService da NFS-e do Distrito Federal (Padrão ABRASF 2.04) e solicitamos suporte técnico urgente devido a barreiras impeditivas encontradas em ambos os ambientes de homologação.
 
-Gostaríamos de solicitar um auxílio técnico quanto aos pontos abaixo:
+Realizamos testes exaustivos utilizando duas abordagens distintas:
+1. Assinatura Server-Side (PHP/OpenSSL) com Certificado A1.
+2. Assinatura Client-Side (WebPKI/Token) com Certificado A3.
 
-1. BLOQUEIO (403 FORBIDDEN) NA HOMOLOGAÇÃO OFICIAL
-Ao tentar consumir o endpoint:
-https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx
+Abaixo detalhamos os erros encontrados:
 
-Nossa requisição via servidor (cURL) é imediatamente bloqueada pelo WAF (Cloudflare), retornando "HTTP/1.1 403 Forbidden" e página de Challenge. Já forçamos o User-Agent, Headers de Browser e HTTP/1.1, sem sucesso.
-- Há algum bloqueio de Faixa de IP para integrações servidor-a-servidor?
-- O Certificado A1 é aceito para autenticação SSL "Client Auth" neste endpoint, ou ele exige comportamento de browser (A3)?
+---
 
-2. ERRO GENÉRICO NO AMBIENTE FICTÍCIO
-Ao tentar o endpoint alternativo:
-https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx
+1. AMBIENTE FICTÍCIO (Erro Genérico "s:Client - Error")
+Endpoint: https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx
 
-Conseguimos estabelecer a conexão SSL (Handshake OK), porém o WebService retorna invariavelmente uma falha genérica, independente da estrutura do XML enviado:
+Conseguimos conexão, mas o WebService retorna uma falha genérica ("Error") para TODOS os formatos de XML enviados, inclusive XMLs assinados validamente via Token A3.
 
+O que já testamos (sem sucesso):
+- Assinatura via Certificado A1 (OpenSSL SHA1).
+- Assinatura via Certificado A3 (WebPKI/Lacuna), que garante a validade da assinatura.
+- Variações de estrutura XML: CDATA, HTML Entities, URI="", URI="#ID", com e sem prefixo "ds:".
+- Consulta por Número da Nota e por Período.
+
+Em todos os casos, o retorno é invariável:
+HTTP/1.1 500 Internal Server Error
 <s:Fault>
   <faultcode>s:Client</faultcode>
   <faultstring>Error</faultstring>
 </s:Fault>
 
-Tentativas realizadas (todas resultaram no mesmo erro):
-- Consulta por Número da Nota e por Período de Competência.
-- Assinatura XML (XMLDSig) no elemento Raiz com algoritmo Canonicalization (C14N) e RSA-SHA1.
-- Variações de Namespace: ds:Signature vs Signature (sem prefixo).
-- Variações de Reference URI: URI="" (Enveloped) e URI="#ID".
-- Envio com e sem CDATA nas tags nfseCabecMsg/nfseDadosMsg.
+Como o erro persiste mesmo usando assinatura A3 testada, suspeitamos que:
+A) O ambiente fictício pode estar inoperante para o serviço ConsultarNfseServicoPrestado.
+B) Pode haver uma divergência de dados cadastrais (CNPJ/IM) neste ambiente específico que gera uma falha não tratada no servidor.
 
-AMBIENTE DE TESTE:
-- Prestador: CNPJ 61.733.714/0001-01 / IM: 0841147200111
-- Certificado: A1 (Válido, emitido por AC Soluti)
-- Método: ConsultarNfseServicoPrestado
+Solicitação: Poderiam validar se o serviço está operante e nos fornecer um XML de Envelope SOAP de exemplo que seja aceito neste ambiente?
 
-DÚVIDA CRÍTICA:
-O sistema da ISSNET DF suporta integração via Certificado A1 (arquivo .pfx no servidor) para assinatura e transmissão do XML? Observamos que o acesso via Painel Web funciona com A3, mas nossa aplicação roda em servidor cloud Linux/Windows onde o uso de A1 é mandatório.
+---
 
-Poderiam nos fornecer um exemplo de XML (Envelope SOAP completo) que seja aceito com sucesso no ambiente Fictício para que possamos validar nossa estrutura de assinatura?
+2. AMBIENTE HOMOLOGAÇÃO OFICIAL (Bloqueio WAF / Cloudflare)
+Endpoint: https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx
 
-Agradecemos desde já.
+Nossas requisições de integração continuam sendo bloqueadas pelo WAF (Cloudflare), retornando HTTP 403 Forbidden com página de desafio (Challenge).
+
+Solicitação:
+- Existe uma regra de firewall específica para liberar integrações via WebService (SOAP)?
+- O endpoint aceita requisições "Server-to-Server" (A1) ou exige comportamento de navegador?
+
+---
+
+DADOS PARA ANÁLISE:
+Prestador: CNPJ 61.733.714/0001-01 / IM: 0841147200111
+Serviço: ConsultarNfseServicoPrestado
+XML Enviado (Exemplo com Assinatura A3 - Rejeitado no Fictício com "Error"):
+
+<soap:Envelope ...>
+  <soap:Body>
+    <ConsultarNfseServicoPrestado ...>
+      <nfseCabecMsg>...</nfseCabecMsg>
+      <nfseDadosMsg>
+        <ConsultarNfseServicoPrestadoEnvio ... Id="ConsultarNfseServicoPrestadoEnvio">
+           <Pedido>...</Pedido>
+           <ds:Signature ...>
+             <!-- Assinatura válida gerada via Token A3 -->
+           </ds:Signature>
+        </ConsultarNfseServicoPrestadoEnvio>
+      </nfseDadosMsg>
+    </ConsultarNfseServicoPrestado>
+  </soap:Body>
+</soap:Envelope>
+
+Aguardamos retorno.
 
 Atenciosamente,
 Equipe de Desenvolvimento - DInovaTech

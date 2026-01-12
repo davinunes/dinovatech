@@ -8,7 +8,7 @@ if (!$input) {
 }
 
 $action = $input['action'] ?? 'direct_a1';
-$variation = $input['variation'] ?? 'standard'; // standard, uri_empty, no_prefix, no_cdata
+$variation = $input['variation'] ?? 'standard'; // standard, uri_empty, no_prefix, no_cdata, support_combo
 
 // Configuration
 $endpoint_type = $input['endpoint'] ?? 'fictitious';
@@ -36,15 +36,12 @@ if ($action === 'direct_a1') {
     $rootXml = $xmlComponents['root'];
     $rootId = $xmlComponents['id'];
 
-    // Choose URI Reference based on Variation
+    // VARIATION LOGIC
     $uriRef = "#" . $rootId;
-    if ($variation === 'uri_empty') {
+
+    if ($variation === 'uri_empty' || $variation === 'support_combo') {
         $uriRef = "";
-        // If URI is empty, we must NOT have an Id on the root element usually, or it's ignored. 
-        // But removing Id might break C14N search if library depends on it. 
-        // Let's try to KEEP Id but reference "" (Enveloped).
-        // Actually, if URI="", it means "Sign the containing document".
-        // Let's remove the ID from the passed XML for this case to be cleaner?
+        // Remove ID if URI is empty (Enveloped Signature usually doesn't need ID on root)
         $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
     }
 
@@ -56,7 +53,7 @@ if ($action === 'direct_a1') {
     exit;
 }
 
-// (Action 2 & 3 skipped for brevity as we are focusing on A1 debugging now, but they would need similar updates if A3 was active)
+// ... (Rest of actions skipped)
 
 // --- HELPERS ---
 
@@ -110,12 +107,16 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     $ns = 'ds'; // Default
     $nsDecl = ' xmlns:ds="http://www.w3.org/2000/09/xmldsig#"';
 
-    if ($variation === 'no_prefix') {
+    if ($variation === 'no_prefix' || $variation === 'support_combo') {
         $ns = '';
         $nsDecl = ' xmlns="http://www.w3.org/2000/09/xmldsig#"';
     }
 
     $p = $ns ? "$ns:" : ""; // Prefix string
+
+    // Note: CanonicalizationMethod and Transform Algorithm must match example exactly
+    // Example: CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
+    // Reference/Transforms/Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"
 
     $signedInfo = "<{$p}SignedInfo{$nsDecl}>" .
         "<{$p}CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"></{$p}CanonicalizationMethod>" .
@@ -155,7 +156,6 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     $signatureFragment->appendXML($signatureXml);
     $dom->documentElement->appendChild($signatureFragment);
 
-    // Clean headers from result
     $finalXml = $dom->saveXML();
     $search1 = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
     $search2 = '<' . '?xml version="1.0"?' . '>';
@@ -168,12 +168,10 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
 {
     $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
 
-    // CDATA Strategy
     if ($variation === 'no_cdata') {
-        // HTML Entities instead of CDATA
         $payloadForEnvelope = htmlspecialchars($finalXmlPayload, ENT_XML1, 'UTF-8');
         $cabecMsg = htmlspecialchars("$xmlDecl<cabecalho versao=\"1.00\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>", ENT_XML1, 'UTF-8');
-
+        // ... (No CDATA Logic)
         $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
