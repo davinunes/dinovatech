@@ -294,7 +294,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
 
     if ($variation === 'no_cdata') {
         $payloadForEnvelope = htmlspecialchars($finalXmlPayload, ENT_XML1, 'UTF-8');
-        $cabecForEnvelope = htmlspecialchars($xmlDecl . $nfseCabecMsg, ENT_XML1, 'UTF-8');
+        $cabecForEnvelope = htmlspecialchars($nfseCabecMsg, ENT_XML1, 'UTF-8');
 
         $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -312,7 +312,7 @@ XML;
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
     <$methodTag xmlns="http://nfse.abrasf.org.br">
-      <nfseCabecMsg><![CDATA[$xmlDecl$nfseCabecMsg]]></nfseCabecMsg>
+      <nfseCabecMsg><![CDATA[$nfseCabecMsg]]></nfseCabecMsg>
       <nfseDadosMsg><![CDATA[$finalXmlPayload]]></nfseDadosMsg>
     </$methodTag>
   </soap:Body>
