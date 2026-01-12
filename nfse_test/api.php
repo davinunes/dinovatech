@@ -8,7 +8,8 @@ if (!$input) {
 }
 
 $action = $input['action'] ?? 'direct_a1';
-$variation = $input['variation'] ?? 'standard'; // standard, uri_empty, no_prefix, no_cdata, support_combo
+$method = $input['method'] ?? 'consultar'; // 'consultar' or 'gerar'
+$variation = $input['variation'] ?? 'support_combo'; // Default to what support uses
 
 // Configuration
 $endpoint_type = $input['endpoint'] ?? 'fictitious';
@@ -32,16 +33,20 @@ if ($action === 'direct_a1') {
         exit;
     }
 
-    $xmlComponents = buildPedidoXml($input);
+    // Build XML based on Method
+    if ($method === 'gerar') {
+        $xmlComponents = buildGerarNfseXml($input);
+    } else {
+        $xmlComponents = buildConsultarXml($input);
+    }
+
     $rootXml = $xmlComponents['root'];
     $rootId = $xmlComponents['id'];
 
     // VARIATION LOGIC
     $uriRef = "#" . $rootId;
-
     if ($variation === 'uri_empty' || $variation === 'support_combo') {
         $uriRef = "";
-        // Remove ID if URI is empty (Enveloped Signature usually doesn't need ID on root)
         $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
     }
 
@@ -49,7 +54,7 @@ if ($action === 'direct_a1') {
     $signedXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
 
     // Send
-    sendSoap($signedXml, $endpoint_url, $certs, $variation);
+    sendSoap($signedXml, $endpoint_url, $certs, $variation, $method);
     exit;
 }
 
@@ -57,9 +62,10 @@ if ($action === 'direct_a1') {
 
 // --- HELPERS ---
 
-function buildPedidoXml($input)
+function buildConsultarXml($input)
 {
     $cnpj = $input['cnpj'] ?? '';
+    // ... [Same mapping as before] ...
     $cpf = $input['cpf'] ?? '';
     $im = $input['im'] ?? '';
     $numero = $input['numero'] ?? '';
@@ -95,8 +101,116 @@ function buildPedidoXml($input)
     return ['root' => $rootXml, 'id' => $rootId];
 }
 
+function buildGerarNfseXml($input)
+{
+    $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
+    $imPrestador = $input['im'] ?? '0841147200111';
+    $numeroRps = rand(2000, 9999); // Random RPS to avoid duplication error
+    $dataHoje = date('Y-m-d');
+
+    // TOMADOR GENERICO (Test)
+    // Using a valid sample CPF or the User's CPF if available, otherwise just use the Prestador's own CNPJ as Tomador (Self-invoice for test)
+    $cpfTomador = $input['cpf_tomador'] ?? '00000000191'; // Banco do Brasil test or similar
+    // Actually, let's use a dummy CPF unless provided
+
+    // Content structure matching Support Example
+    $rpsContent = <<<XML
+<Rps>
+    <InfDeclaracaoPrestacaoServico>
+        <Rps>
+            <IdentificacaoRps>
+                <Numero>$numeroRps</Numero>
+                <Serie>A</Serie>
+                <Tipo>1</Tipo>
+            </IdentificacaoRps>
+            <DataEmissao>$dataHoje</DataEmissao>
+            <Status>1</Status>
+        </Rps>
+        <Competencia>$dataHoje</Competencia>
+        <Servico>
+            <Valores>
+                <ValorServicos>1.00</ValorServicos>
+                <ValorDeducoes>0</ValorDeducoes>
+                <ValorPis>0</ValorPis>
+                <ValorCofins>0</ValorCofins>
+                <ValorInss>0</ValorInss>
+                <ValorIr>0</ValorIr>
+                <ValorCsll>0</ValorCsll>
+                <OutrasRetencoes>0</OutrasRetencoes>
+                <ValTotTributos>0</ValTotTributos>
+                <ValorIss>0.05</ValorIss>
+                <Aliquota>5.00</Aliquota>
+                <DescontoIncondicionado>0</DescontoIncondicionado>
+                <DescontoCondicionado>0</DescontoCondicionado>
+            </Valores>
+            <IssRetido>2</IssRetido>
+            <ItemListaServico>01.07</ItemListaServico>
+            <CodigoCnae>6203100</CodigoCnae>
+            <CodigoTributacaoMunicipio>620310000</CodigoTributacaoMunicipio>
+            <Discriminacao>Teste de Integracao via WebService - RPS $numeroRps</Discriminacao>
+            <CodigoMunicipio>5300108</CodigoMunicipio>
+            <ExigibilidadeISS>1</ExigibilidadeISS>
+            <MunicipioIncidencia>5300108</MunicipioIncidencia>
+        </Servico>
+        <Prestador>
+            <CpfCnpj>
+                <Cnpj>$cnpjPrestador</Cnpj>
+            </CpfCnpj>
+            <InscricaoMunicipal>$imPrestador</InscricaoMunicipal>
+        </Prestador>
+        <TomadorServico>
+            <IdentificacaoTomador>
+                <CpfCnpj>
+                    <Cpf>01691128104</Cpf>
+                </CpfCnpj>
+            </IdentificacaoTomador>
+            <RazaoSocial>TOMADOR DE TESTE</RazaoSocial>
+        </TomadorServico>
+        <OptanteSimplesNacional>2</OptanteSimplesNacional>
+        <IncentivoFiscal>2</IncentivoFiscal>
+    </InfDeclaracaoPrestacaoServico>
+</Rps>
+XML;
+
+    $rootId = "GerarNfseEnvio"; // Not standard ID usage in support example, but they used root signing
+    // Actually the support example signed the Rps element inside?
+    // Let's look at the file: <GerarNfseEnvio> <Rps> ... <Signature> ... </Rps> </GerarNfseEnvio>
+    // Wait, the Signature is INSIDE <Rps> ? 
+    // Checking file line 261: <Rps> ... <Signature> ... </Rps>
+    // YES. The signature is inside Rps.
+    // So we are signing the RPS content, not the Envelope.
+    // And InfDeclaracaoPrestacaoServico is what is likely signed or the whole Rps.
+    // But usually Rps contains InfDeclaracaoPrestacaoServico AND Signature.
+
+    // Correction: We need to sign InfDeclaracaoPrestacaoServico? Or Rps? 
+    // If Reference URI="", it signs the parent (Rps).
+    // So structure is: <GerarNfseEnvio> <Rps> [Content] [Signature] </Rps> </GerarNfseEnvio>
+
+    // IMPORTANT: The Support Example `GerarNfseEnvio` has `xmlns` on the root.
+    // The previous implementation signed the ROOT of the payload.
+    // Here, we have `GerarNfseEnvio` -> `Rps`
+
+    // I will construct the `Rps` content, sign it (wrap in Rps), and then wrap in GerarNfseEnvio.
+    // Actually, `assinarRoot` appends signature to the end.
+    // So if I pass `<Rps>...</Rps>`, it will become `<Rps>...<Signature>...</Signature></Rps>`.
+    // Then I wrap that in `GerarNfseEnvio`.
+
+    $rootXml = $rpsContent;
+    $rootId = "Rps"; // Conceptual ID, though we use URI=""
+
+    // Wait, `assinarRoot` expects a full XML string. 
+    // If I pass `<Rps>...`, it returns signed `<Rps>...`.
+    // Then I just need to Wrap it.
+
+    return ['root' => $rootXml, 'id' => $rootId, 'wrapper' => 'GerarNfseEnvio'];
+}
+
 function assinarRoot($xmlString, $certs, $uriRef, $variation)
 {
+    // ... [Same Signature Logic] ...
+    // Note: If we need to sign a specific inner ID, we would need to pass that.
+    // But with URI="", it signs the root of what is passed.
+
     $dom = new DOMDocument('1.0', 'UTF-8');
     $dom->loadXML($xmlString);
 
@@ -113,10 +227,6 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     }
 
     $p = $ns ? "$ns:" : ""; // Prefix string
-
-    // Note: CanonicalizationMethod and Transform Algorithm must match example exactly
-    // Example: CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"
-    // Reference/Transforms/Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"
 
     $signedInfo = "<{$p}SignedInfo{$nsDecl}>" .
         "<{$p}CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"></{$p}CanonicalizationMethod>" .
@@ -164,21 +274,35 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     return trim($finalXml);
 }
 
-function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard')
+function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard', $method = 'consultar')
 {
+
+    // If GerarNfse, we need to Wrap the Signed RPS in GerarNfseEnvio
+    if ($method === 'gerar') {
+        $finalXmlPayload = '<GerarNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">' . $finalXmlPayload . '</GerarNfseEnvio>';
+    }
+
     $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
+    $soapAction = ($method === 'gerar')
+        ? 'http://nfse.abrasf.org.br/GerarNfse'
+        : 'http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado';
+
+    $methodTag = ($method === 'gerar') ? 'GerarNfse' : 'ConsultarNfseServicoPrestado';
+
+    // Strategy for Envelope CDATA vs Entities
+    $nfseCabecMsg = "<cabecalho versao=\"1.00\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>";
 
     if ($variation === 'no_cdata') {
         $payloadForEnvelope = htmlspecialchars($finalXmlPayload, ENT_XML1, 'UTF-8');
-        $cabecMsg = htmlspecialchars("$xmlDecl<cabecalho versao=\"1.00\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>", ENT_XML1, 'UTF-8');
-        // ... (No CDATA Logic)
+        $cabecForEnvelope = htmlspecialchars($xmlDecl . $nfseCabecMsg, ENT_XML1, 'UTF-8');
+
         $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
-    <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
-      <nfseCabecMsg>$cabecMsg</nfseCabecMsg>
+    <$methodTag xmlns="http://nfse.abrasf.org.br">
+      <nfseCabecMsg>$cabecForEnvelope</nfseCabecMsg>
       <nfseDadosMsg>$payloadForEnvelope</nfseDadosMsg>
-    </ConsultarNfseServicoPrestado>
+    </$methodTag>
   </soap:Body>
 </soap:Envelope>
 XML;
@@ -187,10 +311,10 @@ XML;
         $soapEnvelope = <<<XML
 <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Body>
-    <ConsultarNfseServicoPrestado xmlns="http://nfse.abrasf.org.br">
-      <nfseCabecMsg><![CDATA[$xmlDecl<cabecalho versao="1.00" xmlns="http://www.abrasf.org.br/nfse.xsd"><versaoDados>2.04</versaoDados></cabecalho>]]></nfseCabecMsg>
+    <$methodTag xmlns="http://nfse.abrasf.org.br">
+      <nfseCabecMsg><![CDATA[$xmlDecl$nfseCabecMsg]]></nfseCabecMsg>
       <nfseDadosMsg><![CDATA[$finalXmlPayload]]></nfseDadosMsg>
-    </ConsultarNfseServicoPrestado>
+    </$methodTag>
   </soap:Body>
 </soap:Envelope>
 XML;
@@ -203,7 +327,7 @@ XML;
     curl_setopt($ch, CURLOPT_POSTFIELDS, $soapEnvelope);
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'Content-Type: text/xml; charset=utf-8',
-        'SOAPAction: "http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado"',
+        'SOAPAction: "' . $soapAction . '"',
         'Content-Length: ' . strlen($soapEnvelope),
         'Accept: text/xml',
         'Accept-Language: pt-BR',
