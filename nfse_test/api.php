@@ -127,13 +127,26 @@ function buildGerarNfseXml($input)
     $itemLista = $input['item_lista'] ?? '01.07';
     $codigoCnae = $input['codigo_cnae'] ?? '6204000';
     $codigoTributacao = $input['codigo_tributacao'] ?? '7';
-    $discriminacao = $input['discriminacao'] ?? "Teste de Integracao via WebService - RPS $numeroRps";
+
+    // Sanitize Discriminacao (Remove accents/special chars to avoid encoding hell)
+    $discriminacaoRaw = $input['discriminacao'] ?? "Teste de Integracao via WebService - RPS $numeroRps";
+    $discriminacao = preg_replace('/[^a-zA-Z0-9 -]/', ' ', iconv('UTF-8', 'ASCII//TRANSLIT', $discriminacaoRaw));
 
     $valorServicos = $input['valor'] ?? '10.00';
     $issRetido = $input['iss_retido'] ?? '2'; // 1=Sim, 2=Não
 
+    // Aliquota strategy: Simples/Immunities often require 0 or integer-like 0.
+    // Use 0 instead of 0.00 (Matches successful Web Panel XML)
+    $aliquota = '0';
+
+    // Configurable Optante Simples
+    // Default to 2 (Não) to match successful Web Panel XML.
+    $optanteSimples = $input['optante_simples'] ?? '2';
+
+    $rpsId = "rps" . $numeroRps;
+
     $infRps = <<<XML
-    <InfDeclaracaoPrestacaoServico>
+    <InfDeclaracaoPrestacaoServico Id="$rpsId">
         <Rps>
             <IdentificacaoRps>
                 <Numero>$numeroRps</Numero>
@@ -156,7 +169,7 @@ function buildGerarNfseXml($input)
                 <OutrasRetencoes>0.00</OutrasRetencoes>
                 <ValTotTributos>0.00</ValTotTributos>
                 <ValorIss>0.00</ValorIss>
-                <Aliquota>0.00</Aliquota>
+                <Aliquota>$aliquota</Aliquota>
                 <DescontoIncondicionado>0.00</DescontoIncondicionado>
                 <DescontoCondicionado>0.00</DescontoCondicionado>
             </Valores>
@@ -197,7 +210,7 @@ function buildGerarNfseXml($input)
                 <Email>davi.nunes@gmail.com</Email>
             </Contato>
         </TomadorServico>
-        <OptanteSimplesNacional>2</OptanteSimplesNacional>
+        <OptanteSimplesNacional>$optanteSimples</OptanteSimplesNacional>
         <IncentivoFiscal>2</IncentivoFiscal>
     </InfDeclaracaoPrestacaoServico>
 XML;
