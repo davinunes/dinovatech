@@ -50,20 +50,13 @@ if ($action === 'direct_a1') {
     $rootId = $xmlComponents['id'];
 
     // VARIATION LOGIC
-    if (empty($rootId)) {
-        $uriRef = "";
-    } else {
-        $uriRef = "#" . $rootId;
-    }
-
+    $uriRef = "#" . $rootId;
     if ($variation === 'uri_empty' || $variation === 'support_combo') {
-        // If it was already empty (from buildGerarNfseXml), keeps empty.
-        // If it had an ID (Consultar), forces empty and removes ID attribute.
-        // FIX: Applied to ALL methods as Consultar also fails with "Error" likely due to ID/URI mismatch.
-        if (!empty($rootId)) {
-            $uriRef = "";
-            $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
-        }
+        // Legacy Logic Restoration (Commit 2aa36ab)
+        // For this variation, we MUST strip the ID from the root element and set URI to empty.
+        // This applies to ALL methods (Gerar, Consultar, ConsultarRPS).
+        $uriRef = "";
+        $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
     }
 
     // Sign
