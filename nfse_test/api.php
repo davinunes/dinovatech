@@ -199,6 +199,8 @@ function buildConsultarRpsDisponivelXml($input)
         $pedidoContent .= "</IdentificacaoRps>";
     }
 
+    $pedidoContent .= "<Pagina>1</Pagina>";
+
     $pedidoContent .= "</Pedido>";
 
     $rootId = "ConsultarRpsDisponivelEnvio";
