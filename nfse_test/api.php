@@ -145,7 +145,7 @@ function buildGerarNfseXml($input)
 {
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
     $imPrestador = $input['im'] ?? '0841147200111';
-    $numeroRps = rand(2000, 9999);
+    $numeroRps = $input['numero_rps'] ?? ''; // Empty by default now
     $dataHoje = date('Y-m-d');
 
     // Content structure matching Support Example (URI="")
@@ -229,14 +229,17 @@ function buildGerarNfseXml($input)
     // Configurable Optante Simples
     $optanteSimples = $input['optante_simples'] ?? '2';
 
-    $rpsId = "rps" . $numeroRps;
+    // We need a unique ID for InfDeclaracaoPrestacaoServico regardless of RPS
+    $rpsId = "rps" . ($numeroRps ?: rand(10000, 99999));
 
     $razaoSocialTomador = $cleanString("Davi Nunes de França");
     $enderecoTomador = $cleanString("QI 24 Lotes 1 a 13 (Residencial Miami Beach)");
     $bairroTomador = $cleanString("Setor Industrial (Taguatinga)");
 
-    $infRps = <<<XML
-    <InfDeclaracaoPrestacaoServico Id="$rpsId">
+    $infRps = "<InfDeclaracaoPrestacaoServico Id=\"$rpsId\">";
+
+    if (!empty($numeroRps)) {
+        $infRps .= <<<XML
         <Rps>
             <IdentificacaoRps>
                 <Numero>$numeroRps</Numero>
@@ -246,6 +249,10 @@ function buildGerarNfseXml($input)
             <DataEmissao>$dataHoje</DataEmissao>
             <Status>1</Status>
         </Rps>
+XML;
+    }
+
+    $infRps .= <<<XML
         <Competencia>$dataHoje</Competencia>
         <Servico>
             <Valores>
