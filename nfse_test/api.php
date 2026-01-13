@@ -145,7 +145,10 @@ function buildGerarNfseXml($input)
 {
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
     $imPrestador = $input['im'] ?? '0841147200111';
-    $numeroRps = $input['numero_rps'] ?? ''; // Empty by default now
+    $numeroRps = $input['numero_rps'] ?? '';
+    if (empty($numeroRps)) {
+        $numeroRps = rand(2000, 9999);
+    }
     $dataHoje = date('Y-m-d');
 
     // Content structure matching Support Example (URI="")
@@ -238,8 +241,8 @@ function buildGerarNfseXml($input)
 
     $infRps = "<InfDeclaracaoPrestacaoServico Id=\"$rpsId\">";
 
-    if (!empty($numeroRps)) {
-        $infRps .= <<<XML
+    // Server REQUIRES RPS block (E011), so we include it unconditionally.
+    $infRps .= <<<XML
         <Rps>
             <IdentificacaoRps>
                 <Numero>$numeroRps</Numero>
@@ -250,7 +253,6 @@ function buildGerarNfseXml($input)
             <Status>1</Status>
         </Rps>
 XML;
-    }
 
     $infRps .= <<<XML
         <Competencia>$dataHoje</Competencia>
