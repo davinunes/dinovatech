@@ -44,10 +44,19 @@ if ($action === 'direct_a1') {
     $rootId = $xmlComponents['id'];
 
     // VARIATION LOGIC
-    $uriRef = "#" . $rootId;
-    if ($variation === 'uri_empty' || $variation === 'support_combo') {
+    if (empty($rootId)) {
         $uriRef = "";
-        $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+    } else {
+        $uriRef = "#" . $rootId;
+    }
+
+    if ($variation === 'uri_empty' || $variation === 'support_combo') {
+        // If it was already empty (from buildGerarNfseXml), keeps empty.
+        // If it had an ID (Consultar), forces empty and removes ID attribute.
+        if (!empty($rootId)) {
+            $uriRef = "";
+            $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+        }
     }
 
     // Sign
@@ -108,15 +117,11 @@ function buildGerarNfseXml($input)
     $numeroRps = rand(2000, 9999);
     $dataHoje = date('Y-m-d');
 
-    // Using Data from Successful Note
-    $cpfTomador = $input['cpf_tomador'] ?? '01691128104';
-    $rpsId = "rps" . $numeroRps;
-
-    // Content structure matching Successful Note (DeclaracaoPrestacaoServico -> InfDeclaracaoPrestacaoServico)
+    // Content structure matching Support Example (URI="")
     // In RPS context: Rps -> InfDeclaracaoPrestacaoServico
 
     $infRps = <<<XML
-    <InfDeclaracaoPrestacaoServico Id="$rpsId">
+    <InfDeclaracaoPrestacaoServico>
         <Rps>
             <IdentificacaoRps>
                 <Numero>$numeroRps</Numero>
@@ -187,15 +192,10 @@ XML;
     // Structure for Signature: Wrapper <Rps> contains <Inf...> and <Signature>
     $rootXml = "<Rps>$infRps</Rps>";
 
-    // We want to sign the inner ID, but our assinarRoot appends signature to the END.
-    // If we pass the whole <Rps>...</Rps> to assinarRoot, it will append Signature at the end of Rps content
-    // Check assinarRoot logic: it appends to documentElement. 
-    // If documentElement is <Rps>, it becomes <Rps> <Inf...> <Signature> </Rps>
-    // This is CORRECT structure.
+    // Use Empty ID to trigger URI="" in caller logic
+    $rootId = "";
 
-    // However, we need to make sure the Reference URI matches the ID we put in Inf...
-
-    return ['root' => $rootXml, 'id' => $rpsId, 'wrapper' => 'GerarNfseEnvio'];
+    return ['root' => $rootXml, 'id' => $rootId, 'wrapper' => 'GerarNfseEnvio'];
 }
 
 function assinarRoot($xmlString, $certs, $uriRef, $variation)
