@@ -146,6 +146,9 @@ function buildGerarNfseXml($input)
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
     $imPrestador = $input['im'] ?? '0841147200111';
     $numeroRps = $input['numero_rps'] ?? '';
+    $serieRps = $input['serie_rps'] ?? 'A';
+    $tipoRps = $input['tipo_rps'] ?? '1';
+
     if (empty($numeroRps)) {
         $numeroRps = rand(2000, 9999);
     }
@@ -253,8 +256,8 @@ function buildGerarNfseXml($input)
         <Rps>
             <IdentificacaoRps>
                 <Numero>$numeroRps</Numero>
-                <Serie>A</Serie>
-                <Tipo>1</Tipo>
+                <Serie>$serieRps</Serie>
+                <Tipo>$tipoRps</Tipo>
             </IdentificacaoRps>
             <DataEmissao>$dataHoje</DataEmissao>
             <Status>1</Status>
