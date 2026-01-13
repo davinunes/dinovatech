@@ -46,6 +46,8 @@ if ($action === 'direct_a1') {
         $xmlComponents = buildConsultarCadastralXml($input);
     } elseif ($method === 'consultar_rps') {
         $xmlComponents = buildConsultarNfseRpsXml($input);
+    } elseif ($method === 'consultar_rps_disponivel') {
+        $xmlComponents = buildConsultarRpsDisponivelXml($input);
     } else {
         $xmlComponents = buildConsultarXml($input);
     }
@@ -171,6 +173,36 @@ function buildConsultarNfseRpsXml($input)
 
     $rootId = "ConsultarNfseRpsEnvio";
     $rootXml = '<ConsultarNfseRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarNfseRpsEnvio>';
+
+    return ['root' => $rootXml, 'id' => $rootId];
+}
+
+function buildConsultarRpsDisponivelXml($input)
+{
+    $cnpj = $input['cnpj'] ?? '';
+    $im = $input['im'] ?? '';
+    $serieRps = $input['serie_rps'] ?? '8';
+    $tipoRps = $input['tipo_rps'] ?? '1';
+    $numeroRps = $input['numero_rps'] ?? '';
+
+    $pedidoContent = "<Pedido>";
+    $pedidoContent .= "<Prestador>";
+    $pedidoContent .= "<CpfCnpj><Cnpj>$cnpj</Cnpj></CpfCnpj>";
+    $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
+    $pedidoContent .= "</Prestador>";
+
+    if (!empty($numeroRps)) {
+        $pedidoContent .= "<IdentificacaoRps>";
+        $pedidoContent .= "<Numero>$numeroRps</Numero>";
+        $pedidoContent .= "<Serie>$serieRps</Serie>";
+        $pedidoContent .= "<Tipo>$tipoRps</Tipo>";
+        $pedidoContent .= "</IdentificacaoRps>";
+    }
+
+    $pedidoContent .= "</Pedido>";
+
+    $rootId = "ConsultarRpsDisponivelEnvio";
+    $rootXml = '<ConsultarRpsDisponivelEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarRpsDisponivelEnvio>';
 
     return ['root' => $rootXml, 'id' => $rootId];
 }
@@ -480,9 +512,11 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     } elseif ($method === 'consultar_cadastral') {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarDadosCadastrais';
         $methodTag = 'ConsultarDadosCadastrais';
-    } elseif ($method === 'consultar_rps') {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfsePorRps';
         $methodTag = 'ConsultarNfsePorRps';
+    } elseif ($method === 'consultar_rps_disponivel') {
+        $soapAction = 'http://nfse.abrasf.org.br/ConsultarRpsDisponivel';
+        $methodTag = 'ConsultarRpsDisponivel';
     } else {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado';
         $methodTag = 'ConsultarNfseServicoPrestado';

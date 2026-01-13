@@ -252,28 +252,41 @@
                                     Verifique se um <strong>RPS enviado</strong> foi processado e convertido em Nota.
                                 </div>
                                 <div class="card card-body bg-light border-0">
-                                    <div class="row g-3">
+                                    <div class="row g-3 items-end">
                                         <div class="col-md-4">
                                             <label class="form-label fw-bold">Número RPS</label>
                                             <input type="text" class="form-control" id="cons_rps_numero"
-                                                placeholder="Ex: 88801">
+                                                placeholder="Opcional">
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label fw-bold">Série</label>
-                                            <input type="text" class="form-control" id="cons_rps_serie" value="A">
+                                            <input type="text" class="form-control" id="cons_rps_serie" value="8">
                                         </div>
                                         <div class="col-md-3">
                                             <label class="form-label fw-bold">Tipo</label>
                                             <select class="form-select" id="cons_rps_tipo">
                                                 <option value="1" selected>1 - RPS</option>
-                                                <option value="2">2 - Conjugada</option>
-                                                <option value="3">3 - Cupom</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-12">
-                                            <button class="btn btn-dark w-100" onclick="testarAPI('consultar_rps')">
-                                                <i class="bi bi-search"></i> Consultar Status RPS
+                                        <div class="col-md-2">
+                                            <button class="btn btn-dark w-100 h-100"
+                                                onclick="testarAPI('consultar_rps')">
+                                                <i class="bi bi-search"></i> Status
                                             </button>
+                                        </div>
+
+                                        <div class="col-12 mt-4">
+                                            <h6 class="text-uppercase text-muted small fw-bold mb-3 border-top pt-3">
+                                                Novos Métodos</h6>
+                                            <button class="btn btn-outline-primary w-100"
+                                                onclick="testarAPI('consultar_rps_disponivel')">
+                                                <i class="bi bi-question-circle me-2"></i> Consultar Disponibilidade
+                                                (Próximo RPS)
+                                            </button>
+                                            <small class="text-muted d-block mt-2">
+                                                * Usa a Série informada acima. Se der erro, tentaremos descobrir a
+                                                próxima sequência válida.
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -401,7 +414,7 @@
                 payload.optante_simples = document.getElementById('optante_simples').value;
                 payload.codigo_nbs = document.getElementById('codigo_nbs').value;
                 payload.aliquota = document.getElementById('aliquota').value;
-            } else if (method === 'consultar_rps') {
+            } else if (method === 'consultar_rps' || method === 'consultar_rps_disponivel') {
                 payload.numero_rps = document.getElementById('cons_rps_numero').value;
                 payload.serie_rps = document.getElementById('cons_rps_serie').value;
                 payload.tipo_rps = document.getElementById('cons_rps_tipo').value;
