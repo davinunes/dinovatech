@@ -35,8 +35,11 @@ if ($action === 'direct_a1') {
     }
 
     // Build XML based on Method
+    // Build XML based on Method
     if ($method === 'gerar') {
         $xmlComponents = buildGerarNfseXml($input);
+    } elseif ($method === 'consultar_cadastral') {
+        $xmlComponents = buildConsultarCadastralXml($input);
     } else {
         $xmlComponents = buildConsultarXml($input);
     }
@@ -111,6 +114,33 @@ function buildConsultarXml($input)
     return ['root' => $rootXml, 'id' => $rootId];
 }
 
+function buildConsultarCadastralXml($input)
+{
+    $cnpj = $input['cnpj'] ?? '';
+    $im = $input['im'] ?? '';
+    $cpf = $input['cpf'] ?? '';
+
+    $pedidoContent = "<Pedido>";
+    $pedidoContent .= "<Prestador>";
+    $pedidoContent .= "<CpfCnpj>";
+    if (!empty($cpf)) {
+        $pedidoContent .= "<Cpf>$cpf</Cpf>";
+    } else {
+        $pedidoContent .= "<Cnpj>$cnpj</Cnpj>";
+    }
+    $pedidoContent .= "</CpfCnpj>";
+    $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
+    $pedidoContent .= "</Prestador>";
+    $pedidoContent .= "</Pedido>";
+
+    // No specific inner ID usually for this, so we sign the root.
+    // However, we need to verify if the root tag needs an ID.
+    // Based on standard, it doesn't always, but our assinarRoot handles empty URI.
+    $rootXml = '<ConsultarDadosCadastraisEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">' . $pedidoContent . '</ConsultarDadosCadastraisEnvio>';
+
+    return ['root' => $rootXml, 'id' => ''];
+}
+
 function buildGerarNfseXml($input)
 {
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
@@ -128,7 +158,7 @@ function buildGerarNfseXml($input)
     $codigoCnae = $input['codigo_cnae'] ?? '6204000';
     $codigoTributacao = $input['codigo_tributacao'] ?? '7';
     // NBS default to what user mentioned
-    $codigoNbs = $input['codigo_nbs'] ?? '115080000';
+    $codigoNbs = $input['codigo_nbs'] ?? '';
     $aliquota = $input['aliquota'] ?? '0';
 
     // Helper for manual sanitization (Server iconv seems flaky)
@@ -237,7 +267,12 @@ function buildGerarNfseXml($input)
             <ItemListaServico>$itemLista</ItemListaServico>
             <CodigoCnae>$codigoCnae</CodigoCnae>
             <CodigoTributacaoMunicipio>$codigoTributacao</CodigoTributacaoMunicipio>
-            <CodigoNbs>$codigoNbs</CodigoNbs>
+XML;
+    if (!empty($codigoNbs)) {
+        $infRps .= "\n            <CodigoNbs>$codigoNbs</CodigoNbs>";
+    }
+    $infRps .= <<<XML
+
             <Discriminacao>$discriminacao</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
             <ExigibilidadeISS>1</ExigibilidadeISS>
@@ -376,11 +411,19 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     }
 
     $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
-    $soapAction = ($method === 'gerar')
-        ? 'http://nfse.abrasf.org.br/GerarNfse'
-        : 'http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado';
+    $soapAction = '';
+    $methodTag = '';
 
-    $methodTag = ($method === 'gerar') ? 'GerarNfse' : 'ConsultarNfseServicoPrestado';
+    if ($method === 'gerar') {
+        $soapAction = 'http://nfse.abrasf.org.br/GerarNfse';
+        $methodTag = 'GerarNfse';
+    } elseif ($method === 'consultar_cadastral') {
+        $soapAction = 'http://nfse.abrasf.org.br/ConsultarDadosCadastrais';
+        $methodTag = 'ConsultarDadosCadastrais';
+    } else {
+        $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado';
+        $methodTag = 'ConsultarNfseServicoPrestado';
+    }
 
     // Strategy for Envelope CDATA vs Entities
     $nfseCabecMsg = "<cabecalho versao=\"2.04\" xmlns=\"http://www.abrasf.org.br/nfse.xsd\"><versaoDados>2.04</versaoDados></cabecalho>";

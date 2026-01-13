@@ -90,6 +90,12 @@
                             <i class="bi bi-search me-2"></i>Consultar / Recuperar
                         </button>
                     </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="cadastro-tab" data-bs-toggle="tab" data-bs-target="#cadastro"
+                            type="button">
+                            <i class="bi bi-person-lines-fill me-2"></i>Dados Cadastrais
+                        </button>
+                    </li>
                 </ul>
             </div>
 
@@ -217,6 +223,27 @@
                                             </button>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB: CADASTRO -->
+                    <div class="tab-pane fade" id="cadastro" role="tabpanel">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="alert alert-warning border-0 bg-warning bg-opacity-10">
+                                    <i class="bi bi-lightbulb me-2"></i>
+                                    Utilize esta opção para descobrir os códigos corretos (CNAE, NBS, Tributação)
+                                    vinculados à sua inscrição.
+                                </div>
+                                <div class="card card-body bg-light border-0 text-center py-5">
+                                    <h5 class="card-title mb-4">Consultar Dados do Prestador</h5>
+                                    <p class="text-muted mb-4">Esta consulta recupera as atividades e códigos
+                                        autorizados para o CNPJ/IM configurados.</p>
+                                    <button class="btn btn-dark btn-lg" onclick="testarAPI('consultar_cadastral')">
+                                        <i class="bi bi-search me-2"></i>Consultar Cadastro
+                                    </button>
                                 </div>
                             </div>
                         </div>
