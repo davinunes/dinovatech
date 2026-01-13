@@ -120,6 +120,15 @@ function buildGerarNfseXml($input)
     // Content structure matching Support Example (URI="")
     // In RPS context: Rps -> InfDeclaracaoPrestacaoServico
 
+    // Dynamic Service Data
+    $itemLista = $input['item_lista'] ?? '01.07';
+    $codigoCnae = $input['codigo_cnae'] ?? '6204000';
+    $codigoTributacao = $input['codigo_tributacao'] ?? '7';
+    $discriminacao = $input['discriminacao'] ?? "Teste de Integracao via WebService - RPS $numeroRps";
+
+    $valorServicos = $input['valor'] ?? '10.00';
+    $issRetido = $input['iss_retido'] ?? '2'; // 1=Sim, 2=Não
+
     $infRps = <<<XML
     <InfDeclaracaoPrestacaoServico>
         <Rps>
@@ -134,7 +143,7 @@ function buildGerarNfseXml($input)
         <Competencia>$dataHoje</Competencia>
         <Servico>
             <Valores>
-                <ValorServicos>10.00</ValorServicos>
+                <ValorServicos>$valorServicos</ValorServicos>
                 <ValorDeducoes>0.00</ValorDeducoes>
                 <ValorPis>0.00</ValorPis>
                 <ValorCofins>0.00</ValorCofins>
@@ -148,11 +157,11 @@ function buildGerarNfseXml($input)
                 <DescontoIncondicionado>0.00</DescontoIncondicionado>
                 <DescontoCondicionado>0.00</DescontoCondicionado>
             </Valores>
-            <IssRetido>2</IssRetido>
-            <ItemListaServico>01.07</ItemListaServico>
-            <CodigoCnae>6204000</CodigoCnae>
-            <CodigoTributacaoMunicipio>7</CodigoTributacaoMunicipio>
-            <Discriminacao>Teste de Integracao via WebService - RPS $numeroRps</Discriminacao>
+            <IssRetido>$issRetido</IssRetido>
+            <ItemListaServico>$itemLista</ItemListaServico>
+            <CodigoCnae>$codigoCnae</CodigoCnae>
+            <CodigoTributacaoMunicipio>$codigoTributacao</CodigoTributacaoMunicipio>
+            <Discriminacao>$discriminacao</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
             <ExigibilidadeISS>1</ExigibilidadeISS>
             <MunicipioIncidencia>5300108</MunicipioIncidencia>
