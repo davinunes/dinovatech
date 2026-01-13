@@ -7,6 +7,7 @@
     <title>Painel NFS-e DF (DInova)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-okaidia.min.css" rel="stylesheet" />
     <style>
         body {
             background-color: #f4f6f9;
@@ -281,10 +282,11 @@
                             </button>
                         </div>
                         <div class="tab-pane fade show active" id="res-response">
-                            <pre class="m-0 rounded-0 border-0"><code id="xmlResponse"></code></pre>
+                            <pre
+                                class="m-0 rounded-0 border-0"><code id="xmlResponse" class="language-xml"></code></pre>
                         </div>
                         <div class="tab-pane fade" id="res-request">
-                            <pre class="m-0 rounded-0 border-0"><code id="xmlRequest"></code></pre>
+                            <pre class="m-0 rounded-0 border-0"><code id="xmlRequest" class="language-xml"></code></pre>
                         </div>
                     </div>
                 </div>
@@ -293,7 +295,12 @@
 
     </div>
 
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-xml-doc.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-xml.min.js"></script>
     <script>
         function copyToClipboard() {
             const activeTab = document.querySelector('#resTab .active').getAttribute('data-bs-target');
@@ -380,8 +387,29 @@
                 resultStatus.innerText = 'FALHA JS';
                 xmlResponse.innerText = 'Erro Javascript: ' + error.message;
             }
+    }
+    </script>
+    </script>
+    <script>
+        function formatXml(xml) {
+             let formatted = '';
+             let pad = 0;
+             const nodes = xml.replace(/>\s*</g, '><').replace(/</g, '\n<').split('\n');
+             
+             for (let node of nodes) {
+                 if (!node.trim()) continue;
+                 let indent = 0;
+                 if (node.match(/^<\//)) {
+                     pad = Math.max(0, pad - 1); // Closing tag
+                 } else if (node.match(/^<[^/].*[^/]>$/) && !node.match(/^<\?/) && !node.match(/^<!/)) {
+                     indent = 1; // Opening tag
+                 }
+                 
+                 formatted += '  '.repeat(pad) + node + '\n';
+                 pad += indent;
+             }
+             return formatted;
         }
     </script>
 </body>
-
 </html>
