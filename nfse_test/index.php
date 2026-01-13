@@ -146,7 +146,7 @@
                                         <label class="form-label small fw-bold">Valor (R$)</label>
                                         <div class="input-group">
                                             <span class="input-group-text">R$</span>
-                                            <input type="text" class="form-control" id="valor" value="10.00">
+                                            <input type="text" class="form-control" id="valor" value="100.00">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
@@ -168,7 +168,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-bold">Alíquota (%)</label>
-                                        <input type="text" class="form-control" id="aliquota" value="0">
+                                        <input type="text" class="form-control" id="aliquota" value="3.00">
                                     </div>
 
                                     <div class="col-md-3">
