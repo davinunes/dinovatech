@@ -285,8 +285,12 @@ function buildGerarNfseXml($input)
 
     $infRps = "<InfDeclaracaoPrestacaoServico Id=\"$rpsId\">";
 
-    // Server REQUIRES RPS block (E011), so we include it unconditionally.
-    $infRps .= <<<XML
+    // Check for "Avulso" generation (No RPS block)
+    if ($serieRps && (strtoupper($serieRps) === 'AVULSO' || strtoupper($serieRps) === 'NONE')) {
+        // Skip RPS block to generate "Nota Avulsa"
+    } else {
+        // Standard generation with RPS
+        $infRps .= <<<XML
         <Rps>
             <IdentificacaoRps>
                 <Numero>$numeroRps</Numero>
@@ -297,6 +301,7 @@ function buildGerarNfseXml($input)
             <Status>1</Status>
         </Rps>
 XML;
+    }
 
     $infRps .= <<<XML
         <Competencia>$dataHoje</Competencia>

@@ -125,7 +125,13 @@
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-bold">Série</label>
-                                        <input type="text" class="form-control" id="serie_rps" value="A">
+                                        <select class="form-select" id="serie_rps">
+                                            <option value="A" selected>Série A</option>
+                                            <option value="1">Série 1</option>
+                                            <option value="RPS">Série RPS</option>
+                                            <option value="NF">Série NF</option>
+                                            <option value="AVULSO">SEM RPS (Nota Avulsa)</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label small fw-bold">Tipo</label>
