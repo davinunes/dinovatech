@@ -55,12 +55,20 @@ if ($action === 'direct_a1') {
 
     // VARIATION LOGIC
     $uriRef = "#" . $rootId;
+
+    // DEBUG: Enforce protocol to match 2aa36ab legacy success
+    $variation = 'support_combo';
+
     if ($variation === 'uri_empty' || $variation === 'support_combo') {
         // Legacy Logic Restoration (Commit 2aa36ab)
         // For this variation, we MUST strip the ID from the root element and set URI to empty.
         // This applies to ALL methods (Gerar, Consultar, ConsultarRPS).
         $uriRef = "";
-        $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+
+        // Ensure replacement works even if $rootId is empty (though it shouldn't be for valid requests)
+        if (!empty($rootId)) {
+            $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+        }
     }
 
     // Sign
