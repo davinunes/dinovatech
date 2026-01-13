@@ -147,6 +147,13 @@
                                         <label class="form-label small fw-bold">Cód. Tributação</label>
                                         <input type="text" class="form-control" id="codigo_tributacao" value="7">
                                     </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Simples Nacional</label>
+                                        <select class="form-select" id="optante_simples">
+                                            <option value="1">1 - Sim</option>
+                                            <option value="2" selected>2 - Não</option>
+                                        </select>
+                                    </div>
                                     <div class="col-md-12">
                                         <label class="form-label small fw-bold">Discriminação</label>
                                         <textarea class="form-control" id="discriminacao"
