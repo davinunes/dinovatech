@@ -145,6 +145,15 @@ function buildGerarNfseXml($input)
 
     $rpsId = "rps" . $numeroRps;
 
+    // Sanitize Address/Name to avoid Encoding/Entity mismatches (e.g. França -> Franca)
+    $cleanString = function ($str) {
+        return preg_replace('/[^a-zA-Z0-9 -]/', ' ', iconv('UTF-8', 'ASCII//TRANSLIT', $str));
+    };
+
+    $razaoSocialTomador = $cleanString("Davi Nunes de França");
+    $enderecoTomador = $cleanString("QI 24 Lotes 1 a 13 (Residencial Miami Beach)");
+    $bairroTomador = $cleanString("Setor Industrial (Taguatinga)");
+
     $infRps = <<<XML
     <InfDeclaracaoPrestacaoServico Id="$rpsId">
         <Rps>
@@ -195,12 +204,12 @@ function buildGerarNfseXml($input)
                     <Cpf>$cpfTomador</Cpf>
                 </CpfCnpj>
             </IdentificacaoTomador>
-            <RazaoSocial>Davi Nunes de França</RazaoSocial>
+            <RazaoSocial>$razaoSocialTomador</RazaoSocial>
             <Endereco>
-                <Endereco>QI 24 Lotes 1 a 13 (Residencial Miami Beach)</Endereco>
+                <Endereco>$enderecoTomador</Endereco>
                 <Numero>1</Numero>
                 <Complemento>104E</Complemento>
-                <Bairro>Setor Industrial (Taguatinga)</Bairro>
+                <Bairro>$bairroTomador</Bairro>
                 <CodigoMunicipio>5300108</CodigoMunicipio>
                 <Uf>DF</Uf>
                 <Cep>72135902</Cep>
