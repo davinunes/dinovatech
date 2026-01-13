@@ -12,6 +12,10 @@ $action = $input['action'] ?? 'direct_a1';
 $method = $input['method'] ?? 'consultar'; // 'consultar' or 'gerar'
 $variation = $input['variation'] ?? 'support_combo'; // Default to what support uses
 
+// FORCE VARIATION for debugging if it's somehow failing
+if (empty($variation))
+    $variation = 'support_combo';
+
 // Configuration
 $endpoint_type = $input['endpoint'] ?? 'fictitious';
 $endpoint_url = ($endpoint_type === 'official')
