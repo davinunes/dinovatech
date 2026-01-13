@@ -1,0 +1,109 @@
+{
+    "updated": "2025-12-13T00:00:00.000Z",
+    "taxId": "61733714000101",
+    "alias": "Digital Inovation Tecnologia",
+    "founded": "2025-07-14",
+    "head": true,
+    "company": {
+        "members": [
+            {
+                "since": "2025-07-14",
+                "person": {
+                    "id": "a66cae75-8c66-4304-9576-252c97be7a67",
+                    "type": "NATURAL",
+                    "name": "Davi Nunes de Franca",
+                    "taxId": "***911281**",
+                    "age": "31-40"
+                },
+                "role": {
+                    "id": 49,
+                    "text": "Sócio-Administrador"
+                }
+            }
+        ],
+        "id": 61733714,
+        "name": "DAVI NUNES DE FRANCA TECNOLOGIA DA INFORMACAO LTDA",
+        "equity": 1000,
+        "nature": {
+            "id": 2062,
+            "text": "Sociedade Empresária Limitada"
+        },
+        "size": {
+            "id": 1,
+            "acronym": "ME",
+            "text": "Microempresa"
+        },
+        "simples": {
+            "optant": true,
+            "since": "2025-07-14"
+        },
+        "simei": {
+            "optant": false,
+            "since": null
+        }
+    },
+    "statusDate": "2025-07-14",
+    "status": {
+        "id": 2,
+        "text": "Ativa"
+    },
+    "address": {
+        "municipality": 5300108,
+        "street": "Quadra Qi 24",
+        "number": "S/N",
+        "district": "Setor Industrial (taguatinga)",
+        "city": "Brasília",
+        "state": "DF",
+        "details": "Lote 1 A13 TO e Apt 104",
+        "zip": "72135240",
+        "country": {
+            "id": 76,
+            "name": "Brasil"
+        }
+    },
+    "mainActivity": {
+        "id": 6204000,
+        "text": "Consultoria em tecnologia da informação"
+    },
+    "phones": [
+        {
+            "type": "MOBILE",
+            "area": "61",
+            "number": "96757676"
+        }
+    ],
+    "emails": [
+        {
+            "ownership": "PERSONAL",
+            "address": "davi.nunes@gmail.com",
+            "domain": "gmail.com"
+        }
+    ],
+    "sideActivities": [
+        {
+            "id": 6201501,
+            "text": "Desenvolvimento de programas de computador sob encomenda"
+        },
+        {
+            "id": 6202300,
+            "text": "Desenvolvimento e licenciamento de programas de computador customizáveis"
+        },
+        {
+            "id": 6203100,
+            "text": "Desenvolvimento e licenciamento de programas de computador não-customizáveis"
+        },
+        {
+            "id": 6209100,
+            "text": "Suporte técnico, manutenção e outros serviços em tecnologia da informação"
+        },
+        {
+            "id": 8020001,
+            "text": "Atividades de monitoramento de sistemas de segurança eletrônico"
+        },
+        {
+            "id": 8599603,
+            "text": "Treinamento em informática"
+        }
+    ],
+    "suframa": []
+}

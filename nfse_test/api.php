@@ -163,6 +163,7 @@ function buildGerarNfseXml($input)
             <ItemListaServico>$itemLista</ItemListaServico>
             <CodigoCnae>$codigoCnae</CodigoCnae>
             <CodigoTributacaoMunicipio>$codigoTributacao</CodigoTributacaoMunicipio>
+            <CodigoNbs>115080000</CodigoNbs>
             <Discriminacao>$discriminacao</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
             <ExigibilidadeISS>1</ExigibilidadeISS>
