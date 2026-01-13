@@ -40,6 +40,8 @@ if ($action === 'direct_a1') {
         $xmlComponents = buildGerarNfseXml($input);
     } elseif ($method === 'consultar_cadastral') {
         $xmlComponents = buildConsultarCadastralXml($input);
+    } elseif ($method === 'consultar_rps') {
+        $xmlComponents = buildConsultarNfseRpsXml($input);
     } else {
         $xmlComponents = buildConsultarXml($input);
     }
@@ -54,9 +56,10 @@ if ($action === 'direct_a1') {
         $uriRef = "#" . $rootId;
     }
 
-    if ($variation === 'uri_empty' || $variation === 'support_combo') {
+    if (($variation === 'uri_empty' || $variation === 'support_combo') && $method === 'gerar') {
         // If it was already empty (from buildGerarNfseXml), keeps empty.
         // If it had an ID (Consultar), forces empty and removes ID attribute.
+        // FIX: Restrict this only to 'gerar' method to avoid breaking Consultations which require ID for Signature.
         if (!empty($rootId)) {
             $uriRef = "";
             $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
@@ -139,6 +142,32 @@ function buildConsultarCadastralXml($input)
     $rootXml = '<ConsultarDadosCadastraisEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">' . $pedidoContent . '</ConsultarDadosCadastraisEnvio>';
 
     return ['root' => $rootXml, 'id' => ''];
+}
+
+function buildConsultarNfseRpsXml($input)
+{
+    $cnpj = $input['cnpj'] ?? '';
+    $im = $input['im'] ?? '';
+    $numeroRps = $input['numero_rps'] ?? '';
+    $serieRps = $input['serie_rps'] ?? 'A';
+    $tipoRps = $input['tipo_rps'] ?? '1';
+
+    $pedidoContent = "<Pedido>";
+    $pedidoContent .= "<IdentificacaoRps>";
+    $pedidoContent .= "<Numero>$numeroRps</Numero>";
+    $pedidoContent .= "<Serie>$serieRps</Serie>";
+    $pedidoContent .= "<Tipo>$tipoRps</Tipo>";
+    $pedidoContent .= "</IdentificacaoRps>";
+    $pedidoContent .= "<Prestador>";
+    $pedidoContent .= "<CpfCnpj><Cnpj>$cnpj</Cnpj></CpfCnpj>";
+    $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
+    $pedidoContent .= "</Prestador>";
+    $pedidoContent .= "</Pedido>";
+
+    $rootId = "ConsultarNfseRpsEnvio";
+    $rootXml = '<ConsultarNfseRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarNfseRpsEnvio>';
+
+    return ['root' => $rootXml, 'id' => $rootId];
 }
 
 function buildGerarNfseXml($input)
@@ -441,6 +470,9 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     } elseif ($method === 'consultar_cadastral') {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarDadosCadastrais';
         $methodTag = 'ConsultarDadosCadastrais';
+    } elseif ($method === 'consultar_rps') {
+        $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfsePorRps';
+        $methodTag = 'ConsultarNfseRps';
     } else {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado';
         $methodTag = 'ConsultarNfseServicoPrestado';

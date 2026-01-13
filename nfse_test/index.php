@@ -91,6 +91,13 @@
                             <i class="bi bi-search me-2"></i>Consultar / Recuperar
                         </button>
                     </li>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="consultar-rps-tab" data-bs-toggle="tab"
+                            data-bs-target="#consultar_rps" type="button">
+                            <i class="bi bi-upc-scan me-2"></i>Consultar Status RPS
+                        </button>
+                    </li>
                     <li class="nav-item">
                         <button class="nav-link" id="cadastro-tab" data-bs-toggle="tab" data-bs-target="#cadastro"
                             type="button">
@@ -229,6 +236,44 @@
                         </div>
                     </div>
 
+                    <!-- TAB: CONSULTAR RPS -->
+                    <div class="tab-pane fade" id="consultar_rps" role="tabpanel">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="alert alert-info border-0 bg-info bg-opacity-10">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Verifique se um <strong>RPS enviado</strong> foi processado e convertido em Nota.
+                                </div>
+                                <div class="card card-body bg-light border-0">
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold">Número RPS</label>
+                                            <input type="text" class="form-control" id="cons_rps_numero"
+                                                placeholder="Ex: 88801">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-bold">Série</label>
+                                            <input type="text" class="form-control" id="cons_rps_serie" value="A">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label fw-bold">Tipo</label>
+                                            <select class="form-select" id="cons_rps_tipo">
+                                                <option value="1" selected>1 - RPS</option>
+                                                <option value="2">2 - Conjugada</option>
+                                                <option value="3">3 - Cupom</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <button class="btn btn-dark w-100" onclick="testarAPI('consultar_rps')">
+                                                <i class="bi bi-search"></i> Consultar Status RPS
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- TAB: CADASTRO -->
                     <div class="tab-pane fade" id="cadastro" role="tabpanel">
                         <div class="row justify-content-center">
@@ -333,26 +378,31 @@
                 // Common Params
                 cnpj: '61733714000101',
                 im: '0841147200111',
-
-                // Consultar Params
-                dataInicial: document.getElementById('dataInicial').value,
-                dataFinal: document.getElementById('dataFinal').value,
-
-                // Gerar Params
-                valor: document.getElementById('valor').value,
-                item_lista: document.getElementById('item_lista').value,
-                codigo_cnae: document.getElementById('codigo_cnae').value,
-                codigo_tributacao: document.getElementById('codigo_tributacao').value,
-                discriminacao: document.getElementById('discriminacao').value,
-                cpf_tomador: document.getElementById('cpf_tomador').value,
-                numero_rps: document.getElementById('numero_rps').value,
-                serie_rps: document.getElementById('serie_rps').value,
-                tipo_rps: document.getElementById('tipo_rps').value,
-                optante_simples: document.getElementById('optante_simples').value,
-                // NEW
-                codigo_nbs: document.getElementById('codigo_nbs').value,
-                aliquota: document.getElementById('aliquota').value
             };
+
+            if (method === 'gerar') {
+                payload.numero_rps = document.getElementById('numero_rps').value;
+                payload.serie_rps = document.getElementById('serie_rps').value;
+                payload.tipo_rps = document.getElementById('tipo_rps').value;
+
+                payload.valor = document.getElementById('valor').value;
+                payload.item_lista = document.getElementById('item_lista').value;
+                payload.codigo_cnae = document.getElementById('codigo_cnae').value;
+                payload.codigo_tributacao = document.getElementById('codigo_tributacao').value;
+                payload.discriminacao = document.getElementById('discriminacao').value;
+                payload.cpf_tomador = document.getElementById('cpf_tomador').value;
+                payload.optante_simples = document.getElementById('optante_simples').value;
+                payload.codigo_nbs = document.getElementById('codigo_nbs').value;
+                payload.aliquota = document.getElementById('aliquota').value;
+            } else if (method === 'consultar_rps') {
+                payload.numero_rps = document.getElementById('cons_rps_numero').value;
+                payload.serie_rps = document.getElementById('cons_rps_serie').value;
+                payload.tipo_rps = document.getElementById('cons_rps_tipo').value;
+            } else if (method === 'consultar') {
+                // Date filters handled if API supports it, currently API uses them for ConsultarNfseServicoPrestado
+                payload.dataInicial = document.getElementById('dataInicial').value;
+                payload.dataFinal = document.getElementById('dataFinal').value;
+            }
 
             try {
                 const response = await fetch('api.php', {
