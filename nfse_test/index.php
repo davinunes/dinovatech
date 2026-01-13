@@ -363,16 +363,12 @@
 
                 const data = await response.json();
 
-                const formatXML = (xml) => {
-                    if (!xml) return '';
-                    let formatted = '';
-                    let reg = /(>)(<)(\/*)/g;
-                    xml = xml.replace(reg, '$1\r\n$2$3');
-                    return xml;
-                };
+                // Use global formatXml
+                xmlResponse.textContent = formatXml(data.response || data.curl_error || 'Sem resposta');
+                xmlRequest.textContent = formatXml(data.request || 'Sem request');
 
-                xmlResponse.innerText = formatXML(data.response_body || data.curl_error || 'Sem resposta');
-                xmlRequest.innerText = formatXML(data.request_envelope || 'Sem request');
+                // Trigger Syntax Highlighting
+                Prism.highlightAll();
 
                 if (data.status === 'success') {
                     resultStatus.className = 'badge bg-success';
@@ -385,31 +381,31 @@
             } catch (error) {
                 resultStatus.className = 'badge bg-danger';
                 resultStatus.innerText = 'FALHA JS';
-                xmlResponse.innerText = 'Erro Javascript: ' + error.message;
+                xmlResponse.textContent = 'Erro Javascript: ' + error.message;
             }
-    }
-    </script>
+        }
     </script>
     <script>
         function formatXml(xml) {
-             let formatted = '';
-             let pad = 0;
-             const nodes = xml.replace(/>\s*</g, '><').replace(/</g, '\n<').split('\n');
-             
-             for (let node of nodes) {
-                 if (!node.trim()) continue;
-                 let indent = 0;
-                 if (node.match(/^<\//)) {
-                     pad = Math.max(0, pad - 1); // Closing tag
-                 } else if (node.match(/^<[^/].*[^/]>$/) && !node.match(/^<\?/) && !node.match(/^<!/)) {
-                     indent = 1; // Opening tag
-                 }
-                 
-                 formatted += '  '.repeat(pad) + node + '\n';
-                 pad += indent;
-             }
-             return formatted;
+            let formatted = '';
+            let pad = 0;
+            const nodes = xml.replace(/>\s*</g, '><').replace(/</g, '\n<').split('\n');
+
+            for (let node of nodes) {
+                if (!node.trim()) continue;
+                let indent = 0;
+                if (node.match(/^<\//)) {
+                    pad = Math.max(0, pad - 1); // Closing tag
+                } else if (node.match(/^<[^/].*[^/]>$/) && !node.match(/^<\?/) && !node.match(/^<!/)) {
+                    indent = 1; // Opening tag
+                }
+
+                formatted += '  '.repeat(pad) + node + '\n';
+                pad += indent;
+            }
+            return formatted;
         }
     </script>
 </body>
+
 </html>
