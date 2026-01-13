@@ -56,10 +56,10 @@ if ($action === 'direct_a1') {
         $uriRef = "#" . $rootId;
     }
 
-    if (($variation === 'uri_empty' || $variation === 'support_combo') && $method === 'gerar') {
+    if ($variation === 'uri_empty' || $variation === 'support_combo') {
         // If it was already empty (from buildGerarNfseXml), keeps empty.
         // If it had an ID (Consultar), forces empty and removes ID attribute.
-        // FIX: Restrict this only to 'gerar' method to avoid breaking Consultations which require ID for Signature.
+        // FIX: Applied to ALL methods as Consultar also fails with "Error" likely due to ID/URI mismatch.
         if (!empty($rootId)) {
             $uriRef = "";
             $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
@@ -472,7 +472,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
         $methodTag = 'ConsultarDadosCadastrais';
     } elseif ($method === 'consultar_rps') {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfsePorRps';
-        $methodTag = 'ConsultarNfseRps';
+        $methodTag = 'ConsultarNfsePorRps';
     } else {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado';
         $methodTag = 'ConsultarNfseServicoPrestado';
