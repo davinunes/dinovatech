@@ -1,198 +1,258 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFS-e DF - Campo de Provas (A1 & A3)</title>
+    <title>Painel NFS-e DF (DInova)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Lacuna WebPKI -->
-    <script src="https://cdn.lacunasoftware.com/libs/web-pki/lacuna-web-pki-2.14.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f8f9fa; }
-        .card { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .response-area { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; font-size: 0.85rem; max-height: 500px; overflow-y: auto; }
-        .nav-tabs .nav-link { cursor: pointer; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .card { border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .nav-tabs .nav-link { color: #6c757d; font-weight: 500; }
+        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 2px solid #0d6efd; }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; max-height: 600px; overflow-y: auto; font-size: 13px; }
+        .badge-status { font-size: 0.9em; padding: 0.5em 1em; }
     </style>
 </head>
-<body class="py-4">
+<body class="py-5">
     <div class="container">
-        <h1 class="mb-4 text-center">NFS-e DF <small class="text-muted">Campo de Provas</small></h1>
+        
+        <header class="mb-5 text-center">
+            <h1 class="display-6 fw-bold text-primary">Painel de Integração NFS-e DF</h1>
+            <p class="text-muted">Ambiente de Validação e Testes - Digital Inovation</p>
+        </header>
 
-        <div class="row g-4">
-            <!-- Controls -->
-            <div class="col-md-4">
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">Configuração</div>
-                    <div class="card-body">
-                        <ul class="nav nav-tabs mb-3" id="mainTab">
-                            <li class="nav-item">
-                                <a class="nav-link active" id="tab-a1" data-bs-toggle="tab" data-bs-target="#content-a1">A1 (Servidor)</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" id="tab-a3" data-bs-toggle="tab" data-bs-target="#content-a3">A3 (WebPKI)</a>
-                            </li>
-                        </ul>
-
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">CPF (Opcional - A3)</label>
-                                    <input type="text" class="form-control form-control-sm" id="cpf_a3" placeholder="Apenas números">
-                                </div>
-                                <div class="alert alert-secondary small">
-                                    Requer licença WebPKI ou ambiente localhost.
-                                </div>
-                                <button type="button" class="btn btn-primary w-100 mt-3" onclick="doTestA3()">Assinar e Enviar (A3)</button>
-                            </div>
-                        </div>
+        <!-- Environment Config -->
+        <div class="card mb-4 border-start border-4 border-warning">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <strong class="text-uppercase text-muted small">Ambiente de Destino</strong>
                     </div>
-                </div>
-            </div>
-
-            <!-- Results -->
-            <div class="col-md-8">
-                <div class="card h-100">
-                    <div class="card-header">Resultado da Requisição</div>
-                    <div class="card-body d-flex flex-column">
-                        <div id="loader" class="text-center py-5 d-none">
-                            <div class="spinner-border text-primary" role="status"></div>
-                            <p class="mt-2" id="loaderText">Processando...</p>
-                        </div>
-                        
-                        <div id="results">
-                            <h5>Status HTTP: <span id="resStatus" class="badge bg-secondary">-</span></h5>
-                            
-                            <ul class="nav nav-tabs mt-3" id="resTab">
-                                <li class="nav-item">
-                                    <a class="nav-link active" data-bs-toggle="tab" data-bs-target="#res-body">Response Body</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#res-headers">Headers</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-bs-toggle="tab" data-bs-target="#res-request">Request Envelope</a>
-                                </li>
-                            </ul>
-                            
-                            <div class="tab-content flex-grow-1">
-                                <div class="tab-pane fade show active" id="res-body">
-                                    <pre class="response-area mt-2" id="bodyContent">Aguardando execução...</pre>
-                                </div>
-                                <div class="tab-pane fade" id="res-headers">
-                                    <pre class="response-area mt-2" id="headersContent">...</pre>
-                                </div>
-                                <div class="tab-pane fade" id="res-request">
-                                    <pre class="response-area mt-2" id="requestContent">...</pre>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="col-md-6">
+                        <select class="form-select" id="endpoint">
+                            <option value="fictitious" selected>Homologação Fictícia (Sem WAF)</option>
+                            <option value="official">Homologação Oficial (WAF Blocked)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 text-end">
+                         <span class="badge bg-success bg-opacity-10 text-success border border-success">Certificado A1 Carregado</span>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Main Workspace -->
+        <div class="card">
+            <div class="card-header bg-white pt-3 px-4">
+                <ul class="nav nav-tabs card-header-tabs" id="mainTab" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" id="emitir-tab" data-bs-toggle="tab" data-bs-target="#emitir" type="button">
+                            <i class="bi bi-file-earmark-plus me-2"></i>Emitir Nota (Simulação)
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="consultar-tab" data-bs-toggle="tab" data-bs-target="#consultar" type="button">
+                            <i class="bi bi-search me-2"></i>Consultar / Recuperar
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="card-body p-4 bg-white">
+                <div class="tab-content">
+                    
+                    <!-- TAB: EMITIR (GERAR) -->
+                    <div class="tab-pane fade show active" id="emitir" role="tabpanel">
+                        <div class="row g-4">
+                             <!-- Service Data -->
+                             <div class="col-md-12">
+                                <h6 class="text-uppercase text-muted border-bottom pb-2 mb-3">Dados do Serviço Prestado</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Valor do Serviço (R$)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">R$</span>
+                                            <input type="text" class="form-control" id="valor" value="10.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Item da Lista (LC 116)</label>
+                                        <input type="text" class="form-control" id="item_lista" value="01.07" title="Ex: 01.07 - Suporte Técnico">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Código CNAE</label>
+                                        <input type="text" class="form-control" id="codigo_cnae" value="6204000">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Cód. Tributação Mun.</label>
+                                        <input type="text" class="form-control" id="codigo_tributacao" value="7">
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label small fw-bold">Discriminação do Serviço</label>
+                                        <textarea class="form-control" id="discriminacao" rows="2">Suporte e Manutenção Técnica em Informática - Teste de Integração</textarea>
+                                    </div>
+                                </div>
+                             </div>
+
+                             <!-- Tomador Data -->
+                             <div class="col-md-12">
+                                <h6 class="text-uppercase text-muted border-bottom pb-2 mb-3 mt-2">Dados do Cliente (Tomador)</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold">CPF do Tomador</label>
+                                        <input type="text" class="form-control" id="cpf_tomador" value="01691128104">
+                                        <div class="form-text">Use um CPF válido para evitar rejeição.</div>
+                                    </div>
+                                </div>
+                             </div>
+
+                             <div class="col-12 text-end">
+                                 <button class="btn btn-primary btn-lg px-5" onclick="testarAPI('gerar')">
+                                     <i class="bi bi-send-fill me-2"></i>Emitir Nota (GerarNfse)
+                                 </button>
+                             </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB: CONSULTAR -->
+                    <div class="tab-pane fade" id="consultar" role="tabpanel">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="alert alert-info border-0 bg-info bg-opacity-10">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    A consulta busca por <strong>Data de Emissão</strong> (Competência).
+                                </div>
+                                <div class="card card-body bg-light border-0">
+                                    <div class="row g-3 align-items-end">
+                                        <div class="col-md-5">
+                                            <label class="form-label fw-bold">Data Inicial</label>
+                                            <input type="date" class="form-control" id="dataInicial" value="2026-01-01">
+                                        </div>
+                                        <div class="col-md-5">
+                                            <label class="form-label fw-bold">Data Final</label>
+                                            <input type="date" class="form-control" id="dataFinal" value="<?php echo date('Y-m-d'); ?>">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button class="btn btn-dark w-100" onclick="testarAPI('consultar')">
+                                                <i class="bi bi-search"></i> Buscar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <div id="resultArea" class="mt-5" style="display:none;">
+            <div class="card border-dark">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                    <div>
+                        <i class="bi bi-terminal me-2"></i>Log de Execução
+                    </div>
+                    <span id="resultStatus" class="badge">Aguardando...</span>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="nav nav-tabs nav-tabs-dark bg-secondary bg-opacity-10 px-3 pt-2" id="resTab" role="tablist">
+                         <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#res-response" type="button">Resposta (XML)</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#res-request" type="button">Request (Envelope)</button>
+                        </li>
+                    </ul>
+                     <div class="tab-content p-0">
+                        <div class="tab-pane fade show active" id="res-response">
+                            <pre class="m-0 rounded-0 border-0"><code id="xmlResponse"></code></pre>
+                        </div>
+                        <div class="tab-pane fade" id="res-request">
+                            <pre class="m-0 rounded-0 border-0"><code id="xmlRequest"></code></pre>
+                        </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // --- UI ---
-        document.querySelectorAll('input[name="filterType"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                const isNumber = e.target.value === 'NUMBER';
-                document.getElementById('groupNumber').classList.toggle('d-none', !isNumber);
-                document.getElementById('groupPeriod').classList.toggle('d-none', isNumber);
-            });
-        });
+        async function testarAPI(method) {
+            const resultArea = document.getElementById('resultArea');
+            const resultStatus = document.getElementById('resultStatus');
+            const xmlResponse = document.getElementById('xmlResponse');
+            const xmlRequest = document.getElementById('xmlRequest');
+            
+            resultArea.style.display = 'block';
+            resultStatus.className = 'badge bg-warning text-dark';
+            resultStatus.innerText = 'ENVIANDO...';
+            xmlResponse.innerText = 'Processando requisição...';
+            xmlRequest.innerText = 'Gerando envelope...';
 
-        // --- WEB PKI (A3) ---
-        let pki = new LacunaWebPKI();
-        
-        function initWebPKI() {
-            pki.init({
-                ready: function () {
-                    pki.listCertificates({
-                        selectId: 'certificateSelect',
-                        selectOptionFormatter: function (cert) {
-                            return cert.subjectName + ' (Exp: ' + new Date(cert.validityEnd).toLocaleDateString() + ')';
-                        }
-                    }).success(function (certs) {
-                        console.log("Certificates loaded.");
-                    });
-                },
-                defaultError: function (message, error, origin, code) {
-                    console.error('Web PKI: ' + message);
-                }
-            });
-        }
-        
-        window.addEventListener('load', initWebPKI);
-
-        // --- EXECUTION ---
-
-        function getCommonData(isA3 = false) {
-             const cpfVal = isA3 ? document.getElementById('cpf_a3').value : document.getElementById('cpf').value;
-             
-            return {
+            // Fixed Protocol: Support Combo
+            const payload = {
+                action: 'direct_a1',
+                method: method,
                 endpoint: document.getElementById('endpoint').value,
-                cnpj: document.getElementById('cnpj').value,
-                cpf: cpfVal,
-                im: document.getElementById('im').value,
-                numero: document.getElementById('numero').value,
-                dataInicial: document.querySelector('input[name="filterType"]:checked').value === 'PERIOD' ? document.getElementById('dataInicial').value : '',
-                dataFinal: document.querySelector('input[name="filterType"]:checked').value === 'PERIOD' ? document.getElementById('dataFinal').value : ''
-            };
-        }
+                variation: 'support_combo', 
+                
+                // Common Params
+                cnpj: '61733714000101', 
+                im: '0841147200111',     
+                
+                // Consultar Params
+                dataInicial: document.getElementById('dataInicial').value,
+                dataFinal: document.getElementById('dataFinal').value,
 
-        async function doTestA1(method = 'consultar') {
-            showLoader(method === 'gerar' ? "Gerando RPS de Teste..." : "Consultando API...");
-            
-            const payload = getCommonData(false);
-            payload.action = 'direct_a1';
-            payload.method = method; // Pass method
-            payload.variation = document.getElementById('variation').value; 
-            
+                // Gerar Params
+                valor: document.getElementById('valor').value,
+                item_lista: document.getElementById('item_lista').value,
+                codigo_cnae: document.getElementById('codigo_cnae').value,
+                codigo_tributacao: document.getElementById('codigo_tributacao').value,
+                discriminacao: document.getElementById('discriminacao').value,
+                cpf_tomador: document.getElementById('cpf_tomador').value
+            };
+
             try {
-                const req = await fetch('api.php', {
+                const response = await fetch('api.php', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const res = await req.json();
-                renderResponse(res);
-            } catch (err) {
-                renderError(err);
-            } finally {
-                hideLoader();
+
+                const data = await response.json();
+                
+                const formatXML = (xml) => {
+                    if (!xml) return '';
+                    let formatted = '';
+                    let reg = /(>)(<)(\/*)/g;
+                    xml = xml.replace(reg, '$1\r\n$2$3');
+                    return xml;
+                };
+
+                xmlResponse.innerText = formatXML(data.response_body || data.curl_error || 'Sem resposta');
+                xmlRequest.innerText = formatXML(data.request_envelope || 'Sem request');
+
+                if (data.status === 'success') {
+                    resultStatus.className = 'badge bg-success';
+                    resultStatus.innerText = 'HTTP 200 OK';
+                } else {
+                    resultStatus.className = 'badge bg-danger';
+                    resultStatus.innerText = 'ERRO ' + (data.http_code || 'API');
+                }
+
+            } catch (error) {
+                resultStatus.className = 'badge bg-danger';
+                resultStatus.innerText = 'FALHA JS';
+                xmlResponse.innerText = 'Erro Javascript: ' + error.message;
             }
-        }
-
-        async function doTestA3() {
-            // (A3 Logic Reuse if needed)
-            const thumbprint = document.getElementById('certificateSelect').value;
-            if(!thumbprint) { alert("Selecione um certificado!"); return; }
-            alert("A3 implementado apenas para Consulta por enquanto.");
-        }
-
-        function renderResponse(res) {
-            document.getElementById('resStatus').innerText = res.http_code;
-            document.getElementById('resStatus').className = 'badge ' + (res.http_code == 200 ? 'bg-success' : 'bg-danger');
-            
-            document.getElementById('bodyContent').innerText = res.response_body || res.curl_error || 'No response';
-            document.getElementById('headersContent').innerText = res.headers ? res.headers.join('\n') : 'No headers';
-            document.getElementById('requestContent').innerText = res.request_envelope || 'No request generated';
-        }
-
-        function renderError(err) {
-            document.getElementById('bodyContent').innerText = 'Fatal JS Error: ' + err.message;
-        }
-
-        function showLoader(msg) {
-            document.getElementById('loader').classList.remove('d-none');
-            document.getElementById('loaderText').innerText = msg;
-            document.getElementById('results').classList.add('d-none');
-        }
-
-        function hideLoader() {
-            document.getElementById('loader').classList.add('d-none');
-            document.getElementById('results').classList.remove('d-none');
         }
     </script>
 </body>
