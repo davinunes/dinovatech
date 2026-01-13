@@ -1,4 +1,5 @@
 <?php
+# O Git não detectou alteração
 header('Content-Type: application/json');
 
 $input = json_decode(file_get_contents('php://input'), true);
