@@ -227,7 +227,14 @@ function buildGerarNfseXml($input)
     $discriminacao = $cleanString($discriminacaoRaw);
 
     $valorServicos = $input['valor'] ?? '10.00';
+    $valorServicos = number_format((float) $valorServicos, 2, '.', ''); // Ensure 2 decimals
     $issRetido = $input['iss_retido'] ?? '2'; // 1=Sim, 2=Não
+
+    // Auto-calculate ISS Value to prevent E232
+    $valorIss = '0.00';
+    if ((float) $aliquota > 0) {
+        $valorIss = number_format((float) $valorServicos * ((float) $aliquota / 100), 2, '.', '');
+    }
 
     // Configurable Optante Simples
     $optanteSimples = $input['optante_simples'] ?? '2';
@@ -267,7 +274,7 @@ XML;
                 <ValorCsll>0.00</ValorCsll>
                 <OutrasRetencoes>0.00</OutrasRetencoes>
                 <ValTotTributos>0.00</ValTotTributos>
-                <ValorIss>0.00</ValorIss>
+                <ValorIss>$valorIss</ValorIss>
                 <Aliquota>$aliquota</Aliquota>
                 <DescontoIncondicionado>0.00</DescontoIncondicionado>
                 <DescontoCondicionado>0.00</DescontoCondicionado>
