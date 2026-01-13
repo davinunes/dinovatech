@@ -8,17 +8,46 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f4f6f9; font-family: 'Segoe UI', system-ui, sans-serif; }
-        .card { border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .nav-tabs .nav-link { color: #6c757d; font-weight: 500; }
-        .nav-tabs .nav-link.active { color: #0d6efd; border-bottom: 2px solid #0d6efd; }
-        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 6px; max-height: 600px; overflow-y: auto; font-size: 13px; }
-        .badge-status { font-size: 0.9em; padding: 0.5em 1em; }
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .nav-tabs .nav-link {
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            border-bottom: 2px solid #0d6efd;
+        }
+
+        pre {
+            background: #272822;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            max-height: 600px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+
+        .badge-status {
+            font-size: 0.9em;
+            padding: 0.5em 1em;
+        }
     </style>
 </head>
+
 <body class="py-5">
     <div class="container">
-        
+
         <header class="mb-5 text-center">
             <h1 class="display-6 fw-bold text-primary">Painel de Integração NFS-e DF</h1>
             <p class="text-muted">Ambiente de Validação e Testes - Digital Inovation</p>
@@ -38,7 +67,8 @@
                         </select>
                     </div>
                     <div class="col-md-3 text-end">
-                         <span class="badge bg-success bg-opacity-10 text-success border border-success">Certificado A1 Carregado</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success">Certificado A1
+                            Carregado</span>
                     </div>
                 </div>
             </div>
@@ -49,71 +79,99 @@
             <div class="card-header bg-white pt-3 px-4">
                 <ul class="nav nav-tabs card-header-tabs" id="mainTab" role="tablist">
                     <li class="nav-item">
-                        <button class="nav-link active" id="emitir-tab" data-bs-toggle="tab" data-bs-target="#emitir" type="button">
+                        <button class="nav-link active" id="emitir-tab" data-bs-toggle="tab" data-bs-target="#emitir"
+                            type="button">
                             <i class="bi bi-file-earmark-plus me-2"></i>Emitir Nota (Simulação)
                         </button>
                     </li>
                     <li class="nav-item">
-                        <button class="nav-link" id="consultar-tab" data-bs-toggle="tab" data-bs-target="#consultar" type="button">
+                        <button class="nav-link" id="consultar-tab" data-bs-toggle="tab" data-bs-target="#consultar"
+                            type="button">
                             <i class="bi bi-search me-2"></i>Consultar / Recuperar
                         </button>
                     </li>
                 </ul>
             </div>
-            
+
             <div class="card-body p-4 bg-white">
                 <div class="tab-content">
-                    
+
                     <!-- TAB: EMITIR (GERAR) -->
                     <div class="tab-pane fade show active" id="emitir" role="tabpanel">
                         <div class="row g-4">
-                             <!-- Service Data -->
-                             <div class="col-md-12">
-                                <h6 class="text-uppercase text-muted border-bottom pb-2 mb-3">Dados do Serviço Prestado</h6>
+                            <!-- Service Data -->
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-muted border-bottom pb-2 mb-3">Dados da Emissão (RPS)
+                                </h6>
                                 <div class="row g-3">
                                     <div class="col-md-3">
-                                        <label class="form-label small fw-bold">Valor do Serviço (R$)</label>
+                                        <label class="form-label small fw-bold">Número RPS</label>
+                                        <input type="text" class="form-control" id="numero_rps" placeholder="Auto"
+                                            title="Deixe vazio para gerar aleatório">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Série</label>
+                                        <input type="text" class="form-control" id="serie_rps" value="A">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Tipo</label>
+                                        <select class="form-select" id="tipo_rps">
+                                            <option value="1" selected>1 - RPS</option>
+                                            <option value="2">2 - Nota Conjugada</option>
+                                            <option value="3">3 - Cupom</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-muted border-bottom pb-2 mb-3 mt-3">Dados do Serviço
+                                    Prestado</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Valor (R$)</label>
                                         <div class="input-group">
                                             <span class="input-group-text">R$</span>
                                             <input type="text" class="form-control" id="valor" value="10.00">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label small fw-bold">Item da Lista (LC 116)</label>
-                                        <input type="text" class="form-control" id="item_lista" value="01.07" title="Ex: 01.07 - Suporte Técnico">
+                                        <label class="form-label small fw-bold">Item (LC 116)</label>
+                                        <input type="text" class="form-control" id="item_lista" value="01.07">
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label small fw-bold">Código CNAE</label>
+                                        <label class="form-label small fw-bold">CNAE</label>
                                         <input type="text" class="form-control" id="codigo_cnae" value="6204000">
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label small fw-bold">Cód. Tributação Mun.</label>
+                                        <label class="form-label small fw-bold">Cód. Tributação</label>
                                         <input type="text" class="form-control" id="codigo_tributacao" value="7">
                                     </div>
                                     <div class="col-md-12">
-                                        <label class="form-label small fw-bold">Discriminação do Serviço</label>
-                                        <textarea class="form-control" id="discriminacao" rows="2">Suporte e Manutenção Técnica em Informática - Teste de Integração</textarea>
+                                        <label class="form-label small fw-bold">Discriminação</label>
+                                        <textarea class="form-control" id="discriminacao"
+                                            rows="2">Suporte e Manutenção Técnica em Informática - Teste de Integração</textarea>
                                     </div>
                                 </div>
-                             </div>
+                            </div>
 
-                             <!-- Tomador Data -->
-                             <div class="col-md-12">
-                                <h6 class="text-uppercase text-muted border-bottom pb-2 mb-3 mt-2">Dados do Cliente (Tomador)</h6>
+                            <!-- Tomador Data -->
+                            <div class="col-md-12">
+                                <h6 class="text-uppercase text-muted border-bottom pb-2 mb-3 mt-2">Dados do Cliente
+                                    (Tomador)</h6>
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <label class="form-label small fw-bold">CPF do Tomador</label>
                                         <input type="text" class="form-control" id="cpf_tomador" value="01691128104">
-                                        <div class="form-text">Use um CPF válido para evitar rejeição.</div>
                                     </div>
                                 </div>
-                             </div>
+                            </div>
 
-                             <div class="col-12 text-end">
-                                 <button class="btn btn-primary btn-lg px-5" onclick="testarAPI('gerar')">
-                                     <i class="bi bi-send-fill me-2"></i>Emitir Nota (GerarNfse)
-                                 </button>
-                             </div>
+                            <div class="col-12 text-end">
+                                <button class="btn btn-primary btn-lg px-5" onclick="testarAPI('gerar')">
+                                    <i class="bi bi-send-fill me-2"></i>Emitir Nota (GerarNfse)
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -133,7 +191,8 @@
                                         </div>
                                         <div class="col-md-5">
                                             <label class="form-label fw-bold">Data Final</label>
-                                            <input type="date" class="form-control" id="dataFinal" value="<?php echo date('Y-m-d'); ?>">
+                                            <input type="date" class="form-control" id="dataFinal"
+                                                value="<?php echo date('Y-m-d'); ?>">
                                         </div>
                                         <div class="col-md-2">
                                             <button class="btn btn-dark w-100" onclick="testarAPI('consultar')">
@@ -160,22 +219,30 @@
                     <span id="resultStatus" class="badge">Aguardando...</span>
                 </div>
                 <div class="card-body p-0">
-                    <ul class="nav nav-tabs nav-tabs-dark bg-secondary bg-opacity-10 px-3 pt-2" id="resTab" role="tablist">
-                         <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#res-response" type="button">Resposta (XML)</button>
+                    <ul class="nav nav-tabs nav-tabs-dark bg-secondary bg-opacity-10 px-3 pt-2" id="resTab"
+                        role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#res-response"
+                                type="button">Resposta (XML)</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#res-request" type="button">Request (Envelope)</button>
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#res-request"
+                                type="button">Request (Envelope)</button>
                         </li>
                     </ul>
-                     <div class="tab-content p-0">
+                    <div class="tab-content p-0 position-relative">
+                        <div class="position-absolute top-0 end-0 m-2" style="z-index: 10;">
+                            <button class="btn btn-sm btn-outline-light bg-dark" onclick="copyToClipboard()">
+                                <i class="bi bi-clipboard"></i> Copiar
+                            </button>
+                        </div>
                         <div class="tab-pane fade show active" id="res-response">
                             <pre class="m-0 rounded-0 border-0"><code id="xmlResponse"></code></pre>
                         </div>
                         <div class="tab-pane fade" id="res-request">
                             <pre class="m-0 rounded-0 border-0"><code id="xmlRequest"></code></pre>
                         </div>
-                     </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -184,12 +251,21 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function copyToClipboard() {
+            const activeTab = document.querySelector('#resTab .active').getAttribute('data-bs-target');
+            const codeId = activeTab === '#res-response' ? 'xmlResponse' : 'xmlRequest';
+            const text = document.getElementById(codeId).innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Conteúdo copiado!');
+            });
+        }
+
         async function testarAPI(method) {
             const resultArea = document.getElementById('resultArea');
             const resultStatus = document.getElementById('resultStatus');
             const xmlResponse = document.getElementById('xmlResponse');
             const xmlRequest = document.getElementById('xmlRequest');
-            
+
             resultArea.style.display = 'block';
             resultStatus.className = 'badge bg-warning text-dark';
             resultStatus.innerText = 'ENVIANDO...';
@@ -201,12 +277,12 @@
                 action: 'direct_a1',
                 method: method,
                 endpoint: document.getElementById('endpoint').value,
-                variation: 'support_combo', 
-                
+                variation: 'support_combo',
+
                 // Common Params
-                cnpj: '61733714000101', 
-                im: '0841147200111',     
-                
+                cnpj: '61733714000101',
+                im: '0841147200111',
+
                 // Consultar Params
                 dataInicial: document.getElementById('dataInicial').value,
                 dataFinal: document.getElementById('dataFinal').value,
@@ -217,7 +293,10 @@
                 codigo_cnae: document.getElementById('codigo_cnae').value,
                 codigo_tributacao: document.getElementById('codigo_tributacao').value,
                 discriminacao: document.getElementById('discriminacao').value,
-                cpf_tomador: document.getElementById('cpf_tomador').value
+                cpf_tomador: document.getElementById('cpf_tomador').value,
+                numero_rps: document.getElementById('numero_rps').value,
+                serie_rps: document.getElementById('serie_rps').value,
+                tipo_rps: document.getElementById('tipo_rps').value
             };
 
             try {
@@ -228,7 +307,7 @@
                 });
 
                 const data = await response.json();
-                
+
                 const formatXML = (xml) => {
                     if (!xml) return '';
                     let formatted = '';
@@ -256,4 +335,5 @@
         }
     </script>
 </body>
+
 </html>
