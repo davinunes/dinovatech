@@ -289,12 +289,12 @@
             xmlResponse.innerText = 'Processando requisição...';
             xmlRequest.innerText = 'Gerando envelope...';
 
-            // Fixed Protocol: Support Combo
+            // Fixed Protocol: Proven Protocol (ID + URI Ref + No Prefix + Entities)
             const payload = {
                 action: 'direct_a1',
                 method: method,
                 endpoint: document.getElementById('endpoint').value,
-                variation: 'support_combo',
+                variation: 'proven_protocol',
 
                 // Common Params
                 cnpj: '61733714000101',

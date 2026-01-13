@@ -314,7 +314,7 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     $ns = 'ds'; // Default
     $nsDecl = ' xmlns:ds="http://www.w3.org/2000/09/xmldsig#"';
 
-    if ($variation === 'no_prefix' || $variation === 'support_combo') {
+    if ($variation === 'no_prefix' || $variation === 'support_combo' || $variation === 'proven_protocol') {
         $ns = '';
         $nsDecl = ' xmlns="http://www.w3.org/2000/09/xmldsig#"';
     }
