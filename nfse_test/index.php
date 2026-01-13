@@ -363,12 +363,14 @@
 
                 const data = await response.json();
 
-                // Use global formatXml
-                xmlResponse.textContent = formatXml(data.response || data.curl_error || 'Sem resposta');
-                xmlRequest.textContent = formatXml(data.request || 'Sem request');
+                // Correct properties from api.php ID: 1125
+                xmlResponse.textContent = formatXml(data.response_body || data.curl_error || 'Sem resposta');
+                xmlRequest.textContent = formatXml(data.request_envelope || 'Sem request');
 
                 // Trigger Syntax Highlighting
-                Prism.highlightAll();
+                if (window.Prism) {
+                    Prism.highlightAll();
+                }
 
                 if (data.status === 'success') {
                     resultStatus.className = 'badge bg-success';
@@ -384,9 +386,9 @@
                 xmlResponse.textContent = 'Erro Javascript: ' + error.message;
             }
         }
-    </script>
-    <script>
+
         function formatXml(xml) {
+            if (!xml) return '';
             let formatted = '';
             let pad = 0;
             const nodes = xml.replace(/>\s*</g, '><').replace(/</g, '\n<').split('\n');
