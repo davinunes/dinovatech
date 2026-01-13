@@ -204,6 +204,9 @@ XML;
     // We pass ID here. The caller logic (api.php top level) will decide to use it or not based on variation.
     // for PROVEN_PROTOCOL, we need it.
 
+    // Structure for Signature: Wrapper <Rps> contains <Inf...> and <Signature>
+    $rootXml = "<Rps>$infRps</Rps>";
+
     return ['root' => $rootXml, 'id' => $rpsId, 'wrapper' => 'GerarNfseEnvio'];
 }
 
