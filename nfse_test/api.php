@@ -127,28 +127,79 @@ function buildGerarNfseXml($input)
     $itemLista = $input['item_lista'] ?? '01.07';
     $codigoCnae = $input['codigo_cnae'] ?? '6204000';
     $codigoTributacao = $input['codigo_tributacao'] ?? '7';
+    // NBS default to what user mentioned
+    $codigoNbs = $input['codigo_nbs'] ?? '115080000';
+    $aliquota = $input['aliquota'] ?? '0';
 
-    // Sanitize Discriminacao (Remove accents/special chars to avoid encoding hell)
+    // Helper for manual sanitization (Server iconv seems flaky)
+    $cleanString = function ($str) {
+        $map = [
+            'á' => 'a',
+            'à' => 'a',
+            'ã' => 'a',
+            'â' => 'a',
+            'ä' => 'a',
+            'Á' => 'A',
+            'À' => 'A',
+            'Ã' => 'A',
+            'Â' => 'A',
+            'Ä' => 'A',
+            'é' => 'e',
+            'è' => 'e',
+            'ê' => 'e',
+            'ë' => 'e',
+            'É' => 'E',
+            'È' => 'E',
+            'Ê' => 'E',
+            'Ë' => 'E',
+            'í' => 'i',
+            'ì' => 'i',
+            'î' => 'i',
+            'ï' => 'i',
+            'Í' => 'I',
+            'Ì' => 'I',
+            'Î' => 'I',
+            'Ï' => 'I',
+            'ó' => 'o',
+            'ò' => 'o',
+            'õ' => 'o',
+            'ô' => 'o',
+            'ö' => 'o',
+            'Ó' => 'O',
+            'Ò' => 'O',
+            'Õ' => 'O',
+            'Ô' => 'O',
+            'Ö' => 'O',
+            'ú' => 'u',
+            'ù' => 'u',
+            'û' => 'u',
+            'ü' => 'u',
+            'Ú' => 'U',
+            'Ù' => 'U',
+            'Û' => 'U',
+            'Ü' => 'U',
+            'ç' => 'c',
+            'Ç' => 'C',
+            'ñ' => 'n',
+            'Ñ' => 'N',
+            'º' => '',
+            '°' => ''
+        ];
+        $str = strtr($str, $map);
+        return preg_replace('/[^a-zA-Z0-9 -]/', ' ', $str);
+    };
+
+    // Sanitize Discriminacao
     $discriminacaoRaw = $input['discriminacao'] ?? "Teste de Integracao via WebService - RPS $numeroRps";
-    $discriminacao = preg_replace('/[^a-zA-Z0-9 -]/', ' ', iconv('UTF-8', 'ASCII//TRANSLIT', $discriminacaoRaw));
+    $discriminacao = $cleanString($discriminacaoRaw);
 
     $valorServicos = $input['valor'] ?? '10.00';
     $issRetido = $input['iss_retido'] ?? '2'; // 1=Sim, 2=Não
 
-    // Aliquota strategy: Simples/Immunities often require 0 or integer-like 0.
-    // Use 0 instead of 0.00 (Matches successful Web Panel XML)
-    $aliquota = '0';
-
     // Configurable Optante Simples
-    // Default to 2 (Não) to match successful Web Panel XML.
     $optanteSimples = $input['optante_simples'] ?? '2';
 
     $rpsId = "rps" . $numeroRps;
-
-    // Sanitize Address/Name to avoid Encoding/Entity mismatches (e.g. França -> Franca)
-    $cleanString = function ($str) {
-        return preg_replace('/[^a-zA-Z0-9 -]/', ' ', iconv('UTF-8', 'ASCII//TRANSLIT', $str));
-    };
 
     $razaoSocialTomador = $cleanString("Davi Nunes de França");
     $enderecoTomador = $cleanString("QI 24 Lotes 1 a 13 (Residencial Miami Beach)");
@@ -186,7 +237,7 @@ function buildGerarNfseXml($input)
             <ItemListaServico>$itemLista</ItemListaServico>
             <CodigoCnae>$codigoCnae</CodigoCnae>
             <CodigoTributacaoMunicipio>$codigoTributacao</CodigoTributacaoMunicipio>
-            <CodigoNbs>115080000</CodigoNbs>
+            <CodigoNbs>$codigoNbs</CodigoNbs>
             <Discriminacao>$discriminacao</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
             <ExigibilidadeISS>1</ExigibilidadeISS>
