@@ -59,8 +59,10 @@ if ($action === 'direct_a1') {
     $uriRef = "#" . $rootId;
 
     // DEBUG: Enforce protocol to match 2aa36ab legacy success
-    // Exception: ConsultarDadosCadastrais broke with this force. It likely needs 'proven_protocol' (URI="#")
-    if ($method !== 'consultar_cadastral') {
+    // ConsultarDadosCadastrais likely needs 'standard' (CDATA + URI="#" + ds:Prefix) - Legacy Default
+    if ($method === 'consultar_cadastral') {
+        $variation = 'standard';
+    } else {
         $variation = 'support_combo';
     }
 
