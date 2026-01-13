@@ -147,6 +147,16 @@
                                         <label class="form-label small fw-bold">Cód. Tributação</label>
                                         <input type="text" class="form-control" id="codigo_tributacao" value="7">
                                     </div>
+                                    <!-- NEW: NBS & Aliquota -->
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Cód. NBS</label>
+                                        <input type="text" class="form-control" id="codigo_nbs" value="115080000">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Alíquota (%)</label>
+                                        <input type="text" class="form-control" id="aliquota" value="0">
+                                    </div>
+
                                     <div class="col-md-3">
                                         <label class="form-label small fw-bold">Simples Nacional</label>
                                         <select class="form-select" id="optante_simples">
@@ -303,7 +313,11 @@
                 cpf_tomador: document.getElementById('cpf_tomador').value,
                 numero_rps: document.getElementById('numero_rps').value,
                 serie_rps: document.getElementById('serie_rps').value,
-                tipo_rps: document.getElementById('tipo_rps').value
+                tipo_rps: document.getElementById('tipo_rps').value,
+                optante_simples: document.getElementById('optante_simples').value,
+                // NEW
+                codigo_nbs: document.getElementById('codigo_nbs').value,
+                aliquota: document.getElementById('aliquota').value
             };
 
             try {
