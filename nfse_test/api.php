@@ -273,7 +273,6 @@ XML;
                 <ValorIr>0.00</ValorIr>
                 <ValorCsll>0.00</ValorCsll>
                 <OutrasRetencoes>0.00</OutrasRetencoes>
-                <ValTotTributos>0.00</ValTotTributos>
                 <ValorIss>$valorIss</ValorIss>
                 <Aliquota>$aliquota</Aliquota>
                 <DescontoIncondicionado>0.00</DescontoIncondicionado>
