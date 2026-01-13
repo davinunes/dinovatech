@@ -126,7 +126,8 @@
                                     <div class="col-md-3">
                                         <label class="form-label small fw-bold">Série</label>
                                         <select class="form-select" id="serie_rps">
-                                            <option value="A" selected>Série A</option>
+                                            <option value="8" selected>Série 8 (Válida)</option>
+                                            <option value="A">Série A</option>
                                             <option value="1">Série 1</option>
                                             <option value="RPS">Série RPS</option>
                                             <option value="NF">Série NF</option>

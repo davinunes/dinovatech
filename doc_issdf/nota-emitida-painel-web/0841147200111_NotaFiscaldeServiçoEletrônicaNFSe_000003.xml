@@ -1,0 +1,110 @@
+<ConsultarNfseServicoPrestadoResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <ListaNfse>
+    <CompNfse>
+      <Nfse versao="2.04">
+        <InfNfse>
+          <Numero>3</Numero>
+          <CodigoVerificacao>1FFF3F01F</CodigoVerificacao>
+          <DataEmissao>2026-01-13T20:04:05.700</DataEmissao>
+          <OutrasInformacoes>NFSE EMITIDA EM AMBIENTE DE HOMOLOGAÇÃO. SEM VALOR LEGAL.</OutrasInformacoes>
+          <ValoresNfse>
+            <BaseCalculo>222.22</BaseCalculo>
+            <ValorLiquidoNfse>222.22</ValorLiquidoNfse>
+          </ValoresNfse>
+          <DescricaoCodigoTributacaoMunicípio>Atividade - 2 %</DescricaoCodigoTributacaoMunicípio>
+          <ValorCredito>0.00</ValorCredito>
+          <PrestadorServico>
+            <RazaoSocial>Davi Nunes de Franca Tecnologia da Informacao Ltda</RazaoSocial>
+            <NomeFantasia>Digital Inovation Tecnologia</NomeFantasia>
+            <Endereco>
+              <Endereco>QI 24 Lotes 1 a 13 (Residencial Miami Beach)</Endereco>
+              <Numero>1</Numero>
+              <Complemento>104e</Complemento>
+              <Bairro>Setor Industrial (Taguatinga)</Bairro>
+              <CodigoMunicipio>5300108</CodigoMunicipio>
+              <Uf>DF</Uf>
+              <Cep>72135902</Cep>
+            </Endereco>
+            <Contato>
+              <Telefone>61996757676</Telefone>
+              <Email>DAVI.NUNES@GMAIL.COM</Email>
+            </Contato>
+          </PrestadorServico>
+          <OrgaoGerador>
+            <CodigoMunicipio>5002704</CodigoMunicipio>
+            <Uf>MS</Uf>
+          </OrgaoGerador>
+          <DeclaracaoPrestacaoServico>
+            <InfDeclaracaoPrestacaoServico Id="3">
+              <Rps>
+                <IdentificacaoRps>
+                  <Numero>1</Numero>
+                  <Serie>8</Serie>
+                  <Tipo>1</Tipo>
+                </IdentificacaoRps>
+                <DataEmissao>2026-01-13</DataEmissao>
+                <Status>1</Status>
+              </Rps>
+              <Competencia>2026-01-13</Competencia>
+              <Servico>
+                <Valores>
+                  <ValorServicos>222.22</ValorServicos>
+                  <ValorDeducoes>0.00</ValorDeducoes>
+                  <ValorPis>0.00</ValorPis>
+                  <ValorCofins>0.00</ValorCofins>
+                  <ValorInss>0.00</ValorInss>
+                  <ValorIr>0.00</ValorIr>
+                  <ValorCsll>0.00</ValorCsll>
+                  <OutrasRetencoes>0.00</OutrasRetencoes>
+                  <ValorIss>6.67</ValorIss>
+                  <Aliquota>3</Aliquota>
+                  <DescontoIncondicionado>0.00</DescontoIncondicionado>
+                  <DescontoCondicionado>0.00</DescontoCondicionado>
+                </Valores>
+                <IssRetido>2</IssRetido>
+                <ItemListaServico>08.02</ItemListaServico>
+                <CodigoCnae>8599603</CodigoCnae>
+                <CodigoTributacaoMunicipio>1</CodigoTributacaoMunicipio>
+                <CodigoNbs>122052000</CodigoNbs>
+                <Discriminacao>Teste-Com-RPS</Discriminacao>
+                <CodigoMunicipio>5300108</CodigoMunicipio>
+                <ExigibilidadeISS>1</ExigibilidadeISS>
+                <MunicipioIncidencia>5300108</MunicipioIncidencia>
+              </Servico>
+              <Prestador>
+                <CpfCnpj>
+                  <Cnpj>61733714000101</Cnpj>
+                </CpfCnpj>
+                <InscricaoMunicipal>0841147200111</InscricaoMunicipal>
+              </Prestador>
+              <TomadorServico>
+                <IdentificacaoTomador>
+                  <CpfCnpj>
+                    <Cpf>01691128104</Cpf>
+                  </CpfCnpj>
+                </IdentificacaoTomador>
+                <RazaoSocial>Davi Nunes de França</RazaoSocial>
+                <Endereco>
+                  <Endereco>QI 24 Lotes 1 a 13 (Residencial Miami Beach)</Endereco>
+                  <Numero>1</Numero>
+                  <Complemento>104E</Complemento>
+                  <Bairro>Setor Industrial (Taguatinga)</Bairro>
+                  <CodigoMunicipio>5300108</CodigoMunicipio>
+                  <Uf>DF</Uf>
+                  <Cep>72135902</Cep>
+                </Endereco>
+                <Contato>
+                  <Telefone>61996757676</Telefone>
+                  <Email>davi.nunes@gmail.com</Email>
+                </Contato>
+              </TomadorServico>
+              <OptanteSimplesNacional>2</OptanteSimplesNacional>
+              <IncentivoFiscal>2</IncentivoFiscal>
+            </InfDeclaracaoPrestacaoServico>
+          </DeclaracaoPrestacaoServico>
+        </InfNfse>
+      </Nfse>
+    </CompNfse>
+    <Pagina>1</Pagina>
+  </ListaNfse>
+</ConsultarNfseServicoPrestadoResposta>

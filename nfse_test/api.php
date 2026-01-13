@@ -154,7 +154,7 @@ function buildConsultarNfseRpsXml($input)
     $cnpj = $input['cnpj'] ?? '';
     $im = $input['im'] ?? '';
     $numeroRps = $input['numero_rps'] ?? '';
-    $serieRps = $input['serie_rps'] ?? 'A';
+    $serieRps = $input['serie_rps'] ?? '8';
     $tipoRps = $input['tipo_rps'] ?? '1';
 
     $pedidoContent = "<Pedido>";
@@ -180,7 +180,7 @@ function buildGerarNfseXml($input)
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
     $imPrestador = $input['im'] ?? '0841147200111';
     $numeroRps = $input['numero_rps'] ?? '';
-    $serieRps = $input['serie_rps'] ?? 'A';
+    $serieRps = $input['serie_rps'] ?? '8';
     $tipoRps = $input['tipo_rps'] ?? '1';
 
     if (empty($numeroRps)) {
