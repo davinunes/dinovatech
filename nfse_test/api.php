@@ -120,6 +120,8 @@ function buildGerarNfseXml($input)
     // Content structure matching Support Example (URI="")
     // In RPS context: Rps -> InfDeclaracaoPrestacaoServico
 
+    $cpfTomador = $input['cpf_tomador'] ?? '01691128104';
+
     // Dynamic Service Data
     $itemLista = $input['item_lista'] ?? '01.07';
     $codigoCnae = $input['codigo_cnae'] ?? '6204000';
