@@ -46,6 +46,12 @@ if ($id_fatura) {
         }
         $saldo_devedor = $fatura['valor_total_fatura'] - $total_pago;
 
+        // Fetch NFS-e
+        $nfse_list = [];
+        $query_nfse = "SELECT * FROM NfseEmissoes WHERE id_fatura = '$id_safe' ORDER BY id_emissao DESC";
+        $res_nfse = DBExecute($link, $query_nfse);
+        while ($row = mysqli_fetch_assoc($res_nfse))
+            $nfse_list[] = $row;
     } else {
         $error_msg = "Fatura não encontrada.";
     }
@@ -292,11 +298,74 @@ if ($id_fatura) {
                                     Pagamento</button>
                             <?php endif; ?>
 
-                            <!-- NFS-e Button -->
-                            <button id="btnGerarNfse" onclick="gerarNfse()"
-                                class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-medium transition shadow-md mb-2 flex justify-center items-center">
-                                <span class="material-icons text-sm mr-2">receipt</span> Gerar NFS-e
-                            </button>
+                            <!-- NFS-e Section -->
+                            <div class="mt-4 border-t pt-4">
+                                <h3 class="font-bold text-gray-800 mb-2">Nota Fiscal (NFS-e)</h3>
+                                
+                                <?php 
+                                $hasAuthorized = false;
+                                if (!empty($nfse_list)) {
+                                    foreach ($nfse_list as $nfse) {
+                                        if ($nfse['status'] == 'Autorizada') $hasAuthorized = true;
+                                        
+                                        $statusClass = 'text-gray-500';
+                                        $icon = 'history';
+                                        if ($nfse['status'] == 'Autorizada') { $statusClass = 'text-green-600'; $icon = 'check_circle'; }
+                                        elseif ($nfse['status'] == 'Erro') { $statusClass = 'text-red-500'; $icon = 'error'; }
+                                        elseif ($nfse['status'] == 'Processando') { $statusClass = 'text-blue-500'; $icon = 'hourglass_empty'; }
+                                        
+                                        // Parsed Info
+                                        $numero_nota = 'Pending';
+                                        if ($nfse['xml_retorno']) {
+                                            preg_match('/<Numero>(.*?)<\/Numero>/', $nfse['xml_retorno'], $m);
+                                            if (!empty($m[1])) $numero_nota = $m[1];
+                                        }
+                                        
+                                        // Link (Url not reliable in homolog, use xml_retorno check)
+                                        ?>
+                                        <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-2 text-sm">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="font-bold <?= $statusClass ?> flex items-center">
+                                                    <span class="material-icons text-sm mr-1"><?= $icon ?></span> <?= ucfirst($nfse['status']) ?>
+                                                </span>
+                                                <span class="text-xs text-gray-400"><?= date('d/m H:i', strtotime($nfse['data_emissao'])) ?></span>
+                                            </div>
+                                            
+                                            <?php if ($nfse['status'] == 'Autorizada'): ?>
+                                                <div class="text-xs text-gray-600 mt-1">
+                                                    <strong>Número:</strong> <?= $numero_nota ?><br>
+                                                    <strong>RPS:</strong> <?= $nfse['numero_rps'] ?>/<?= $nfse['serie_rps'] ?><br>
+                                                    <span class="text-[10px] text-gray-400"><?= ucfirst($nfse['ambiente']) ?></span>
+                                                </div>
+                                                <?php if($nfse['url_pdf']): ?>
+                                                    <a href="<?= $nfse['url_pdf'] ?>" target="_blank" class="block mt-2 text-center text-xs bg-blue-100 text-blue-700 py-1 rounded hover:bg-blue-200">
+                                                        Visualizar PDF
+                                                    </a>
+                                                <?php elseif ($nfse['url_xml']): ?>
+                                                     <a href="<?= $nfse['url_xml'] ?>" target="_blank" class="block mt-2 text-center text-xs bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300">
+                                                        Visualizar XML
+                                                    </a>
+                                                <?php endif; ?>
+                                            <?php elseif ($nfse['status'] == 'Erro'): ?>
+                                                 <div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">
+                                                     <?= substr(strip_tags($nfse['xml_retorno']), 0, 100) ?>...
+                                                 </div>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php
+                                    }
+                                } else {
+                                    echo "<p class='text-xs text-gray-400 mb-2 italic'>Nenhuma nota emitida.</p>";
+                                }
+                                ?>
+
+                                <?php if (!$hasAuthorized): ?>
+                                    <button id="btnGerarNfse" onclick="gerarNfse()"
+                                        class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-medium transition shadow-md mb-2 flex justify-center items-center">
+                                        <span class="material-icons text-sm mr-2">receipt</span> Gerar NFS-e
+                                    </button>
+                                <?php endif; ?>
+                            </div>
 
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
