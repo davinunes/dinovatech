@@ -651,7 +651,13 @@ if ($id_fatura) {
                 } else {
                     showToast(res.message, 'error');
                     // Show detailed error in alert for easier debugging
-                    if (res.details) alert(res.details);
+                    let debugMsg = res.details || '';
+                    if (res.debug_xml) {
+                        console.log("DEBUG XML ENVIO:", res.debug_xml);
+                        console.log("DEBUG INPUT:", res.debug_input);
+                        debugMsg += "\n\n(Verifique Console [F12] para XML de Envio)";
+                    }
+                    if (debugMsg) alert(debugMsg);
                     btn.prop('disabled', false).html(originalText);
                 }
             }, 'json').fail(function () {

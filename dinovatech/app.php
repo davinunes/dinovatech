@@ -1599,9 +1599,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['success'] = false;
                 $response['message'] = "Erro ao gerar NFS-e / Recusada.";
                 // Extract error message roughly
-                preg_match('/<Mensagem>(.*?)<\/Mensagem>/', $responseSoap, $matches);
-                $errMsg = $matches[1] ?? 'Verifique o XML de retorno.';
-                $response['details'] = $errMsg;
+                $details = "";
+                if (preg_match_all('/<Mensagem>(.*?)<\/Mensagem>/', $responseSoap, $matches)) {
+                    $details = implode("\n", $matches[1]);
+                } elseif (preg_match('/<Fault>(.*?)<\/Fault>/s', $responseSoap, $matches)) {
+                    $details = strip_tags($matches[1]);
+                }
+                if (empty($details)) {
+                    $details = "Arquivo em desacordo com o XML Schema.";
+                }
+                $response['details'] = $details;
+                $response['debug_xml'] = $xmlSigned;
+                $response['debug_input'] = $inputApi;
             }
             break;
 
