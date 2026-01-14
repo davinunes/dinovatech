@@ -1511,6 +1511,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'im' => $fatura['inscricao_municipal'] ?? ''
             ];
 
+            // VALIDATION: Check for mandatory address fields
+            $missingFields = [];
+            if (empty($tomadorData['endereco']))
+                $missingFields[] = "Endereço";
+            if (empty($tomadorData['numero']))
+                $missingFields[] = "Número";
+            if (empty($tomadorData['bairro']))
+                $missingFields[] = "Bairro";
+            if (empty($tomadorData['cep']))
+                $missingFields[] = "CEP";
+            if (empty($tomadorData['uf']))
+                $missingFields[] = "UF";
+            if (empty($tomadorData['codigo_municipio']))
+                $missingFields[] = "Município (IBGE)";
+
+            if (!empty($missingFields)) {
+                $response['success'] = false;
+                $response['message'] = "Erro de Validação: Complete o cadastro do cliente.";
+                $response['details'] = "Campos obrigatórios faltando: " . implode(", ", $missingFields);
+                break;
+            }
+
             $inputApi = [
                 'cnpj' => $config['cnpj'],
                 'im' => $config['inscricao_municipal'],
