@@ -658,21 +658,34 @@ XML;
     echo json_encode($result);
 }
 
+
+
 function buildConsultarUrlNfseXml($input)
 {
     $cnpj = $input['cnpj'] ?? '';
     $im = $input['im'] ?? '';
-    $numero = $input['numero_nota'] ?? '';
-
-    // Structure based on User's Working Example
-    // <Pedido><Prestador>...</Prestador><NumeroNfse>...</NumeroNfse><Pagina>1</Pagina></Pedido>
+    $numero = $input['numero_nota'] ?? $input['numero'] ?? '';
+    $numeroRps = $input['numero_rps'] ?? '';
+    $serieRps = $input['serie_rps'] ?? '8';
+    $tipoRps = $input['tipo_rps'] ?? '1';
 
     $pedidoContent = "<Pedido>";
     $pedidoContent .= "<Prestador>";
     $pedidoContent .= "<CpfCnpj><Cnpj>$cnpj</Cnpj></CpfCnpj>";
     $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
     $pedidoContent .= "</Prestador>";
-    $pedidoContent .= "<NumeroNfse>$numero</NumeroNfse>";
+
+    // Flexible Logic: Prioritize Note Number, Fallback to RPS
+    if (!empty($numero) && $numero != '0') {
+        $pedidoContent .= "<NumeroNfse>$numero</NumeroNfse>";
+    } elseif (!empty($numeroRps)) {
+        $pedidoContent .= "<IdentificacaoRps>";
+        $pedidoContent .= "<Numero>$numeroRps</Numero>";
+        $pedidoContent .= "<Serie>$serieRps</Serie>";
+        $pedidoContent .= "<Tipo>$tipoRps</Tipo>";
+        $pedidoContent .= "</IdentificacaoRps>";
+    }
+
     $pedidoContent .= "<Pagina>1</Pagina>";
     $pedidoContent .= "</Pedido>";
 

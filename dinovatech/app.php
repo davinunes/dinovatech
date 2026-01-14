@@ -1675,6 +1675,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
 
+
+
         case 'consultar_url_nfse':
             $id_emissao = $_POST['id_emissao'];
             $res = DBExecute($link, "SELECT * FROM NfseEmissoes WHERE id_emissao = '$id_emissao'");
@@ -1688,7 +1690,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
             $config = mysqli_fetch_assoc($resConf);
 
-            // Load Cert
             $pfxPath = $config['caminho_certificado'];
             $finalPfxPath = null;
             if (file_exists($pfxPath)) {
@@ -1711,60 +1712,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
-            // Input for ConsultarUrlNfseEnvio
-            $inputApi = [
-                'cnpj' => $config['cnpj'],
-                'im' => $config['inscricao_municipal'],
-                'numero_nota' => $emissao['numero_nota'] ?: '0',
-                'numero_rps' => $emissao['numero_rps'],
-                'serie_rps' => $emissao['serie_rps'] ?? '8',
-                'tipo_rps' => $emissao['tipo_rps'] ?? '1'
-            ];
+            // Define function to perform request
+            $performConsultarUrl = function ($useRpsOnly) use ($config, $emissao, $certs) {
+                // Input
+                $inputApi = [
+                    'cnpj' => $config['cnpj'],
+                    'im' => $config['inscricao_municipal'],
+                    // If useRpsOnly is true, we force numero_nota to be empty/0 so it falls back to RPS
+                    'numero_nota' => $useRpsOnly ? '0' : ($emissao['numero_nota'] ?: '0'),
+                    'numero_rps' => $emissao['numero_rps'],
+                    'serie_rps' => $emissao['serie_rps'] ?? '8',
+                    'tipo_rps' => $emissao['tipo_rps'] ?? '1'
+                ];
 
-            if (!function_exists('buildConsultarUrlNfseXml')) {
-                require_once '../nfse_test/api.php';
-            }
-
-            // 1. Build XML (Using restored function)
-            $xmlComponents = buildConsultarUrlNfseXml($inputApi);
-            $rootXml = $xmlComponents['root'];
-            $rootId = $xmlComponents['id'];
-
-            // 2. Sign XML 
-            $variation = 'support_combo';
-            $uriRef = "#" . $rootId;
-
-            if ($variation === 'support_combo') {
-                $uriRef = "";
-                if (!empty($rootId)) {
-                    $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+                if (!function_exists('buildConsultarUrlNfseXml')) {
+                    require_once '../nfse_test/api.php';
                 }
-            }
 
-            $finalXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
+                $xmlComponents = buildConsultarUrlNfseXml($inputApi);
+                $rootXml = $xmlComponents['root'];
+                $rootId = $xmlComponents['id'];
 
-            // Endpoint
-            $endpoint = ($emissao['ambiente'] == 'producao')
-                ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
-                : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+                $variation = 'support_combo';
+                $uriRef = "#" . $rootId;
 
-            // 3. Send
-            $resultSoap = sendSoap($finalXml, $endpoint, $certs, $variation, 'consultar_url', true);
+                if ($variation === 'support_combo') {
+                    $uriRef = "";
+                    if (!empty($rootId)) {
+                        $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+                    }
+                }
+
+                $finalXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
+
+                $endpoint = ($emissao['ambiente'] == 'producao')
+                    ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
+                    : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+
+                return sendSoap($finalXml, $endpoint, $certs, $variation, 'consultar_url', true);
+            };
+
+            // Attempt 1: Default (Prioritize Note Number)
+            $resultSoap = $performConsultarUrl(false);
             $respXml = $resultSoap['response_body'] ?? '';
 
+            // Retry Logic: If Not Found (E212) and we tried Note Number, try RPS
+            // Only retry if we actually have an RPS number
+            if ((strpos($respXml, 'E212') !== false || strpos($respXml, 'não encontrada') !== false) && !empty($emissao['numero_rps'])) {
+                $resultSoap = $performConsultarUrl(true); // Force RPS
+                $respXml = $resultSoap['response_body'] ?? '';
+            }
+
+            // Parse Final Response
             if (strpos($respXml, '<Fault>') !== false) {
                 $response['success'] = false;
                 $response['message'] = 'Erro na API Prefeitura (Fault).';
                 $response['debug_xml'] = $respXml;
             } elseif (strpos($respXml, 'ConsultarUrlNfseResposta') !== false) {
-                // Format XML for debug
                 $dom = new DOMDocument;
                 $dom->preserveWhiteSpace = false;
                 $dom->formatOutput = true;
                 @$dom->loadXML($respXml);
                 $formattedXml = $dom->saveXML();
 
-                // Extract URL (UrlVisualizacaoNfse based on user working example)
                 $url = '';
                 if (preg_match('/<UrlVisualizacaoNfse>(.*?)<\/UrlVisualizacaoNfse>/', $respXml, $m)) {
                     $url = $m[1];
@@ -1775,7 +1785,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($url) {
-                    $url = htmlspecialchars_decode($url);
+                    $url = htmlspecialchars_decode($url); // Decode entities
                     $url_esc = mysqli_real_escape_string($link, $url);
                     DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
                     $response['success'] = true;
@@ -1791,7 +1801,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['debug_xml'] = $respXml;
             }
             break;
-
     }
 } else {
     $response['message'] = "Requisição inválida (apenas POST permitido).";
