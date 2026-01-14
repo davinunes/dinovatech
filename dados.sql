@@ -1,4 +1,4 @@
--- Dados do Banco de Dados - Gerado em 2026-01-14 17:05:22
+-- Dados do Banco de Dados - Gerado em 2026-01-14 17:17:02
 
 
 -- Dumping data for table `Arquivos` --
@@ -35,7 +35,7 @@ INSERT INTO `Clientes` VALUES("10","Condomínio Residencial Top Life II Taguatin
 
 
 -- Dumping data for table `ConfiguracoesEmissor` --
-INSERT INTO `ConfiguracoesEmissor` VALUES("1","Davi Nunes de Franca Tecnologia da Informacao Ltda","Digital Inovation Tecnologia","61733714000101","0841147200111","5300108","simples","0","certificado/DInovaTech_1001347811.pfx","Yuk11nn@","homologacao","14","0","8","QI 24 LOTE 1 A13 TO E APT 104","1","Miami Beach","SETOR INDUSTRIAL (TAGUATINGA)","72135902","DF");
+INSERT INTO `ConfiguracoesEmissor` VALUES("1","Davi Nunes de Franca Tecnologia da Informacao Ltda","Digital Inovation Tecnologia","61733714000101","0841147200111","5300108","simples","0","certificado/DInovaTech_1001347811.pfx","Yuk11nn@","homologacao","15","0","8","QI 24 LOTE 1 A13 TO E APT 104","1","Miami Beach","SETOR INDUSTRIAL (TAGUATINGA)","72135902","DF");
 
 
 -- Dumping data for table `FaturaArquivos` --
