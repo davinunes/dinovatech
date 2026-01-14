@@ -1715,31 +1715,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $inputApi = [
                 'cnpj' => $config['cnpj'],
                 'im' => $config['inscricao_municipal'],
-                'numero_rps' => $emissao['numero_rps'], // Mandatory for this method
+                'numero_rps' => $emissao['numero_rps'],
                 'serie_rps' => $emissao['serie_rps'] ?? '8',
                 'tipo_rps' => $emissao['tipo_rps'] ?? '1'
             ];
 
-            // Build XML using the Correct Method
-            // Note: Api.php is already required at the top of this file or earlier in the flow
-            // If not, we might need to require it, but gerar_nfse does it successfully.
-            // We'll rely on global require or require it here if function not exists.
             if (!function_exists('buildConsultarNfseRpsXml')) {
                 require_once '../nfse_test/api.php';
             }
 
             $xmlComponents = buildConsultarNfseRpsXml($inputApi);
-            $finalXml = $xmlComponents['root'];
+            $rootXml = $xmlComponents['root'];
+            $rootId = $xmlComponents['id'];
+
+            // SIGNING LOGIC (Replicating direct_a1 'support_combo' behavior)
+            $variation = 'support_combo';
+            $uriRef = "#" . $rootId;
+
+            if ($variation === 'support_combo') {
+                // Legacy Logic: Strip ID and set URI to empty
+                $uriRef = "";
+                if (!empty($rootId)) {
+                    $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+                }
+            }
+
+            // Sign the XML
+            $finalXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
 
             // Endpoint
             $endpoint = ($emissao['ambiente'] == 'producao')
                 ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
                 : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
-            // Send using support_combo (which supports Signed Requests)
-            // 'consultar_rps' is not in the map index.php uses, but 'support_combo' is generic enough.
-            // api.php -> sendSoap signature: ($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard', $method = 'consultar', ...)
-            $resultSoap = sendSoap($finalXml, $endpoint, $certs, 'support_combo', 'consultar', true);
+            // Send
+            // We pass 'consultar_rps' as method tag to ensure correct SOAPAction
+            // (ConsultarNfseRpsEnvio needs ConsultarNfsePorRps action)
+            $resultSoap = sendSoap($finalXml, $endpoint, $certs, $variation, 'consultar_rps', true);
             $respXml = $resultSoap['response_body'] ?? '';
 
             if (strpos($respXml, '<Fault>') !== false) {
@@ -1747,8 +1759,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = 'Erro na API Prefeitura (Fault).';
                 $response['debug_xml'] = $respXml;
             } elseif (strpos($respXml, 'ConsultarNfseRpsResposta') !== false) {
-                // Success structure
-                // Extract URL if present
+                // Format XML for debug
+                $dom = new DOMDocument;
+                $dom->preserveWhiteSpace = false;
+                $dom->formatOutput = true;
+                @$dom->loadXML($respXml);
+                $formattedXml = $dom->saveXML();
+
+                // Extract URL
                 $url = '';
                 if (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m)) {
                     $url = $m[1];
@@ -1756,27 +1774,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $url = $m[1];
                 }
 
-                // Extract XML link or full XML if needed
-                // If CompNfse is present, we have the note.
-                if (strpos($respXml, '<CompNfse>') !== false) {
-                    // We can also extract the full CompNfse to save as 'xml_retorno' if we wanted to update it.
-                    // For now, let's focus on URL.
-                }
-
                 if ($url) {
                     $url_esc = mysqli_real_escape_string($link, $url);
-                    // Also update status if it was not concluido (e.g. if we are recovering)
-                    // But usually we click this on 'concluido' notes.
                     DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
                     $response['success'] = true;
                     $response['message'] = "URL encontrada: $url";
                 } else {
-                    $response['success'] = false; // Soft fail, we got the XML but no URL
-                    $response['message'] = 'Nota encontrada, mas campo URL não identificado no XML.';
-                    $response['debug_xml'] = $respXml; // Let user find it
+                    $response['success'] = false;
+                    $response['message'] = 'Nota encontrada, mas URL não identificada.';
+                    $response['debug_xml'] = $formattedXml;
                 }
             } else {
-                // MensagemRetorno
                 $response['success'] = false;
                 $response['message'] = 'Erro no Retorno da Consulta.';
                 $response['debug_xml'] = $respXml;
