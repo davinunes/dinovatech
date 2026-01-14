@@ -2,10 +2,11 @@
 // migrate_nfse_v4.php
 // Add fiscal registration columns to Clientes table
 
-require_once 'dinovatech/db_connection.php';
+include 'database.php';
 
 echo "<h2>DInovaTech - Migration DB (NFS-e V4) - IE/IM Clients</h2>";
-echo "<pre>";
+echo "
+<pre>";
 
 // 1. Add columns to Clientes
 $table = 'Clientes';
