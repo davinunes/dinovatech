@@ -369,6 +369,25 @@ function buildGerarNfseXml($input)
         $tomadorCpfCnpjTag = "<Cnpj>$cpfCnpjTomador</Cnpj>";
     }
 
+    // Prepare Contato Block (Choice: Telefone+Email OR Email)
+    // FIX: Email sanitization allowed only alphanumeric, breaking 'gmail.com'. 
+    // FIX: Telefone cannot be empty tag.
+
+    $emailTomadorRaw = $input['tomador']['email'] ?? '';
+    // Allow alphanumeric, @, dot, underscore, hyphen
+    $emailTomadorClean = preg_replace('/[^a-zA-Z0-9@._-]/', '', $emailTomadorRaw);
+
+    $contatoTag = "";
+    if (!empty($telefoneTomador) && !empty($emailTomadorClean)) {
+        $contatoTag = "<Contato><Telefone>$telefoneTomador</Telefone><Email>$emailTomadorClean</Email></Contato>";
+    } elseif (!empty($emailTomadorClean)) {
+        $contatoTag = "<Contato><Email>$emailTomadorClean</Email></Contato>";
+    } elseif (!empty($telefoneTomador)) {
+        // Technically Schema says: Sequence(Telefone, Email [opt]) OR Sequence(Email). 
+        // If only Telefone, we must use first sequence.
+        $contatoTag = "<Contato><Telefone>$telefoneTomador</Telefone></Contato>";
+    }
+
     $infRps = "<InfDeclaracaoPrestacaoServico Id=\"$rpsId\">";
 
     // Check for "Avulso" generation (No RPS block)
@@ -449,10 +468,7 @@ XML;
                 <Uf>$ufTomador</Uf>
                 <Cep>$cepTomador</Cep>
             </Endereco>
-            <Contato>
-                <Telefone>$telefoneTomador</Telefone>
-                <Email>$emailTomador</Email>
-            </Contato>
+            $contatoTag
         </TomadorServico>
         <OptanteSimplesNacional>$optanteSimples</OptanteSimplesNacional>
         <IncentivoFiscal>2</IncentivoFiscal>
