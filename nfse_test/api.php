@@ -272,17 +272,61 @@ function buildGerarNfseXml($input)
         // 1. Convert newlines to literal \s\n (Manual Requirement)
         $str = str_replace(["\r\n", "\r", "\n"], '\s\n', $str);
 
-        // 2. Transliterate to ASCII (e.g., ç -> c, ã -> a)
-        // Check if iconv is available, otherwise allow regex to strip
-        if (function_exists('iconv')) {
-            $converted = @iconv('UTF-8', 'ASCII//TRANSLIT', $str);
-            if ($converted !== false) {
-                $str = $converted;
-            }
-        }
+        // 2. Manual Transliteration (Safer than iconv)
+        $map = [
+            'á' => 'a',
+            'à' => 'a',
+            'ã' => 'a',
+            'â' => 'a',
+            'ä' => 'a',
+            'é' => 'e',
+            'è' => 'e',
+            'ê' => 'e',
+            'ë' => 'e',
+            'í' => 'i',
+            'ì' => 'i',
+            'î' => 'i',
+            'ï' => 'i',
+            'ó' => 'o',
+            'ò' => 'o',
+            'õ' => 'o',
+            'ô' => 'o',
+            'ö' => 'o',
+            'ú' => 'u',
+            'ù' => 'u',
+            'û' => 'u',
+            'ü' => 'u',
+            'ç' => 'c',
+            'ñ' => 'n',
+            'Á' => 'A',
+            'À' => 'A',
+            'Ã' => 'A',
+            'Â' => 'A',
+            'Ä' => 'A',
+            'É' => 'E',
+            'È' => 'E',
+            'Ê' => 'E',
+            'Ë' => 'E',
+            'Í' => 'I',
+            'Ì' => 'I',
+            'Î' => 'I',
+            'Ï' => 'I',
+            'Ó' => 'O',
+            'Ò' => 'O',
+            'Õ' => 'O',
+            'Ô' => 'O',
+            'Ö' => 'O',
+            'Ú' => 'U',
+            'Ù' => 'U',
+            'Û' => 'U',
+            'Ü' => 'U',
+            'Ç' => 'C',
+            'Ñ' => 'N'
+        ];
+        $str = strtr($str, $map);
 
-        // 3. Whitelist: Only alphanumerics, space, hyphen, and backslash (\)
-        return preg_replace('/[^a-zA-Z0-9 \-\\\\]/', ' ', $str);
+        // 3. Whitelist: Alphanumerics, space, hyphen, backslash, brackets
+        return preg_replace('/[^a-zA-Z0-9 \-\\\\\[\]]/', ' ', $str);
     };
 
     // Sanitize Discriminacao

@@ -1447,7 +1447,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             while ($row = mysqli_fetch_assoc($resItems)) {
                 $items[] = $row;
                 $totalServicos += ($row['quantidade'] * $row['valor_unitario']);
-                $discriminacaoParts[] = $row['nome_servico'] . " (x" . $row['quantidade'] . ")";
+                // Format: Service Name [ Tag/Description ]
+                $tagContent = $row['descricao'] ?? '';
+                $discriminacaoParts[] = $row['nome_servico'] . " [ " . $tagContent . " ]";
 
                 // Determine Tax Settings (Prioritize First Item with Recurrence Override)
                 if (!$taxSettings) {
