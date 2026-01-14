@@ -1456,13 +1456,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'cnae' => $row['codigo_cnae'],
                         'nbs' => $row['codigo_nbs'],
                         'item_lista' => $row['item_lista_servico'],
-                        'tributacao' => $row['codigo_tributacao_municipio']
+                        'tributacao' => $row['codigo_tributacao_municipio'],
+                        'aliquota' => $row['aliquota_iss'],
+                        'iss_retido' => $row['iss_retido']
                     ];
 
                     // Check Recurrence Override
                     if (!empty($row['item_recorrencia_id'])) {
                         $id_rec = $row['item_recorrencia_id'];
-                        $resRec = DBExecute($link, "SELECT codigo_cnae, codigo_nbs, codigo_tributacao_municipio FROM Recorrencias WHERE id_recorrencia='$id_rec'");
+                        $resRec = DBExecute($link, "SELECT codigo_cnae, codigo_nbs, codigo_tributacao_municipio, aliquota_iss, iss_retido FROM Recorrencias WHERE id_recorrencia='$id_rec'");
                         $recRow = mysqli_fetch_assoc($resRec);
                         if ($recRow) {
                             if (!empty($recRow['codigo_cnae']))
@@ -1471,6 +1473,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $taxSettings['nbs'] = $recRow['codigo_nbs'];
                             if (!empty($recRow['codigo_tributacao_municipio']))
                                 $taxSettings['tributacao'] = $recRow['codigo_tributacao_municipio'];
+
+                            // Only override if not null in recurrence (assuming NULL means 'use default')
+                            if (!is_null($recRow['aliquota_iss']))
+                                $taxSettings['aliquota'] = $recRow['aliquota_iss'];
+                            if (!is_null($recRow['iss_retido']))
+                                $taxSettings['iss_retido'] = $recRow['iss_retido'];
                         }
                     }
                 }
