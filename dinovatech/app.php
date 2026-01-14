@@ -36,7 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $optante_simples = isset($_POST['optante_simples']) ? 1 : 0;
             $ambiente_padrao = $_POST['ambiente_padrao'] ?? 'homologacao';
             $serie_rps = $_POST['serie_rps'] ?? '8';
-            $ultimo_rps = $_POST['ultimo_rps'] ?? 0;
+            $ultimo_rps_homologacao = $_POST['ultimo_rps_homologacao'] ?? 0;
+            $ultimo_rps_producao = $_POST['ultimo_rps_producao'] ?? 0;
             $caminho_certificado = $_POST['caminho_certificado'] ?? '';
             $senha_certificado = $_POST['senha_certificado'] ?? '';
 
@@ -51,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $regime_tributario = mysqli_real_escape_string($link, $regime_tributario);
                 $ambiente_padrao = mysqli_real_escape_string($link, $ambiente_padrao);
                 $serie_rps = mysqli_real_escape_string($link, $serie_rps);
-                $ultimo_rps = (int) $ultimo_rps;
+                $ultimo_rps_homologacao = (int) $ultimo_rps_homologacao;
+                $ultimo_rps_producao = (int) $ultimo_rps_producao;
                 $caminho_certificado = mysqli_real_escape_string($link, $caminho_certificado);
                 // Senha: se vier vazia, não altera (se for update) ou insere vazia (se insert)
                 // Se vier preenchida, altera.
@@ -67,21 +69,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 razao_social='$razao_social', nome_fantasia='$nome_fantasia', cnpj='$cnpj', 
                                 inscricao_municipal='$inscricao_municipal', codigo_municipio='$codigo_municipio',
                                 regime_tributario='$regime_tributario', optante_simples='$optante_simples',
-                                ambiente_padrao='$ambiente_padrao', serie_rps='$serie_rps', ultimo_rps='$ultimo_rps',
+                                ambiente_padrao='$ambiente_padrao', serie_rps='$serie_rps', 
+                                ultimo_rps_homologacao='$ultimo_rps_homologacao', ultimo_rps_producao='$ultimo_rps_producao',
                                 caminho_certificado='$caminho_certificado'
                                 $senha_sql_part
                               WHERE id_config='$id_config'";
                 } else {
-                    // Insert (Check if exists first to enforce singleton effectively if needed, but table structure implies multiple. Assuming singleton for now or user picks first)
-                    // If insert, and password is empty, it inserts NULL
+                    // Insert
                     $senha_val = empty($senha_certificado) ? "NULL" : "'$senha_certificado'";
                     $query = "INSERT INTO ConfiguracoesEmissor 
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, 
-                               regime_tributario, optante_simples, ambiente_padrao, serie_rps, ultimo_rps, 
+                               regime_tributario, optante_simples, ambiente_padrao, serie_rps, 
+                               ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$codigo_municipio',
-                               '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', '$ultimo_rps',
+                               '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
+                               '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val)";
                 }
 
@@ -728,9 +732,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $descricao_personalizada = mysqli_real_escape_string($link, $_POST['descricao_personalizada'] ?? '');
 
+                // V2 Refinements
+                $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
+                $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
+                $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
 
-                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada)
-                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada')";
+                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada, codigo_cnae, codigo_nbs, codigo_tributacao_municipio)
+                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada', '$codigo_cnae', '$codigo_nbs', '$codigo_tributacao_municipio')";
 
                 $result = DBExecute($link, $query);
 
@@ -821,10 +829,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $iss_retido = ($iss_retido_input === '1' || $iss_retido_input === '0') ? "'$iss_retido_input'" : "NULL";
                 $descricao_personalizada = mysqli_real_escape_string($link, $_POST['descricao_personalizada'] ?? '');
 
+                // V2 Refinements - Edição
+                $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
+                $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
+                $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
+
                 $query = "UPDATE Recorrencias 
                           SET id_cliente='$id_cliente', id_servico='$id_servico', quantidade='$quantidade', valor_sugerido_recorrencia='$valor_sugerido_recorrencia', 
                               tipo_periodo='$tipo_periodo', intervalo='$intervalo', data_inicio_cobranca='$data_inicio_cobranca', data_fim_cobranca=$data_fim_cobranca,
-                              item_lista_servico='$item_lista_servico', aliquota_iss=$aliquota_iss, iss_retido=$iss_retido, descricao_personalizada='$descricao_personalizada'
+                              item_lista_servico='$item_lista_servico', aliquota_iss=$aliquota_iss, iss_retido=$iss_retido, descricao_personalizada='$descricao_personalizada',
+                              codigo_cnae='$codigo_cnae', codigo_nbs='$codigo_nbs', codigo_tributacao_municipio='$codigo_tributacao_municipio'
                           WHERE id_recorrencia='$id_recorrencia'";
 
                 $result = DBExecute($link, $query);

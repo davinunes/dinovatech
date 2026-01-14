@@ -227,6 +227,27 @@ DBClose($link);
                                             </select>
                                         </div>
                                     </div>
+                                    
+                                    <!-- V2 Refinements: More Overrides -->
+                                    <div>
+                                        <label for="codigo_cnae" class="block text-sm font-medium text-gray-700 mb-1">Código CNAE</label>
+                                        <input type="text" id="codigo_cnae" name="codigo_cnae"
+                                            value="<?= $contrato['codigo_cnae'] ?? '' ?>" placeholder="Padrão Serviço"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="codigo_nbs" class="block text-sm font-medium text-gray-700 mb-1">Código NBS</label>
+                                        <input type="text" id="codigo_nbs" name="codigo_nbs"
+                                            value="<?= $contrato['codigo_nbs'] ?? '' ?>" placeholder="Padrão Serviço"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="codigo_tributacao_municipio" class="block text-sm font-medium text-gray-700 mb-1">Cód. Trib. Município</label>
+                                        <input type="text" id="codigo_tributacao_municipio" name="codigo_tributacao_municipio"
+                                            value="<?= $contrato['codigo_tributacao_municipio'] ?? '' ?>" placeholder="Padrão Serviço"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+
                                 </div>
                                 <div class="mt-4">
                                     <label for="descricao_personalizada"

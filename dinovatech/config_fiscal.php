@@ -107,11 +107,18 @@ if (!isset($_SESSION['usuario_id'])) {
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS Emitido</label>
-                                <input type="number" name="ultimo_rps" id="ultimo_rps" value="0"
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
+                                    (Homologação)</label>
+                                <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao" value="0"
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                <p class="text-xs text-gray-500 mt-1">Atualize apenas se necessário sincronizar manual.
-                                </p>
+                                <p class="text-xs text-gray-500 mt-1">Ambiente de Teste</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
+                                    (Produção)</label>
+                                <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
+                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 border-orange-200">
+                                <p class="text-xs text-orange-600 mt-1 font-bold">Ambiente Oficial (Cuidado)</p>
                             </div>
                         </div>
                     </div>
@@ -171,7 +178,8 @@ if (!isset($_SESSION['usuario_id'])) {
                     $('#regime_tributario').val(d.regime_tributario);
                     $('#ambiente_padrao').val(d.ambiente_padrao);
                     $('#serie_rps').val(d.serie_rps);
-                    $('#ultimo_rps').val(d.ultimo_rps);
+                    $('#ultimo_rps_homologacao').val(d.ultimo_rps_homologacao);
+                    $('#ultimo_rps_producao').val(d.ultimo_rps_producao);
                     $('#caminho_certificado').val(d.caminho_certificado);
 
                     if (d.optante_simples == 1) {
