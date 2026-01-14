@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-14 01:56:07
+-- Estrutura do Banco de Dados - Gerado em 2026-01-14 02:27:24
 
 
 CREATE TABLE `Arquivos` (
