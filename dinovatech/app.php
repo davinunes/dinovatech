@@ -1447,9 +1447,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             while ($row = mysqli_fetch_assoc($resItems)) {
                 $items[] = $row;
                 $totalServicos += ($row['quantidade'] * $row['valor_unitario']);
+
                 // Format: Service Name [ Tag/Description ]
                 $tagContent = $row['descricao'] ?? '';
-                $discriminacaoParts[] = $row['nome_servico'] . " [ " . $tagContent . " ]";
+                if (!empty($tagContent)) {
+                    $discriminacaoParts[] = $row['nome_servico'] . " [ " . $tagContent . " ]";
+                } else {
+                    $discriminacaoParts[] = $row['nome_servico'];
+                }
 
                 // Determine Tax Settings (Prioritize First Item with Recurrence Override)
                 if (!$taxSettings) {
@@ -1544,7 +1549,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'valor' => number_format($totalServicos, 2, '.', ''),
                 'iss_retido' => $taxSettings['iss_retido'] ? '1' : '2',
                 'aliquota' => $taxSettings['aliquota'],
-                'discriminacao' => implode(' | ', $discriminacaoParts),
+                'discriminacao' => implode(' \s\n ', $discriminacaoParts),
                 'codigo_cnae' => $taxSettings['cnae'],
                 'codigo_nbs' => $taxSettings['nbs'],
                 'item_lista' => $taxSettings['item_lista'],
