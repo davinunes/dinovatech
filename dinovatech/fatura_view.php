@@ -306,7 +306,7 @@ if ($id_fatura) {
                                 $hasAuthorized = false;
                                 if (!empty($nfse_list)) {
                                     foreach ($nfse_list as $nfse) {
-                                        if ($nfse['status'] == 'concluido')
+                                        if ($nfse['status'] == 'concluido' && isset($nfse['ambiente']) && $nfse['ambiente'] == 'producao')
                                             $hasAuthorized = true;
 
                                         $statusClass = 'text-gray-500';
