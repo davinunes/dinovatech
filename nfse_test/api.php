@@ -16,6 +16,12 @@ $variation = $input['variation'] ?? 'support_combo'; // Default to what support 
 if (empty($variation))
     $variation = 'support_combo';
 
+// Exception: Isolate ConsultarRpsDisponivel to use 'support_combo' (URI="") explicitly
+// This method is new and separate from the stable 4 methods.
+if ($method === 'consultar_rps_disponivel') {
+    $variation = 'support_combo';
+}
+
 // Configuration
 $endpoint_type = $input['endpoint'] ?? 'fictitious';
 $endpoint_url = ($endpoint_type === 'official')
@@ -58,19 +64,8 @@ if ($action === 'direct_a1') {
     // VARIATION LOGIC
     $uriRef = "#" . $rootId;
 
-    // Hybrid Strategy based on working history:
-    // Gerar, ConsultarRps, ConsultarRpsDisponivel -> URI="" (support_combo)
-    // ConsultarDadosCadastrais -> URI="#" (match input 'proven_protocol')
-
-    if ($method === 'gerar' || $method === 'consultar_rps' || $method === 'consultar_rps_disponivel') {
-        $variation = 'support_combo';
-    }
-    // Else leave $variation as passed from JS ('proven_protocol')
-
-    // Default fallback
-    if (empty($variation)) {
-        $variation = 'support_combo';
-    }
+    // DEBUG: Enforce protocol to match 2aa36ab legacy success
+    // $variation = 'support_combo'; // REMOVED GLOBAL FORCE to respect JS input (proven_protocol)
 
     if ($variation === 'uri_empty' || $variation === 'support_combo') {
         // Legacy Logic Restoration (Commit 2aa36ab)
@@ -219,6 +214,7 @@ function buildConsultarRpsDisponivelXml($input)
 
     return ['root' => $rootXml, 'id' => $rootId];
 }
+
 
 function buildGerarNfseXml($input)
 {
@@ -525,6 +521,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     } elseif ($method === 'consultar_cadastral') {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarDadosCadastrais';
         $methodTag = 'ConsultarDadosCadastrais';
+    } elseif ($method === 'consultar_rps') {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfsePorRps';
         $methodTag = 'ConsultarNfsePorRps';
     } elseif ($method === 'consultar_rps_disponivel') {
