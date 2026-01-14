@@ -1,6 +1,7 @@
 <?php
 # O Git não detectou alteração
 header('Content-Type: application/json');
+date_default_timezone_set('America/Sao_Paulo'); // Fix: Ensure generated dates match server local time
 
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) {
