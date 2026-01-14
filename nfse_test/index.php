@@ -1,5 +1,8 @@
 <?php
-date_default_timezone_set('America/Sao_Paulo');
+// Force GMT-3 (Brazil Standard Time) manually to avoid timezone DB issues
+$now = time() - (3 * 3600); // 3 hours in seconds
+$today = gmdate('Y-m-d', $now);
+date_default_timezone_set('UTC'); // Reset to predictable base
 ?>
 <html lang="pt-BR">
 
@@ -232,7 +235,7 @@ date_default_timezone_set('America/Sao_Paulo');
                                         <div class="col-md-5">
                                             <label class="form-label fw-bold">Data Final</label>
                                             <input type="date" class="form-control" id="dataFinal"
-                                                value="<?php echo date('Y-m-d'); ?>">
+                                                value="<?php echo $today; ?>">
                                         </div>
                                         <div class="col-md-2">
                                             <button class="btn btn-dark w-100" onclick="testarAPI('consultar')">

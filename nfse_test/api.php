@@ -1,7 +1,9 @@
 <?php
 # O Git não detectou alteração
 header('Content-Type: application/json');
-date_default_timezone_set('America/Sao_Paulo'); // Fix: Ensure generated dates match server local time
+// Manual UTC-3 calculation to ignore environment TZ issues
+$dataHoje = gmdate('Y-m-d', time() - (3 * 3600));
+date_default_timezone_set('UTC'); // Reset base
 
 $input = json_decode(file_get_contents('php://input'), true);
 if (!$input) {
@@ -237,7 +239,8 @@ function buildGerarNfseXml($input)
     if (empty($numeroRps)) {
         $numeroRps = rand(2000, 9999);
     }
-    $dataHoje = date('Y-m-d');
+    // Manual UTC-3 Calculation because Environment Timezone is unreliable
+    $dataHoje = gmdate('Y-m-d', time() - (3 * 3600));
 
     // Content structure matching Support Example (URI="")
     // In RPS context: Rps -> InfDeclaracaoPrestacaoServico
