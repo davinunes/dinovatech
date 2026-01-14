@@ -1525,7 +1525,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'codigo_nbs' => $taxSettings['nbs'],
                 'item_lista' => $taxSettings['item_lista'],
                 'codigo_tributacao' => $taxSettings['tributacao'],
-                'optante_simples' => $config['optante_simples'],
+                'optante_simples' => ($config['optante_simples'] == '1') ? '1' : '2', // Force 1 or 2
                 'tomador' => $tomadorData
             ];
 
