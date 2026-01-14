@@ -1,4 +1,4 @@
--- Dados do Banco de Dados - Gerado em 2026-01-14 02:27:24
+-- Dados do Banco de Dados - Gerado em 2026-01-14 13:40:20
 
 
 -- Dumping data for table `Arquivos` --
@@ -35,7 +35,7 @@ INSERT INTO `Clientes` VALUES("10","Condomínio Residencial Top Life II Taguatin
 
 
 -- Dumping data for table `ConfiguracoesEmissor` --
-INSERT INTO `ConfiguracoesEmissor` VALUES("1","Davi Nunes de Franca Tecnologia da Informacao Ltda","Digital Inovation Tecnologia","61733714000101","0841147200111","5300108","simples","1","certificado/DInovaTech_1001347811.pfx","Yuk11nn@","homologacao","10","8");
+INSERT INTO `ConfiguracoesEmissor` VALUES("1","Davi Nunes de Franca Tecnologia da Informacao Ltda","Digital Inovation Tecnologia","61733714000101","0841147200111","5300108","simples","1","certificado/DInovaTech_1001347811.pfx","Yuk11nn@","homologacao","10","0","8");
 
 
 -- Dumping data for table `FaturaArquivos` --
@@ -220,23 +220,23 @@ INSERT INTO `Pagamentos` VALUES("117","37","98.00","2026-01-12","Confirmado","E2
 
 
 -- Dumping data for table `Recorrencias` --
-INSERT INTO `Recorrencias` VALUES("1","1","1","1","4500.00","mensal","1","2025-07-18","","2026-01","","","","");
-INSERT INTO `Recorrencias` VALUES("2","1","3","1","84.00","mensal","1","2025-07-18","2025-07-30","2025-07","","","","");
-INSERT INTO `Recorrencias` VALUES("3","6","2","1","0.10","mensal","1","2025-07-19","","","","","","");
-INSERT INTO `Recorrencias` VALUES("4","5","1","1","4250.00","mensal","1","2025-06-02","","2026-02","","","","");
-INSERT INTO `Recorrencias` VALUES("5","1","3","1","98.00","mensal","1","2025-08-01","","","","","","");
-INSERT INTO `Recorrencias` VALUES("6","9","4","1","200.00","mensal","1","2025-07-01","","2026-02","","","","");
-INSERT INTO `Recorrencias` VALUES("9","10","4","1","200.00","mensal","1","2025-11-24","","2026-02","","","","");
+INSERT INTO `Recorrencias` VALUES("1","1","1","1","4500.00","mensal","1","2025-07-18","","2026-01","","","","","","","");
+INSERT INTO `Recorrencias` VALUES("2","1","3","1","84.00","mensal","1","2025-07-18","2025-07-30","2025-07","","","","","","","");
+INSERT INTO `Recorrencias` VALUES("3","6","2","1","0.10","mensal","1","2025-07-19","","","","","","","","","");
+INSERT INTO `Recorrencias` VALUES("4","5","1","1","4250.00","mensal","1","2025-06-02","","2026-02","","","","","","","");
+INSERT INTO `Recorrencias` VALUES("5","1","3","1","98.00","mensal","1","2025-08-01","","","","","","","","","");
+INSERT INTO `Recorrencias` VALUES("6","9","4","1","200.00","mensal","1","2025-07-01","","2026-02","","","1","","","","");
+INSERT INTO `Recorrencias` VALUES("9","10","4","1","200.00","mensal","1","2025-11-24","","2026-02","08.02","2.00","1","Analise de dados coletados de sensores de Nivel de Agua","8599603","1","122051900");
 
 
 -- Dumping data for table `Servicos` --
-INSERT INTO `Servicos` VALUES("1","Consultoria em Tecnologia da Informação","4500.00","01.06","6204000","7","115071000","2.01","0","Mensalidade {MES}");
+INSERT INTO `Servicos` VALUES("1","Consultoria em Tecnologia da Informação","4500.00","01.06","6204000","7","115071000","2.01","0","Mensalidade Analise de Dados {MES}");
 INSERT INTO `Servicos` VALUES("2","Licenciamento de Software","100.00","","","","","0.00","0","");
 INSERT INTO `Servicos` VALUES("3","Google Workspace","98.00","01.05","6202300","7","111062000","2.01","0","Gestão de licença temporária de uso de software");
-INSERT INTO `Servicos` VALUES("4","Monitoramento de Reservatorio","200.00","01.05","6202300","7","111062000","2.01","1","Mensalidade da Licenca de software de monitoramento de nivel de reservatorio de agua");
-INSERT INTO `Servicos` VALUES("5","Avulso","87.50","","","","","0.00","0","");
-INSERT INTO `Servicos` VALUES("6","Plantão TI ","250.00","","","","","0.00","0","");
-INSERT INTO `Servicos` VALUES("7","Suporte Plantão TI","125.00","","","","","0.00","0","");
+INSERT INTO `Servicos` VALUES("4","Monitoramento de Reservatorio","200.00","01.05","6202300","7","111062000","2.01","0","Mensalidade da Licenca de software de monitoramento de nivel de reservatorio de agua");
+INSERT INTO `Servicos` VALUES("5","Avulso","87.50","08.02","8599603","1","122051900","2.00","0","Analise de Dados Avulso");
+INSERT INTO `Servicos` VALUES("6","Plantão TI ","250.00","08.02","8599603","1","122051900","0.00","0","Plantao em avaliacao de dados {DIA} {MES}");
+INSERT INTO `Servicos` VALUES("7","Suporte Plantão TI","125.00","08.02","8599603","1","122051900","2.00","0","Suporte e ou Plantao com avaliacao de trabalhos {DIA}-{MES}");
 
 
 -- Dumping data for table `Usuarios` --

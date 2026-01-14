@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-14 02:27:24
+-- Estrutura do Banco de Dados - Gerado em 2026-01-14 13:40:20
 
 
 CREATE TABLE `Arquivos` (
@@ -38,7 +38,8 @@ CREATE TABLE `ConfiguracoesEmissor` (
   `caminho_certificado` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `senha_certificado` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ambiente_padrao` enum('homologacao','producao') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'homologacao',
-  `ultimo_rps` int DEFAULT '0',
+  `ultimo_rps_homologacao` int DEFAULT '0',
+  `ultimo_rps_producao` int DEFAULT '0',
   `serie_rps` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '8',
   PRIMARY KEY (`id_config`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -156,6 +157,9 @@ CREATE TABLE `Recorrencias` (
   `aliquota_iss` decimal(5,2) DEFAULT NULL,
   `iss_retido` tinyint(1) DEFAULT NULL,
   `descricao_personalizada` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `codigo_cnae` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `codigo_tributacao_municipio` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `codigo_nbs` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id_recorrencia`),
   UNIQUE KEY `id_cliente` (`id_cliente`,`id_servico`,`tipo_periodo`,`intervalo`,`data_inicio_cobranca`),
   KEY `id_servico` (`id_servico`),
