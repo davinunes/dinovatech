@@ -1530,11 +1530,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $xmlData = buildGerarNfseXml($inputApi);
 
             // 6. Load Cert
-            if (!file_exists($config['caminho_certificado'])) {
-                $response['message'] = "Arquivo PFX não encontrado no caminho: " . $config['caminho_certificado'];
+            $pfxPath = $config['caminho_certificado'];
+            $finalPfxPath = null;
+
+            // Check Paths (Absolute, Relative to App, Relative to Root)
+            if (file_exists($pfxPath)) {
+                $finalPfxPath = $pfxPath;
+            } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
+                $finalPfxPath = __DIR__ . '/' . $pfxPath;
+            } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
+                $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+            }
+
+            if (!$finalPfxPath) {
+                $response['message'] = "Arquivo PFX não encontrado. Verifique caminho: " . $pfxPath;
                 break;
             }
-            $pfxContent = file_get_contents($config['caminho_certificado']);
+
+            $pfxContent = file_get_contents($finalPfxPath);
             $certs = [];
             if (!openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado'])) {
                 $response['message'] = "Senha do certificado incorreta ou PFX inválido.";
