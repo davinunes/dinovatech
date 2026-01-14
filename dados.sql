@@ -1,4 +1,4 @@
--- Dados do Banco de Dados - Gerado em 2026-01-14 13:40:20
+-- Dados do Banco de Dados - Gerado em 2026-01-14 17:05:22
 
 
 -- Dumping data for table `Arquivos` --
@@ -26,16 +26,16 @@ INSERT INTO `Arquivos` VALUES("21","5424966294.pdf","https://objectstorage.sa-sa
 
 
 -- Dumping data for table `Clientes` --
-INSERT INTO `Clientes` VALUES("1","ACESSO COM SERVICOS DE TELECOMUNICACOES E SUPRIMENTOS LTDA","30063355000190","6134791091","financeiroacesso.comdf@gmail.com");
-INSERT INTO `Clientes` VALUES("5","LAYER7 TECNOLOGIA LTDA","21706269000168","","financeiro@layer7tecnologia.com.br");
-INSERT INTO `Clientes` VALUES("6","DAVI NUNES DE FRANCA","01691128104","61996757676","davi.nunes@gmail.com");
-INSERT INTO `Clientes` VALUES("8","MARIANA ","70521212120","","mariana@gmail.com");
-INSERT INTO `Clientes` VALUES("9","Condomínio Residencial Top Life II Taguatinga - Long Beach Bloco B","23196654000138","","blocob.longbeach@gmail.com");
-INSERT INTO `Clientes` VALUES("10","Condomínio Residencial Top Life II Taguatinga - Long Beach Bloco A","23196523000150","","longbeach.blocoa@gmail.com");
+INSERT INTO `Clientes` VALUES("1","ACESSO COM SERVICOS DE TELECOMUNICACOES E SUPRIMENTOS LTDA","30063355000190","","","6134791091","financeiroacesso.comdf@gmail.com","Quadra 03","08","Bloco A Sobreloja","Setor Norte","72705531","DF","5300108");
+INSERT INTO `Clientes` VALUES("5","LAYER7 TECNOLOGIA LTDA","21706269000168","","","","financeiro@layer7tecnologia.com.br","","","","","","","");
+INSERT INTO `Clientes` VALUES("6","DAVI NUNES DE FRANCA","01691128104","","","61996757676","davi.nunes@gmail.com","","","","","","","");
+INSERT INTO `Clientes` VALUES("8","MARIANA ","70521212120","","","","mariana@gmail.com","","","","","","","");
+INSERT INTO `Clientes` VALUES("9","Condomínio Residencial Top Life II Taguatinga - Long Beach Bloco B","23196654000138","","","","blocob.longbeach@gmail.com","QUADRA QI 24","14","Long Beach","SETOR INDUSTRIAL (TAGUATINGA)","72135240","DF","5300108");
+INSERT INTO `Clientes` VALUES("10","Condomínio Residencial Top Life II Taguatinga - Long Beach Bloco A","23196523000150","","","","longbeach.blocoa@gmail.com","","","","","","","");
 
 
 -- Dumping data for table `ConfiguracoesEmissor` --
-INSERT INTO `ConfiguracoesEmissor` VALUES("1","Davi Nunes de Franca Tecnologia da Informacao Ltda","Digital Inovation Tecnologia","61733714000101","0841147200111","5300108","simples","1","certificado/DInovaTech_1001347811.pfx","Yuk11nn@","homologacao","10","0","8");
+INSERT INTO `ConfiguracoesEmissor` VALUES("1","Davi Nunes de Franca Tecnologia da Informacao Ltda","Digital Inovation Tecnologia","61733714000101","0841147200111","5300108","simples","0","certificado/DInovaTech_1001347811.pfx","Yuk11nn@","homologacao","14","0","8","QI 24 LOTE 1 A13 TO E APT 104","1","Miami Beach","SETOR INDUSTRIAL (TAGUATINGA)","72135902","DF");
 
 
 -- Dumping data for table `FaturaArquivos` --

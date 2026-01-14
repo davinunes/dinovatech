@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-14 13:40:20
+-- Estrutura do Banco de Dados - Gerado em 2026-01-14 17:05:22
 
 
 CREATE TABLE `Arquivos` (
@@ -17,8 +17,17 @@ CREATE TABLE `Clientes` (
   `id_cliente` int NOT NULL AUTO_INCREMENT,
   `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `cpf_cnpj` varchar(18) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `inscricao_municipal` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `inscricao_estadual` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `telefone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `endereco` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `numero` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `complemento` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bairro` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cep` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `uf` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `codigo_municipio` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id_cliente`),
   UNIQUE KEY `cpf_cnpj` (`cpf_cnpj`),
   UNIQUE KEY `email` (`email`)
@@ -41,6 +50,12 @@ CREATE TABLE `ConfiguracoesEmissor` (
   `ultimo_rps_homologacao` int DEFAULT '0',
   `ultimo_rps_producao` int DEFAULT '0',
   `serie_rps` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '8',
+  `endereco` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `numero` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `complemento` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `bairro` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cep` varchar(15) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `uf` varchar(2) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id_config`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
