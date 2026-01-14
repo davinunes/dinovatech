@@ -88,6 +88,65 @@ if ($id_cliente) {
                                 </div>
                             </div>
 
+                            <!-- Endereço Cliente -->
+                            <div class="border-t pt-4 mt-2">
+                                <h4 class="text-sm font-semibold text-gray-600 mb-3">Endereço (Obrigatório para NFSe)
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="md:col-span-2">
+                                        <label for="endereco"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Logradouro</label>
+                                        <input type="text" id="endereco" name="endereco"
+                                            value="<?= $cliente['endereco'] ?? '' ?>"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="numero"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                                        <input type="text" id="numero" name="numero"
+                                            value="<?= $cliente['numero'] ?? '' ?>"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="complemento"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
+                                        <input type="text" id="complemento" name="complemento"
+                                            value="<?= $cliente['complemento'] ?? '' ?>"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="bairro"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                                        <input type="text" id="bairro" name="bairro"
+                                            value="<?= $cliente['bairro'] ?? '' ?>"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="cep"
+                                            class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                                        <input type="text" id="cep" name="cep" value="<?= $cliente['cep'] ?? '' ?>"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label for="uf"
+                                                class="block text-sm font-medium text-gray-700 mb-1">UF</label>
+                                            <input type="text" id="uf" name="uf" value="<?= $cliente['uf'] ?? '' ?>"
+                                                maxlength="2"
+                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition uppercase">
+                                        </div>
+                                        <div>
+                                            <label for="codigo_municipio"
+                                                class="block text-sm font-medium text-gray-700 mb-1">Cód. Mun.
+                                                (IBGE)</label>
+                                            <input type="text" id="codigo_municipio" name="codigo_municipio"
+                                                value="<?= $cliente['codigo_municipio'] ?? '5300108' ?>"
+                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="pt-4 flex justify-end">
                                 <a href="clientes.php"
                                     class="px-6 py-3 mr-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">Cancelar</a>

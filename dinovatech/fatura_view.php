@@ -292,6 +292,12 @@ if ($id_fatura) {
                                     Pagamento</button>
                             <?php endif; ?>
 
+                            <!-- NFS-e Button -->
+                            <button id="btnGerarNfse" onclick="gerarNfse()"
+                                class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-medium transition shadow-md mb-2 flex justify-center items-center">
+                                <span class="material-icons text-sm mr-2">receipt</span> Gerar NFS-e
+                            </button>
+
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
                                 / PDF</button>
@@ -628,6 +634,30 @@ if ($id_fatura) {
                     }
                 }, 'json');
             }
+        }
+
+        function gerarNfse() {
+            if (!confirm('Deseja iniciar a geração da NFS-e para esta fatura?')) return;
+
+            const btn = $('#btnGerarNfse');
+            const originalText = btn.html();
+            btn.prop('disabled', true).html('<span class="material-icons animate-spin text-sm mr-2">refresh</span> Gerando...');
+
+            $.post('app.php', { action: 'gerar_nfse', id_fatura: <?= $id_fatura ?> }, function (res) {
+                if (res.success) {
+                    showToast(res.message, 'success');
+                    // Reload to show new status or attachments
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showToast(res.message, 'error');
+                    // Show detailed error in alert for easier debugging
+                    if (res.details) alert(res.details);
+                    btn.prop('disabled', false).html(originalText);
+                }
+            }, 'json').fail(function () {
+                showToast('Erro de comunicação com o servidor.', 'error');
+                btn.prop('disabled', false).html(originalText);
+            });
         }
 
         $(document).ready(function () {

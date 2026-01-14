@@ -5,104 +5,110 @@ header('Content-Type: application/json');
 $dataHoje = gmdate('Y-m-d', time() - (3 * 3600));
 date_default_timezone_set('UTC'); // Reset base
 
-$input = json_decode(file_get_contents('php://input'), true);
-if (!$input) {
-    echo json_encode(['status' => 'error', 'message' => 'Invalid JSON']);
-    exit;
-}
-
-$action = $input['action'] ?? 'direct_a1';
-$method = $input['method'] ?? 'consultar'; // 'consultar' or 'gerar'
-$variation = $input['variation'] ?? 'support_combo'; // Default to what support uses
-
-// FORCE VARIATION based on known working configurations per method.
-// Ignores input variation to prevent regression.
-
-$protocolMap = [
-    'gerar' => 'support_combo',                  // Signed RPS Wrapper: Needs URI=""
-    'consultar' => 'support_combo',              // Consultar Notas (Servico Prestado): Needs URI=""
-    'consultar_rps' => 'support_combo',          // Consultar RPS: Needs URI=""
-    'consultar_rps_disponivel' => 'support_combo', // Disponibilidade: Needs URI=""
-    'consultar_url' => 'support_combo',          // Consultar URL: Model has URI=""
-    'consultar_cadastral' => 'proven_protocol'   // Cadastral: Needs URI="#" (Legacy behavior)
-];
-
-if (isset($protocolMap[$method])) {
-    $variation = $protocolMap[$method];
-} else {
-    // Fallback or default
-    if (empty($variation))
-        $variation = 'support_combo';
-}
-
-// Configuration
-$endpoint_type = $input['endpoint'] ?? 'fictitious';
-$endpoint_url = ($endpoint_type === 'official')
-    ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
-    : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
-
-$certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
-$senha_arquivo = __DIR__ . '/../certificado/certificado.php';
-
-
-// --- ACTION 1: DIRECT A1 SEND ---
-if ($action === 'direct_a1') {
-    if (file_exists($certificado_pfx)) {
-        require $senha_arquivo;
-        $pfxContent = file_get_contents($certificado_pfx);
-        $certs = [];
-        openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => "Certificate A1 not found"]);
+// Execution ONLY if called directly
+if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
+    header('Content-Type: application/json');
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!$input) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid JSON']);
         exit;
     }
 
-    // Build XML based on Method
-    // Build XML based on Method
-    if ($method === 'gerar') {
-        $xmlComponents = buildGerarNfseXml($input);
-    } elseif ($method === 'consultar_cadastral') {
-        $xmlComponents = buildConsultarCadastralXml($input);
-    } elseif ($method === 'consultar_rps') {
-        $xmlComponents = buildConsultarNfseRpsXml($input);
-    } elseif ($method === 'consultar_rps_disponivel') {
-        $xmlComponents = buildConsultarRpsDisponivelXml($input);
-    } elseif ($method === 'consultar_url') {
-        $xmlComponents = buildConsultarUrlNfseXml($input);
+
+    $action = $input['action'] ?? 'direct_a1';
+    $method = $input['method'] ?? 'consultar'; // 'consultar' or 'gerar'
+    $variation = $input['variation'] ?? 'support_combo'; // Default to what support uses
+
+    // FORCE VARIATION based on known working configurations per method.
+// Ignores input variation to prevent regression.
+
+    $protocolMap = [
+        'gerar' => 'support_combo',                  // Signed RPS Wrapper: Needs URI=""
+        'consultar' => 'support_combo',              // Consultar Notas (Servico Prestado): Needs URI=""
+        'consultar_rps' => 'support_combo',          // Consultar RPS: Needs URI=""
+        'consultar_rps_disponivel' => 'support_combo', // Disponibilidade: Needs URI=""
+        'consultar_url' => 'support_combo',          // Consultar URL: Model has URI=""
+        'consultar_cadastral' => 'proven_protocol'   // Cadastral: Needs URI="#" (Legacy behavior)
+    ];
+
+    if (isset($protocolMap[$method])) {
+        $variation = $protocolMap[$method];
     } else {
-        $xmlComponents = buildConsultarXml($input);
+        // Fallback or default
+        if (empty($variation))
+            $variation = 'support_combo';
     }
 
-    $rootXml = $xmlComponents['root'];
-    $rootId = $xmlComponents['id'];
+    // Configuration
+    $endpoint_type = $input['endpoint'] ?? 'fictitious';
+    $endpoint_url = ($endpoint_type === 'official')
+        ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
+        : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
-    // VARIATION LOGIC
-    $uriRef = "#" . $rootId;
+    $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
+    $senha_arquivo = __DIR__ . '/../certificado/certificado.php';
 
-    // DEBUG: Enforce protocol to match 2aa36ab legacy success
-    // $variation = 'support_combo'; // REMOVED GLOBAL FORCE to respect JS input (proven_protocol)
 
-    if ($variation === 'uri_empty' || $variation === 'support_combo') {
-        // Legacy Logic Restoration (Commit 2aa36ab)
-        // For this variation, we MUST strip the ID from the root element and set URI to empty.
-        // This applies to ALL methods (Gerar, Consultar, ConsultarRPS).
-        $uriRef = "";
-
-        // Ensure replacement works even if $rootId is empty (though it shouldn't be for valid requests)
-        if (!empty($rootId)) {
-            $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+    // --- ACTION 1: DIRECT A1 SEND ---
+    if ($action === 'direct_a1') {
+        if (file_exists($certificado_pfx)) {
+            require $senha_arquivo;
+            $pfxContent = file_get_contents($certificado_pfx);
+            $certs = [];
+            openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => "Certificate A1 not found"]);
+            exit;
         }
+
+        // Build XML based on Method
+        // Build XML based on Method
+        if ($method === 'gerar') {
+            $xmlComponents = buildGerarNfseXml($input);
+        } elseif ($method === 'consultar_cadastral') {
+            $xmlComponents = buildConsultarCadastralXml($input);
+        } elseif ($method === 'consultar_rps') {
+            $xmlComponents = buildConsultarNfseRpsXml($input);
+        } elseif ($method === 'consultar_rps_disponivel') {
+            $xmlComponents = buildConsultarRpsDisponivelXml($input);
+        } elseif ($method === 'consultar_url') {
+            $xmlComponents = buildConsultarUrlNfseXml($input);
+        } else {
+            $xmlComponents = buildConsultarXml($input);
+        }
+
+        $rootXml = $xmlComponents['root'];
+        $rootId = $xmlComponents['id'];
+
+        // VARIATION LOGIC
+        $uriRef = "#" . $rootId;
+
+        // DEBUG: Enforce protocol to match 2aa36ab legacy success
+        // $variation = 'support_combo'; // REMOVED GLOBAL FORCE to respect JS input (proven_protocol)
+
+        if ($variation === 'uri_empty' || $variation === 'support_combo') {
+            // Legacy Logic Restoration (Commit 2aa36ab)
+            // For this variation, we MUST strip the ID from the root element and set URI to empty.
+            // This applies to ALL methods (Gerar, Consultar, ConsultarRPS).
+            $uriRef = "";
+
+            // Ensure replacement works even if $rootId is empty (though it shouldn't be for valid requests)
+            if (!empty($rootId)) {
+                $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+            }
+        }
+
+        // Sign
+        $signedXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
+
+        // Send
+        sendSoap($signedXml, $endpoint_url, $certs, $variation, $method);
+        exit;
     }
 
-    // Sign
-    $signedXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
+    // ... (Rest of actions skipped)
 
-    // Send
-    sendSoap($signedXml, $endpoint_url, $certs, $variation, $method);
-    exit;
 }
-
-// ... (Rest of actions skipped)
 
 // --- HELPERS ---
 
@@ -335,11 +341,32 @@ function buildGerarNfseXml($input)
     $optanteSimples = $input['optante_simples'] ?? '2';
 
     // We need a unique ID for InfDeclaracaoPrestacaoServico regardless of RPS
+    // We need a unique ID for InfDeclaracaoPrestacaoServico regardless of RPS
     $rpsId = "rps" . ($numeroRps ?: rand(10000, 99999));
 
-    $razaoSocialTomador = $cleanString("Davi Nunes de França");
-    $enderecoTomador = $cleanString("QI 24 Lotes 1 a 13 (Residencial Miami Beach)");
-    $bairroTomador = $cleanString("Setor Industrial (Taguatinga)");
+    // Prestador Info (Add Address if needed for signature, but usually XML only asks for Cnpj/Inscrica)
+    // Actually, Prestador tag in Rps usually only has Cnpj/Inscricao.
+    // Address is in ConfiguracoesEmissor if needed elsewhere.
+
+    $razaoSocialTomador = $cleanString($input['tomador']['razao_social'] ?? '');
+    $cpfCnpjTomador = $cleanString($input['tomador']['cpf_cnpj'] ?? ''); // Plain numbers
+    $enderecoTomador = $cleanString($input['tomador']['endereco'] ?? '');
+    $numeroTomador = $cleanString($input['tomador']['numero'] ?? '');
+    $complementoTomador = $cleanString($input['tomador']['complemento'] ?? '');
+    $bairroTomador = $cleanString($input['tomador']['bairro'] ?? '');
+    $cepTomador = $cleanString($input['tomador']['cep'] ?? '');
+    $ufTomador = $cleanString($input['tomador']['uf'] ?? '');
+    $cidadeTomador = $cleanString($input['tomador']['codigo_municipio'] ?? '5300108'); // IBGE
+    $telefoneTomador = $cleanString($input['tomador']['telefone'] ?? '');
+    $emailTomador = $cleanString($input['tomador']['email'] ?? '');
+
+    // Decide if CPF or CNPJ
+    $tomadorCpfCnpjTag = "";
+    if (strlen($cpfCnpjTomador) == 11) {
+        $tomadorCpfCnpjTag = "<Cpf>$cpfCnpjTomador</Cpf>";
+    } else {
+        $tomadorCpfCnpjTag = "<Cnpj>$cpfCnpjTomador</Cnpj>";
+    }
 
     $infRps = "<InfDeclaracaoPrestacaoServico Id=\"$rpsId\">";
 
@@ -390,7 +417,6 @@ XML;
         $infRps .= "<CodigoNbs>$codigoNbs</CodigoNbs>";
     }
     $infRps .= <<<XML
-
             <Discriminacao>$discriminacao</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
             <ExigibilidadeISS>1</ExigibilidadeISS>
@@ -405,22 +431,22 @@ XML;
         <TomadorServico>
             <IdentificacaoTomador>
                 <CpfCnpj>
-                    <Cpf>$cpfTomador</Cpf>
+                    $tomadorCpfCnpjTag
                 </CpfCnpj>
             </IdentificacaoTomador>
             <RazaoSocial>$razaoSocialTomador</RazaoSocial>
             <Endereco>
                 <Endereco>$enderecoTomador</Endereco>
-                <Numero>1</Numero>
-                <Complemento>104E</Complemento>
+                <Numero>$numeroTomador</Numero>
+                <Complemento>$complementoTomador</Complemento>
                 <Bairro>$bairroTomador</Bairro>
-                <CodigoMunicipio>5300108</CodigoMunicipio>
-                <Uf>DF</Uf>
-                <Cep>72135902</Cep>
+                <CodigoMunicipio>$cidadeTomador</CodigoMunicipio>
+                <Uf>$ufTomador</Uf>
+                <Cep>$cepTomador</Cep>
             </Endereco>
             <Contato>
-                <Telefone>61996757676</Telefone>
-                <Email>davi.nunes@gmail.com</Email>
+                <Telefone>$telefoneTomador</Telefone>
+                <Email>$emailTomador</Email>
             </Contato>
         </TomadorServico>
         <OptanteSimplesNacional>$optanteSimples</OptanteSimplesNacional>
@@ -520,7 +546,7 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     return trim($finalXml);
 }
 
-function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard', $method = 'consultar')
+function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard', $method = 'consultar', $returnResponse = false)
 {
 
     // If GerarNfse, we need to Wrap the Signed RPS in GerarNfseEnvio
@@ -531,6 +557,7 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     $xmlDecl = '<' . '?xml version="1.0" encoding="UTF-8"?' . '>';
     $soapAction = '';
     $methodTag = '';
+
 
     if ($method === 'gerar') {
         $soapAction = 'http://nfse.abrasf.org.br/GerarNfse';
@@ -629,7 +656,7 @@ XML;
         @unlink($keyPemFile);
     }
 
-    echo json_encode([
+    $result = [
         'status' => $httpCode == 200 ? 'success' : 'fail',
         'http_code' => $httpCode,
         'endpoint' => $endpoint_url,
@@ -637,6 +664,12 @@ XML;
         'response_body' => $responseBody,
         'request_envelope' => $soapEnvelope,
         'curl_error' => $curlError
-    ]);
+    ];
+
+    if ($returnResponse) {
+        return $result;
+    }
+
+    echo json_encode($result);
 }
 ?>

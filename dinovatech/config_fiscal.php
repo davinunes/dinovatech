@@ -61,6 +61,45 @@ if (!isset($_SESSION['usuario_id'])) {
                                 <input type="text" name="inscricao_municipal" id="inscricao_municipal" required
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                             </div>
+
+                            <!-- Endereço Empresa -->
+                            <div class="md:col-span-2 border-t pt-4 mt-2">
+                                <h4 class="text-sm font-semibold text-gray-600 mb-3">Endereço (Obrigatório para NFSe)
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Logradouro</label>
+                                        <input type="text" name="endereco" id="endereco" required
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                                        <input type="text" name="numero" id="numero" required
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
+                                        <input type="text" name="complemento" id="complemento"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                                        <input type="text" name="bairro" id="bairro" required
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                                        <input type="text" name="cep" id="cep" required
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">UF</label>
+                                        <input type="text" name="uf" id="uf" required maxlength="2"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 uppercase">
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Cód. Município
                                     (IBGE)</label>
@@ -175,6 +214,15 @@ if (!isset($_SESSION['usuario_id'])) {
                     $('#cnpj').val(d.cnpj);
                     $('#inscricao_municipal').val(d.inscricao_municipal);
                     $('#codigo_municipio').val(d.codigo_municipio);
+
+                    // Address
+                    $('#endereco').val(d.endereco);
+                    $('#numero').val(d.numero);
+                    $('#complemento').val(d.complemento);
+                    $('#bairro').val(d.bairro);
+                    $('#cep').val(d.cep);
+                    $('#uf').val(d.uf);
+
                     $('#regime_tributario').val(d.regime_tributario);
                     $('#ambiente_padrao').val(d.ambiente_padrao);
                     $('#serie_rps').val(d.serie_rps);

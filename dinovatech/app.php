@@ -55,6 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ultimo_rps_homologacao = (int) $ultimo_rps_homologacao;
                 $ultimo_rps_producao = (int) $ultimo_rps_producao;
                 $caminho_certificado = mysqli_real_escape_string($link, $caminho_certificado);
+
+                // Address - Config Fiscal
+                $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
+                $numero = mysqli_real_escape_string($link, $_POST['numero'] ?? '');
+                $complemento = mysqli_real_escape_string($link, $_POST['complemento'] ?? '');
+                $bairro = mysqli_real_escape_string($link, $_POST['bairro'] ?? '');
+                $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
+                $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
+
                 // Senha: se vier vazia, não altera (se for update) ou insere vazia (se insert)
                 // Se vier preenchida, altera.
                 $senha_sql_part = "";
@@ -71,7 +80,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 regime_tributario='$regime_tributario', optante_simples='$optante_simples',
                                 ambiente_padrao='$ambiente_padrao', serie_rps='$serie_rps', 
                                 ultimo_rps_homologacao='$ultimo_rps_homologacao', ultimo_rps_producao='$ultimo_rps_producao',
-                                caminho_certificado='$caminho_certificado'
+                                caminho_certificado='$caminho_certificado',
+                                endereco='$endereco', numero='$numero', complemento='$complemento',
+                                bairro='$bairro', cep='$cep', uf='$uf'
                                 $senha_sql_part
                               WHERE id_config='$id_config'";
                 } else {
@@ -81,12 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, 
                                regime_tributario, optante_simples, ambiente_padrao, serie_rps, 
                                ultimo_rps_homologacao, ultimo_rps_producao, 
-                               caminho_certificado, senha_certificado)
+                               caminho_certificado, senha_certificado,
+                               endereco, numero, complemento, bairro, cep, uf)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
-                               '$caminho_certificado', $senha_val)";
+                               '$caminho_certificado', $senha_val,
+                               '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf')";
                 }
 
                 if (DBExecute($link, $query)) {
@@ -195,8 +208,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $telefone = mysqli_real_escape_string($link, $telefone);
                 $email = mysqli_real_escape_string($link, $email);
 
-                $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email) 
-                          VALUES ('$nome', '$cpf_cnpj', '$telefone', '$email')";
+                // Address - Cliente
+                $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
+                $numero = mysqli_real_escape_string($link, $_POST['numero'] ?? '');
+                $complemento = mysqli_real_escape_string($link, $_POST['complemento'] ?? '');
+                $bairro = mysqli_real_escape_string($link, $_POST['bairro'] ?? '');
+                $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
+                $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
+                $codigo_municipio = mysqli_real_escape_string($link, $_POST['codigo_municipio'] ?? '');
+
+                $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email, endereco, numero, complemento, bairro, cep, uf, codigo_municipio) 
+                          VALUES ('$nome', '$cpf_cnpj', '$telefone', '$email', '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$codigo_municipio')";
 
                 $result = mysqli_query($link, $query);
 
@@ -228,7 +250,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = "ID do cliente é obrigatório.";
             } else {
                 $id_cliente = mysqli_real_escape_string($link, $id_cliente);
-                $query = "SELECT id_cliente, nome, cpf_cnpj, telefone, email FROM Clientes WHERE id_cliente = '$id_cliente'";
+                // Select * to get address fields
+                $query = "SELECT * FROM Clientes WHERE id_cliente = '$id_cliente'";
                 $result = DBExecute($link, $query);
                 if ($result && mysqli_num_rows($result) > 0) {
                     $response['success'] = true;
@@ -255,7 +278,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $telefone = mysqli_real_escape_string($link, $telefone);
                 $email = mysqli_real_escape_string($link, $email);
 
-                $query = "UPDATE Clientes SET nome = '$nome', cpf_cnpj = '$cpf_cnpj', telefone = '$telefone', email = '$email' WHERE id_cliente = '$id_cliente'";
+                // Address - Cliente Edit
+                $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
+                $numero = mysqli_real_escape_string($link, $_POST['numero'] ?? '');
+                $complemento = mysqli_real_escape_string($link, $_POST['complemento'] ?? '');
+                $bairro = mysqli_real_escape_string($link, $_POST['bairro'] ?? '');
+                $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
+                $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
+                $codigo_municipio = mysqli_real_escape_string($link, $_POST['codigo_municipio'] ?? '');
+
+                $query = "UPDATE Clientes SET nome='$nome', cpf_cnpj='$cpf_cnpj', telefone='$telefone', email='$email',
+                          endereco='$endereco', numero='$numero', complemento='$complemento', bairro='$bairro', cep='$cep', uf='$uf', codigo_municipio='$codigo_municipio'
+                          WHERE id_cliente='$id_cliente'";
                 $result = DBExecute($link, $query);
 
                 if ($result) {
@@ -1362,6 +1396,193 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     $response['message'] = "Erro ao buscar arquivos: " . mysqli_error($link);
                 }
+            }
+            break;
+
+        case 'gerar_nfse':
+            require_once '../nfse_test/api.php';
+
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            if (empty($id_fatura)) {
+                $response['message'] = "ID Fatura obrigatório";
+                break;
+            }
+            $id_fatura = mysqli_real_escape_string($link, $id_fatura);
+
+            // 1. Fetch Config
+            $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+            $config = mysqli_fetch_assoc($resConf);
+            if (!$config) {
+                $response['message'] = "Configuração Fiscal não encontrada";
+                break;
+            }
+            if (empty($config['caminho_certificado'])) {
+                $response['message'] = "Certificado não configurado";
+                break;
+            }
+
+            // 2. Fetch Fatura & Client
+            $queryFat = "SELECT F.*, C.*, C.nome as nome_tomador, F.id_fatura as f_id FROM Faturas F JOIN Clientes C ON F.id_cliente=C.id_cliente WHERE F.id_fatura='$id_fatura'";
+            $resFat = DBExecute($link, $queryFat);
+            $fatura = mysqli_fetch_assoc($resFat);
+            if (!$fatura) {
+                $response['message'] = "Fatura não encontrada";
+                break;
+            }
+
+            // 3. Fetch Items
+            $queryItems = "SELECT I.*, S.*, I.id_recorrencia as item_recorrencia_id FROM ItensFatura I JOIN Servicos S ON I.id_servico=S.id_servico WHERE I.id_fatura='$id_fatura'";
+            $resItems = DBExecute($link, $queryItems);
+            $items = [];
+            $totalServicos = 0.0;
+            $discriminacaoParts = [];
+
+            $taxSettings = null; // Will hold {cnae, nbs, item_lista, tributacao}
+
+            while ($row = mysqli_fetch_assoc($resItems)) {
+                $items[] = $row;
+                $totalServicos += ($row['quantidade'] * $row['valor_unitario']);
+                $discriminacaoParts[] = $row['nome_servico'] . " (x" . $row['quantidade'] . ")";
+
+                // Determine Tax Settings (Prioritize First Item with Recurrence Override)
+                if (!$taxSettings) {
+                    // Defaults from Service
+                    $taxSettings = [
+                        'cnae' => $row['codigo_cnae'],
+                        'nbs' => $row['codigo_nbs'],
+                        'item_lista' => $row['item_lista_servico'],
+                        'tributacao' => $row['codigo_tributacao_municipio']
+                    ];
+
+                    // Check Recurrence Override
+                    if (!empty($row['item_recorrencia_id'])) {
+                        $id_rec = $row['item_recorrencia_id'];
+                        $resRec = DBExecute($link, "SELECT codigo_cnae, codigo_nbs, codigo_tributacao_municipio FROM Recorrencias WHERE id_recorrencia='$id_rec'");
+                        $recRow = mysqli_fetch_assoc($resRec);
+                        if ($recRow) {
+                            if (!empty($recRow['codigo_cnae']))
+                                $taxSettings['cnae'] = $recRow['codigo_cnae'];
+                            if (!empty($recRow['codigo_nbs']))
+                                $taxSettings['nbs'] = $recRow['codigo_nbs'];
+                            if (!empty($recRow['codigo_tributacao_municipio']))
+                                $taxSettings['tributacao'] = $recRow['codigo_tributacao_municipio'];
+                        }
+                    }
+                }
+            }
+
+            if (empty($items)) {
+                $response['message'] = "Fatura sem itens";
+                break;
+            }
+
+            // 4. Prepare Input
+            $ambiente = ($config['ambiente_padrao'] == '1') ? 'producao' : 'homologacao'; // 1=Prod, 2=Homolog
+            // RPS Number
+            $nextRps = ($ambiente == 'producao') ? $config['ultimo_rps_producao'] + 1 : $config['ultimo_rps_homologacao'] + 1;
+
+            // Clean/Construct Address for Tomador
+            $tomadorData = [
+                'razao_social' => $fatura['nome_tomador'],
+                'cpf_cnpj' => $fatura['cpf_cnpj'],
+                'endereco' => $fatura['endereco'],
+                // Try to split number if stuck in address, but assuming columns are populated now
+                'numero' => $fatura['numero'] ?: 'S/N',
+                'complemento' => $fatura['complemento'],
+                'bairro' => $fatura['bairro'] ?: 'Centro',
+                'cep' => $fatura['cep'],
+                'uf' => $fatura['uf'],
+                'codigo_municipio' => $fatura['codigo_municipio'] ?: '5300108',
+                'telefone' => $fatura['telefone'],
+                'email' => $fatura['email']
+            ];
+
+            $inputApi = [
+                'cnpj' => $config['cnpj'],
+                'im' => $config['inscricao_municipal'],
+                'numero_rps' => $nextRps,
+                'serie_rps' => $config['serie_rps'],
+                'tipo_rps' => '1',
+                'valor' => number_format($totalServicos, 2, '.', ''),
+                'iss_retido' => '2', // Default Nao
+                'aliquota' => '0',
+                'discriminacao' => implode(' | ', $discriminacaoParts),
+                'codigo_cnae' => $taxSettings['cnae'],
+                'codigo_nbs' => $taxSettings['nbs'],
+                'item_lista' => $taxSettings['item_lista'],
+                'codigo_tributacao' => $taxSettings['tributacao'],
+                'optante_simples' => $config['optante_simples'],
+                'tomador' => $tomadorData
+            ];
+
+            // 5. Build XML
+            // Assuming buildGerarNfseXml is available from require
+            if (!function_exists('buildGerarNfseXml')) {
+                $response['message'] = "Erro interno: Biblioteca NFSe não carregada.";
+                break;
+            }
+            $xmlData = buildGerarNfseXml($inputApi);
+
+            // 6. Load Cert
+            if (!file_exists($config['caminho_certificado'])) {
+                $response['message'] = "Arquivo PFX não encontrado no caminho: " . $config['caminho_certificado'];
+                break;
+            }
+            $pfxContent = file_get_contents($config['caminho_certificado']);
+            $certs = [];
+            if (!openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado'])) {
+                $response['message'] = "Senha do certificado incorreta ou PFX inválido.";
+                break;
+            }
+
+            // 7. Sign
+            $xmlSigned = assinarRoot($xmlData['root'], $certs, "", 'support_combo');
+
+            // 8. Send
+            // Determine endpoint
+            $endpoint = ($ambiente == 'producao')
+                ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
+                : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+
+            $resultSoap = sendSoap($xmlSigned, $endpoint, $certs, 'support_combo', 'gerar', true);
+            $responseSoap = $resultSoap['response_body'] ?? '';
+
+            // 9. Process Response
+            $status = 'Erro';
+            // Check for explicit Success tag or absence of messages
+            // XML Response usually has <NumeroLote> or <Inscricao>
+            // With 'GerarNfse', success returns <CompNfse>...<Numero>X</Numero>...
+            if (strpos($responseSoap, '<Numero>') !== false && strpos($responseSoap, '<CompNfse>') !== false) {
+                $status = 'Autorizada';
+            } elseif (strpos($responseSoap, '<ListaMensagemRetorno>') === false && strpos($responseSoap, '<Fault>') === false && !empty($responseSoap)) {
+                // Sometimes success is just raw XML without Fault
+                // But safer to check for typical success tags
+            }
+
+            $xml_envio_esc = mysqli_real_escape_string($link, $xmlSigned);
+            $xml_retorno_esc = mysqli_real_escape_string($link, $responseSoap);
+
+            $queryLog = "INSERT INTO NfseEmissoes (id_fatura, numero_rps, serie_rps, ambiente, xml_envio, xml_retorno, status, data_emissao) VALUES (
+                '$id_fatura', '$nextRps', '{$config['serie_rps']}', '$ambiente', '$xml_envio_esc', '$xml_retorno_esc', '$status', NOW()
+            )";
+            DBExecute($link, $queryLog);
+
+            if ($status == 'Autorizada') {
+                // Update RPS Counter
+                if ($ambiente == 'producao') {
+                    DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_producao=$nextRps WHERE id_config={$config['id_config']}");
+                } else {
+                    DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_homologacao=$nextRps WHERE id_config={$config['id_config']}");
+                }
+                $response['success'] = true;
+                $response['message'] = "NFS-e Gerada com Sucesso! RPS $nextRps";
+            } else {
+                $response['success'] = false;
+                $response['message'] = "Erro ao gerar NFS-e / Recusada.";
+                // Extract error message roughly
+                preg_match('/<Mensagem>(.*?)<\/Mensagem>/', $responseSoap, $matches);
+                $errMsg = $matches[1] ?? 'Verifique o XML de retorno.';
+                $response['details'] = $errMsg;
             }
             break;
 
