@@ -296,64 +296,24 @@ function buildGerarNfseXml($input)
     $codigoNbs = $input['codigo_nbs'] ?? '';
     $aliquota = $input['aliquota'] ?? '0';
 
-    // Helper for manual sanitization (Server iconv seems flaky)
+    // Helper to sanitize strings (Remove accents, special chars, keep newlines as literal \s\n)
     $cleanString = function ($str) {
-        $map = [
-            'á' => 'a',
-            'à' => 'a',
-            'ã' => 'a',
-            'â' => 'a',
-            'ä' => 'a',
-            'Á' => 'A',
-            'À' => 'A',
-            'Ã' => 'A',
-            'Â' => 'A',
-            'Ä' => 'A',
-            'é' => 'e',
-            'è' => 'e',
-            'ê' => 'e',
-            'ë' => 'e',
-            'É' => 'E',
-            'È' => 'E',
-            'Ê' => 'E',
-            'Ë' => 'E',
-            'í' => 'i',
-            'ì' => 'i',
-            'î' => 'i',
-            'ï' => 'i',
-            'Í' => 'I',
-            'Ì' => 'I',
-            'Î' => 'I',
-            'Ï' => 'I',
-            'ó' => 'o',
-            'ò' => 'o',
-            'õ' => 'o',
-            'ô' => 'o',
-            'ö' => 'o',
-            'Ó' => 'O',
-            'Ò' => 'O',
-            'Õ' => 'O',
-            'Ô' => 'O',
-            'Ö' => 'O',
-            'ú' => 'u',
-            'ù' => 'u',
-            'û' => 'u',
-            'ü' => 'u',
-            'Ú' => 'U',
-            'Ù' => 'U',
-            'Û' => 'U',
-            'Ü' => 'U',
-            'ç' => 'c',
-            'Ç' => 'C',
-            'ñ' => 'n',
-            'Ñ' => 'N',
-            'º' => '',
-            '°' => ''
-        ];
-        // Replace actual newlines with literal string "\s\n" as per manual
+        if (empty($str))
+            return "";
+
+        // 1. Convert newlines to literal \s\n (Manual Requirement)
         $str = str_replace(["\r\n", "\r", "\n"], '\s\n', $str);
 
-        // Remove special chars but KEEP backslash (\) for the escape sequence
+        // 2. Transliterate to ASCII (e.g., ç -> c, ã -> a)
+        // Check if iconv is available, otherwise allow regex to strip
+        if (function_exists('iconv')) {
+            $converted = @iconv('UTF-8', 'ASCII//TRANSLIT', $str);
+            if ($converted !== false) {
+                $str = $converted;
+            }
+        }
+
+        // 3. Whitelist: Only alphanumerics, space, hyphen, and backslash (\)
         return preg_replace('/[^a-zA-Z0-9 \-\\\\]/', ' ', $str);
     };
 
