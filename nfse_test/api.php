@@ -58,11 +58,17 @@ if ($action === 'direct_a1') {
     // VARIATION LOGIC
     $uriRef = "#" . $rootId;
 
-    // DEBUG: Enforce protocol to match 2aa36ab legacy success
-    // ConsultarDadosCadastrais likely needs 'standard' (CDATA + URI="#" + ds:Prefix) - Legacy Default
-    if ($method === 'consultar_cadastral') {
-        $variation = 'standard';
-    } else {
+    // Hybrid Strategy based on working history:
+    // Gerar, ConsultarRps, ConsultarRpsDisponivel -> URI="" (support_combo)
+    // ConsultarDadosCadastrais -> URI="#" (match input 'proven_protocol')
+
+    if ($method === 'gerar' || $method === 'consultar_rps' || $method === 'consultar_rps_disponivel') {
+        $variation = 'support_combo';
+    }
+    // Else leave $variation as passed from JS ('proven_protocol')
+
+    // Default fallback
+    if (empty($variation)) {
         $variation = 'support_combo';
     }
 
