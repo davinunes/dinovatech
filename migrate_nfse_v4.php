@@ -4,6 +4,11 @@
 
 include 'database.php';
 
+$link = DBConnect();
+if (!$link) {
+    die("Erro ao conectar ao banco de dados.");
+}
+
 echo "<h2>DInovaTech - Migration DB (NFS-e V4) - IE/IM Clients</h2>";
 echo "
 <pre>";
