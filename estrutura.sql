@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-14 17:17:02
+-- Estrutura do Banco de Dados - Gerado em 2026-01-14 20:27:46
 
 
 CREATE TABLE `Arquivos` (
@@ -132,7 +132,7 @@ CREATE TABLE `NfseEmissoes` (
   PRIMARY KEY (`id_emissao`),
   KEY `id_fatura` (`id_fatura`),
   CONSTRAINT `NfseEmissoes_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
