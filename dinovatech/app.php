@@ -1609,7 +1609,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 '$valor_servico', '$aliquota', '$iss_retido_val', '$item_lista', '$discriminacao_esc',
                 '$xml_envio_esc', '$xml_retorno_esc', '$status', NOW()
             )";
-            DBExecute($link, $queryLog);
+            $insertResult = DBExecute($link, $queryLog);
+
+            if (!$insertResult) {
+                $response['success'] = false;
+                $response['message'] = "Erro CRÍTICO no Banco de Dados: " . mysqli_error($link);
+                break;
+            }
 
             if ($status == 'Autorizada') {
                 // Update RPS Counter
