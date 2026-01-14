@@ -1589,8 +1589,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $xml_envio_esc = mysqli_real_escape_string($link, $xmlSigned);
             $xml_retorno_esc = mysqli_real_escape_string($link, $responseSoap);
 
-            $queryLog = "INSERT INTO NfseEmissoes (id_fatura, numero_rps, serie_rps, ambiente, xml_envio, xml_retorno, status, data_emissao) VALUES (
-                '$id_fatura', '$nextRps', '{$config['serie_rps']}', '$ambiente', '$xml_envio_esc', '$xml_retorno_esc', '$status', NOW()
+            // Prepare snapshot data
+            $valor_servico = number_format($totalServicos, 2, '.', '');
+            $aliquota = $taxSettings['aliquota'] ?: '0.00';
+            $iss_retido_val = ($taxSettings['iss_retido'] == '1') ? 1 : 0; // 1=Sim, 2=Nao, but bool in DB? DB is boolean, so 1/0
+            // Wait, schema says boolean DEFAULT false. 
+            // In DB boolean is tinyint(1).
+            // Logic: if iss_retido string is '1' (Sim), store 1. If '2' (Nao), store 0.
+
+            $item_lista = $taxSettings['item_lista'];
+            $discriminacao_esc = mysqli_real_escape_string($link, implode(' | ', $discriminacaoParts));
+
+            $queryLog = "INSERT INTO NfseEmissoes (
+                id_fatura, numero_rps, serie_rps, ambiente, 
+                valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
+                xml_envio, xml_retorno, status, data_emissao
+            ) VALUES (
+                '$id_fatura', '$nextRps', '{$config['serie_rps']}', '$ambiente', 
+                '$valor_servico', '$aliquota', '$iss_retido_val', '$item_lista', '$discriminacao_esc',
+                '$xml_envio_esc', '$xml_retorno_esc', '$status', NOW()
             )";
             DBExecute($link, $queryLog);
 
