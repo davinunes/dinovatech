@@ -1,6 +1,6 @@
 <?php
 // Force GMT-3 (Brazil Standard Time) manually to avoid timezone DB issues
-$now = time() - (3 * 3600); // 3 hours in seconds
+$now = time() - (3 * 3600); // 3 hours in seconds 
 $today = gmdate('Y-m-d', $now);
 date_default_timezone_set('UTC'); // Reset to predictable base
 ?>
