@@ -1,5 +1,5 @@
 <?php
-// Script de Migração para NFS-e (Executar uma vez)
+// Script de Migração para NFS-e (Executar uma vez) - VERSÃO COMPATÍVEL MYSQL ANTIGO
 // Local: e:\DEV\dinovatech\migrate_nfse.php
 
 include 'database.php';
@@ -10,7 +10,7 @@ if (!$link) {
     die("Erro ao conectar ao banco de dados.");
 }
 
-echo "<h1>Iniciando Migração NFS-e...</h1>";
+echo "<h1>Iniciando Migração NFS-e (Modo Compatibilidade)...</h1>";
 
 // --- 1. Tabela ConfiguracoesEmissor ---
 $sql1 = "CREATE TABLE IF NOT EXISTS `ConfiguracoesEmissor` (
@@ -32,30 +32,21 @@ $sql1 = "CREATE TABLE IF NOT EXISTS `ConfiguracoesEmissor` (
 
 execSql($link, "Criar tabela ConfiguracoesEmissor", $sql1);
 
-// --- 2. Alterar Servicos ---
-$sql2 = "ALTER TABLE `Servicos`
-ADD COLUMN IF NOT EXISTS `item_lista_servico` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS `codigo_cnae` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS `codigo_tributacao_municipio` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS `codigo_nbs` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS `aliquota_iss` decimal(5,2) DEFAULT '0.00',
-ADD COLUMN IF NOT EXISTS `iss_retido` boolean DEFAULT false,
-ADD COLUMN IF NOT EXISTS `descricao_nfse_padrao` text COLLATE utf8mb4_unicode_ci DEFAULT NULL;";
-
-// MySQL < 8.0 não suporta 'IF NOT EXISTS' em ADD COLUMN diretamente de forma limpa, 
-// mas vamos tentar rodar ignorando erro de coluna duplicada ou verificar antes.
-// Para simplificar, vamos rodar e capturar erro se já existir.
-tryExec($link, "Alterar tabela Servicos", $sql2);
+// --- 2. Alterar Servicos (Coluna por Coluna) ---
+addColumnSafe($link, "Servicos", "item_lista_servico", "varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+addColumnSafe($link, "Servicos", "codigo_cnae", "varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+addColumnSafe($link, "Servicos", "codigo_tributacao_municipio", "varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+addColumnSafe($link, "Servicos", "codigo_nbs", "varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+addColumnSafe($link, "Servicos", "aliquota_iss", "decimal(5,2) DEFAULT '0.00'");
+addColumnSafe($link, "Servicos", "iss_retido", "boolean DEFAULT false");
+addColumnSafe($link, "Servicos", "descricao_nfse_padrao", "text COLLATE utf8mb4_unicode_ci DEFAULT NULL");
 
 
-// --- 3. Alterar Recorrencias ---
-$sql3 = "ALTER TABLE `Recorrencias`
-ADD COLUMN IF NOT EXISTS `item_lista_servico` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS `aliquota_iss` decimal(5,2) DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS `iss_retido` boolean DEFAULT NULL,
-ADD COLUMN IF NOT EXISTS `descricao_personalizada` text COLLATE utf8mb4_unicode_ci DEFAULT NULL;";
-
-tryExec($link, "Alterar tabela Recorrencias", $sql3);
+// --- 3. Alterar Recorrencias (Coluna por Coluna) ---
+addColumnSafe($link, "Recorrencias", "item_lista_servico", "varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL");
+addColumnSafe($link, "Recorrencias", "aliquota_iss", "decimal(5,2) DEFAULT NULL");
+addColumnSafe($link, "Recorrencias", "iss_retido", "boolean DEFAULT NULL");
+addColumnSafe($link, "Recorrencias", "descricao_personalizada", "text COLLATE utf8mb4_unicode_ci DEFAULT NULL");
 
 
 // --- 4. Tabela NfseEmissoes ---
@@ -87,27 +78,25 @@ $sql4 = "CREATE TABLE IF NOT EXISTS `NfseEmissoes` (
 
 execSql($link, "Criar tabela NfseEmissoes", $sql4);
 
-// --- 5. Alterar Faturas (Flag) ---
-$sql5 = "ALTER TABLE `Faturas`
-ADD COLUMN IF NOT EXISTS `possui_nfse` boolean DEFAULT false;";
-tryExec($link, "Alterar tabela Faturas", $sql5);
+
+// --- 5. Alterar Faturas ---
+addColumnSafe($link, "Faturas", "possui_nfse", "boolean DEFAULT false");
 
 
 // --- 6. Inserir Configuração Inicial (DInova) ---
 // Verifica se já existe
 $check = mysqli_query($link, "SELECT count(*) as qtd FROM ConfiguracoesEmissor");
-$row = mysqli_fetch_assoc($check);
+$resCheck = mysqli_fetch_assoc($check);
 
-if ($row['qtd'] == 0) {
+if ($resCheck['qtd'] == 0) {
     echo "<p>Inserindo configuração inicial...</p>";
-    $razao = "DINOVA TECNOLOGIA LTDA"; // Exemplo
+    $razao = "DINOVA TECNOLOGIA LTDA";
     $fantasia = "DInova Tech";
-    $cnpj = "61733714000101"; // Do certificado de teste
-    $im = "0841147200111"; // Do certificado de teste
+    $cnpj = "61733714000101";
+    $im = "0841147200111";
     $cod_mun = "5300108";
-    $certificado = "certificado/DInovaTech_1001347811.pfx"; // Relativo ao root
+    $certificado = "certificado/DInovaTech_1001347811.pfx";
 
-    // Inserção sem Inscricao Estadual (IE) e sem Senha (gerenciada via arquivo)
     $insert = "INSERT INTO ConfiguracoesEmissor 
     (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, caminho_certificado, ambiente_padrao)
     VALUES 
@@ -137,25 +126,24 @@ function execSql($link, $desc, $sql)
     }
 }
 
-function tryExec($link, $desc, $sql)
+function addColumnSafe($link, $table, $column, $def)
 {
-    // Tenta executar, mas se der erro (ex: duplicate column), ignora mas avisa
-    echo "<p>Tentando: $desc... ";
-    try {
-        if (@mysqli_query($link, $sql)) {
-            echo "<span style='color:green'>OK</span></p>";
+    echo "<p>Checando coluna <b>$column</b> em <b>$table</b>... ";
+
+    // Check existance
+    $checkSql = "SHOW COLUMNS FROM `$table` LIKE '$column'";
+    $result = mysqli_query($link, $checkSql);
+
+    if (mysqli_num_rows($result) > 0) {
+        echo "<span style='color:orange'>Já existe (Ignorado)</span></p>";
+    } else {
+        // Add
+        $alterSql = "ALTER TABLE `$table` ADD COLUMN `$column` $def";
+        if (mysqli_query($link, $alterSql)) {
+            echo "<span style='color:green'>Adicionada com Sucesso</span></p>";
         } else {
-            $err = mysqli_error($link);
-            // Ignora erro 1060 (Duplicate column name)
-            if (strpos($err, "Duplicate column") !== false || strpos($err, "1060") !== false) {
-                echo "<span style='color:orange'>Já existia (Ignorado)</span></p>";
-            } else {
-                echo "<span style='color:red'>ERRO: $err</span></p>";
-            }
+            echo "<span style='color:red'>ERRO ao adicionar: " . mysqli_error($link) . "</span></p>";
         }
-    } catch (Exception $e) {
-        // Ignora erro específico de coluna já existente se for Exception logic
-        echo "<span style='color:red'>ERRO EXCEPTION: " . $e->getMessage() . "</span></p>";
     }
 }
 ?>
