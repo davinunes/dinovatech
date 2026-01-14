@@ -1676,8 +1676,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
         case 'consultar_url_nfse':
+            require_once '../nfse_test/api.php';
+
             $id_emissao = $_POST['id_emissao'];
-            // Fetch Emission Data
             $res = DBExecute($link, "SELECT * FROM NfseEmissoes WHERE id_emissao = '$id_emissao'");
             $emissao = mysqli_fetch_assoc($res);
             if (!$emissao) {
@@ -1686,57 +1687,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
-            // Fetch Config
-            $faturaRes = DBExecute($link, "SELECT id_cliente FROM Faturas WHERE id_fatura = '{$emissao['id_fatura']}'");
-            $fatura = mysqli_fetch_assoc($faturaRes);
-
             $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
             $config = mysqli_fetch_assoc($resConf);
 
-            // Input for API
+            // Load Cert
+            $pfxPath = $config['caminho_certificado'];
+            $finalPfxPath = null;
+            if (file_exists($pfxPath)) {
+                $finalPfxPath = $pfxPath;
+            } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
+                $finalPfxPath = __DIR__ . '/' . $pfxPath;
+            } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
+                $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+            }
+
+            if (!$finalPfxPath) {
+                $response['message'] = "Certificado não encontrado.";
+                break;
+            }
+
+            $pfxContent = file_get_contents($finalPfxPath);
+            $certs = [];
+            if (!openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado'])) {
+                $response['message'] = "Senha do certificado incorreta.";
+                break;
+            }
+
+            // Input
             $inputApi = [
-                'action' => 'direct_a1',
-                'method' => 'consultar_url',
                 'cnpj' => $config['cnpj'],
                 'im' => $config['inscricao_municipal'],
                 'numero_nota' => $emissao['numero_nota'] ?: '0',
                 'serie' => $emissao['serie_rps'],
-                'tipo' => '1',
-                'endpoint' => ($emissao['ambiente'] == 'producao') ? 'official' : 'fictitious'
+                'tipo' => '1'
             ];
 
-            // Use external API script
-            $apiUrl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/../nfse_test/api.php";
+            // Build XML
+            $xmlComponents = buildConsultarUrlNfseXml($inputApi);
+            $finalXml = $xmlComponents['root'];
 
-            $ch = curl_init($apiUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($inputApi));
-            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+            // Send
+            $endpoint = ($emissao['ambiente'] == 'producao')
+                ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
+                : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
-            $apiResponse = curl_exec($ch);
-            curl_close($ch);
+            // Send Internal
+            // Note: We are bypassing the curl loopback to api.php and calling sendSoap directly
+            // which is defined in the required api.php
+            $resultSoap = sendSoap($finalXml, $endpoint, $certs, 'support_combo', 'consultar_url', true);
+            $respXml = $resultSoap['response_body'] ?? '';
 
-            $json = json_decode($apiResponse, true);
-
-            if ($json && $json['status'] == 'success') {
-                $respXml = $json['response_body']; // Usually full XML
-                // Try to find URL
-                if (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m) || preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $respXml, $m)) {
-                    $url = $m[1];
-                    $url_esc = mysqli_real_escape_string($link, $url);
-                    DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
-                    $response['success'] = true;
-                    $response['message'] = "URL atualizada: $url";
-                } else {
-                    $response['success'] = false;
-                    $response['message'] = 'URL não encontrada ou nota ainda não processada completamente. Tente novamente mais tarde.';
-                    $response['debug_xml'] = $respXml;
-                }
+            if (strpos($respXml, '<Fault>') !== false) {
+                $response['success'] = false;
+                $response['message'] = 'Erro na API Prefeitura.';
+                $response['debug_xml'] = $respXml;
+            } elseif (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m) || preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $respXml, $m)) {
+                $url = $m[1];
+                $url_esc = mysqli_real_escape_string($link, $url);
+                DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
+                $response['success'] = true;
+                $response['message'] = "URL atualizada: $url";
             } else {
                 $response['success'] = false;
-                $response['message'] = 'Erro na API de Consulta.';
-                $response['details'] = $json;
+                $response['message'] = 'URL não encontrada no retorno.';
+                $response['debug_xml'] = $respXml;
             }
             break;
 
