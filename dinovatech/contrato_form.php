@@ -182,6 +182,63 @@ DBClose($link);
                                 </div>
                             </div>
 
+                            <!-- DADOS FISCAIS PERSONALIZADOS -->
+                            <div class="border-t pt-4 mt-2">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                    <span class="material-icons mr-2 text-cyan-600">receipt_long</span> Dados Fiscais
+                                    (Personalização)
+                                </h3>
+                                <p class="text-sm text-gray-500 mb-4">Deixe em branco para usar o padrão do Serviço.</p>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="item_lista_servico"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Item Lista Serviço
+                                            (Override)</label>
+                                        <input type="text" id="item_lista_servico" name="item_lista_servico"
+                                            value="<?= $contrato['item_lista_servico'] ?? '' ?>"
+                                            placeholder="Padrão Serviço"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="aliquota_iss"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Alíquota ISS
+                                            (%)</label>
+                                        <input type="number" id="aliquota_iss" name="aliquota_iss" step="0.01" min="0"
+                                            max="100" value="<?= $contrato['aliquota_iss'] ?? '' ?>"
+                                            placeholder="Padrão Serviço"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div class="flex items-center pt-8">
+                                        <!-- Checkbox needs tri-state essentially, or simple checkbox. 
+                                              If unchecked, we might mean "False" or "Default".
+                                              For now simple checkbox Override. 
+                                              To allow "Default", assume empty means default? 
+                                              But checkbox is bool. 
+                                              Maybe a dropdown: [Padrão, Retido, Não Retido] -->
+                                        <div class="w-full">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">ISS
+                                                Retido?</label>
+                                            <select name="iss_retido" id="iss_retido"
+                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
+                                                <option value="">Padrão do Serviço</option>
+                                                <option value="1" <?= ($contrato['iss_retido'] ?? '') === '1' ? 'selected' : '' ?>>Sim, Retido</option>
+                                                <option value="0" <?= ($contrato['iss_retido'] ?? '') === '0' ? 'selected' : '' ?>>Não, Normal</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label for="descricao_personalizada"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Descrição
+                                        Personalizada</label>
+                                    <textarea id="descricao_personalizada" name="descricao_personalizada" rows="3"
+                                        placeholder="Se preenchido, substitui a descrição padrão do serviço."
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"><?= $contrato['descricao_personalizada'] ?? '' ?></textarea>
+                                </div>
+                            </div>
+
+
                             <div class="pt-4 flex justify-end">
                                 <a href="contratos.php"
                                     class="px-6 py-3 mr-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">Cancelar</a>
