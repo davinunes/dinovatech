@@ -389,6 +389,9 @@ function buildGerarNfseXml($input)
 XML;
     }
 
+    // Pre-calc IM tag
+    $imTomadorTag = !empty($imTomador) ? "<InscricaoMunicipal>$imTomador</InscricaoMunicipal>" : "";
+
     $infRps .= <<<XML
         <Competencia>$dataHoje</Competencia>
         <Servico>
@@ -434,7 +437,7 @@ XML;
                 <CpfCnpj>
                     $tomadorCpfCnpjTag
                 </CpfCnpj>
-                " . (!empty($imTomador) ? "<InscricaoMunicipal>$imTomador</InscricaoMunicipal>" : "") . "
+                $imTomadorTag
             </IdentificacaoTomador>
             <RazaoSocial>$razaoSocialTomador</RazaoSocial>
             <Endereco>
