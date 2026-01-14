@@ -301,55 +301,68 @@ if ($id_fatura) {
                             <!-- NFS-e Section -->
                             <div class="mt-4 border-t pt-4">
                                 <h3 class="font-bold text-gray-800 mb-2">Nota Fiscal (NFS-e)</h3>
-                                
-                                <?php 
+
+                                <?php
                                 $hasAuthorized = false;
                                 if (!empty($nfse_list)) {
                                     foreach ($nfse_list as $nfse) {
-                                        if ($nfse['status'] == 'Autorizada') $hasAuthorized = true;
-                                        
+                                        if ($nfse['status'] == 'concluido')
+                                            $hasAuthorized = true;
+
                                         $statusClass = 'text-gray-500';
                                         $icon = 'history';
-                                        if ($nfse['status'] == 'Autorizada') { $statusClass = 'text-green-600'; $icon = 'check_circle'; }
-                                        elseif ($nfse['status'] == 'Erro') { $statusClass = 'text-red-500'; $icon = 'error'; }
-                                        elseif ($nfse['status'] == 'Processando') { $statusClass = 'text-blue-500'; $icon = 'hourglass_empty'; }
-                                        
+                                        if ($nfse['status'] == 'concluido') {
+                                            $statusClass = 'text-green-600';
+                                            $icon = 'check_circle';
+                                        } elseif ($nfse['status'] == 'Erro') {
+                                            $statusClass = 'text-red-500';
+                                            $icon = 'error';
+                                        } elseif ($nfse['status'] == 'Processando') {
+                                            $statusClass = 'text-blue-500';
+                                            $icon = 'hourglass_empty';
+                                        }
+
                                         // Parsed Info
                                         $numero_nota = 'Pending';
                                         if ($nfse['xml_retorno']) {
                                             preg_match('/<Numero>(.*?)<\/Numero>/', $nfse['xml_retorno'], $m);
-                                            if (!empty($m[1])) $numero_nota = $m[1];
+                                            if (!empty($m[1]))
+                                                $numero_nota = $m[1];
                                         }
-                                        
+
                                         // Link (Url not reliable in homolog, use xml_retorno check)
                                         ?>
                                         <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-2 text-sm">
                                             <div class="flex items-center justify-between mb-1">
                                                 <span class="font-bold <?= $statusClass ?> flex items-center">
-                                                    <span class="material-icons text-sm mr-1"><?= $icon ?></span> <?= ucfirst($nfse['status']) ?>
+                                                    <span class="material-icons text-sm mr-1"><?= $icon ?></span>
+                                                    <?= ucfirst($nfse['status']) ?>
                                                 </span>
-                                                <span class="text-xs text-gray-400"><?= date('d/m H:i', strtotime($nfse['data_emissao'])) ?></span>
+                                                <span
+                                                    class="text-xs text-gray-400"><?= date('d/m H:i', strtotime($nfse['data_emissao'])) ?></span>
                                             </div>
-                                            
-                                            <?php if ($nfse['status'] == 'Autorizada'): ?>
+
+                                            <?php if ($nfse['status'] == 'concluido'): ?>
                                                 <div class="text-xs text-gray-600 mt-1">
                                                     <strong>Número:</strong> <?= $numero_nota ?><br>
                                                     <strong>RPS:</strong> <?= $nfse['numero_rps'] ?>/<?= $nfse['serie_rps'] ?><br>
                                                     <span class="text-[10px] text-gray-400"><?= ucfirst($nfse['ambiente']) ?></span>
                                                 </div>
-                                                <?php if($nfse['url_pdf']): ?>
-                                                    <a href="<?= $nfse['url_pdf'] ?>" target="_blank" class="block mt-2 text-center text-xs bg-blue-100 text-blue-700 py-1 rounded hover:bg-blue-200">
+                                                <?php if ($nfse['url_pdf']): ?>
+                                                    <a href="<?= $nfse['url_pdf'] ?>" target="_blank"
+                                                        class="block mt-2 text-center text-xs bg-blue-100 text-blue-700 py-1 rounded hover:bg-blue-200">
                                                         Visualizar PDF
                                                     </a>
                                                 <?php elseif ($nfse['url_xml']): ?>
-                                                     <a href="<?= $nfse['url_xml'] ?>" target="_blank" class="block mt-2 text-center text-xs bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300">
+                                                    <a href="<?= $nfse['url_xml'] ?>" target="_blank"
+                                                        class="block mt-2 text-center text-xs bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300">
                                                         Visualizar XML
                                                     </a>
                                                 <?php endif; ?>
                                             <?php elseif ($nfse['status'] == 'Erro'): ?>
-                                                 <div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">
-                                                     <?= substr(strip_tags($nfse['xml_retorno']), 0, 100) ?>...
-                                                 </div>
+                                                <div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">
+                                                    <?= substr(strip_tags($nfse['xml_retorno']), 0, 100) ?>...
+                                                </div>
                                             <?php endif; ?>
                                         </div>
                                         <?php

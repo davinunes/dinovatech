@@ -1580,7 +1580,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // XML Response usually has <NumeroLote> or <Inscricao>
             // With 'GerarNfse', success returns <CompNfse>...<Numero>X</Numero>...
             if (strpos($responseSoap, '<Numero>') !== false && strpos($responseSoap, '<CompNfse>') !== false) {
-                $status = 'Autorizada';
+                $status = 'concluido';
             } elseif (strpos($responseSoap, '<ListaMensagemRetorno>') === false && strpos($responseSoap, '<Fault>') === false && !empty($responseSoap)) {
                 // Sometimes success is just raw XML without Fault
                 // But safer to check for typical success tags
@@ -1617,7 +1617,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
-            if ($status == 'Autorizada') {
+            if ($status == 'concluido') {
                 // Update RPS Counter
                 if ($ambiente == 'producao') {
                     DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_producao=$nextRps WHERE id_config={$config['id_config']}");
