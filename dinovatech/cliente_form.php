@@ -74,6 +74,25 @@ if ($id_cliente) {
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
+                                    <label for="inscricao_municipal"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Inscrição Municipal
+                                        (Opcional)</label>
+                                    <input type="text" id="inscricao_municipal" name="inscricao_municipal"
+                                        value="<?= $cliente['inscricao_municipal'] ?? '' ?>"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+                                </div>
+                                <div>
+                                    <label for="inscricao_estadual"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Inscrição Estadual
+                                        (Opcional)</label>
+                                    <input type="text" id="inscricao_estadual" name="inscricao_estadual"
+                                        value="<?= $cliente['inscricao_estadual'] ?? '' ?>"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
                                     <label for="email"
                                         class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
                                     <input type="email" id="email" name="email" value="<?= $cliente['email'] ?? '' ?>"

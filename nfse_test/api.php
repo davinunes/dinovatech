@@ -359,6 +359,7 @@ function buildGerarNfseXml($input)
     $cidadeTomador = $cleanString($input['tomador']['codigo_municipio'] ?? '5300108'); // IBGE
     $telefoneTomador = $cleanString($input['tomador']['telefone'] ?? '');
     $emailTomador = $cleanString($input['tomador']['email'] ?? '');
+    $imTomador = $cleanString($input['tomador']['im'] ?? ''); // IM of the Client
 
     // Decide if CPF or CNPJ
     $tomadorCpfCnpjTag = "";
@@ -433,6 +434,7 @@ XML;
                 <CpfCnpj>
                     $tomadorCpfCnpjTag
                 </CpfCnpj>
+                " . (!empty($imTomador) ? "<InscricaoMunicipal>$imTomador</InscricaoMunicipal>" : "") . "
             </IdentificacaoTomador>
             <RazaoSocial>$razaoSocialTomador</RazaoSocial>
             <Endereco>

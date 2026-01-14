@@ -216,9 +216,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
                 $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
                 $codigo_municipio = mysqli_real_escape_string($link, $_POST['codigo_municipio'] ?? '');
+                $inscricao_municipal = mysqli_real_escape_string($link, $_POST['inscricao_municipal'] ?? '');
+                $inscricao_estadual = mysqli_real_escape_string($link, $_POST['inscricao_estadual'] ?? '');
 
-                $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email, endereco, numero, complemento, bairro, cep, uf, codigo_municipio) 
-                          VALUES ('$nome', '$cpf_cnpj', '$telefone', '$email', '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$codigo_municipio')";
+                $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email, endereco, numero, complemento, bairro, cep, uf, codigo_municipio, inscricao_municipal, inscricao_estadual) 
+                          VALUES ('$nome', '$cpf_cnpj', '$telefone', '$email', '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$codigo_municipio', '$inscricao_municipal', '$inscricao_estadual')";
 
                 $result = mysqli_query($link, $query);
 
@@ -286,9 +288,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
                 $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
                 $codigo_municipio = mysqli_real_escape_string($link, $_POST['codigo_municipio'] ?? '');
+                $inscricao_municipal = mysqli_real_escape_string($link, $_POST['inscricao_municipal'] ?? '');
+                $inscricao_estadual = mysqli_real_escape_string($link, $_POST['inscricao_estadual'] ?? '');
 
                 $query = "UPDATE Clientes SET nome='$nome', cpf_cnpj='$cpf_cnpj', telefone='$telefone', email='$email',
-                          endereco='$endereco', numero='$numero', complemento='$complemento', bairro='$bairro', cep='$cep', uf='$uf', codigo_municipio='$codigo_municipio'
+                          endereco='$endereco', numero='$numero', complemento='$complemento', bairro='$bairro', cep='$cep', uf='$uf', codigo_municipio='$codigo_municipio',
+                          inscricao_municipal='$inscricao_municipal', inscricao_estadual='$inscricao_estadual'
                           WHERE id_cliente='$id_cliente'";
                 $result = DBExecute($link, $query);
 
@@ -1494,7 +1499,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'uf' => $fatura['uf'],
                 'codigo_municipio' => $fatura['codigo_municipio'] ?: '5300108',
                 'telefone' => $fatura['telefone'],
-                'email' => $fatura['email']
+                'email' => $fatura['email'],
+                'im' => $fatura['inscricao_municipal'] ?? ''
             ];
 
             $inputApi = [
