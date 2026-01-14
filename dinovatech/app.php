@@ -1711,36 +1711,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
-            // Input for ConsultarNfseRpsEnvio
+            // Input for ConsultarUrlNfseEnvio
             $inputApi = [
                 'cnpj' => $config['cnpj'],
                 'im' => $config['inscricao_municipal'],
+                'numero_nota' => $emissao['numero_nota'] ?: '0',
                 'numero_rps' => $emissao['numero_rps'],
                 'serie_rps' => $emissao['serie_rps'] ?? '8',
                 'tipo_rps' => $emissao['tipo_rps'] ?? '1'
             ];
 
-            if (!function_exists('buildConsultarNfseRpsXml')) {
+            if (!function_exists('buildConsultarUrlNfseXml')) {
                 require_once '../nfse_test/api.php';
             }
 
-            $xmlComponents = buildConsultarNfseRpsXml($inputApi);
+            // 1. Build XML (Using restored function)
+            $xmlComponents = buildConsultarUrlNfseXml($inputApi);
             $rootXml = $xmlComponents['root'];
             $rootId = $xmlComponents['id'];
 
-            // SIGNING LOGIC (Replicating direct_a1 'support_combo' behavior)
+            // 2. Sign XML 
             $variation = 'support_combo';
             $uriRef = "#" . $rootId;
 
             if ($variation === 'support_combo') {
-                // Legacy Logic: Strip ID and set URI to empty
                 $uriRef = "";
                 if (!empty($rootId)) {
                     $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
                 }
             }
 
-            // Sign the XML
             $finalXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
 
             // Endpoint
@@ -1748,17 +1748,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
                 : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
-            // Send
-            // We pass 'consultar_rps' as method tag to ensure correct SOAPAction
-            // (ConsultarNfseRpsEnvio needs ConsultarNfsePorRps action)
-            $resultSoap = sendSoap($finalXml, $endpoint, $certs, $variation, 'consultar_rps', true);
+            // 3. Send
+            $resultSoap = sendSoap($finalXml, $endpoint, $certs, $variation, 'consultar_url', true);
             $respXml = $resultSoap['response_body'] ?? '';
 
             if (strpos($respXml, '<Fault>') !== false) {
                 $response['success'] = false;
                 $response['message'] = 'Erro na API Prefeitura (Fault).';
                 $response['debug_xml'] = $respXml;
-            } elseif (strpos($respXml, 'ConsultarNfseRpsResposta') !== false) {
+            } elseif (strpos($respXml, 'ConsultarUrlNfseResposta') !== false) {
                 // Format XML for debug
                 $dom = new DOMDocument;
                 $dom->preserveWhiteSpace = false;
@@ -1766,22 +1764,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 @$dom->loadXML($respXml);
                 $formattedXml = $dom->saveXML();
 
-                // Extract URL
+                // Extract URL (UrlVisualizacaoNfse based on user working example)
                 $url = '';
-                if (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m)) {
+                if (preg_match('/<UrlVisualizacaoNfse>(.*?)<\/UrlVisualizacaoNfse>/', $respXml, $m)) {
+                    $url = $m[1];
+                } elseif (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m)) {
                     $url = $m[1];
                 } elseif (preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $respXml, $m)) {
                     $url = $m[1];
                 }
 
                 if ($url) {
+                    $url = htmlspecialchars_decode($url);
                     $url_esc = mysqli_real_escape_string($link, $url);
                     DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
                     $response['success'] = true;
                     $response['message'] = "URL encontrada: $url";
                 } else {
                     $response['success'] = false;
-                    $response['message'] = 'Nota encontrada, mas URL não identificada.';
+                    $response['message'] = 'Retorno recebido, mas URL não identificada.';
                     $response['debug_xml'] = $formattedXml;
                 }
             } else {

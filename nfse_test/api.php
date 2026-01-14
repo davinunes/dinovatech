@@ -236,45 +236,7 @@ function buildConsultarRpsDisponivelXml($input)
     return ['root' => $rootXml, 'id' => $rootId];
 }
 
-function buildConsultarUrlNfseXml($input)
-{
-    $cnpj = $input['cnpj'] ?? '';
-    $im = $input['im'] ?? '';
-    $numero = $input['numero'] ?? ''; // Numero da Nota
-    $numeroRps = $input['numero_rps'] ?? '';
-    $serieRps = $input['serie_rps'] ?? '8';
-    $tipoRps = $input['tipo_rps'] ?? '1';
-    // $dataInicial/Final could be used for PeriodoEmissao, but usually URL is for specific Note.
 
-    $pedidoContent = "<Pedido>";
-    $pedidoContent .= "<Prestador>";
-    $pedidoContent .= "<CpfCnpj><Cnpj>$cnpj</Cnpj></CpfCnpj>";
-    $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
-    $pedidoContent .= "</Prestador>";
-
-    // Mutually Exclusive Options: Rps OR NumeroNfse OR Periodo
-    if (!empty($numero)) {
-        $pedidoContent .= "<NumeroNfse>$numero</NumeroNfse>";
-    } elseif (!empty($numeroRps)) {
-        $pedidoContent .= "<IdentificacaoRps>";
-        $pedidoContent .= "<Numero>$numeroRps</Numero>";
-        $pedidoContent .= "<Serie>$serieRps</Serie>";
-        $pedidoContent .= "<Tipo>$tipoRps</Tipo>";
-        $pedidoContent .= "</IdentificacaoRps>";
-    } else {
-        // Fallback or Error? 
-        // For testing, user might want to test Periodo, but usually URL is single.
-        // Let's assume input 'numero' is primary.
-    }
-
-    $pedidoContent .= "<Pagina>1</Pagina>";
-    $pedidoContent .= "</Pedido>";
-
-    $rootId = "ConsultarUrlNfseEnvio";
-    $rootXml = '<ConsultarUrlNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarUrlNfseEnvio>';
-
-    return ['root' => $rootXml, 'id' => $rootId];
-}
 function buildGerarNfseXml($input)
 {
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
@@ -694,5 +656,30 @@ XML;
     }
 
     echo json_encode($result);
+}
+
+function buildConsultarUrlNfseXml($input)
+{
+    $cnpj = $input['cnpj'] ?? '';
+    $im = $input['im'] ?? '';
+    $numero = $input['numero_nota'] ?? '';
+
+    // Structure based on User's Working Example
+    // <Pedido><Prestador>...</Prestador><NumeroNfse>...</NumeroNfse><Pagina>1</Pagina></Pedido>
+
+    $pedidoContent = "<Pedido>";
+    $pedidoContent .= "<Prestador>";
+    $pedidoContent .= "<CpfCnpj><Cnpj>$cnpj</Cnpj></CpfCnpj>";
+    $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
+    $pedidoContent .= "</Prestador>";
+    $pedidoContent .= "<NumeroNfse>$numero</NumeroNfse>";
+    $pedidoContent .= "<Pagina>1</Pagina>";
+    $pedidoContent .= "</Pedido>";
+
+    $rootId = "ConsultarUrlNfseEnvio";
+
+    $rootXml = '<ConsultarUrlNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarUrlNfseEnvio>';
+
+    return ['root' => $rootXml, 'id' => $rootId];
 }
 ?>
