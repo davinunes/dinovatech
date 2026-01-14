@@ -23,6 +23,7 @@ $protocolMap = [
     'consultar' => 'support_combo',              // Consultar Notas (Servico Prestado): Needs URI=""
     'consultar_rps' => 'support_combo',          // Consultar RPS: Needs URI=""
     'consultar_rps_disponivel' => 'support_combo', // Disponibilidade: Needs URI=""
+    'consultar_url' => 'support_combo',          // Consultar URL: Model has URI=""
     'consultar_cadastral' => 'proven_protocol'   // Cadastral: Needs URI="#" (Legacy behavior)
 ];
 
@@ -66,6 +67,8 @@ if ($action === 'direct_a1') {
         $xmlComponents = buildConsultarNfseRpsXml($input);
     } elseif ($method === 'consultar_rps_disponivel') {
         $xmlComponents = buildConsultarRpsDisponivelXml($input);
+    } elseif ($method === 'consultar_url') {
+        $xmlComponents = buildConsultarUrlNfseXml($input);
     } else {
         $xmlComponents = buildConsultarXml($input);
     }
@@ -227,7 +230,45 @@ function buildConsultarRpsDisponivelXml($input)
     return ['root' => $rootXml, 'id' => $rootId];
 }
 
+function buildConsultarUrlNfseXml($input)
+{
+    $cnpj = $input['cnpj'] ?? '';
+    $im = $input['im'] ?? '';
+    $numero = $input['numero'] ?? ''; // Numero da Nota
+    $numeroRps = $input['numero_rps'] ?? '';
+    $serieRps = $input['serie_rps'] ?? '8';
+    $tipoRps = $input['tipo_rps'] ?? '1';
+    // $dataInicial/Final could be used for PeriodoEmissao, but usually URL is for specific Note.
 
+    $pedidoContent = "<Pedido>";
+    $pedidoContent .= "<Prestador>";
+    $pedidoContent .= "<CpfCnpj><Cnpj>$cnpj</Cnpj></CpfCnpj>";
+    $pedidoContent .= "<InscricaoMunicipal>$im</InscricaoMunicipal>";
+    $pedidoContent .= "</Prestador>";
+
+    // Mutually Exclusive Options: Rps OR NumeroNfse OR Periodo
+    if (!empty($numero)) {
+        $pedidoContent .= "<NumeroNfse>$numero</NumeroNfse>";
+    } elseif (!empty($numeroRps)) {
+        $pedidoContent .= "<IdentificacaoRps>";
+        $pedidoContent .= "<Numero>$numeroRps</Numero>";
+        $pedidoContent .= "<Serie>$serieRps</Serie>";
+        $pedidoContent .= "<Tipo>$tipoRps</Tipo>";
+        $pedidoContent .= "</IdentificacaoRps>";
+    } else {
+        // Fallback or Error? 
+        // For testing, user might want to test Periodo, but usually URL is single.
+        // Let's assume input 'numero' is primary.
+    }
+
+    $pedidoContent .= "<Pagina>1</Pagina>";
+    $pedidoContent .= "</Pedido>";
+
+    $rootId = "ConsultarUrlNfseEnvio";
+    $rootXml = '<ConsultarUrlNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd" Id="' . $rootId . '">' . $pedidoContent . '</ConsultarUrlNfseEnvio>';
+
+    return ['root' => $rootXml, 'id' => $rootId];
+}
 function buildGerarNfseXml($input)
 {
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
@@ -540,6 +581,9 @@ function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = '
     } elseif ($method === 'consultar_rps_disponivel') {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarRpsDisponivel';
         $methodTag = 'ConsultarRpsDisponivel';
+    } elseif ($method === 'consultar_url') {
+        $soapAction = 'http://nfse.abrasf.org.br/ConsultarUrlNfse';
+        $methodTag = 'ConsultarUrlNfse';
     } else {
         $soapAction = 'http://nfse.abrasf.org.br/ConsultarNfseServicoPrestado';
         $methodTag = 'ConsultarNfseServicoPrestado';

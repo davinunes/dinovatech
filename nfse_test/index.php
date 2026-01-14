@@ -96,11 +96,17 @@ date_default_timezone_set('UTC'); // Reset to predictable base
                             <i class="bi bi-search me-2"></i>Consultar / Recuperar
                         </button>
                     </li>
-                    </li>
+
                     <li class="nav-item">
                         <button class="nav-link" id="consultar-rps-tab" data-bs-toggle="tab"
                             data-bs-target="#consultar_rps" type="button">
                             <i class="bi bi-upc-scan me-2"></i>Consultar Status RPS
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" id="consultar-url-tab" data-bs-toggle="tab"
+                            data-bs-target="#consultar_url" type="button">
+                            <i class="bi bi-link-45deg me-2"></i>Obter Links (PDF/XML)
                         </button>
                     </li>
                     <li class="nav-item">
@@ -299,6 +305,42 @@ date_default_timezone_set('UTC'); // Reset to predictable base
                         </div>
                     </div>
 
+
+                    <!-- TAB: CONSULTAR URL (NOVO) -->
+                    <div class="tab-pane fade" id="consultar_url" role="tabpanel">
+                        <div class="row justify-content-center">
+                            <div class="col-md-8">
+                                <div class="alert alert-info border-0 bg-info bg-opacity-10">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Obtenha o <strong>Link do PDF</strong> de Visualização ou o XML oficial da NFSe.
+                                </div>
+                                <div class="card card-body bg-light border-0">
+                                    <div class="row g-3 items-end">
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold">Número da Nota</label>
+                                            <input type="text" class="form-control" id="cons_url_numero"
+                                                placeholder="Ex: 4">
+                                        </div>
+                                        <div class="col-md-1 text-center align-self-center pt-4">
+                                            <strong>OU</strong>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label fw-bold">Número RPS</label>
+                                            <input type="text" class="form-control" id="cons_url_rps_numero"
+                                                placeholder="Opcional">
+                                        </div>
+
+                                        <div class="col-md-3">
+                                            <button class="btn btn-dark w-100" onclick="testarAPI('consultar_url')">
+                                                <i class="bi bi-link-45deg"></i> Obter Link
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- TAB: CADASTRO -->
                     <div class="tab-pane fade" id="cadastro" role="tabpanel">
                         <div class="row justify-content-center">
@@ -421,6 +463,14 @@ date_default_timezone_set('UTC'); // Reset to predictable base
                 payload.aliquota = document.getElementById('aliquota').value;
             } else if (method === 'consultar_rps' || method === 'consultar_rps_disponivel') {
                 payload.numero_rps = document.getElementById('cons_rps_numero').value;
+                payload.serie_rps = document.getElementById('cons_rps_serie').value;
+                payload.tipo_rps = document.getElementById('cons_rps_tipo').value;
+            } else if (method === 'consultar_url') {
+                payload.numero = document.getElementById('cons_url_numero').value;
+                payload.numero_rps = document.getElementById('cons_url_rps_numero').value;
+                // Reusing Series/Type from RPS tab defaults is okay, or could add specific inputs.
+                // For simplicity, let's just default them or use global defaults if not passed.
+                // Or I should read them from the RPS tab if user wants to specify series for RPS search.
                 payload.serie_rps = document.getElementById('cons_rps_serie').value;
                 payload.tipo_rps = document.getElementById('cons_rps_tipo').value;
             } else if (method === 'consultar') {
