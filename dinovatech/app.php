@@ -1676,8 +1676,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 
         case 'consultar_url_nfse':
-            require_once '../nfse_test/api.php';
-
             $id_emissao = $_POST['id_emissao'];
             $res = DBExecute($link, "SELECT * FROM NfseEmissoes WHERE id_emissao = '$id_emissao'");
             $emissao = mysqli_fetch_assoc($res);
@@ -1713,43 +1711,74 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
-            // Input
+            // Input for ConsultarNfseRpsEnvio
             $inputApi = [
                 'cnpj' => $config['cnpj'],
                 'im' => $config['inscricao_municipal'],
-                'numero_nota' => $emissao['numero_nota'] ?: '0',
-                'serie' => $emissao['serie_rps'],
-                'tipo' => '1'
+                'numero_rps' => $emissao['numero_rps'], // Mandatory for this method
+                'serie_rps' => $emissao['serie_rps'] ?? '8',
+                'tipo_rps' => $emissao['tipo_rps'] ?? '1'
             ];
 
-            // Build XML
-            $xmlComponents = buildConsultarUrlNfseXml($inputApi);
+            // Build XML using the Correct Method
+            // Note: Api.php is already required at the top of this file or earlier in the flow
+            // If not, we might need to require it, but gerar_nfse does it successfully.
+            // We'll rely on global require or require it here if function not exists.
+            if (!function_exists('buildConsultarNfseRpsXml')) {
+                require_once '../nfse_test/api.php';
+            }
+
+            $xmlComponents = buildConsultarNfseRpsXml($inputApi);
             $finalXml = $xmlComponents['root'];
 
-            // Send
+            // Endpoint
             $endpoint = ($emissao['ambiente'] == 'producao')
                 ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
                 : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
-            // Send Internal
-            // Note: We are bypassing the curl loopback to api.php and calling sendSoap directly
-            // which is defined in the required api.php
-            $resultSoap = sendSoap($finalXml, $endpoint, $certs, 'support_combo', 'consultar_url', true);
+            // Send using support_combo (which supports Signed Requests)
+            // 'consultar_rps' is not in the map index.php uses, but 'support_combo' is generic enough.
+            // api.php -> sendSoap signature: ($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard', $method = 'consultar', ...)
+            $resultSoap = sendSoap($finalXml, $endpoint, $certs, 'support_combo', 'consultar', true);
             $respXml = $resultSoap['response_body'] ?? '';
 
             if (strpos($respXml, '<Fault>') !== false) {
                 $response['success'] = false;
-                $response['message'] = 'Erro na API Prefeitura.';
+                $response['message'] = 'Erro na API Prefeitura (Fault).';
                 $response['debug_xml'] = $respXml;
-            } elseif (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m) || preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $respXml, $m)) {
-                $url = $m[1];
-                $url_esc = mysqli_real_escape_string($link, $url);
-                DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
-                $response['success'] = true;
-                $response['message'] = "URL atualizada: $url";
+            } elseif (strpos($respXml, 'ConsultarNfseRpsResposta') !== false) {
+                // Success structure
+                // Extract URL if present
+                $url = '';
+                if (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m)) {
+                    $url = $m[1];
+                } elseif (preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $respXml, $m)) {
+                    $url = $m[1];
+                }
+
+                // Extract XML link or full XML if needed
+                // If CompNfse is present, we have the note.
+                if (strpos($respXml, '<CompNfse>') !== false) {
+                    // We can also extract the full CompNfse to save as 'xml_retorno' if we wanted to update it.
+                    // For now, let's focus on URL.
+                }
+
+                if ($url) {
+                    $url_esc = mysqli_real_escape_string($link, $url);
+                    // Also update status if it was not concluido (e.g. if we are recovering)
+                    // But usually we click this on 'concluido' notes.
+                    DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
+                    $response['success'] = true;
+                    $response['message'] = "URL encontrada: $url";
+                } else {
+                    $response['success'] = false; // Soft fail, we got the XML but no URL
+                    $response['message'] = 'Nota encontrada, mas campo URL não identificado no XML.';
+                    $response['debug_xml'] = $respXml; // Let user find it
+                }
             } else {
+                // MensagemRetorno
                 $response['success'] = false;
-                $response['message'] = 'URL não encontrada no retorno.';
+                $response['message'] = 'Erro no Retorno da Consulta.';
                 $response['debug_xml'] = $respXml;
             }
             break;
