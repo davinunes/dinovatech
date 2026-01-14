@@ -1674,6 +1674,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
 
 
+
+        case 'consultar_url_nfse':
+            $id_emissao = $_POST['id_emissao'];
+            // Fetch Emission Data
+            $res = DBExecute($link, "SELECT * FROM NfseEmissoes WHERE id_emissao = '$id_emissao'");
+            $emissao = mysqli_fetch_assoc($res);
+            if (!$emissao) {
+                $response['success'] = false;
+                $response['message'] = 'Emissão não encontrada';
+                break;
+            }
+
+            // Fetch Config
+            $faturaRes = DBExecute($link, "SELECT id_cliente FROM Faturas WHERE id_fatura = '{$emissao['id_fatura']}'");
+            $fatura = mysqli_fetch_assoc($faturaRes);
+
+            $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+            $config = mysqli_fetch_assoc($resConf);
+
+            // Input for API
+            $inputApi = [
+                'action' => 'direct_a1',
+                'method' => 'consultar_url',
+                'cnpj' => $config['cnpj'],
+                'im' => $config['inscricao_municipal'],
+                'numero_nota' => $emissao['numero_nota'] ?: '0',
+                'serie' => $emissao['serie_rps'],
+                'tipo' => '1',
+                'endpoint' => ($emissao['ambiente'] == 'producao') ? 'official' : 'fictitious'
+            ];
+
+            // Use external API script
+            $apiUrl = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/../nfse_test/api.php";
+
+            $ch = curl_init($apiUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($inputApi));
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+
+            $apiResponse = curl_exec($ch);
+            curl_close($ch);
+
+            $json = json_decode($apiResponse, true);
+
+            if ($json && $json['status'] == 'success') {
+                $respXml = $json['response_body']; // Usually full XML
+                // Try to find URL
+                if (preg_match('/<Url>(.*?)<\/Url>/', $respXml, $m) || preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $respXml, $m)) {
+                    $url = $m[1];
+                    $url_esc = mysqli_real_escape_string($link, $url);
+                    DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
+                    $response['success'] = true;
+                    $response['message'] = "URL atualizada: $url";
+                } else {
+                    $response['success'] = false;
+                    $response['message'] = 'URL não encontrada ou nota ainda não processada completamente. Tente novamente mais tarde.';
+                    $response['debug_xml'] = $respXml;
+                }
+            } else {
+                $response['success'] = false;
+                $response['message'] = 'Erro na API de Consulta.';
+                $response['details'] = $json;
+            }
+            break;
+
     }
 } else {
     $response['message'] = "Requisição inválida (apenas POST permitido).";

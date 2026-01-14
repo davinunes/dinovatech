@@ -349,11 +349,23 @@ if ($id_fatura) {
                                                     <span class="text-[10px] text-gray-400"><?= ucfirst($nfse['ambiente']) ?></span>
                                                 </div>
                                                 
-                                                <div class="flex gap-2 mt-2">
+                                                <div class="grid grid-cols-2 gap-2 mt-2">
                                                     <a href="ver_nfse_xml.php?id=<?= $nfse['id_emissao'] ?>" target="_blank" 
-                                                       class="flex-1 text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">
+                                                       class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">
                                                         XML Assinado
                                                     </a>
+                                                    <?php if ($nfse['url_pdf']): ?>
+                                                        <a href="<?= $nfse['url_pdf'] ?>" target="_blank"
+                                                            class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">
+                                                            PDF
+                                                        </a>
+                                                    <?php else: ?>
+                                                        <button onclick="consultarUrlNfse(<?= $nfse['id_emissao'] ?>)"
+                                                                class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300"
+                                                                title="Tentar obter link PDF na Prefeitura">
+                                                            Buscar PDF
+                                                        </button>
+                                                    <?php endif; ?>
                                                 </div>
                                             <?php elseif ($nfse['status'] == 'Erro'): ?>
                                                 <div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">
@@ -712,6 +724,24 @@ if ($id_fatura) {
                     }
                 }, 'json');
             }
+        }
+
+        function consultarUrlNfse(idEmissao) {
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = '...';
+
+            $.post('app.php', { action: 'consultar_url_nfse', id_emissao: idEmissao }, function (res) {
+                if (res.success) {
+                    showToast('PDF encontrado! Atualizando...', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(res.message, 'error');
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            }, 'json');
         }
 
         function gerarNfse() {

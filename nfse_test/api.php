@@ -567,6 +567,32 @@ function assinarRoot($xmlString, $certs, $uriRef, $variation)
     return trim($finalXml);
 }
 
+// --------------------------------------------------------------------------------
+// [NEW][SUPPORT] Method 5: ConsultarUrlNfse
+function buildConsultarUrlNfseXml($input)
+{
+    $cnpj = $input['cnpj'] ?? '';
+    $im = $input['im'] ?? '';
+    $numero = $input['numero_nota'] ?? '';
+    $serie = $input['serie'] ?? '8';
+    $tipo = $input['tipo'] ?? '1';
+
+    $xml = <<<XML
+<ConsultarUrlNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
+    <Prestador>
+        <CpfCnpj>
+            <Cnpj>$cnpj</Cnpj>
+        </CpfCnpj>
+        <InscricaoMunicipal>$im</InscricaoMunicipal>
+    </Prestador>
+    <Numero>$numero</Numero>
+    <Serie>$serie</Serie>
+    <Tipo>$tipo</Tipo>
+</ConsultarUrlNfseEnvio>
+XML;
+    return ['root' => $xml, 'id' => ''];
+}
+
 function sendSoap($finalXmlPayload, $endpoint_url, $certsA1 = [], $variation = 'standard', $method = 'consultar', $returnResponse = false)
 {
 
