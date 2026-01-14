@@ -1,4 +1,4 @@
--- Dados do Banco de Dados - Gerado em 2026-01-10 03:04:15
+-- Dados do Banco de Dados - Gerado em 2026-01-14 01:52:38
 
 
 -- Dumping data for table `Arquivos` --
@@ -91,7 +91,7 @@ INSERT INTO `Faturas` VALUES("33","1","2025-12-02","2025-12-30","4500.00","Em Ab
 INSERT INTO `Faturas` VALUES("34","5","2025-12-04","2026-01-06","4750.00","Liquidada");
 INSERT INTO `Faturas` VALUES("35","9","2025-12-10","2026-01-15","200.00","Liquidada");
 INSERT INTO `Faturas` VALUES("36","10","2025-12-22","2025-12-30","200.00","Liquidada");
-INSERT INTO `Faturas` VALUES("37","1","2025-12-26","2026-01-15","98.00","Em Aberto");
+INSERT INTO `Faturas` VALUES("37","1","2025-12-26","2026-01-15","98.00","Liquidada");
 INSERT INTO `Faturas` VALUES("38","1","2025-12-26","2026-01-15","4500.00","Em Aberto");
 INSERT INTO `Faturas` VALUES("39","5","2026-01-03","2026-02-06","4500.00","Em Aberto");
 INSERT INTO `Faturas` VALUES("40","9","2026-01-07","2026-02-16","200.00","Em Aberto");
@@ -209,6 +209,7 @@ INSERT INTO `Pagamentos` VALUES("113","43","0.10","2026-01-08","Expirado","","",
 INSERT INTO `Pagamentos` VALUES("114","43","0.10","2026-01-08","Confirmado","E2EID: E0000000020260108022939065742130 - TXID: zbmrd4nfcpljp40pn3ada976ls3xpi7il3t","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/a690591a4c8a48da84c7020e5cc08f9b52040000530398654040.105802BR5901*6008BRASILIA61087213524062070503***6304874D","zbmrd4nfcpljp40pn3ada976ls3xpi7il3t","E0000000020260108022939065742130","{\"criacao\": \"2026-01-08T02:28:15.857Z\", \"expiracao\": 3600}");
 INSERT INTO `Pagamentos` VALUES("115","38","4500.00","2026-01-08","Pendente","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/dff43e17bb1a4f829d616207bda1d71a52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***63041A1D","650nwiarl2vmvy47qakcmuexfimuvni1ong","","{\"criacao\": \"2026-01-08T02:56:53.588Z\", \"expiracao\": 3600}");
 INSERT INTO `Pagamentos` VALUES("116","33","4500.00","2026-01-10","Pendente","","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/145fa3f5f5174feb80206d57ae7dfd4f52040000530398654074500.005802BR5901*6008BRASILIA61087213524062070503***63046633","om8pxgh94d8wy8mbgcsfsjwf3qxi8i8ymxy","","{\"criacao\": \"2026-01-10T02:23:22.502Z\", \"expiracao\": 3600}");
+INSERT INTO `Pagamentos` VALUES("117","37","98.00","2026-01-12","Confirmado","E2EID: E02338666202601121536d9tsFqZyZgI - TXID: w6y09efamq9pmiejiovsmro4booevv9untd","","00020101021226930014BR.GOV.BCB.PIX2571spi-qrcode.bancointer.com.br/spi/pj/v2/eb3b0f9e1df74c398063f084c5a4bdb6520400005303986540598.005802BR5901*6008BRASILIA61087213524062070503***63046ACE","w6y09efamq9pmiejiovsmro4booevv9untd","E02338666202601121536d9tsFqZyZgI","{\"criacao\": \"2026-01-12T15:35:28.585Z\", \"expiracao\": 3600}");
 
 
 -- Dumping data for table `Recorrencias` --

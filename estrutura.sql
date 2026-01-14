@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-10 03:04:15
+-- Estrutura do Banco de Dados - Gerado em 2026-01-14 01:52:38
 
 
 CREATE TABLE `Arquivos` (
@@ -89,7 +89,7 @@ CREATE TABLE `Pagamentos` (
   UNIQUE KEY `e2eid` (`e2eid`),
   KEY `id_fatura` (`id_fatura`),
   CONSTRAINT `Pagamentos_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`)
-) ENGINE=InnoDB AUTO_INCREMENT=117 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
