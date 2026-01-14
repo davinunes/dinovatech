@@ -348,17 +348,13 @@ if ($id_fatura) {
                                                     <strong>RPS:</strong> <?= $nfse['numero_rps'] ?>/<?= $nfse['serie_rps'] ?><br>
                                                     <span class="text-[10px] text-gray-400"><?= ucfirst($nfse['ambiente']) ?></span>
                                                 </div>
-                                                <?php if ($nfse['url_pdf']): ?>
-                                                    <a href="<?= $nfse['url_pdf'] ?>" target="_blank"
-                                                        class="block mt-2 text-center text-xs bg-blue-100 text-blue-700 py-1 rounded hover:bg-blue-200">
-                                                        Visualizar PDF
+                                                
+                                                <div class="flex gap-2 mt-2">
+                                                    <a href="ver_nfse_xml.php?id=<?= $nfse['id_emissao'] ?>" target="_blank" 
+                                                       class="flex-1 text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">
+                                                        XML Assinado
                                                     </a>
-                                                <?php elseif ($nfse['url_xml']): ?>
-                                                    <a href="<?= $nfse['url_xml'] ?>" target="_blank"
-                                                        class="block mt-2 text-center text-xs bg-gray-200 text-gray-700 py-1 rounded hover:bg-gray-300">
-                                                        Visualizar XML
-                                                    </a>
-                                                <?php endif; ?>
+                                                </div>
                                             <?php elseif ($nfse['status'] == 'Erro'): ?>
                                                 <div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">
                                                     <?= substr(strip_tags($nfse['xml_retorno']), 0, 100) ?>...
