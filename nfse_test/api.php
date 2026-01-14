@@ -401,6 +401,28 @@ XML;
     if (!empty($codigoNbs)) {
         $infRps .= "<CodigoNbs>$codigoNbs</CodigoNbs>";
     }
+
+    // Build Dynamic Address Block
+    $enderecoBlock = "";
+    if (!empty($enderecoTomador))
+        $enderecoBlock .= "                <Endereco>$enderecoTomador</Endereco>\n";
+    if (!empty($numeroTomador))
+        $enderecoBlock .= "                <Numero>$numeroTomador</Numero>\n";
+    if (!empty($complementoTomador))
+        $enderecoBlock .= "                <Complemento>$complementoTomador</Complemento>\n";
+    if (!empty($bairroTomador))
+        $enderecoBlock .= "                <Bairro>$bairroTomador</Bairro>\n";
+    if (!empty($cidadeTomador))
+        $enderecoBlock .= "                <CodigoMunicipio>$cidadeTomador</CodigoMunicipio>\n";
+    if (!empty($ufTomador))
+        $enderecoBlock .= "                <Uf>$ufTomador</Uf>\n";
+    if (!empty($cepTomador))
+        $enderecoBlock .= "                <Cep>$cepTomador</Cep>\n";
+    // If block is empty, ensure at least empty Address tag (or let Schema fail if strict)
+    // Actually, schema usually requires at least one address field or the tag itself might be optional?
+    // Usually <Endereco> tag is mandatory for <Tomador>. If all children empty, we might send empty wrapper.
+    // <Endereco></Endereco> is valid if children are optional.
+
     $infRps .= <<<XML
             <Discriminacao>$discriminacao</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
@@ -422,13 +444,7 @@ XML;
             </IdentificacaoTomador>
             <RazaoSocial>$razaoSocialTomador</RazaoSocial>
             <Endereco>
-                <Endereco>$enderecoTomador</Endereco>
-                <Numero>$numeroTomador</Numero>
-                <Complemento>$complementoTomador</Complemento>
-                <Bairro>$bairroTomador</Bairro>
-                <CodigoMunicipio>$cidadeTomador</CodigoMunicipio>
-                <Uf>$ufTomador</Uf>
-                <Cep>$cepTomador</Cep>
+$enderecoBlock
             </Endereco>
             $contatoTag
         </TomadorServico>
