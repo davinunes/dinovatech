@@ -350,8 +350,11 @@ function buildGerarNfseXml($input)
             'º' => '',
             '°' => ''
         ];
-        $str = strtr($str, $map);
-        return preg_replace('/[^a-zA-Z0-9 -]/', ' ', $str);
+        // Replace actual newlines with literal string "\s\n" as per manual
+        $str = str_replace(["\r\n", "\r", "\n"], '\s\n', $str);
+
+        // Remove special chars but KEEP backslash (\) for the escape sequence
+        return preg_replace('/[^a-zA-Z0-9 \-\\\\]/', ' ', $str);
     };
 
     // Sanitize Discriminacao
