@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-14 01:52:38
+-- Estrutura do Banco de Dados - Gerado em 2026-01-14 01:56:07
 
 
 CREATE TABLE `Arquivos` (
@@ -26,6 +26,25 @@ CREATE TABLE `Clientes` (
 
 
 
+CREATE TABLE `ConfiguracoesEmissor` (
+  `id_config` int NOT NULL AUTO_INCREMENT,
+  `razao_social` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nome_fantasia` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `cnpj` varchar(18) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `inscricao_municipal` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `codigo_municipio` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '5300108',
+  `regime_tributario` enum('simples','lucro_presumido','lucro_real') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'simples',
+  `optante_simples` tinyint(1) DEFAULT '1',
+  `caminho_certificado` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `senha_certificado` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ambiente_padrao` enum('homologacao','producao') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'homologacao',
+  `ultimo_rps` int DEFAULT '0',
+  `serie_rps` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT '8',
+  PRIMARY KEY (`id_config`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
 CREATE TABLE `FaturaArquivos` (
   `id_vinculo` int NOT NULL AUTO_INCREMENT,
   `id_fatura` int NOT NULL,
@@ -46,6 +65,7 @@ CREATE TABLE `Faturas` (
   `data_vencimento` date NOT NULL,
   `valor_total_fatura` decimal(10,2) DEFAULT '0.00',
   `status` enum('Em Aberto','Liquidada','Atrasada','Cancelada') COLLATE utf8mb4_unicode_ci DEFAULT 'Em Aberto',
+  `possui_nfse` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id_fatura`),
   KEY `id_cliente` (`id_cliente`),
   CONSTRAINT `Faturas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `Clientes` (`id_cliente`)
@@ -69,6 +89,34 @@ CREATE TABLE `ItensFatura` (
   CONSTRAINT `ItensFatura_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE,
   CONSTRAINT `ItensFatura_ibfk_2` FOREIGN KEY (`id_servico`) REFERENCES `Servicos` (`id_servico`)
 ) ENGINE=InnoDB AUTO_INCREMENT=94 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+CREATE TABLE `NfseEmissoes` (
+  `id_emissao` int NOT NULL AUTO_INCREMENT,
+  `id_fatura` int NOT NULL,
+  `id_usuario_responsavel` int DEFAULT NULL,
+  `data_emissao` datetime DEFAULT CURRENT_TIMESTAMP,
+  `ambiente` enum('homologacao','producao') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `valor_servico` decimal(10,2) NOT NULL,
+  `aliquota_iss` decimal(5,2) NOT NULL,
+  `iss_retido` tinyint(1) NOT NULL,
+  `item_lista_servico` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `discriminacao` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `numero_rps` int DEFAULT NULL,
+  `serie_rps` varchar(5) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `numero_nota` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `codigo_verificacao` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `url_xml` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `url_pdf` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `status` enum('pendente','processando','concluido','erro','cancelado') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'pendente',
+  `mensagem_erro` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `xml_envio` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `xml_retorno` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  PRIMARY KEY (`id_emissao`),
+  KEY `id_fatura` (`id_fatura`),
+  CONSTRAINT `NfseEmissoes_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -104,6 +152,10 @@ CREATE TABLE `Recorrencias` (
   `data_inicio_cobranca` date NOT NULL,
   `data_fim_cobranca` date DEFAULT NULL,
   `ultima_fatura_gerada_mes_ano` varchar(7) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `item_lista_servico` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `aliquota_iss` decimal(5,2) DEFAULT NULL,
+  `iss_retido` tinyint(1) DEFAULT NULL,
+  `descricao_personalizada` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`id_recorrencia`),
   UNIQUE KEY `id_cliente` (`id_cliente`,`id_servico`,`tipo_periodo`,`intervalo`,`data_inicio_cobranca`),
   KEY `id_servico` (`id_servico`),
@@ -117,6 +169,13 @@ CREATE TABLE `Servicos` (
   `id_servico` int NOT NULL AUTO_INCREMENT,
   `nome_servico` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `valor_sugerido` decimal(10,2) NOT NULL,
+  `item_lista_servico` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `codigo_cnae` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `codigo_tributacao_municipio` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `codigo_nbs` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `aliquota_iss` decimal(5,2) DEFAULT '0.00',
+  `iss_retido` tinyint(1) DEFAULT '0',
+  `descricao_nfse_padrao` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   PRIMARY KEY (`id_servico`)
 ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

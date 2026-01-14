@@ -1,4 +1,4 @@
--- Dados do Banco de Dados - Gerado em 2026-01-14 01:52:38
+-- Dados do Banco de Dados - Gerado em 2026-01-14 01:56:07
 
 
 -- Dumping data for table `Arquivos` --
@@ -34,6 +34,10 @@ INSERT INTO `Clientes` VALUES("9","Condomínio Residencial Top Life II Taguating
 INSERT INTO `Clientes` VALUES("10","Condomínio Residencial Top Life II Taguatinga - Long Beach Bloco A","23196523000150","","longbeach.blocoa@gmail.com");
 
 
+-- Dumping data for table `ConfiguracoesEmissor` --
+INSERT INTO `ConfiguracoesEmissor` VALUES("1","DINOVA TECNOLOGIA LTDA","DInova Tech","61733714000101","0841147200111","5300108","simples","1","certificado/DInovaTech_1001347811.pfx","","homologacao","0","8");
+
+
 -- Dumping data for table `FaturaArquivos` --
 INSERT INTO `FaturaArquivos` VALUES("1","34","1");
 INSERT INTO `FaturaArquivos` VALUES("2","35","2");
@@ -59,45 +63,45 @@ INSERT INTO `FaturaArquivos` VALUES("21","31","21");
 
 
 -- Dumping data for table `Faturas` --
-INSERT INTO `Faturas` VALUES("5","1","2025-07-19","2025-07-15","4500.00","Liquidada");
-INSERT INTO `Faturas` VALUES("6","1","2025-07-19","2025-07-15","84.00","Liquidada");
-INSERT INTO `Faturas` VALUES("7","1","2025-07-19","2025-08-15","302.82","Liquidada");
-INSERT INTO `Faturas` VALUES("8","6","2025-07-19","2025-07-31","0.10","Liquidada");
-INSERT INTO `Faturas` VALUES("9","5","2025-07-19","2025-08-06","4500.00","Liquidada");
-INSERT INTO `Faturas` VALUES("10","1","2025-07-19","2025-08-15","98.00","Liquidada");
-INSERT INTO `Faturas` VALUES("11","1","2025-07-19","2025-08-15","4500.00","Liquidada");
-INSERT INTO `Faturas` VALUES("12","8","2025-07-19","2025-07-31","0.00","Liquidada");
-INSERT INTO `Faturas` VALUES("13","9","2025-07-21","2025-08-15","200.00","Liquidada");
-INSERT INTO `Faturas` VALUES("14","1","2025-07-22","2025-08-15","539.00","Liquidada");
-INSERT INTO `Faturas` VALUES("15","5","2025-08-02","2025-09-05","5116.50","Liquidada");
-INSERT INTO `Faturas` VALUES("16","9","2025-08-22","2025-09-15","200.00","Liquidada");
-INSERT INTO `Faturas` VALUES("17","1","2025-08-24","2025-09-15","4500.00","Liquidada");
-INSERT INTO `Faturas` VALUES("18","1","2025-08-26","2025-09-15","98.00","Liquidada");
-INSERT INTO `Faturas` VALUES("19","1","2025-08-29","2025-09-16","306.12","Liquidada");
-INSERT INTO `Faturas` VALUES("20","5","2025-09-02","2025-10-06","4625.00","Liquidada");
-INSERT INTO `Faturas` VALUES("21","9","2025-09-02","2025-10-15","200.00","Liquidada");
-INSERT INTO `Faturas` VALUES("22","1","2025-09-02","2025-10-15","4500.00","Liquidada");
-INSERT INTO `Faturas` VALUES("23","1","2025-09-02","2025-10-15","98.00","Liquidada");
-INSERT INTO `Faturas` VALUES("24","5","2025-09-27","2025-11-06","4337.50","Liquidada");
-INSERT INTO `Faturas` VALUES("25","9","2025-09-27","2025-11-15","195.98","Liquidada");
-INSERT INTO `Faturas` VALUES("26","1","2025-09-27","2025-11-15","4500.00","Liquidada");
-INSERT INTO `Faturas` VALUES("27","1","2025-09-27","2025-11-15","98.00","Liquidada");
-INSERT INTO `Faturas` VALUES("28","5","2025-10-10","2025-12-08","5000.00","Liquidada");
-INSERT INTO `Faturas` VALUES("29","9","2025-11-06","2025-12-15","195.98","Liquidada");
-INSERT INTO `Faturas` VALUES("30","10","2025-11-24","2026-01-15","200.00","Liquidada");
-INSERT INTO `Faturas` VALUES("31","1","2025-11-24","2025-12-15","98.00","Liquidada");
-INSERT INTO `Faturas` VALUES("32","1","2025-11-24","2025-12-15","4500.00","Liquidada");
-INSERT INTO `Faturas` VALUES("33","1","2025-12-02","2025-12-30","4500.00","Em Aberto");
-INSERT INTO `Faturas` VALUES("34","5","2025-12-04","2026-01-06","4750.00","Liquidada");
-INSERT INTO `Faturas` VALUES("35","9","2025-12-10","2026-01-15","200.00","Liquidada");
-INSERT INTO `Faturas` VALUES("36","10","2025-12-22","2025-12-30","200.00","Liquidada");
-INSERT INTO `Faturas` VALUES("37","1","2025-12-26","2026-01-15","98.00","Liquidada");
-INSERT INTO `Faturas` VALUES("38","1","2025-12-26","2026-01-15","4500.00","Em Aberto");
-INSERT INTO `Faturas` VALUES("39","5","2026-01-03","2026-02-06","4500.00","Em Aberto");
-INSERT INTO `Faturas` VALUES("40","9","2026-01-07","2026-02-16","200.00","Em Aberto");
-INSERT INTO `Faturas` VALUES("41","10","2026-01-07","2026-02-16","200.00","Em Aberto");
-INSERT INTO `Faturas` VALUES("42","6","2026-01-08","2026-01-10","0.15","Liquidada");
-INSERT INTO `Faturas` VALUES("43","6","2026-01-08","2026-01-09","0.10","Liquidada");
+INSERT INTO `Faturas` VALUES("5","1","2025-07-19","2025-07-15","4500.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("6","1","2025-07-19","2025-07-15","84.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("7","1","2025-07-19","2025-08-15","302.82","Liquidada","0");
+INSERT INTO `Faturas` VALUES("8","6","2025-07-19","2025-07-31","0.10","Liquidada","0");
+INSERT INTO `Faturas` VALUES("9","5","2025-07-19","2025-08-06","4500.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("10","1","2025-07-19","2025-08-15","98.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("11","1","2025-07-19","2025-08-15","4500.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("12","8","2025-07-19","2025-07-31","0.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("13","9","2025-07-21","2025-08-15","200.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("14","1","2025-07-22","2025-08-15","539.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("15","5","2025-08-02","2025-09-05","5116.50","Liquidada","0");
+INSERT INTO `Faturas` VALUES("16","9","2025-08-22","2025-09-15","200.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("17","1","2025-08-24","2025-09-15","4500.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("18","1","2025-08-26","2025-09-15","98.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("19","1","2025-08-29","2025-09-16","306.12","Liquidada","0");
+INSERT INTO `Faturas` VALUES("20","5","2025-09-02","2025-10-06","4625.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("21","9","2025-09-02","2025-10-15","200.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("22","1","2025-09-02","2025-10-15","4500.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("23","1","2025-09-02","2025-10-15","98.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("24","5","2025-09-27","2025-11-06","4337.50","Liquidada","0");
+INSERT INTO `Faturas` VALUES("25","9","2025-09-27","2025-11-15","195.98","Liquidada","0");
+INSERT INTO `Faturas` VALUES("26","1","2025-09-27","2025-11-15","4500.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("27","1","2025-09-27","2025-11-15","98.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("28","5","2025-10-10","2025-12-08","5000.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("29","9","2025-11-06","2025-12-15","195.98","Liquidada","0");
+INSERT INTO `Faturas` VALUES("30","10","2025-11-24","2026-01-15","200.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("31","1","2025-11-24","2025-12-15","98.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("32","1","2025-11-24","2025-12-15","4500.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("33","1","2025-12-02","2025-12-30","4500.00","Em Aberto","0");
+INSERT INTO `Faturas` VALUES("34","5","2025-12-04","2026-01-06","4750.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("35","9","2025-12-10","2026-01-15","200.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("36","10","2025-12-22","2025-12-30","200.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("37","1","2025-12-26","2026-01-15","98.00","Liquidada","0");
+INSERT INTO `Faturas` VALUES("38","1","2025-12-26","2026-01-15","4500.00","Em Aberto","0");
+INSERT INTO `Faturas` VALUES("39","5","2026-01-03","2026-02-06","4500.00","Em Aberto","0");
+INSERT INTO `Faturas` VALUES("40","9","2026-01-07","2026-02-16","200.00","Em Aberto","0");
+INSERT INTO `Faturas` VALUES("41","10","2026-01-07","2026-02-16","200.00","Em Aberto","0");
+INSERT INTO `Faturas` VALUES("42","6","2026-01-08","2026-01-10","0.15","Liquidada","0");
+INSERT INTO `Faturas` VALUES("43","6","2026-01-08","2026-01-09","0.10","Liquidada","0");
 
 
 -- Dumping data for table `ItensFatura` --
@@ -154,6 +158,9 @@ INSERT INTO `ItensFatura` VALUES("90","41","4","1","200.00","Mensalidade - Monit
 INSERT INTO `ItensFatura` VALUES("91","42","1","1","0.10","Teste","");
 INSERT INTO `ItensFatura` VALUES("92","42","1","1","0.05","teste","");
 INSERT INTO `ItensFatura` VALUES("93","43","1","1","0.10","teste expirar pix","");
+
+
+-- Dumping data for table `NfseEmissoes` --
 
 
 -- Dumping data for table `Pagamentos` --
@@ -213,23 +220,23 @@ INSERT INTO `Pagamentos` VALUES("117","37","98.00","2026-01-12","Confirmado","E2
 
 
 -- Dumping data for table `Recorrencias` --
-INSERT INTO `Recorrencias` VALUES("1","1","1","1","4500.00","mensal","1","2025-07-18","","2026-01");
-INSERT INTO `Recorrencias` VALUES("2","1","3","1","84.00","mensal","1","2025-07-18","2025-07-30","2025-07");
-INSERT INTO `Recorrencias` VALUES("3","6","2","1","0.10","mensal","1","2025-07-19","","");
-INSERT INTO `Recorrencias` VALUES("4","5","1","1","4250.00","mensal","1","2025-06-02","","2026-02");
-INSERT INTO `Recorrencias` VALUES("5","1","3","1","98.00","mensal","1","2025-08-01","","");
-INSERT INTO `Recorrencias` VALUES("6","9","4","1","200.00","mensal","1","2025-07-01","","2026-02");
-INSERT INTO `Recorrencias` VALUES("9","10","4","1","200.00","mensal","1","2025-11-24","","2026-02");
+INSERT INTO `Recorrencias` VALUES("1","1","1","1","4500.00","mensal","1","2025-07-18","","2026-01","","","","");
+INSERT INTO `Recorrencias` VALUES("2","1","3","1","84.00","mensal","1","2025-07-18","2025-07-30","2025-07","","","","");
+INSERT INTO `Recorrencias` VALUES("3","6","2","1","0.10","mensal","1","2025-07-19","","","","","","");
+INSERT INTO `Recorrencias` VALUES("4","5","1","1","4250.00","mensal","1","2025-06-02","","2026-02","","","","");
+INSERT INTO `Recorrencias` VALUES("5","1","3","1","98.00","mensal","1","2025-08-01","","","","","","");
+INSERT INTO `Recorrencias` VALUES("6","9","4","1","200.00","mensal","1","2025-07-01","","2026-02","","","","");
+INSERT INTO `Recorrencias` VALUES("9","10","4","1","200.00","mensal","1","2025-11-24","","2026-02","","","","");
 
 
 -- Dumping data for table `Servicos` --
-INSERT INTO `Servicos` VALUES("1","Consultoria em Tecnologia da Informação","4500.00");
-INSERT INTO `Servicos` VALUES("2","Licenciamento de Software","100.00");
-INSERT INTO `Servicos` VALUES("3","Google Workspace","98.00");
-INSERT INTO `Servicos` VALUES("4","Monitoramento de Reservatorio","200.00");
-INSERT INTO `Servicos` VALUES("5","Avulso","87.50");
-INSERT INTO `Servicos` VALUES("6","Plantão TI ","250.00");
-INSERT INTO `Servicos` VALUES("7","Suporte Plantão TI","125.00");
+INSERT INTO `Servicos` VALUES("1","Consultoria em Tecnologia da Informação","4500.00","","","","","0.00","0","");
+INSERT INTO `Servicos` VALUES("2","Licenciamento de Software","100.00","","","","","0.00","0","");
+INSERT INTO `Servicos` VALUES("3","Google Workspace","98.00","","","","","0.00","0","");
+INSERT INTO `Servicos` VALUES("4","Monitoramento de Reservatorio","200.00","","","","","0.00","0","");
+INSERT INTO `Servicos` VALUES("5","Avulso","87.50","","","","","0.00","0","");
+INSERT INTO `Servicos` VALUES("6","Plantão TI ","250.00","","","","","0.00","0","");
+INSERT INTO `Servicos` VALUES("7","Suporte Plantão TI","125.00","","","","","0.00","0","");
 
 
 -- Dumping data for table `Usuarios` --
