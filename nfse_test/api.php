@@ -12,14 +12,23 @@ $action = $input['action'] ?? 'direct_a1';
 $method = $input['method'] ?? 'consultar'; // 'consultar' or 'gerar'
 $variation = $input['variation'] ?? 'support_combo'; // Default to what support uses
 
-// FORCE VARIATION for debugging if it's somehow failing
-if (empty($variation))
-    $variation = 'support_combo';
+// FORCE VARIATION based on known working configurations per method.
+// Ignores input variation to prevent regression.
 
-// Exception: Isolate ConsultarRpsDisponivel to use 'support_combo' (URI="") explicitly
-// This method is new and separate from the stable 4 methods.
-if ($method === 'consultar_rps_disponivel') {
-    $variation = 'support_combo';
+$protocolMap = [
+    'gerar' => 'support_combo',                  // Signed RPS Wrapper: Needs URI=""
+    'consultar' => 'support_combo',              // Consultar Notas (Servico Prestado): Needs URI=""
+    'consultar_rps' => 'support_combo',          // Consultar RPS: Needs URI=""
+    'consultar_rps_disponivel' => 'support_combo', // Disponibilidade: Needs URI=""
+    'consultar_cadastral' => 'proven_protocol'   // Cadastral: Needs URI="#" (Legacy behavior)
+];
+
+if (isset($protocolMap[$method])) {
+    $variation = $protocolMap[$method];
+} else {
+    // Fallback or default
+    if (empty($variation))
+        $variation = 'support_combo';
 }
 
 // Configuration
