@@ -1510,8 +1510,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'serie_rps' => $config['serie_rps'],
                 'tipo_rps' => '1',
                 'valor' => number_format($totalServicos, 2, '.', ''),
-                'iss_retido' => '2', // Default Nao
-                'aliquota' => '0',
+                'iss_retido' => $taxSettings['iss_retido'] ? '1' : '2',
+                'aliquota' => $taxSettings['aliquota'],
                 'discriminacao' => implode(' | ', $discriminacaoParts),
                 'codigo_cnae' => $taxSettings['cnae'],
                 'codigo_nbs' => $taxSettings['nbs'],
