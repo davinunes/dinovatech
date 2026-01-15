@@ -56,7 +56,11 @@ if ($link) {
         while ($row = mysqli_fetch_assoc($result_clientes)) {
             $clientes[] = $row;
         }
+    } else {
+        echo "<div class='bg-red-200 p-4 text-red-800 font-bold'>ERRO SQL: " . mysqli_error($link) . "<br>QUERY: $query_clientes</div>";
     }
+    // Debug Trace
+    // echo "<!-- DEBUG: Where=$where_clause | Count=" . count($clientes) . " -->";
     DBClose($link);
 }
 ?>
