@@ -17,6 +17,8 @@ if ($link) {
     if ($current_page < 1)
         $current_page = 1;
 
+    $offset = ($current_page - 1) * $limit;
+
     // Search logic
     $search = isset($_GET['search']) ? mysqli_real_escape_string($link, $_GET['search']) : '';
     $status_filter = $_GET['status'] ?? 'ativos'; // ativos, inativos, todos
@@ -56,11 +58,7 @@ if ($link) {
         while ($row = mysqli_fetch_assoc($result_clientes)) {
             $clientes[] = $row;
         }
-    } else {
-        echo "<div class='bg-red-200 p-4 text-red-800 font-bold'>ERRO SQL: " . mysqli_error($link) . "<br>QUERY: $query_clientes</div>";
     }
-    // Debug Trace
-    // echo "<!-- DEBUG: Where=$where_clause | Count=" . count($clientes) . " -->";
     DBClose($link);
 }
 ?>
