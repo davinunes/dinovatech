@@ -4,6 +4,23 @@ session_set_cookie_params(0, '/');
 session_start();
 
 include "../database.php"; // Seu arquivo com DBConnect, DBExecute, etc.
+
+// ACTION GET: Toggle Status Cliente (Direct Link)
+if (isset($_GET['action']) && $_GET['action'] === 'toggle_status_cliente') {
+    $link = DBConnect();
+    $id = mysqli_real_escape_string($link, $_GET['id'] ?? '');
+    $status = (int) ($_GET['status'] ?? 1);
+
+    if ($id) {
+        $query = "UPDATE Clientes SET ativo = $status WHERE id_cliente = '$id'";
+        DBExecute($link, $query);
+    }
+    DBClose($link);
+
+    header("Location: clientes.php");
+    exit();
+}
+
 header('Content-Type: application/json'); // Sempre retorna JSON
 
 $link = DBConnect(); // Abre a conexão UMA VEZ para toda a requisição AJAX

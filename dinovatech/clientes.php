@@ -19,18 +19,38 @@ if ($link) {
 
     // Search logic
     $search = isset($_GET['search']) ? mysqli_real_escape_string($link, $_GET['search']) : '';
-    $where_clause = "";
+    $status_filter = $_GET['status'] ?? 'ativos'; // ativos, inativos, todos
+
+    $where_conditions = [];
     if ($search) {
-        $where_clause = "WHERE nome LIKE '%$search%' OR cpf_cnpj LIKE '%$search%'";
+        $where_conditions[] = "(nome LIKE '%$search%' OR cpf_cnpj LIKE '%$search%')";
     }
 
-    $query_total = "SELECT COUNT(id_cliente) AS total FROM Clientes $where_clause";
-    $result_total = DBExecute($link, $query_total);
-    $total_records = mysqli_fetch_assoc($result_total)['total'];
-    $total_pages = ceil($total_records / $limit);
+    // Status Logic (Assuming 'ativo' column exists - defaulting to 1 if missing logic fails, but migration is needed)
+    if ($status_filter === 'ativos') {
+        $where_conditions[] = "ativo = 1";
+    } elseif ($status_filter === 'inativos') {
+        $where_conditions[] = "ativo = 0";
+    }
 
-    $offset = ($current_page - 1) * $limit;
-    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email, telefone FROM Clientes $where_clause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
+    $where_clause = !empty($where_conditions) ? "WHERE " . implode(' AND ', $where_conditions) : "WHERE ativo = 1"; // Default safe fallback
+
+    $query_total = "SELECT COUNT(id_cliente) AS total FROM Clientes $where_clause";
+    // ...
+    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email, telefone, ativo FROM Clientes $where_clause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
+    // ...
+
+    // UI Updates below ...
+    // Filter Buttons (Inside Search Bar Div or beside it)
+    /*
+    <div class="flex gap-2 mb-2">
+        <a href="?status=ativos" class="...">Ativos</a> ...
+    </div>
+    */
+    // Since I'm replacing chunks, I'll do multiple edits or one big one if contiguous?
+    // The search logic is at top. The UI is further down.
+    // I will use replace_file_content for logic first, then UI.
+    // Actually, I can replace the whole PHP block at the top first.
     $result_clientes = DBExecute($link, $query_clientes);
     if ($result_clientes) {
         while ($row = mysqli_fetch_assoc($result_clientes)) {
@@ -67,9 +87,26 @@ if ($link) {
                 </a>
             </div>
 
+            <!-- Status Filter -->
+            <div class="flex gap-2 mb-4">
+                <a href="?status=ativos&search=<?= urlencode($search) ?>" 
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'ativos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
+                    Ativos
+                </a>
+                <a href="?status=inativos&search=<?= urlencode($search) ?>" 
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'inativos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
+                    Inativos
+                </a>
+                <a href="?status=todos&search=<?= urlencode($search) ?>" 
+                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'todos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
+                    Todos
+                </a>
+            </div>
+
             <!-- Search Bar -->
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
                 <form method="GET" class="flex gap-2">
+                    <input type="hidden" name="status" value="<?= htmlspecialchars($status_filter) ?>">
                     <div class="relative flex-1">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                             <span class="material-icons">search</span>
@@ -113,7 +150,22 @@ if ($link) {
                                     <td class="p-4"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['email']) ?></td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['telefone']) ?></td>
-                                    <td class="p-4 text-right">
+                                    <td class="p-4 text-right flex justify-end gap-2">
+                                        <?php if(isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1" 
+                                               class="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-medium transition-colors"
+                                               title="Reativar Cliente">
+                                                <span class="material-icons text-sm mr-1">check_circle</span> Ativar
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=0" 
+                                               class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-medium transition-colors"
+                                               onclick="return confirm('Tem certeza que deseja inativar este cliente?')" 
+                                               title="Inativar Cliente">
+                                                <span class="material-icons text-sm mr-1">block</span> Inativar
+                                            </a>
+                                        <?php endif; ?>
+                                        
                                         <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
                                             class="inline-flex items-center px-3 py-1.5 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 rounded-lg text-xs font-medium transition-colors">
                                             Ver Detalhes
@@ -131,7 +183,12 @@ if ($link) {
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                             <div class="flex justify-between items-start mb-3">
                                 <div>
-                                    <h3 class="font-bold text-gray-900"><?= htmlspecialchars($cliente['nome']) ?></h3>
+                                    <h3 class="font-bold text-gray-900 flex items-center gap-2">
+                                        <?= htmlspecialchars($cliente['nome']) ?>
+                                        <?php if(isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Inativo</span>
+                                        <?php endif; ?>
+                                    </h3>
                                     <p class="text-sm text-gray-500"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></p>
                                 </div>
                                 <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
@@ -153,9 +210,22 @@ if ($link) {
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            <div class="mt-4 pt-3 border-t border-gray-50 flex justify-end">
+                            <div class="mt-4 pt-3 border-t border-gray-50 flex gap-2 justify-end">
+                                <?php if(isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                    <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1"
+                                        class="flex-1 text-center bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg text-sm font-medium transition-colors">
+                                        Ativar
+                                    </a>
+                                <?php else: ?>
+                                    <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=0"
+                                        class="flex-1 text-center bg-red-50 hover:bg-red-100 text-red-700 py-2 rounded-lg text-sm font-medium transition-colors"
+                                        onclick="return confirm('Tem certeza que deseja inativar este cliente?')">
+                                        Inativar
+                                    </a>
+                                <?php endif; ?>
+                                
                                 <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
-                                    class="w-full text-center bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">
+                                    class="flex-1 text-center bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Ver Detalhes
                                 </a>
                             </div>

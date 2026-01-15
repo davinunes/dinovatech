@@ -106,7 +106,9 @@ if (!isset($_SESSION['usuario_id'])) {
                     <div class="p-6 border-b border-gray-100">
                         <h3 class="text-lg font-semibold text-gray-800">Faturas Recentes</h3>
                     </div>
-                    <div class="overflow-x-auto flex-1">
+
+                    <!-- Desktop Table -->
+                    <div class="hidden md:block overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
@@ -124,6 +126,11 @@ if (!isset($_SESSION['usuario_id'])) {
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Mobile Cards -->
+                    <div id="listaFaturasRecentesCards" class="md:hidden space-y-4 p-4 bg-gray-50">
+                        <div class="text-center text-gray-500 py-4">Carregando...</div>
+                    </div>
                 </div>
             </div>
 
@@ -133,11 +140,12 @@ if (!isset($_SESSION['usuario_id'])) {
     <?php include 'components/layout_scripts.php'; ?>
     <script>
         $(document).ready(function () {
+            // ... (rest of search/autocomplete code remains unchanged)
             let revenueChart = null;
 
             // Initialize Autocompletes
             $("#filtroClienteNome").autocomplete({
-                source: function(request, response) {
+                source: function (request, response) {
                     $.ajax({
                         url: "app.php",
                         type: "POST",
@@ -146,9 +154,9 @@ if (!isset($_SESSION['usuario_id'])) {
                             action: "buscar_clientes",
                             termo: request.term
                         },
-                        success: function(resp) {
-                            if(resp.success && resp.data) {
-                                response($.map(resp.data, function(item) {
+                        success: function (resp) {
+                            if (resp.success && resp.data) {
+                                response($.map(resp.data, function (item) {
                                     return {
                                         label: item.nome + (item.cpf_cnpj ? ' (' + item.cpf_cnpj + ')' : ''),
                                         value: item.nome,
@@ -161,10 +169,10 @@ if (!isset($_SESSION['usuario_id'])) {
                         }
                     });
                 },
-                select: function(event, ui) {
+                select: function (event, ui) {
                     $("#filtroClienteId").val(ui.item.id);
                 },
-                change: function(event, ui) {
+                change: function (event, ui) {
                     if (!ui.item) {
                         $("#filtroClienteId").val(""); // Clear ID if text cleared
                     }
@@ -172,7 +180,7 @@ if (!isset($_SESSION['usuario_id'])) {
             });
 
             $("#filtroServicoNome").autocomplete({
-                source: function(request, response) {
+                source: function (request, response) {
                     $.ajax({
                         url: "app.php",
                         type: "POST",
@@ -181,9 +189,9 @@ if (!isset($_SESSION['usuario_id'])) {
                             action: "buscar_servicos",
                             termo: request.term
                         },
-                        success: function(resp) {
-                            if(resp.success && resp.data) {
-                                response($.map(resp.data, function(item) {
+                        success: function (resp) {
+                            if (resp.success && resp.data) {
+                                response($.map(resp.data, function (item) {
                                     return {
                                         label: item.nome_servico,
                                         value: item.nome_servico, // Correct property
@@ -196,10 +204,10 @@ if (!isset($_SESSION['usuario_id'])) {
                         }
                     });
                 },
-                select: function(event, ui) {
+                select: function (event, ui) {
                     $("#filtroServicoId").val(ui.item.id);
                 },
-                change: function(event, ui) {
+                change: function (event, ui) {
                     if (!ui.item) {
                         $("#filtroServicoId").val("");
                     }
@@ -231,11 +239,13 @@ if (!isset($_SESSION['usuario_id'])) {
                             $('#statTotalAtrasado').text(formatCurrency(data.total_atrasado));
 
                             // Update Titles if available
-                            if(data.titulo_faturado) $('#lblTotalFaturado').text(data.titulo_faturado);
-                            if(data.titulo_aberto) $('#lblTotalAberto').text(data.titulo_aberto);
+                            if (data.titulo_faturado) $('#lblTotalFaturado').text(data.titulo_faturado);
+                            if (data.titulo_aberto) $('#lblTotalAberto').text(data.titulo_aberto);
 
-                            // Render List
+                            // Render List & Cards
                             let html = '';
+                            let htmlCards = '';
+
                             if (data.faturas_recentes.length > 0) {
                                 data.faturas_recentes.forEach(fatura => {
                                     let statusClass = '';
@@ -250,6 +260,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                         fatura.status = 'Atrasada';
                                     }
 
+                                    // Table Row
                                     html += `
                                         <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
                                             <td class="p-4">#${fatura.id_fatura}</td>
@@ -259,11 +270,34 @@ if (!isset($_SESSION['usuario_id'])) {
                                             <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">${fatura.status}</span></td>
                                         </tr>
                                     `;
+
+                                    // Card
+                                    htmlCards += `
+                                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
+                                            <div class="flex justify-between items-start mb-2">
+                                               <div>
+                                                   <span class="text-xs text-gray-400">#${fatura.id_fatura}</span>
+                                                   <h4 class="font-bold text-gray-800">${fatura.nome}</h4>
+                                               </div>
+                                               <span class="px-2 py-0.5 rounded-full text-xs font-semibold ${statusClass}">${fatura.status}</span>
+                                            </div>
+                                            <div class="flex justify-between items-end mt-2">
+                                               <div class="text-sm text-gray-500">
+                                                   Venc: ${formatDate(fatura.data_vencimento)}
+                                               </div>
+                                               <div class="text-lg font-bold text-gray-800">
+                                                   ${formatCurrency(fatura.valor_total_fatura)}
+                                               </div>
+                                            </div>
+                                        </div>
+                                    `;
                                 });
                             } else {
                                 html = '<tr><td colspan="5" class="p-4 text-center">Nenhuma fatura recente encontrada.</td></tr>';
+                                htmlCards = '<div class="text-center text-gray-500 py-4">Nenhuma fatura recente encontrada.</div>';
                             }
                             $('#listaFaturasRecentes').html(html);
+                            $('#listaFaturasRecentesCards').html(htmlCards);
 
                             // Render Chart
                             renderChart(data.grafico);

@@ -112,7 +112,8 @@ if ($id_cliente) {
                         <div class="p-6 border-b border-gray-100 flex justify-between items-center">
                             <h3 class="text-lg font-bold text-gray-800">Faturas</h3>
                         </div>
-                        <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                        <!-- Desktop Table -->
+                        <div class="hidden md:block overflow-x-auto max-h-[500px] overflow-y-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider sticky top-0">
                                     <tr>
@@ -170,6 +171,51 @@ if ($id_cliente) {
                                 </tbody>
                             </table>
                         </div>
+
+                        <!-- Mobile Cards -->
+                        <div class="md:hidden space-y-3 p-4 bg-gray-50">
+                            <?php if (empty($faturas)): ?>
+                                <div class="text-center text-gray-500 py-4">Nenhuma fatura registrada.</div>
+                            <?php else: ?>
+                                <?php foreach ($faturas as $fatura):
+                                    $statusClass = 'text-gray-600 bg-gray-100';
+                                    $hoje = date('Y-m-d');
+                                    if ($fatura['status'] === 'Liquidada') {
+                                        $statusClass = 'text-green-600 bg-green-100';
+                                    } elseif ($fatura['status'] === 'Em Aberto') {
+                                        if ($fatura['data_vencimento'] < $hoje) {
+                                            $statusClass = 'text-red-600 bg-red-100';
+                                        } else {
+                                            $statusClass = 'text-yellow-600 bg-yellow-100';
+                                        }
+                                    }
+                                    $statusLabel = ($fatura['status'] == 'Em Aberto' && $fatura['data_vencimento'] < $hoje) ? 'Atrasada' : $fatura['status'];
+                                    ?>
+                                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <span class="text-xs text-gray-400">#<?= $fatura['id_fatura'] ?></span>
+                                                <div class="text-sm text-gray-500">
+                                                    Venc: <?= date('d/m/Y', strtotime($fatura['data_vencimento'])) ?>
+                                                </div>
+                                            </div>
+                                            <span class="px-2 py-1 rounded text-xs font-bold <?= $statusClass ?>">
+                                                <?= $statusLabel ?>
+                                            </span>
+                                        </div>
+                                        <div class="flex justify-between items-end mt-2">
+                                            <div class="text-lg font-bold text-gray-800">
+                                                R$ <?= number_format($fatura['valor_total_fatura'], 2, ',', '.') ?>
+                                            </div>
+                                            <a href="fatura_view.php?id=<?= $fatura['id_fatura'] ?>"
+                                                class="bg-gray-50 hover:bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors">
+                                                Ver Detalhes
+                                            </a>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
 
                     <!-- Contratos / Recorrência Section -->
@@ -182,7 +228,8 @@ if ($id_cliente) {
                                 <span class="material-icons text-base mr-1">add</span> Adicionar
                             </button>
                         </div>
-                        <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                        <!-- Desktop Table -->
+                        <div class="hidden md:block overflow-x-auto max-h-[500px] overflow-y-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider sticky top-0">
                                     <tr>
@@ -198,10 +245,15 @@ if ($id_cliente) {
                                             <td colspan="4" class="p-6 text-center text-gray-500">Nenhum contrato ativo.</td>
                                         </tr>
                                     <?php else: ?>
-                                        <?php foreach ($contratos as $contrato): ?>
-                                            <tr class="border-b border-gray-50 hover:bg-gray-50">
+                                        <?php foreach ($contratos as $contrato): 
+                                            $is_expired = !empty($contrato['data_fim']) && $contrato['data_fim'] < date('Y-m-d');
+                                        ?>
+                                            <tr class="border-b border-gray-50 hover:bg-gray-50 <?= $is_expired ? 'bg-red-50' : '' ?>">
                                                 <td class="p-4 font-medium">
                                                     <?= htmlspecialchars($contrato['nome_servico']) ?>
+                                                    <?php if($is_expired): ?>
+                                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">EXP</span>
+                                                    <?php endif; ?>
                                                 </td>
                                                 <td class="p-4">R$
                                                     <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?> /
@@ -220,6 +272,39 @@ if ($id_cliente) {
                                     <?php endif; ?>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Mobile Cards -->
+                        <div class="md:hidden space-y-3 p-4 bg-gray-50">
+                            <?php if (empty($contratos)): ?>
+                                <div class="text-center text-gray-500 py-4">Nenhum contrato ativo.</div>
+                            <?php else: ?>
+                                <?php foreach ($contratos as $contrato): 
+                                    $is_expired = !empty($contrato['data_fim']) && $contrato['data_fim'] < date('Y-m-d');
+                                    $card_class = $is_expired ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100';
+                                ?>
+                                    <div class="<?= $card_class ?> p-4 rounded-xl shadow-sm border mb-3">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <h4 class="font-bold text-gray-800"><?= htmlspecialchars($contrato['nome_servico']) ?></h4>
+                                            <?php if($is_expired): ?>
+                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="text-sm text-gray-600 mb-3">
+                                            <div class="flex justify-between">
+                                                <span>R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?> / <?= ucfirst($contrato['tipo_periodo']) ?></span>
+                                            </div>
+                                            <div class="mt-1">Início: <?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></div>
+                                        </div>
+                                        <div class="flex justify-end pt-2 border-t border-gray-200/50">
+                                            <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
+                                               class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors w-full text-center">
+                                                Editar Contrato
+                                            </a>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                     </div>
 
