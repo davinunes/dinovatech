@@ -5,7 +5,7 @@ $link = DBConnect();
 echo "<h2>Debug Clientes</h2>";
 
 if ($link) {
-    // Check columns
+    // Check columns 
     $cols = DBExecute($link, "SHOW COLUMNS FROM Clientes");
     echo "<h3>Columns:</h3><ul>";
     while ($row = mysqli_fetch_assoc($cols)) {
