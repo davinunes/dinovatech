@@ -1566,7 +1566,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Append Footer
             // Note: User requested literal \s\n for line break
-            $discriminacaoFinal .= "\\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
+            $discriminacaoFinal .= "\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
 
             $inputApi = [
                 'cnpj' => $config['cnpj'],
