@@ -148,29 +148,20 @@ if ($link) {
                         <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
                             <?php foreach ($clientes as $cliente): ?>
                                 <tr class="hover:bg-gray-50 transition">
-                                    <td class="p-4 font-medium text-gray-900"><?= htmlspecialchars($cliente['nome']) ?></td>
+                                    <td class="p-4 font-medium text-gray-900">
+                                        <?= htmlspecialchars($cliente['nome']) ?>
+                                        <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                            <span
+                                                class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Inativo</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['email']) ?></td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['telefone']) ?></td>
-                                    <td class="p-4 text-right flex justify-end gap-2">
-                                        <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
-                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1"
-                                                class="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-medium transition-colors"
-                                                title="Reativar Cliente">
-                                                <span class="material-icons text-sm mr-1">check_circle</span> Ativar
-                                            </a>
-                                        <?php else: ?>
-                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=0"
-                                                class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-medium transition-colors"
-                                                onclick="return confirm('Tem certeza que deseja inativar este cliente?')"
-                                                title="Inativar Cliente">
-                                                <span class="material-icons text-sm mr-1">block</span> Inativar
-                                            </a>
-                                        <?php endif; ?>
-
+                                    <td class="p-4 text-right">
                                         <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
-                                            class="inline-flex items-center px-3 py-1.5 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 rounded-lg text-xs font-medium transition-colors">
-                                            Ver Detalhes
+                                            class="text-cyan-600 hover:text-cyan-800 font-medium text-sm inline-flex items-center">
+                                            Detalhes <span class="material-icons text-base ml-1">arrow_forward</span>
                                         </a>
                                     </td>
                                 </tr>
