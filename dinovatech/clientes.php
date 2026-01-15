@@ -33,7 +33,7 @@ if ($link) {
         $where_conditions[] = "ativo = 0";
     }
 
-    $where_clause = !empty($where_conditions) ? "WHERE " . implode(' AND ', $where_conditions) : "WHERE ativo = 1"; // Default safe fallback
+    $where_clause = !empty($where_conditions) ? "WHERE " . implode(' AND ', $where_conditions) : "";
 
     $query_total = "SELECT COUNT(id_cliente) AS total FROM Clientes $where_clause";
     // ...
@@ -89,16 +89,16 @@ if ($link) {
 
             <!-- Status Filter -->
             <div class="flex gap-2 mb-4">
-                <a href="?status=ativos&search=<?= urlencode($search) ?>" 
-                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'ativos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
+                <a href="?status=ativos&search=<?= urlencode($search) ?>"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'ativos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
                     Ativos
                 </a>
-                <a href="?status=inativos&search=<?= urlencode($search) ?>" 
-                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'inativos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
+                <a href="?status=inativos&search=<?= urlencode($search) ?>"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'inativos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
                     Inativos
                 </a>
-                <a href="?status=todos&search=<?= urlencode($search) ?>" 
-                   class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'todos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
+                <a href="?status=todos&search=<?= urlencode($search) ?>"
+                    class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <?= $status_filter === 'todos' ? 'bg-cyan-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200' ?>">
                     Todos
                 </a>
             </div>
@@ -151,21 +151,21 @@ if ($link) {
                                     <td class="p-4"><?= htmlspecialchars($cliente['email']) ?></td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['telefone']) ?></td>
                                     <td class="p-4 text-right flex justify-end gap-2">
-                                        <?php if(isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
-                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1" 
-                                               class="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-medium transition-colors"
-                                               title="Reativar Cliente">
+                                        <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1"
+                                                class="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-medium transition-colors"
+                                                title="Reativar Cliente">
                                                 <span class="material-icons text-sm mr-1">check_circle</span> Ativar
                                             </a>
                                         <?php else: ?>
-                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=0" 
-                                               class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-medium transition-colors"
-                                               onclick="return confirm('Tem certeza que deseja inativar este cliente?')" 
-                                               title="Inativar Cliente">
+                                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=0"
+                                                class="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-medium transition-colors"
+                                                onclick="return confirm('Tem certeza que deseja inativar este cliente?')"
+                                                title="Inativar Cliente">
                                                 <span class="material-icons text-sm mr-1">block</span> Inativar
                                             </a>
                                         <?php endif; ?>
-                                        
+
                                         <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
                                             class="inline-flex items-center px-3 py-1.5 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 rounded-lg text-xs font-medium transition-colors">
                                             Ver Detalhes
@@ -185,8 +185,9 @@ if ($link) {
                                 <div>
                                     <h3 class="font-bold text-gray-900 flex items-center gap-2">
                                         <?= htmlspecialchars($cliente['nome']) ?>
-                                        <?php if(isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Inativo</span>
+                                        <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Inativo</span>
                                         <?php endif; ?>
                                     </h3>
                                     <p class="text-sm text-gray-500"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></p>
@@ -211,7 +212,7 @@ if ($link) {
                                 <?php endif; ?>
                             </div>
                             <div class="mt-4 pt-3 border-t border-gray-50 flex gap-2 justify-end">
-                                <?php if(isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
                                     <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1"
                                         class="flex-1 text-center bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg text-sm font-medium transition-colors">
                                         Ativar
@@ -223,7 +224,7 @@ if ($link) {
                                         Inativar
                                     </a>
                                 <?php endif; ?>
-                                
+
                                 <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
                                     class="flex-1 text-center bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Ver Detalhes
