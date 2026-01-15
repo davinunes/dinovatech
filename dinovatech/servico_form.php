@@ -66,6 +66,17 @@ if ($id_servico) {
                             </div>
 
                             <div>
+                                <label for="descricao_fiscal" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Descrição Fiscal (Opcional)
+                                    <span class="text-xs text-gray-500 font-normal ml-1">- Substitui o nome do serviço
+                                        na NFS-e</span>
+                                </label>
+                                <textarea id="descricao_fiscal" name="descricao_fiscal" rows="2"
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+                                    placeholder="Ex: Consultoria Técnica (Deixe em branco para usar o nome do serviço)"><?= $servico['descricao_fiscal'] ?? '' ?></textarea>
+                            </div>
+
+                            <div>
                                 <label for="valor_sugerido" class="block text-sm font-medium text-gray-700 mb-1">Valor
                                     Sugerido (R$)</label>
                                 <input type="number" id="valor_sugerido" name="valor_sugerido" step="0.01" min="0.00"
