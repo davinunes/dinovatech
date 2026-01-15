@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-14 20:27:46
+-- Estrutura do Banco de Dados - Gerado em 2026-01-15 10:01:14
 
 
 CREATE TABLE `Arquivos` (
@@ -132,7 +132,7 @@ CREATE TABLE `NfseEmissoes` (
   PRIMARY KEY (`id_emissao`),
   KEY `id_fatura` (`id_fatura`),
   CONSTRAINT `NfseEmissoes_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -153,7 +153,7 @@ CREATE TABLE `Pagamentos` (
   UNIQUE KEY `e2eid` (`e2eid`),
   KEY `id_fatura` (`id_fatura`),
   CONSTRAINT `Pagamentos_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`)
-) ENGINE=InnoDB AUTO_INCREMENT=118 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -172,6 +172,7 @@ CREATE TABLE `Recorrencias` (
   `aliquota_iss` decimal(5,2) DEFAULT NULL,
   `iss_retido` tinyint(1) DEFAULT NULL,
   `descricao_personalizada` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `descricao_fiscal` text COLLATE utf8mb4_unicode_ci,
   `codigo_cnae` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `codigo_tributacao_municipio` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `codigo_nbs` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -187,6 +188,7 @@ CREATE TABLE `Recorrencias` (
 CREATE TABLE `Servicos` (
   `id_servico` int NOT NULL AUTO_INCREMENT,
   `nome_servico` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `descricao_fiscal` text COLLATE utf8mb4_unicode_ci,
   `valor_sugerido` decimal(10,2) NOT NULL,
   `item_lista_servico` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `codigo_cnae` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
