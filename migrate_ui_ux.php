@@ -1,5 +1,5 @@
 <?php
-include "dinovatech/database.php";
+include "database.php";
 
 $link = DBConnect();
 
