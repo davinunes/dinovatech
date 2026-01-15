@@ -329,6 +329,12 @@ function buildGerarNfseXml($input)
     // Sanitize Discriminacao
     $discriminacaoRaw = $input['discriminacao'] ?? "Teste de Integracao via WebService - RPS $numeroRps";
 
+    // Append Legal Text (Outras Informacoes) to Discriminacao
+    $outrasInformacoesRaw = $input['outras_informacoes'] ?? '';
+    if (!empty($outrasInformacoesRaw)) {
+        $discriminacaoRaw .= "\n\n" . $outrasInformacoesRaw;
+    }
+
     // Apply \s\n conversion SPECIFICALLY for Discriminacao (as confirmed requirement)
     // We do this BEFORE cleanString so cleanString processes the backslashes correctly (allowed)
     // Actually, cleanString allows \n. But we want literal \s\n.
@@ -470,14 +476,10 @@ XML;
     // Usually <Endereco> tag is mandatory for <Tomador>. If all children empty, we might send empty wrapper.
     // <Endereco></Endereco> is valid if children are optional.
 
-    // Outras Informações (Legal Text)
-    $outrasInformacoesRaw = $input['outras_informacoes'] ?? '';
-    // IMPORTANT: For OutrasInformacoes, we do NOT use \s\n (likely invalid for this field).
-    // We convert newlines to spaces to ensure Schema compliance (often normalizedString).
-    $outrasInformacoesClean = $cleanString($outrasInformacoesRaw);
-    $outrasInformacoes = str_replace(["\r\n", "\r", "\n"], ' ', $outrasInformacoesClean);
+    // Outras Informações (Legal Text) - Merged into Discriminacao above
+    // Code removed to resolve Schema Error
 
-    $outrasInformacoesTag = !empty($outrasInformacoes) ? "<OutrasInformacoes>$outrasInformacoes</OutrasInformacoes>" : "";
+    $outrasInformacoesTag = ""; // Force empty
 
     $infRps .= <<<XML
             <Discriminacao>$discriminacao</Discriminacao>
