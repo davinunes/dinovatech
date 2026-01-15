@@ -1655,7 +1655,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Logic: if iss_retido string is '1' (Sim), store 1. If '2' (Nao), store 0.
 
             $item_lista = $taxSettings['item_lista'];
-            $discriminacao_esc = mysqli_real_escape_string($link, implode(' | ', $discriminacaoParts));
+            $discriminacao_esc = mysqli_real_escape_string($link, $discriminacaoFinal);
 
             $queryLog = "INSERT INTO NfseEmissoes (
                 id_fatura, numero_rps, serie_rps, ambiente, 
