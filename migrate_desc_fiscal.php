@@ -5,7 +5,7 @@ include 'database.php'; // Adjust path if necessary, assuming same dir structure
 $link = DBConnect();
 
 $queries = [
-    "ALTER TABLE `Servicos` ADD COLUMN `descricao_fiscal` TEXT NULL AFTER `descricao_servico`",
+    "ALTER TABLE `Servicos` ADD COLUMN `descricao_fiscal` TEXT NULL AFTER `nome_servico`",
     "ALTER TABLE `Recorrencias` ADD COLUMN `descricao_fiscal` TEXT NULL AFTER `descricao_personalizada`"
 ];
 
