@@ -189,6 +189,16 @@ DBClose($link);
                                     (Personalização)
                                 </h3>
                                 <p class="text-sm text-gray-500 mb-4">Deixe em branco para usar o padrão do Serviço.</p>
+                                
+                                <div class="mb-4">
+                                     <label for="descricao_fiscal" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Descrição Fiscal (Override)
+                                        <span class="text-xs text-gray-500 font-normal ml-1">- Substitui a descrição do serviço para este contrato</span>
+                                    </label>
+                                    <textarea id="descricao_fiscal" name="descricao_fiscal" rows="2"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+                                        placeholder="Ex: Consultoria Mensal (Sobrescreve o cadastro do serviço)"><?= $contrato['descricao_fiscal'] ?? '' ?></textarea>
+                                </div>
 
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>

@@ -335,11 +335,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
                 $iss_retido = isset($_POST['iss_retido']) ? 1 : 0;
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
+                $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
                 $query = "INSERT INTO Servicos 
-                          (nome_servico, valor_sugerido, item_lista_servico, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, iss_retido, descricao_nfse_padrao) 
+                          (nome_servico, valor_sugerido, item_lista_servico, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, iss_retido, descricao_nfse_padrao, descricao_fiscal) 
                           VALUES 
-                          ('$nome_servico', '$valor_sugerido', '$item_lista_servico', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$iss_retido', '$descricao_nfse_padrao')";
+                          ('$nome_servico', '$valor_sugerido', '$item_lista_servico', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$iss_retido', '$descricao_nfse_padrao', '$descricao_fiscal')";
 
                 $result = DBExecute($link, $query);
 
@@ -400,7 +401,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             codigo_nbs = '$codigo_nbs',
                             aliquota_iss = '$aliquota_iss',
                             iss_retido = '$iss_retido',
-                            descricao_nfse_padrao = '$descricao_nfse_padrao'
+                            aliquota_iss = '$aliquota_iss',
+                            iss_retido = '$iss_retido',
+                            descricao_nfse_padrao = '$descricao_nfse_padrao',
+                            descricao_fiscal = '$descricao_fiscal'
                           WHERE id_servico = '$id_servico'";
                 $result = DBExecute($link, $query);
 
@@ -770,14 +774,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $iss_retido = ($iss_retido_input === '1' || $iss_retido_input === '0') ? "'$iss_retido_input'" : "NULL";
 
                 $descricao_personalizada = mysqli_real_escape_string($link, $_POST['descricao_personalizada'] ?? '');
+                $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
                 // V2 Refinements
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
 
-                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada, codigo_cnae, codigo_nbs, codigo_tributacao_municipio)
-                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada', '$codigo_cnae', '$codigo_nbs', '$codigo_tributacao_municipio')";
+                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada, descricao_fiscal, codigo_cnae, codigo_nbs, codigo_tributacao_municipio)
+                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada', '$descricao_fiscal', '$codigo_cnae', '$codigo_nbs', '$codigo_tributacao_municipio')";
 
                 $result = DBExecute($link, $query);
 
@@ -867,6 +872,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $iss_retido_input = $_POST['iss_retido'] ?? '';
                 $iss_retido = ($iss_retido_input === '1' || $iss_retido_input === '0') ? "'$iss_retido_input'" : "NULL";
                 $descricao_personalizada = mysqli_real_escape_string($link, $_POST['descricao_personalizada'] ?? '');
+                $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
                 // V2 Refinements - Edição
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
@@ -876,7 +882,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $query = "UPDATE Recorrencias 
                           SET id_cliente='$id_cliente', id_servico='$id_servico', quantidade='$quantidade', valor_sugerido_recorrencia='$valor_sugerido_recorrencia', 
                               tipo_periodo='$tipo_periodo', intervalo='$intervalo', data_inicio_cobranca='$data_inicio_cobranca', data_fim_cobranca=$data_fim_cobranca,
-                              item_lista_servico='$item_lista_servico', aliquota_iss=$aliquota_iss, iss_retido=$iss_retido, descricao_personalizada='$descricao_personalizada',
+                              item_lista_servico='$item_lista_servico', aliquota_iss=$aliquota_iss, iss_retido=$iss_retido, descricao_personalizada='$descricao_personalizada', descricao_fiscal='$descricao_fiscal',
                               codigo_cnae='$codigo_cnae', codigo_nbs='$codigo_nbs', codigo_tributacao_municipio='$codigo_tributacao_municipio'
                           WHERE id_recorrencia='$id_recorrencia'";
 
@@ -1440,20 +1446,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $resItems = DBExecute($link, $queryItems);
             $items = [];
             $totalServicos = 0.0;
-            $discriminacaoParts = [];
+            // $discriminacaoParts = []; // This is no longer used for building the main description
 
             $taxSettings = null; // Will hold {cnae, nbs, item_lista, tributacao}
+
+            $discriminacaoFinal = "";
+            $firstItem = true;
 
             while ($row = mysqli_fetch_assoc($resItems)) {
                 $items[] = $row;
                 $totalServicos += ($row['quantidade'] * $row['valor_unitario']);
 
-                // Format: Service Name [ Tag/Description ]
-                $tagContent = $row['descricao'] ?? '';
-                if (!empty($tagContent)) {
-                    $discriminacaoParts[] = $row['nome_servico'] . " [ " . $tagContent . " ]";
-                } else {
-                    $discriminacaoParts[] = $row['nome_servico'];
+                if ($firstItem) {
+                    // Strategy: Recorrencia Fiscal > Servico Fiscal > Servico Nome
+                    $descItem = $row['descricao_fiscal'] ?? ''; // From Service
+
+                    // Check Recorrencia Override
+                    if (!empty($row['item_recorrencia_id'])) {
+                        $idRec = $row['item_recorrencia_id'];
+                        $resRec = DBExecute($link, "SELECT descricao_fiscal FROM Recorrencias WHERE id_recorrencia = '$idRec'");
+                        if ($resRec && mysqli_num_rows($resRec) > 0) {
+                            $recRow = mysqli_fetch_assoc($resRec);
+                            if (!empty($recRow['descricao_fiscal'])) {
+                                $descItem = $recRow['descricao_fiscal'];
+                            }
+                        }
+                    }
+
+                    if (empty($descItem)) {
+                        $descItem = $row['nome_servico'];
+                    }
+
+                    $discriminacaoFinal = $descItem;
+                    $firstItem = false;
                 }
 
                 // Determine Tax Settings (Prioritize First Item with Recurrence Override)
@@ -1540,6 +1565,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
+            // Append Footer
+            // Note: User requested literal \s\n for line break
+            $discriminacaoFinal .= " \s\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
+
             $inputApi = [
                 'cnpj' => $config['cnpj'],
                 'im' => $config['inscricao_municipal'],
@@ -1549,7 +1578,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'valor' => number_format($totalServicos, 2, '.', ''),
                 'iss_retido' => $taxSettings['iss_retido'] ? '1' : '2',
                 'aliquota' => $taxSettings['aliquota'],
-                'discriminacao' => implode(' \s\n ', $discriminacaoParts),
+                'discriminacao' => $discriminacaoFinal,
                 'codigo_cnae' => $taxSettings['cnae'],
                 'codigo_nbs' => $taxSettings['nbs'],
                 'item_lista' => $taxSettings['item_lista'],
