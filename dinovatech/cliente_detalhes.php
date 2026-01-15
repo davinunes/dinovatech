@@ -99,6 +99,20 @@ if ($id_cliente) {
                         <a href="cliente_form.php?id=<?= $cliente['id_cliente'] ?>"
                             class="bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-lg font-medium transition text-center">Editar
                             Dados</a>
+
+                        <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1"
+                                class="border border-green-500 text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg font-medium transition text-center">
+                                Ativar Cliente
+                            </a>
+                        <?php else: ?>
+                            <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=0"
+                                class="border border-red-300 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg font-medium transition text-center"
+                                onclick="return confirm('Tem certeza que deseja inativar este cliente?');">
+                                Inativar Cliente
+                            </a>
+                        <?php endif; ?>
+
                         <button onclick="openNovaFaturaModal()"
                             class="bg-cyan-600 text-white hover:bg-cyan-700 px-4 py-2 rounded-lg font-medium transition shadow-sm">Nova
                             Fatura</button>
@@ -245,14 +259,16 @@ if ($id_cliente) {
                                             <td colspan="4" class="p-6 text-center text-gray-500">Nenhum contrato ativo.</td>
                                         </tr>
                                     <?php else: ?>
-                                        <?php foreach ($contratos as $contrato): 
+                                        <?php foreach ($contratos as $contrato):
                                             $is_expired = !empty($contrato['data_fim']) && $contrato['data_fim'] < date('Y-m-d');
-                                        ?>
-                                            <tr class="border-b border-gray-50 hover:bg-gray-50 <?= $is_expired ? 'bg-red-50' : '' ?>">
+                                            ?>
+                                            <tr
+                                                class="border-b border-gray-50 hover:bg-gray-50 <?= $is_expired ? 'bg-red-50' : '' ?>">
                                                 <td class="p-4 font-medium">
                                                     <?= htmlspecialchars($contrato['nome_servico']) ?>
-                                                    <?php if($is_expired): ?>
-                                                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">EXP</span>
+                                                    <?php if ($is_expired): ?>
+                                                        <span
+                                                            class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">EXP</span>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td class="p-4">R$
@@ -279,26 +295,30 @@ if ($id_cliente) {
                             <?php if (empty($contratos)): ?>
                                 <div class="text-center text-gray-500 py-4">Nenhum contrato ativo.</div>
                             <?php else: ?>
-                                <?php foreach ($contratos as $contrato): 
+                                <?php foreach ($contratos as $contrato):
                                     $is_expired = !empty($contrato['data_fim']) && $contrato['data_fim'] < date('Y-m-d');
                                     $card_class = $is_expired ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100';
-                                ?>
+                                    ?>
                                     <div class="<?= $card_class ?> p-4 rounded-xl shadow-sm border mb-3">
                                         <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-bold text-gray-800"><?= htmlspecialchars($contrato['nome_servico']) ?></h4>
-                                            <?php if($is_expired): ?>
-                                                <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>
+                                            <h4 class="font-bold text-gray-800"><?= htmlspecialchars($contrato['nome_servico']) ?>
+                                            </h4>
+                                            <?php if ($is_expired): ?>
+                                                <span
+                                                    class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>
                                             <?php endif; ?>
                                         </div>
                                         <div class="text-sm text-gray-600 mb-3">
                                             <div class="flex justify-between">
-                                                <span>R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?> / <?= ucfirst($contrato['tipo_periodo']) ?></span>
+                                                <span>R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?>
+                                                    / <?= ucfirst($contrato['tipo_periodo']) ?></span>
                                             </div>
-                                            <div class="mt-1">Início: <?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></div>
+                                            <div class="mt-1">Início:
+                                                <?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></div>
                                         </div>
                                         <div class="flex justify-end pt-2 border-t border-gray-200/50">
                                             <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
-                                               class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors w-full text-center">
+                                                class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors w-full text-center">
                                                 Editar Contrato
                                             </a>
                                         </div>

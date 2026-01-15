@@ -213,22 +213,9 @@ if ($link) {
                                     </div>
                                 <?php endif; ?>
                             </div>
-                            <div class="mt-4 pt-3 border-t border-gray-50 flex gap-2 justify-end">
-                                <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
-                                    <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=1"
-                                        class="flex-1 text-center bg-green-50 hover:bg-green-100 text-green-700 py-2 rounded-lg text-sm font-medium transition-colors">
-                                        Ativar
-                                    </a>
-                                <?php else: ?>
-                                    <a href="app.php?action=toggle_status_cliente&id=<?= $cliente['id_cliente'] ?>&status=0"
-                                        class="flex-1 text-center bg-red-50 hover:bg-red-100 text-red-700 py-2 rounded-lg text-sm font-medium transition-colors"
-                                        onclick="return confirm('Tem certeza que deseja inativar este cliente?')">
-                                        Inativar
-                                    </a>
-                                <?php endif; ?>
-
+                            <div class="mt-4 pt-3 border-t border-gray-50 flex justify-end">
                                 <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
-                                    class="flex-1 text-center bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">
+                                    class="w-full text-center bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Ver Detalhes
                                 </a>
                             </div>
