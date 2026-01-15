@@ -391,6 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
                 $iss_retido = isset($_POST['iss_retido']) ? 1 : 0;
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
+                $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
                 $query = "UPDATE Servicos SET 
                             nome_servico = '$nome_servico', 
@@ -399,8 +400,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             codigo_cnae = '$codigo_cnae',
                             codigo_tributacao_municipio = '$codigo_tributacao_municipio',
                             codigo_nbs = '$codigo_nbs',
-                            aliquota_iss = '$aliquota_iss',
-                            iss_retido = '$iss_retido',
                             aliquota_iss = '$aliquota_iss',
                             iss_retido = '$iss_retido',
                             descricao_nfse_padrao = '$descricao_nfse_padrao',
