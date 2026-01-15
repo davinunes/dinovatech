@@ -325,8 +325,8 @@ function buildGerarNfseXml($input)
         ];
         $str = strtr($str, $map);
 
-        // 3. Whitelist: Alphanumerics, space, hyphen, backslash, brackets
-        return preg_replace('/[^a-zA-Z0-9 \-\\\\\[\]\n\r]/', ' ', $str);
+        // 3. Whitelist: Alphanumerics, space, hyphen, backslash, brackets, punctuation
+        return preg_replace('/[^a-zA-Z0-9 \-\\\\\[\]\n\r\.,;]/', ' ', $str);
     };
 
     // Sanitize Discriminacao
