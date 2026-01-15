@@ -1581,7 +1581,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'codigo_cnae' => $taxSettings['cnae'],
                 'codigo_nbs' => $taxSettings['nbs'],
                 'item_lista' => $taxSettings['item_lista'],
-                'outras_informacoes' => "I - DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL; e\nII - NÃO GERA DIREITO A CRÉDITO FISCAL DE IPI.",
                 'codigo_tributacao' => $taxSettings['tributacao'],
                 'optante_simples' => ($config['optante_simples'] == '1') ? '1' : '2', // Force 1 or 2
                 'tomador' => $tomadorData

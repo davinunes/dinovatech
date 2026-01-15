@@ -329,12 +329,6 @@ function buildGerarNfseXml($input)
     // Sanitize Discriminacao
     $discriminacaoRaw = $input['discriminacao'] ?? "Teste de Integracao via WebService - RPS $numeroRps";
 
-    // Append Legal Text (Outras Informacoes) to Discriminacao
-    $outrasInformacoesRaw = $input['outras_informacoes'] ?? '';
-    if (!empty($outrasInformacoesRaw)) {
-        $discriminacaoRaw .= "\n\n" . $outrasInformacoesRaw;
-    }
-
     // Apply \s\n conversion SPECIFICALLY for Discriminacao (as confirmed requirement)
     // We do this BEFORE cleanString so cleanString processes the backslashes correctly (allowed)
     // Actually, cleanString allows \n. But we want literal \s\n.
