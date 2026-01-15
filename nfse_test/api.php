@@ -467,6 +467,12 @@ XML;
     // Usually <Endereco> tag is mandatory for <Tomador>. If all children empty, we might send empty wrapper.
     // <Endereco></Endereco> is valid if children are optional.
 
+    // Outras Informações (Legal Text)
+    $outrasInformacoesRaw = $input['outras_informacoes'] ?? '';
+    // IMPORTANT: cleanString allows newlines now, so legal text formatting is preserved
+    $outrasInformacoes = $cleanString($outrasInformacoesRaw);
+    $outrasInformacoesTag = !empty($outrasInformacoes) ? "<OutrasInformacoes>$outrasInformacoes</OutrasInformacoes>" : "";
+
     $infRps .= <<<XML
             <Discriminacao>$discriminacao</Discriminacao>
             <CodigoMunicipio>5300108</CodigoMunicipio>
@@ -494,6 +500,7 @@ $enderecoBlock
         </TomadorServico>
         <OptanteSimplesNacional>$optanteSimples</OptanteSimplesNacional>
         <IncentivoFiscal>2</IncentivoFiscal>
+        $outrasInformacoesTag
     </InfDeclaracaoPrestacaoServico>
 XML;
 
