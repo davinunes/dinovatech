@@ -269,9 +269,6 @@ function buildGerarNfseXml($input)
         if (empty($str))
             return "";
 
-        // 1. Convert newlines to literal \s\n (Manual Requirement)
-        $str = str_replace(["\r\n", "\r", "\n"], '\s\n', $str);
-
         // 2. Manual Transliteration (Safer than iconv)
         $map = [
             'á' => 'a',
@@ -331,7 +328,13 @@ function buildGerarNfseXml($input)
 
     // Sanitize Discriminacao
     $discriminacaoRaw = $input['discriminacao'] ?? "Teste de Integracao via WebService - RPS $numeroRps";
-    $discriminacao = $cleanString($discriminacaoRaw);
+
+    // Apply \s\n conversion SPECIFICALLY for Discriminacao (as confirmed requirement)
+    // We do this BEFORE cleanString so cleanString processes the backslashes correctly (allowed)
+    // Actually, cleanString allows \n. But we want literal \s\n.
+    // So:
+    $discriminacaoPre = str_replace(["\r\n", "\r", "\n"], '\s\n', $discriminacaoRaw);
+    $discriminacao = $cleanString($discriminacaoPre);
 
     $valorServicos = $input['valor'] ?? '10.00';
     $valorServicos = number_format((float) $valorServicos, 2, '.', ''); // Ensure 2 decimals
@@ -469,8 +472,11 @@ XML;
 
     // Outras Informações (Legal Text)
     $outrasInformacoesRaw = $input['outras_informacoes'] ?? '';
-    // IMPORTANT: cleanString allows newlines now, so legal text formatting is preserved
-    $outrasInformacoes = $cleanString($outrasInformacoesRaw);
+    // IMPORTANT: For OutrasInformacoes, we do NOT use \s\n (likely invalid for this field).
+    // We convert newlines to spaces to ensure Schema compliance (often normalizedString).
+    $outrasInformacoesClean = $cleanString($outrasInformacoesRaw);
+    $outrasInformacoes = str_replace(["\r\n", "\r", "\n"], ' ', $outrasInformacoesClean);
+
     $outrasInformacoesTag = !empty($outrasInformacoes) ? "<OutrasInformacoes>$outrasInformacoes</OutrasInformacoes>" : "";
 
     $infRps .= <<<XML
