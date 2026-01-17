@@ -65,29 +65,29 @@ if ($id_pet_pre) {
 
 // Handle Save
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id_pet = $_POST['id_pet'];
-    $id_veterinario = $_POST['id_veterinario'];
-    $data = $_POST['data_atendimento'];
-    $peso = $_POST['peso'];
-    $motivo = mysqli_real_escape_string($link, $_POST['motivo']);
-    $anamnese = mysqli_real_escape_string($link, $_POST['anamnese']);
-    $exame = mysqli_real_escape_string($link, $_POST['exame_fisico']);
-    $diag = mysqli_real_escape_string($link, $_POST['diagnostico']);
-    $presc = mysqli_real_escape_string($link, $_POST['prescricao']);
-    $obs = mysqli_real_escape_string($link, $_POST['obs_internas']);
+    // Validate required fields
+    if (empty($id_pet) || empty($id_veterinario) || empty($data)) {
+        die("Erro: Campos obrigatórios não preenchidos (Pet, Veterinário, Data).");
+    }
+
+    $id_pet = (int) $id_pet;
+    $id_veterinario = (int) $id_veterinario;
+    $data_safe = mysqli_real_escape_string($link, $data);
+    $peso_safe = $peso ? "'" . mysqli_real_escape_string($link, $peso) . "'" : "NULL";
 
     // Update Pet Weight
     if ($peso) {
-        DBExecute($link, "UPDATE Pets SET peso = '$peso' WHERE id_pet = $id_pet");
+        $peso_val = mysqli_real_escape_string($link, $peso);
+        DBExecute($link, "UPDATE Pets SET peso = '$peso_val' WHERE id_pet = $id_pet");
     }
 
     if ($is_edit) {
-        $q = "UPDATE Atendimentos SET id_veterinario=$id_veterinario, data_atendimento='$data', motivo_visita='$motivo', 
-              anamnese='$anamnese', exame_fisico='$exame', diagnostico='$diag', prescricao='$presc', obs_internas='$obs', peso_atual='$peso'
+        $q = "UPDATE Atendimentos SET id_veterinario=$id_veterinario, data_atendimento='$data_safe', motivo_visita='$motivo', 
+              anamnese='$anamnese', exame_fisico='$exame', diagnostico='$diag', prescricao='$presc', obs_internas='$obs', peso_atual=$peso_safe
               WHERE id_atendimento=$id_atendimento";
     } else {
         $q = "INSERT INTO Atendimentos (id_pet, id_veterinario, data_atendimento, motivo_visita, anamnese, exame_fisico, diagnostico, prescricao, obs_internas, peso_atual)
-              VALUES ($id_pet, $id_veterinario, '$data', '$motivo', '$anamnese', '$exame', '$diag', '$presc', '$obs', '$peso')";
+              VALUES ($id_pet, $id_veterinario, '$data_safe', '$motivo', '$anamnese', '$exame', '$diag', '$presc', '$obs', $peso_safe)";
     }
 
     if (DBExecute($link, $q)) {

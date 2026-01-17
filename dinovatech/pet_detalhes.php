@@ -55,7 +55,7 @@ function calcularIdade($data_nasc)
     return implode(' e ', $parts);
 }
 
-DBClose($link);
+// Connection kept open for lists below
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
