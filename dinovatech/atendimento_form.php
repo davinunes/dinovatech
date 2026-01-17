@@ -66,8 +66,18 @@ if ($id_pet_pre) {
 // Handle Save
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Validate required fields
-    if (empty($id_pet) || empty($id_veterinario) || empty($data)) {
-        die("Erro: Campos obrigatórios não preenchidos (Pet, Veterinário, Data).");
+    $missing = [];
+    if (empty($id_pet)) $missing[] = "Pet (ID: $id_pet)";
+    if (empty($id_veterinario)) $missing[] = "Veterinário";
+    if (empty($data)) $missing[] = "Data";
+
+    if (!empty($missing)) {
+        echo "<pre>";
+        echo "Erro: Campos obrigatórios faltando: " . implode(", ", $missing) . "\n";
+        echo "DADOS RECEBIDOS (POST):\n";
+        print_r($_POST);
+        echo "</pre>";
+        exit;
     }
 
     $id_pet = (int) $id_pet;
