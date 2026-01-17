@@ -31,6 +31,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span class="font-medium">Clientes</span>
         </a>
 
+        <a href="pets.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'pets.php' || $currentPage == 'pet_form.php' || $currentPage == 'pet_detalhes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3">pets</span>
+            <span class="font-medium">Pets</span>
+        </a>
+
         <a href="servicos.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'servicos.php' || $currentPage == 'servico_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">build</span>
