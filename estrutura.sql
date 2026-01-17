@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-17 22:33:05
+-- Estrutura do Banco de Dados - Gerado em 2026-01-17 23:55:39
 
 
 CREATE TABLE `Arquivos` (
@@ -69,7 +69,7 @@ CREATE TABLE `Clientes` (
   PRIMARY KEY (`id_cliente`),
   UNIQUE KEY `cpf_cnpj` (`cpf_cnpj`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -222,7 +222,7 @@ CREATE TABLE `Pets` (
   PRIMARY KEY (`id_pet`),
   KEY `id_cliente` (`id_cliente`),
   CONSTRAINT `Pets_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `Clientes` (`id_cliente`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -289,7 +289,7 @@ CREATE TABLE `Vacinas` (
   `descricao` text DEFAULT NULL,
   `recorrencia_dias` int(11) DEFAULT 365,
   PRIMARY KEY (`id_vacina`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -301,5 +301,5 @@ CREATE TABLE `Veterinarios` (
   `telefone` varchar(20) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id_vet`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
