@@ -184,7 +184,7 @@ DBClose($link);
                                 class="w-full border-gray-300 rounded-lg p-3 border bg-white">
                                 <option value="">Selecione...</option>
                                 <?php foreach ($veterinarios as $v): ?>
-                                    <option value="<?= $v['id_veterinario'] ?>" <?= $id_veterinario == $v['id_veterinario'] ? 'selected' : '' ?>>
+                                    <option value="<?= $v['id_vet'] ?>" <?= $id_veterinario == $v['id_vet'] ? 'selected' : '' ?>>
                                         <?= htmlspecialchars($v['nome']) ?>
                                     </option>
                                 <?php endforeach; ?>
