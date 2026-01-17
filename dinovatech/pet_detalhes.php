@@ -249,7 +249,7 @@ DBClose($link);
                                             <div class="text-xs text-gray-400 mt-1">Lote: <?= htmlspecialchars($vac['lote']) ?></div>
                                         <?php endif; ?>
                                     </div>
-                                <?php
+                                    <?php
                                 endwhile;
                             else:
                                 ?>
@@ -267,17 +267,80 @@ DBClose($link);
                             <h3 class="font-bold text-gray-800 flex items-center">
                                 <span class="material-icons text-blue-500 mr-2">history_edu</span> Histórico Clínico
                             </h3>
-                            <button
-                                class="bg-cyan-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-cyan-700 transition opacity-80 cursor-not-allowed"
-                                title="Em breve">
-                                Novo Atendimento
-                            </button>
+                            <a href="atendimento_form.php?pet_id=<?= $pet['id_pet'] ?>"
+                                class="bg-cyan-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-cyan-700 transition shadow-sm flex items-center">
+                                <span class="material-icons text-sm mr-1">add</span> Novo Atendimento
+                            </a>
                         </div>
-                        <div class="p-12 text-center text-gray-400">
-                            <span class="material-icons text-5xl mb-3 opacity-30">folder_open</span>
-                            <p class="font-medium">Nenhum atendimento registrado.</p>
-                            <p class="text-sm mt-2 max-w-xs mx-auto text-gray-400">Os atendimentos clínicos, exames e
-                                cirurgias aparecerão aqui em uma linha do tempo.</p>
+
+                        <div class="divide-y divide-gray-50">
+                            <?php
+                            // Fetch Consultations
+                            $query_atend = "SELECT a.*, v.nome as nome_vet FROM Atendimentos a 
+                                            LEFT JOIN Veterinarios v ON a.id_veterinario = v.id_veterinario 
+                                            WHERE a.id_pet = '$id_safe' 
+                                            ORDER BY a.data_atendimento DESC";
+                            $res_atend = DBExecute($link, $query_atend);
+
+                            if ($res_atend && mysqli_num_rows($res_atend) > 0):
+                                while ($atend = mysqli_fetch_assoc($res_atend)):
+                                    ?>
+                                    <div class="p-6 hover:bg-gray-50 transition block">
+                                        <div class="flex flex-col sm:flex-row justify-between mb-2">
+                                            <div class="flex items-center mb-2 sm:mb-0">
+                                                <div
+                                                    class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center mr-3 font-bold text-sm">
+                                                    <?= date('d', strtotime($atend['data_atendimento'])) ?>
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold text-gray-800 text-lg">
+                                                        <?= htmlspecialchars($atend['motivo_visita'] ?: 'Consulta de Rotina') ?>
+                                                    </h4>
+                                                    <span
+                                                        class="text-xs text-gray-500"><?= date('M/Y', strtotime($atend['data_atendimento'])) ?>
+                                                        • Dr(a). <?= htmlspecialchars($atend['nome_vet']) ?></span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <a href="atendimento_form.php?id=<?= $atend['id_atendimento'] ?>&pet_id=<?= $pet['id_pet'] ?>"
+                                                    class="text-gray-400 hover:text-cyan-600 transition">
+                                                    <span class="material-icons">edit_note</span>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div class="pl-12 text-sm text-gray-600 space-y-2">
+                                            <?php if ($atend['diagnostico']): ?>
+                                                <div
+                                                    class="bg-red-50 text-red-800 px-3 py-1 inline-block rounded font-medium text-xs mb-1">
+                                                    Dx: <?= htmlspecialchars($atend['diagnostico']) ?>
+                                                </div>
+                                            <?php endif; ?>
+
+                                            <?php if ($atend['anamnese']): ?>
+                                                <p><span class="font-semibold text-gray-700">Anamnese:</span>
+                                                    <?= substr(htmlspecialchars($atend['anamnese']), 0, 100) . '...' ?></p>
+                                            <?php endif; ?>
+
+                                            <?php if ($atend['prescricao']): ?>
+                                                <div
+                                                    class="mt-2 p-3 bg-gray-100 rounded text-gray-700 font-mono text-xs border border-gray-200">
+                                                    <?= nl2br(htmlspecialchars($atend['prescricao'])) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                <?php
+                                endwhile;
+                            else:
+                                ?>
+                                <div class="p-12 text-center text-gray-400">
+                                    <span class="material-icons text-5xl mb-3 opacity-30">folder_open</span>
+                                    <p class="font-medium">Nenhum atendimento registrado.</p>
+                                    <p class="text-sm mt-2 max-w-xs mx-auto text-gray-400">Clique em "Novo Atendimento" para
+                                        iniciar um prontuário.</p>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -296,24 +359,28 @@ DBClose($link);
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Vacina *</label>
-                    <select name="id_vacina" id="id_vacina" required class="w-full p-2 border rounded-lg" onchange="calcularProxima()">
+                    <select name="id_vacina" id="id_vacina" required class="w-full p-2 border rounded-lg"
+                        onchange="calcularProxima()">
                         <option value="">Selecione...</option>
-                        <?php 
+                        <?php
                         // Fetch available vaccines for dropdown
                         $link = DBConnect();
                         $q = "SELECT * FROM Vacinas ORDER BY nome ASC";
                         $r = DBExecute($link, $q);
-                        while($v = mysqli_fetch_assoc($r)): 
-                        ?>
-                            <option value="<?= $v['id_vacina'] ?>" data-dias="<?= $v['recorrencia_dias'] ?>"><?= htmlspecialchars($v['nome']) ?></option>
-                        <?php endwhile; DBClose($link); ?>
+                        while ($v = mysqli_fetch_assoc($r)):
+                            ?>
+                            <option value="<?= $v['id_vacina'] ?>" data-dias="<?= $v['recorrencia_dias'] ?>">
+                                <?= htmlspecialchars($v['nome']) ?></option>
+                        <?php endwhile;
+                        DBClose($link); ?>
                     </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Data Aplicação *</label>
-                        <input type="date" name="data_aplicacao" id="data_aplicacao" value="<?= date('Y-m-d') ?>" required class="w-full p-2 border rounded-lg" onchange="calcularProxima()">
+                        <input type="date" name="data_aplicacao" id="data_aplicacao" value="<?= date('Y-m-d') ?>"
+                            required class="w-full p-2 border rounded-lg" onchange="calcularProxima()">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Próxima Dose</label>
@@ -332,8 +399,10 @@ DBClose($link);
                 </div>
 
                 <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeVacinaModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Registrar</button>
+                    <button type="button" onclick="closeVacinaModal()"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancelar</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Registrar</button>
                 </div>
             </form>
         </div>
@@ -351,7 +420,7 @@ DBClose($link);
         function calcularProxima() {
             const dias = $('#id_vacina option:selected').data('dias');
             const dataAplicacao = $('#data_aplicacao').val();
-            
+
             if (dias && dataAplicacao) {
                 const data = new Date(dataAplicacao);
                 data.setDate(data.getDate() + parseInt(dias)); // Add days
@@ -377,11 +446,12 @@ DBClose($link);
                         alert('Erro: ' + response.message);
                     }
                 },
-                error: function() {
+                error: function () {
                     alert('Erro de conexão ao salvar vacina.');
                 }
             });
         });
     </script>
 </body>
+
 </html>
