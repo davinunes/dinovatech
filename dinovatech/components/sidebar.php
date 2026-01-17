@@ -10,7 +10,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     class="fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-xl flex flex-col">
     <!-- Logo area -->
     <div class="h-16 flex items-center justify-center border-b border-slate-800">
-        <h1 class="text-xl font-bold tracking-wider text-cyan-400">DINOVATECH</h1>
+        <h1 class="text-xl font-bold tracking-wider text-cyan-400">DINOVET</h1>
     </div>
 
     <!-- Navigation -->
@@ -83,7 +83,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <button onclick="toggleSidebar()" class="text-slate-600 focus:outline-none">
             <span class="material-icons text-2xl">menu</span>
         </button>
-        <span class="ml-4 font-bold text-gray-800">Dinovatech</span>
+        <span class="ml-4 font-bold text-gray-800">DinoVet</span>
     </div>
 </header>
 

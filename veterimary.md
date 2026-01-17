@@ -1,157 +1,89 @@
-# Planejamento: Sistema de Clínica Veterinária (DinoVET)
+# Planejamento: Sistema de Clínica Veterinária (DinoVet)
 
 ## 1. Visão Geral
-Transformar o sistema atual (Gestão de Clientes e Faturas) em um **Sistema de Gestão Veterinária (ERP Vet)**.
-A base atual (`Clientes`, `Faturas`, `Servicos`) será aproveitada como o módulo administrativo/financeiro. Novas entidades serão acopladas para o módulo clínico.
+Transformar o sistema "Dinovatech" em **DinoVet**, um sistema de gestão para clínicas veterinárias.
+A base administrativa (Clientes, Faturas, Serviços) é mantida.
+Entidades adicionadas: Pets, Veterinários, Vacinas, Atendimentos, Documentos.
 
-## 2. Entidades Principais
+## 2. Roteiro de Implementação Detalhado
 
-### A. Tutors (Clientes)
-- **Status**: Já existe (`Clientes`).
-- **Adaptação**: O "Cliente" passa a ser semanticamente o "Tutor".
-- **Relacionamento**: Um Tutor possui N Pets.
+### FASE 0: Fundação & Rebranding
+- [ ] **Migração de Banco de Dados**: Executar `migrate0.php` (Concluído).
+- [ ] **UI Rebranding**: Alterar logotipos e títulos para "DinoVet".
+- [ ] **Ajuste de Menu**: Agrupar itens de menu por contexto (Adm vs Clínico).
 
-### B. Pets (Pacientes)
-- **Novo**: Sim.
-- **Campos**: Nome, Espécie (Canino, Felino...), Raça, Sexo, Data Nascimento, Pelagem, Peso Atual, Chip ID, Obs.
-- **Relacionamento**: Pertence a `Clientes`.
+### FASE 1: Gestão de Pets (Os Pacientes)
+Esta fase conecta os Clientes (Tutors) aos seus animais.
 
-### C. Veterinários (Staff)
-- **Novo**: Sim.
-- **Campos**: Nome, CRMV, UF, Telefone, Usuário Vinculado (Login).
-- **Função**: Responsável por atendimentos, vacinas e receitas.
+1.  **Tela: Listagem de Pets (`pets.php`)**
+    -   *Objetivo*: Listar todos os pets cadastrados no sistema.
+    -   *Colunas*: Nome, Espécie/Raça, Tutor (Link), Idade, Peso.
+    -   *Filtros*: Busca por nome, espécie.
 
-### D. Vacinas & Imunização
-- **Vacinas (Catálogo)**:
-    - Nome (ex: V10, Raiva), Descrição, Período Recorrência (dias).
-- **Carteira de Vacinas (Aplicação)**:
-    - Pet, Vacina, Data Aplicação, Data Próxima (Calculada), Lote, Responsável (Vet).
+2.  **Tela: Detalhes do Pet (`pet_detalhes.php`)**
+    -   *Objetivo*: O "Prontuário" central do animal.
+    -   *Seções*:
+        -   **Card Principal**: Foto (placeholder), Dados Básicos, Tutor.
+        -   **Histórico Clínico**: Timeline de atendimentos (Placeholder).
+        -   **Vacinas**: Cartão de vacinas (Placeholder).
 
-### E. Prontuário Eletrônico (Atendimentos)
-- **Conceito**: Histórico cronológico de saúde do Pet.
-- **Entidade `Atendimentos`**:
-    - Data/Hora, Vet Responsável, Motivo (Queixa), Anamnese, Exame Físico (Temp, FC, FR...), Diagnóstico, Tratamento.
-- **Anexos**: Exames, Fotos.
+3.  **Tela: Formulário de Pet (`pet_form.php`)**
+    -   *Objetivo*: Cadastro e Edição.
+    -   *Campos*: Nome, Tutor (Select2/Autocomplete), Espécie (Select), Raça, Sexo, Data Nasc, Cor/Pelagem, Chip, Obs.
 
-### F. Documentos Clínicos
-- **Funcionalidade**: Gerador de documentos.
-- **Tipos**: Receitas, Atestados, Termos de Consentimento.
-- **Estrutura**: Templates HTML pré-definidos que puxam dados do Pet/Tutor.
+4.  **Integração Cliente (`cliente_detalhes.php`)**
+    -   *Ação*: Adicionar aba/bloco "Meus Pets" na tela de detalhes do tutor.
 
----
+### FASE 2: Módulo de Vacinação
+Controle de imunização e alertas.
 
-## 3. Modelo de Banco de Dados (Proposto)
+1.  **Tela: Catálogo de Vacinas (`vacinas.php`)**
+    -   *Objetivo*: CRUD de tipos de vacinas (ex: V10, Antirrábica).
+    -   *Campos*: Nome, Descrição, Recorrência Padrão (dias).
 
-```sql
--- TABELA: Pets
-CREATE TABLE `Pets` (
-  `id_pet` int NOT NULL AUTO_INCREMENT,
-  `id_cliente` int NOT NULL, -- FK Tutor
-  `nome` varchar(100) NOT NULL,
-  `especie` varchar(50) NOT NULL, -- Cachorro, Gato, etc
-  `raca` varchar(100),
-  `sexo` char(1), -- M/F
-  `data_nascimento` date,
-  `peso` decimal(5,2), -- Peso atual em KG
-  `chip_id` varchar(50),
-  `obs` text,
-  `data_cadastro` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_pet`),
-  FOREIGN KEY (`id_cliente`) REFERENCES `Clientes`(`id_cliente`)
-);
+2.  **Funcionalidade: Registro de Aplicação**
+    -   *Local*: Dentro de `pet_detalhes.php` (Aba Vacinas).
+    -   *Modal/Form*: Selecionar Vacina, Data Aplicação, Data Revacina (Auto-calculada), Lote, Vet Responsável.
 
--- TABELA: Veterinarios
-CREATE TABLE `Veterinarios` (
-  `id_vet` int NOT NULL AUTO_INCREMENT,
-  `nome` varchar(100) NOT NULL,
-  `crmv` varchar(20) NOT NULL,
-  `uf_crmv` char(2) NOT NULL,
-  `telefone` varchar(20),
-  `email` varchar(100),
-  PRIMARY KEY (`id_vet`)
-);
+3.  **Visualização: Carteira de Vacinação**
+    -   *UI*: Tabela colorida (Verde=Em dia, Amarelo=Próxima, Vermelho=Vencida).
 
--- TABELA: Vacinas (Catálogo)
-CREATE TABLE `Vacinas` (
-  `id_vacina` int NOT NULL AUTO_INCREMENT,
-  `nome` varchar(100) NOT NULL,
-  `descricao` text,
-  `recorrencia_dias` int DEFAULT 365, -- Ex: 365 para anual
-  PRIMARY KEY (`id_vacina`)
-);
+### FASE 3: Atendimento Clínico
+O registro da consulta.
 
--- TABELA: CarteiraVacinas (Aplicação)
-CREATE TABLE `CarteiraVacinas` (
-  `id_carteira` int NOT NULL AUTO_INCREMENT,
-  `id_pet` int NOT NULL,
-  `id_vacina` int NOT NULL,
-  `id_vet` int, -- Quem aplicou
-  `data_aplicacao` date NOT NULL,
-  `data_vencimento` date, -- Calculado ou manual
-  `lote` varchar(50),
-  `observacao` text,
-  PRIMARY KEY (`id_carteira`),
-  FOREIGN KEY (`id_pet`) REFERENCES `Pets`(`id_pet`),
-  FOREIGN KEY (`id_vacina`) REFERENCES `Vacinas`(`id_vacina`)
-);
+1.  **Tela: Painel do Veterinário (`vet_dashboard.php`)**
+    -   *Objetivo*: Visão rápida para o Vet.
+    -   *Widgets*: Próximas vacinas, Aniversariantes do dia.
 
--- TABELA: Atendimentos (Prontuário)
-CREATE TABLE `Atendimentos` (
-  `id_atendimento` int NOT NULL AUTO_INCREMENT,
-  `id_pet` int NOT NULL,
-  `id_vet` int NOT NULL,
-  `data_atendimento` datetime DEFAULT CURRENT_TIMESTAMP,
-  `queixa_principal` text,
-  `anamnese` text,
-  `exame_fisico` text, -- Pode ser JSON ou texto livre
-  `diagnostico` text,
-  `conduta_tratamento` text,
-  PRIMARY KEY (`id_atendimento`),
-  FOREIGN KEY (`id_pet`) REFERENCES `Pets`(`id_pet`),
-  FOREIGN KEY (`id_vet`) REFERENCES `Veterinarios`(`id_vet`)
-);
+2.  **Tela: Cadastro de Veterinários (`veterinarios.php`)**
+    -   *Objetivo*: CRUD de staff clínico.
+    -   *Vínculo*: Associar a um Usuário do sistema (para login).
 
--- TABELA: DocumentosEmitidos
-CREATE TABLE `DocumentosEmitidos` (
-  `id_documento` int NOT NULL AUTO_INCREMENT,
-  `id_atendimento` int, -- Opcional, vinculado a consulta
-  `id_pet` int NOT NULL,
-  `tipo` varchar(50), -- RECEITA, ATESTADO, TERMO
-  `conteudo` longtext, -- HTML gerado
-  `data_emissao` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id_documento`)
-);
-```
+3.  **Tela: Realizar Atendimento (`atendimento_form.php`)**
+    -   *Fluxo*:
+        -   Selecionar Pet (se não vier da tela de detalhes).
+        -   **Anamnese**: Motivo da consulta, Histórico.
+        -   **Exame Físico**: Peso, Temp, FC, FR, Mucosas, TPC.
+        -   **Diagnóstico/Suspeita**.
+        -   **Conduta/Tratamento**.
+    -   *Salvar*: Gera registro na timeline do Pet.
+
+### FASE 4: Documentos & Receituário
+Geração de documentos para o tutor.
+
+1.  **Funcionalidade: Gerador de Receita**
+    -   *Local*: Dentro do Atendimento.
+    -   *UI*: Editor de texto simples ou lista de medicamentos.
+    -   *Ação*: "Imprimir Receita" (Gera PDF/Print view com cabeçalho da clínica).
 
 ---
 
-## 4. Plano de Implementação (Roadmap)
+## 3. Modelo de Dados (Schema Vet)
+*Ver `migrate0.php` para definição SQL completa.*
 
-### Fase 1: Fundação
-1.  **Migração DB**: Criar tabelas novas (`schema_vet.sql`).
-2.  **Cadastro de Pets**:
-    - Tela de Listagem de Pets (por Tutor).
-    - Formulário de Criação/Edição de Pet.
-    - Alterar "Detalhes do Cliente" para incluir aba "Meus Pets".
-
-### Fase 2: Gestão Clínica Básica
-1.  **Cadastro de Vacinas**: CRUD de tipos de vacina.
-2.  **Carteira de Vacinação**: 
-    - Visualização no Perfil do Pet.
-    - Lógica de "Próxima Dose" (Alerta de Vencimento).
-    - Registro de aplicação.
-
-### Fase 3: Prontuário e Atendimento
-1.  **Nova Consulta**: Tela para registrar atendimento.
-2.  **Histórico**: Timeline do Pet com consultas e vacinas passadas.
-
-### Fase 4: Documentos
-1.  **Gerador de Receitas**: Editor simples ou campos estruturados que geram PDF/Print.
-2.  **Impressão**: Layout de impressão com cabeçalho da clínica.
-
----
-
-## 5. UI/UX - Sugestões
-- **Dashboard Principal**: Além do financeiro, ter widgets "Atendimentos do Dia", "Vacinas Vencendo".
-- **Busca Global**: Buscar por Tutor, Pet ou Telefone.
-- **Design**: Manter o padrão limpo atual, talvez usar ícone de patinha 🐾 para diferenciar ações Vet.
+- `Pets` (Lies to Clientes)
+- `Veterinarios`
+- `Vacinas`
+- `CarteiraVacinas` (Links Pet + Vacina + Vet)
+- `Atendimentos` (Links Pet + Vet)
+- `DocumentosEmitidos` (Links Pet + content)

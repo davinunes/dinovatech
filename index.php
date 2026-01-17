@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bem-vindo à Digital Inovation Tecnologia</title>
+    <title>Bem-vindo ao DinoVet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link rel="shortcut icon" href="favicon.ico" />
+    <link rel="shortcut icon" href="favicon.ico" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -15,17 +16,19 @@
         }
     </style>
 </head>
+
 <body class="bg-gray-100 flex items-center justify-center h-screen">
     <div class="container mx-auto p-8 max-w-lg text-center">
         <div class="bg-white p-10 rounded-xl shadow-lg">
-		
+
             <h1 class="text-3xl font-bold text-gray-800 mb-4">
-                Bem-vindo à <br><span class="text-cyan-600">Digital Inovation Tecnologia</span>
+                Bem-vindo ao <br><span class="text-cyan-600">DinoVet</span>
             </h1>
             <p class="text-gray-600 mb-8">
                 ...
             </p>
-            <a href="./cliente/" class="block w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 text-lg">
+            <a href="./cliente/"
+                class="block w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 text-lg">
                 Acessar Área do Cliente
             </a>
         </div>
@@ -42,4 +45,5 @@
         </div>
     </div>
 </body>
+
 </html>
