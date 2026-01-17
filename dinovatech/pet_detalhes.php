@@ -211,16 +211,53 @@ DBClose($link);
                             <h3 class="font-bold text-gray-800 flex items-center">
                                 <span class="material-icons text-purple-500 mr-2">vaccines</span> Vacinas
                             </h3>
-                            <button
-                                class="text-cyan-600 hover:bg-cyan-50 p-1 rounded transition opacity-50 cursor-not-allowed"
-                                title="Em breve">
+                            <button onclick="openVacinaModal()"
+                                class="text-cyan-600 hover:bg-cyan-50 p-1 rounded transition" title="Registrar Vacina">
                                 <span class="material-icons">add</span>
                             </button>
                         </div>
-                        <div class="p-8 text-center text-gray-400">
-                            <span class="material-icons text-4xl mb-2 opacity-30">medical_services</span>
-                            <p class="text-sm">Histórico de vacinas vazio.</p>
-                            <p class="text-xs mt-1 text-gray-300">(Módulo em desenvolvimento)</p>
+
+                        <div class="divide-y divide-gray-50">
+                            <?php
+                            // Fetch Vaccines
+                            $query_vacinas = "SELECT cv.*, v.nome as nome_vacina, v.recorrencia_dias FROM CarteiraVacinas cv 
+                                              JOIN Vacinas v ON cv.id_vacina = v.id_vacina 
+                                              WHERE cv.id_pet = '$id_safe' 
+                                              ORDER BY cv.data_aplicacao DESC";
+                            $res_vacinas = DBExecute($link, $query_vacinas);
+                            if ($res_vacinas && mysqli_num_rows($res_vacinas) > 0):
+                                while ($vac = mysqli_fetch_assoc($res_vacinas)):
+                                    $vencida = $vac['data_proxima_aplicacao'] && $vac['data_proxima_aplicacao'] < date('Y-m-d');
+                                    ?>
+                                    <div class="p-4 hover:bg-gray-50 transition">
+                                        <div class="flex justify-between items-start">
+                                            <span
+                                                class="font-bold text-gray-700"><?= htmlspecialchars($vac['nome_vacina']) ?></span>
+                                            <span
+                                                class="text-xs text-gray-400"><?= date('d/m/y', strtotime($vac['data_aplicacao'])) ?></span>
+                                        </div>
+                                        <?php if ($vac['data_proxima_aplicacao']): ?>
+                                            <div class="mt-1 flex items-center text-xs">
+                                                <span
+                                                    class="material-icons text-[14px] mr-1 <?= $vencida ? 'text-red-500' : 'text-green-500' ?>">event_repeat</span>
+                                                <span class="<?= $vencida ? 'text-red-600 font-bold' : 'text-green-600' ?>">
+                                                    Reforço: <?= date('d/m/Y', strtotime($vac['data_proxima_aplicacao'])) ?>
+                                                </span>
+                                            </div>
+                                        <?php endif; ?>
+                                        <?php if ($vac['lote']): ?>
+                                            <div class="text-xs text-gray-400 mt-1">Lote: <?= htmlspecialchars($vac['lote']) ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php
+                                endwhile;
+                            else:
+                                ?>
+                                <div class="p-8 text-center text-gray-400">
+                                    <span class="material-icons text-4xl mb-2 opacity-30">medical_services</span>
+                                    <p class="text-sm">Nenhuma vacina registrada.</p>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -249,6 +286,102 @@ DBClose($link);
             <?php endif; ?>
         </main>
     </div>
-</body>
+    <!-- Modal Registrar Vacina -->
+    <div id="modalVacina" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Registrar Vacina</h3>
+            <form id="formVacina">
+                <input type="hidden" name="action" value="register_vaccine">
+                <input type="hidden" name="id_pet" value="<?= $id_pet ?>">
 
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Vacina *</label>
+                    <select name="id_vacina" id="id_vacina" required class="w-full p-2 border rounded-lg" onchange="calcularProxima()">
+                        <option value="">Selecione...</option>
+                        <?php 
+                        // Fetch available vaccines for dropdown
+                        $link = DBConnect();
+                        $q = "SELECT * FROM Vacinas ORDER BY nome ASC";
+                        $r = DBExecute($link, $q);
+                        while($v = mysqli_fetch_assoc($r)): 
+                        ?>
+                            <option value="<?= $v['id_vacina'] ?>" data-dias="<?= $v['recorrencia_dias'] ?>"><?= htmlspecialchars($v['nome']) ?></option>
+                        <?php endwhile; DBClose($link); ?>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data Aplicação *</label>
+                        <input type="date" name="data_aplicacao" id="data_aplicacao" value="<?= date('Y-m-d') ?>" required class="w-full p-2 border rounded-lg" onchange="calcularProxima()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Próxima Dose</label>
+                        <input type="date" name="data_proxima" id="data_proxima" class="w-full p-2 border rounded-lg">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Lote (Opcional)</label>
+                    <input type="text" name="lote" class="w-full p-2 border rounded-lg">
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Observações</label>
+                    <textarea name="observacoes" rows="2" class="w-full p-2 border rounded-lg"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="closeVacinaModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <?php include 'components/layout_scripts.php'; ?>
+    <script>
+        function openVacinaModal() {
+            $('#modalVacina').removeClass('hidden');
+        }
+        function closeVacinaModal() {
+            $('#modalVacina').addClass('hidden');
+        }
+
+        function calcularProxima() {
+            const dias = $('#id_vacina option:selected').data('dias');
+            const dataAplicacao = $('#data_aplicacao').val();
+            
+            if (dias && dataAplicacao) {
+                const data = new Date(dataAplicacao);
+                data.setDate(data.getDate() + parseInt(dias)); // Add days
+                // Format YYYY-MM-DD
+                const yyyy = data.getFullYear();
+                const mm = String(data.getMonth() + 1).padStart(2, '0');
+                const dd = String(data.getDate()).padStart(2, '0');
+                $('#data_proxima').val(`${yyyy}-${mm}-${dd}`);
+            }
+        }
+
+        $('#formVacina').on('submit', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: 'app.php',
+                type: 'POST',
+                data: $(this).serialize(),
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert('Erro: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('Erro de conexão ao salvar vacina.');
+                }
+            });
+        });
+    </script>
+</body>
 </html>

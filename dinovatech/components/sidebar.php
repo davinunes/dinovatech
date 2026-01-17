@@ -44,6 +44,16 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         </a>
 
         <div class="pt-4 pb-2">
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Clínico</p>
+        </div>
+
+        <a href="vacinas.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'vacinas.php' || $currentPage == 'vacina_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3">vaccines</span>
+            <span class="font-medium">Vacinas (Catálogo)</span>
+        </a>
+
+        <div class="pt-4 pb-2">
             <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gestão</p>
         </div>
 
