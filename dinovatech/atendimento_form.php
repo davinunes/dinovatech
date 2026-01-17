@@ -65,11 +65,25 @@ if ($id_pet_pre) {
 
 // Handle Save
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id_pet = $_POST['id_pet'] ?? '';
+    $id_veterinario = $_POST['id_veterinario'] ?? '';
+    $data = $_POST['data_atendimento'] ?? '';
+    $peso = $_POST['peso'] ?? '';
+    $motivo = mysqli_real_escape_string($link, $_POST['motivo'] ?? '');
+    $anamnese = mysqli_real_escape_string($link, $_POST['anamnese'] ?? '');
+    $exame = mysqli_real_escape_string($link, $_POST['exame_fisico'] ?? '');
+    $diag = mysqli_real_escape_string($link, $_POST['diagnostico'] ?? '');
+    $presc = mysqli_real_escape_string($link, $_POST['prescricao'] ?? '');
+    $obs = mysqli_real_escape_string($link, $_POST['obs_internas'] ?? '');
+
     // Validate required fields
     $missing = [];
-    if (empty($id_pet)) $missing[] = "Pet (ID: $id_pet)";
-    if (empty($id_veterinario)) $missing[] = "Veterinário";
-    if (empty($data)) $missing[] = "Data";
+    if (empty($id_pet))
+        $missing[] = "Pet (ID: $id_pet)";
+    if (empty($id_veterinario))
+        $missing[] = "Veterinário";
+    if (empty($data))
+        $missing[] = "Data";
 
     if (!empty($missing)) {
         echo "<pre>";
