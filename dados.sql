@@ -1,10 +1,11 @@
--- Dados do Banco de Dados - Gerado em 2026-01-17 23:55:39
+-- Dados do Banco de Dados - Gerado em 2026-01-18 00:03:18
 
 
 -- Dumping data for table `Arquivos` --
 
 
 -- Dumping data for table `Atendimentos` --
+INSERT INTO `Atendimentos` VALUES("1","2","1","2026-01-18 00:02:00","Algum problema na orelha","asdasd","asdasd","asdasd","asdas");
 
 
 -- Dumping data for table `CarteiraVacinas` --
@@ -38,7 +39,7 @@ INSERT INTO `ConfiguracoesEmissor` VALUES("1","Minha Clínica Veterinária","Din
 
 -- Dumping data for table `Pets` --
 INSERT INTO `Pets` VALUES("1","1","Nina","Canino","Shitzu","F","2021-09-27","4.20","","","2026-01-17 23:32:27");
-INSERT INTO `Pets` VALUES("2","1","Viky","Canino","Shitzu","F","","6.40","","","2026-01-17 23:32:51");
+INSERT INTO `Pets` VALUES("2","1","Viky","Canino","Shitzu","F","","6.00","","","2026-01-17 23:32:51");
 
 
 -- Dumping data for table `Recorrencias` --
@@ -57,3 +58,4 @@ INSERT INTO `Vacinas` VALUES("1","Raiva","Vacina contra raiva","365");
 
 -- Dumping data for table `Veterinarios` --
 INSERT INTO `Veterinarios` VALUES("1","Mariana","123456","DF","","");
+INSERT INTO `Veterinarios` VALUES("2","Mariana2","123456","DF","","");
