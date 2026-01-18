@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $lote = mysqli_real_escape_string($link, $lote);
                 $observacoes = mysqli_real_escape_string($link, $observacoes);
 
-                $query = "INSERT INTO CarteiraVacinas (id_pet, id_vacina, data_aplicacao, data_proxima_aplicacao, lote, observacoes) 
+                $query = "INSERT INTO CarteiraVacinas (id_pet, id_vacina, data_aplicacao, data_vencimento, lote, observacao) 
                           VALUES ($id_pet, $id_vacina, '$data_aplicacao', $data_proxima_val, '$lote', '$observacoes')";
 
                 if (DBExecute($link, $query)) {
