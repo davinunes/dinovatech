@@ -330,7 +330,7 @@ function calcularIdade($data_nasc)
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                <?php
+                                    <?php
                                 endwhile;
                             else:
                                 ?>
@@ -359,37 +359,44 @@ function calcularIdade($data_nasc)
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Vacina *</label>
-                        <select name="id_vacina" id="id_vacina" required class="w-full p-2 border rounded-lg"
-                            onchange="onVacinaChange()">
-                            <option value="">Selecione...</option>
-                            <?php
-                            $link = DBConnect();
-                            // Fetch vaccines
-                            $q = "SELECT * FROM Vacinas ORDER BY nome ASC";
-                            $r = DBExecute($link, $q);
-                            
-                            // Fetch all cycles
-                            $ciclos_map = [];
-                            $qc = "SELECT * FROM VacinaCiclos ORDER BY id_vacina, intervalo ASC";
-                            $rc = DBExecute($link, $qc);
-                            while($ciclo = mysqli_fetch_assoc($rc)){
-                                $ciclos_map[$ciclo['id_vacina']][] = [
-                                    'nome' => $ciclo['nome'], 
-                                    'dias' => $ciclo['intervalo']
-                                ];
-                            }
+                    <select name="id_vacina" id="id_vacina" required class="w-full p-2 border rounded-lg"
+                        onchange="onVacinaChange()">
+                        <option value="">Selecione...</option>
+                        <?php
+                        $link = DBConnect();
+                        // Fetch vaccines
+                        $q = "SELECT * FROM Vacinas ORDER BY nome ASC";
+                        $r = DBExecute($link, $q);
 
-                            while ($v = mysqli_fetch_assoc($r)):
-                                $ciclos_json = isset($ciclos_map[$v['id_vacina']]) ? json_encode($ciclos_map[$v['id_vacina']]) : '[]';
-                                ?>
-                                <option value="<?= $v['id_vacina'] ?>" 
-                                        data-dias="<?= $v['recorrencia_dias'] ?>"
-                                        data-ciclos='<?= $ciclos_json ?>'>
-                                    <?= htmlspecialchars($v['nome']) ?>
-                                </option>
-                            <?php endwhile;
-                            DBClose($link); ?>
-                        </select>
+                        // Fetch all cycles
+                        $ciclos_map = [];
+                        $qc = "SELECT * FROM VacinaCiclos ORDER BY id_vacina, intervalo ASC";
+                        $rc = DBExecute($link, $qc);
+                        while ($ciclo = mysqli_fetch_assoc($rc)) {
+                            $ciclos_map[$ciclo['id_vacina']][] = [
+                                'nome' => $ciclo['nome'],
+                                'dias' => $ciclo['intervalo']
+                            ];
+                        }
+
+                        while ($v = mysqli_fetch_assoc($r)):
+                            $ciclos_json = isset($ciclos_map[$v['id_vacina']]) ? json_encode($ciclos_map[$v['id_vacina']]) : '[]';
+                            ?>
+                            <option value="<?= $v['id_vacina'] ?>" data-dias="<?= $v['recorrencia_dias'] ?>"
+                                data-ciclos='<?= $ciclos_json ?>'>
+                                <?= htmlspecialchars($v['nome']) ?>
+                            </option>
+                        <?php endwhile;
+                        DBClose($link); ?>
+                    </select>
+                </div>
+
+                <!-- Ciclo Selection (Hidden by default) -->
+                <div id="div-ciclo" class="mb-4 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ciclo / Protocolo (Opcional)</label>
+                    <select id="select_ciclo" class="w-full p-2 border rounded-lg bg-gray-50" onchange="applyCiclo()">
+                        <option value="">Padrão da Vacina</option>
+                    </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -469,8 +476,8 @@ function calcularIdade($data_nasc)
 
         function calcularProxima(dias) {
             // override manual logic
-            if(!dias) dias = $('#id_vacina option:selected').data('dias');
-            
+            if (!dias) dias = $('#id_vacina option:selected').data('dias');
+
             const dataAplicacao = $('#data_aplicacao').val();
 
             if (dias && dataAplicacao) {
