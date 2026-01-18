@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-17 23:55:39
+-- Estrutura do Banco de Dados - Gerado em 2026-01-18 00:03:18
 
 
 CREATE TABLE `Arquivos` (
@@ -28,7 +28,7 @@ CREATE TABLE `Atendimentos` (
   KEY `id_vet` (`id_vet`),
   CONSTRAINT `Atendimentos_ibfk_1` FOREIGN KEY (`id_pet`) REFERENCES `Pets` (`id_pet`),
   CONSTRAINT `Atendimentos_ibfk_2` FOREIGN KEY (`id_vet`) REFERENCES `Veterinarios` (`id_vet`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -301,5 +301,5 @@ CREATE TABLE `Veterinarios` (
   `telefone` varchar(20) DEFAULT NULL,
   `email` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id_vet`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
