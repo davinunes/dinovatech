@@ -108,7 +108,7 @@ if ($link) {
                                 </div>
                             </div>
                             <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
-                                <a href="veterinario_form.php?id=<?= $vet['id_veterinario'] ?>"
+                                <a href="veterinario_form.php?id=<?= $vet['id_vet'] ?>"
                                     class="text-cyan-600 hover:text-cyan-800 font-medium text-sm">Editar</a>
                             </div>
                         </div>
