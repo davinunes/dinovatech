@@ -42,14 +42,14 @@ if ($id_atendimento) {
         // Populate inputs
         $id_pet_pre = $atendimento['id_pet'];
         $data_atendimento = date('Y-m-d\TH:i', strtotime($atendimento['data_atendimento'])); // Format for datetime-local
-        $id_veterinario = $atendimento['id_veterinario'];
-        $motivo = $atendimento['motivo_visita'];
+        $id_veterinario = $atendimento['id_vet'];
+        $motivo = $atendimento['queixa_principal'];
         $anamnese = $atendimento['anamnese'];
         $exame_fisico = $atendimento['exame_fisico'];
         $diagnostico = $atendimento['diagnostico'];
-        $tratamento = $atendimento['prescricao'];
-        $obs_internas = $atendimento['obs_internas'];
-        $peso = $atendimento['peso_atual'];
+        $tratamento = $atendimento['conduta_tratamento'];
+        $obs_internas = ""; // Column missing in DB
+        $peso = "";         // Column missing in DB
     }
 }
 
@@ -106,12 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($is_edit) {
-        $q = "UPDATE Atendimentos SET id_veterinario=$id_veterinario, data_atendimento='$data_safe', motivo_visita='$motivo', 
-              anamnese='$anamnese', exame_fisico='$exame', diagnostico='$diag', prescricao='$presc', obs_internas='$obs', peso_atual=$peso_safe
+        $q = "UPDATE Atendimentos SET id_vet=$id_veterinario, data_atendimento='$data_safe', queixa_principal='$motivo', 
+              anamnese='$anamnese', exame_fisico='$exame', diagnostico='$diag', conduta_tratamento='$presc'
               WHERE id_atendimento=$id_atendimento";
     } else {
-        $q = "INSERT INTO Atendimentos (id_pet, id_veterinario, data_atendimento, motivo_visita, anamnese, exame_fisico, diagnostico, prescricao, obs_internas, peso_atual)
-              VALUES ($id_pet, $id_veterinario, '$data_safe', '$motivo', '$anamnese', '$exame', '$diag', '$presc', '$obs', $peso_safe)";
+        $q = "INSERT INTO Atendimentos (id_pet, id_vet, data_atendimento, queixa_principal, anamnese, exame_fisico, diagnostico, conduta_tratamento)
+              VALUES ($id_pet, $id_veterinario, '$data_safe', '$motivo', '$anamnese', '$exame', '$diag', '$presc')";
     }
 
     if (DBExecute($link, $q)) {
