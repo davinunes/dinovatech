@@ -258,6 +258,16 @@ execSql($link, "Tabela: Vacinas", "CREATE TABLE IF NOT EXISTS `Vacinas` (
   PRIMARY KEY (`id_vacina`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
+// VacinaCiclos
+execSql($link, "Tabela: VacinaCiclos", "CREATE TABLE IF NOT EXISTS `VacinaCiclos` (
+  `id_ciclo` int NOT NULL AUTO_INCREMENT,
+  `id_vacina` int NOT NULL,
+  `nome` varchar(100) NOT NULL,
+  `intervalo` int NOT NULL,
+  PRIMARY KEY (`id_ciclo`),
+  FOREIGN KEY (`id_vacina`) REFERENCES `Vacinas`(`id_vacina`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
 // CarteiraVacinas
 execSql($link, "Tabela: CarteiraVacinas", "CREATE TABLE IF NOT EXISTS `CarteiraVacinas` (
   `id_carteira` int NOT NULL AUTO_INCREMENT,
