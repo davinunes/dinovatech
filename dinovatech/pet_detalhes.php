@@ -359,21 +359,37 @@ function calcularIdade($data_nasc)
 
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Vacina *</label>
-                    <select name="id_vacina" id="id_vacina" required class="w-full p-2 border rounded-lg"
-                        onchange="calcularProxima()">
-                        <option value="">Selecione...</option>
-                        <?php
-                        // Fetch available vaccines for dropdown
-                        $link = DBConnect();
-                        $q = "SELECT * FROM Vacinas ORDER BY nome ASC";
-                        $r = DBExecute($link, $q);
-                        while ($v = mysqli_fetch_assoc($r)):
-                            ?>
-                            <option value="<?= $v['id_vacina'] ?>" data-dias="<?= $v['recorrencia_dias'] ?>">
-                                <?= htmlspecialchars($v['nome']) ?></option>
-                        <?php endwhile;
-                        DBClose($link); ?>
-                    </select>
+                        <select name="id_vacina" id="id_vacina" required class="w-full p-2 border rounded-lg"
+                            onchange="onVacinaChange()">
+                            <option value="">Selecione...</option>
+                            <?php
+                            $link = DBConnect();
+                            // Fetch vaccines
+                            $q = "SELECT * FROM Vacinas ORDER BY nome ASC";
+                            $r = DBExecute($link, $q);
+                            
+                            // Fetch all cycles
+                            $ciclos_map = [];
+                            $qc = "SELECT * FROM VacinaCiclos ORDER BY id_vacina, intervalo ASC";
+                            $rc = DBExecute($link, $qc);
+                            while($ciclo = mysqli_fetch_assoc($rc)){
+                                $ciclos_map[$ciclo['id_vacina']][] = [
+                                    'nome' => $ciclo['nome'], 
+                                    'dias' => $ciclo['intervalo']
+                                ];
+                            }
+
+                            while ($v = mysqli_fetch_assoc($r)):
+                                $ciclos_json = isset($ciclos_map[$v['id_vacina']]) ? json_encode($ciclos_map[$v['id_vacina']]) : '[]';
+                                ?>
+                                <option value="<?= $v['id_vacina'] ?>" 
+                                        data-dias="<?= $v['recorrencia_dias'] ?>"
+                                        data-ciclos='<?= $ciclos_json ?>'>
+                                    <?= htmlspecialchars($v['nome']) ?>
+                                </option>
+                            <?php endwhile;
+                            DBClose($link); ?>
+                        </select>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4 mb-4">
@@ -417,13 +433,49 @@ function calcularIdade($data_nasc)
             $('#modalVacina').addClass('hidden');
         }
 
-        function calcularProxima() {
-            const dias = $('#id_vacina option:selected').data('dias');
+        function onVacinaChange() {
+            const opt = $('#id_vacina option:selected');
+            const ciclos = opt.data('ciclos');
+            const defaultDias = opt.data('dias');
+
+            const selectCiclo = $('#select_ciclo');
+            const divCiclo = $('#div-ciclo');
+
+            // Reset Cycle Dropdown
+            selectCiclo.empty().append('<option value="">Padrão (' + defaultDias + ' dias)</option>');
+
+            if (ciclos && ciclos.length > 0) {
+                divCiclo.removeClass('hidden');
+                ciclos.forEach(c => {
+                    selectCiclo.append(`<option value="${c.dias}">${c.nome} (${c.dias} dias)</option>`);
+                });
+            } else {
+                divCiclo.addClass('hidden');
+            }
+
+            // Apply default calculation
+            calcularProxima(defaultDias);
+        }
+
+        function applyCiclo() {
+            const diasCiclo = $('#select_ciclo').val();
+            if (diasCiclo) {
+                calcularProxima(diasCiclo);
+            } else {
+                const defaultDias = $('#id_vacina option:selected').data('dias');
+                calcularProxima(defaultDias);
+            }
+        }
+
+        function calcularProxima(dias) {
+            // override manual logic
+            if(!dias) dias = $('#id_vacina option:selected').data('dias');
+            
             const dataAplicacao = $('#data_aplicacao').val();
 
             if (dias && dataAplicacao) {
                 const data = new Date(dataAplicacao);
-                data.setDate(data.getDate() + parseInt(dias)); // Add days
+                data.setDate(data.getDate() + parseInt(dias));
                 // Format YYYY-MM-DD
                 const yyyy = data.getFullYear();
                 const mm = String(data.getMonth() + 1).padStart(2, '0');

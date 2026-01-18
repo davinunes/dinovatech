@@ -26,6 +26,16 @@ if ($id_vacina) {
     }
 }
 
+// Fetch Cycles if Edit
+$ciclos = [];
+if ($is_edit) {
+    $q_ciclos = "SELECT * FROM VacinaCiclos WHERE id_vacina = " . (int) $id_vacina . " ORDER BY id_ciclo ASC";
+    $r_ciclos = DBExecute($link, $q_ciclos);
+    while ($c = mysqli_fetch_assoc($r_ciclos)) {
+        $ciclos[] = $c;
+    }
+}
+
 // Handle Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'] ?? '';
@@ -45,6 +55,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (DBExecute($link, $query)) {
+            // Get ID if INSERT
+            if (!$is_edit) {
+                $id_vacina = mysqli_insert_id($link);
+            }
+
+            // Sync Cycles
+            // 1. Delete all existing (simplest approach for now)
+            DBExecute($link, "DELETE FROM VacinaCiclos WHERE id_vacina = " . (int) $id_vacina);
+
+            // 2. Insert new ones
+            if (isset($_POST['ciclo_nome']) && is_array($_POST['ciclo_nome'])) {
+                foreach ($_POST['ciclo_nome'] as $k => $c_nome) {
+                    $c_nome_s = mysqli_real_escape_string($link, $c_nome);
+                    $c_int = (int) $_POST['ciclo_intervalo'][$k];
+                    if ($c_nome_s && $c_int > 0) {
+                        DBExecute($link, "INSERT INTO VacinaCiclos (id_vacina, nome, intervalo) VALUES ($id_vacina, '$c_nome_s', $c_int)");
+                    }
+                }
+            }
+
             header("Location: vacinas.php");
             exit();
         } else {
@@ -115,6 +145,51 @@ DBClose($link);
                                 <span class="text-gray-500 text-sm">Ex: 365 para anual, 21 para reforço.</span>
                             </div>
                         </div>
+
+                        <!-- Ciclos / Protocolos -->
+                        <div class="border-t border-gray-100 pt-6">
+                            <h3 class="text-lg font-bold text-gray-800 mb-2">Ciclos / Protocolos (Opcional)</h3>
+                            <p class="text-sm text-gray-500 mb-4">Adicione configurações específicas (ex: Filhote,
+                                Reforço Curto) para facilitar o cálculo.</p>
+
+                            <div id="ciclos-container" class="space-y-3">
+                                <?php foreach ($ciclos as $c): ?>
+                                    <div class="flex gap-2 items-center ciclo-row">
+                                        <input type="text" name="ciclo_nome[]" value="<?= htmlspecialchars($c['nome']) ?>"
+                                            placeholder="Nome (Ex: Filhote)"
+                                            class="flex-1 border-gray-300 rounded-lg p-2 border text-sm" required>
+                                        <input type="number" name="ciclo_intervalo[]" value="<?= $c['intervalo'] ?>"
+                                            placeholder="Dias" class="w-24 border-gray-300 rounded-lg p-2 border text-sm"
+                                            required>
+                                        <button type="button" onclick="removeCiclo(this)"
+                                            class="text-red-500 hover:text-red-700 p-2"><span
+                                                class="material-icons">delete</span></button>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <button type="button" onclick="addCiclo()"
+                                class="mt-3 text-cyan-600 font-medium text-sm flex items-center hover:text-cyan-800">
+                                <span class="material-icons mr-1 text-sm">add_circle</span> Adicionar Ciclo
+                            </button>
+                        </div>
+
+                        <script>
+                            function addCiclo() {
+                                const html = `
+                                    <div class="flex gap-2 items-center ciclo-row">
+                                        <input type="text" name="ciclo_nome[]" placeholder="Nome (Ex: Filhote)" class="flex-1 border-gray-300 rounded-lg p-2 border text-sm" required>
+                                        <input type="number" name="ciclo_intervalo[]" placeholder="Dias" class="w-24 border-gray-300 rounded-lg p-2 border text-sm" required>
+                                        <button type="button" onclick="removeCiclo(this)" class="text-red-500 hover:text-red-700 p-2"><span class="material-icons">delete</span></button>
+                                    </div>
+                                `;
+                                document.getElementById('ciclos-container').insertAdjacentHTML('beforeend', html);
+                            }
+
+                            function removeCiclo(btn) {
+                                btn.closest('.ciclo-row').remove();
+                            }
+                        </script>
 
                         <div class="pt-4 flex justify-end gap-3">
                             <a href="vacinas.php"
