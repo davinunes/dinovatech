@@ -277,7 +277,7 @@ function calcularIdade($data_nasc)
                             <?php
                             // Fetch Consultations
                             $query_atend = "SELECT a.*, v.nome as nome_vet FROM Atendimentos a 
-                                            LEFT JOIN Veterinarios v ON a.id_veterinario = v.id_vet 
+                                            LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet 
                                             WHERE a.id_pet = '$id_safe' 
                                             ORDER BY a.data_atendimento DESC";
                             $res_atend = DBExecute($link, $query_atend);
