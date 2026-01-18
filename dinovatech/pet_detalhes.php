@@ -227,7 +227,7 @@ function calcularIdade($data_nasc)
                             $res_vacinas = DBExecute($link, $query_vacinas);
                             if ($res_vacinas && mysqli_num_rows($res_vacinas) > 0):
                                 while ($vac = mysqli_fetch_assoc($res_vacinas)):
-                                    $vencida = $vac['data_proxima_aplicacao'] && $vac['data_proxima_aplicacao'] < date('Y-m-d');
+                                    $vencida = $vac['data_vencimento'] && $vac['data_vencimento'] < date('Y-m-d');
                                     ?>
                                     <div class="p-4 hover:bg-gray-50 transition">
                                         <div class="flex justify-between items-start">
@@ -236,12 +236,12 @@ function calcularIdade($data_nasc)
                                             <span
                                                 class="text-xs text-gray-400"><?= date('d/m/y', strtotime($vac['data_aplicacao'])) ?></span>
                                         </div>
-                                        <?php if ($vac['data_proxima_aplicacao']): ?>
+                                        <?php if ($vac['data_vencimento']): ?>
                                             <div class="mt-1 flex items-center text-xs">
                                                 <span
                                                     class="material-icons text-[14px] mr-1 <?= $vencida ? 'text-red-500' : 'text-green-500' ?>">event_repeat</span>
                                                 <span class="<?= $vencida ? 'text-red-600 font-bold' : 'text-green-600' ?>">
-                                                    Reforço: <?= date('d/m/Y', strtotime($vac['data_proxima_aplicacao'])) ?>
+                                                    Reforço: <?= date('d/m/Y', strtotime($vac['data_vencimento'])) ?>
                                                 </span>
                                             </div>
                                         <?php endif; ?>
