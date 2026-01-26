@@ -1,4 +1,4 @@
--- Estrutura do Banco de Dados - Gerado em 2026-01-15 10:01:14
+-- Estrutura do Banco de Dados - Gerado em 2026-01-17 17:33:48
 
 
 CREATE TABLE `Arquivos` (
@@ -20,6 +20,7 @@ CREATE TABLE `Clientes` (
   `inscricao_municipal` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `inscricao_estadual` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `telefone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ativo` tinyint(1) DEFAULT '1',
   `email` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `endereco` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `numero` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -85,7 +86,7 @@ CREATE TABLE `Faturas` (
   PRIMARY KEY (`id_fatura`),
   KEY `id_cliente` (`id_cliente`),
   CONSTRAINT `Faturas_ibfk_1` FOREIGN KEY (`id_cliente`) REFERENCES `Clientes` (`id_cliente`)
-) ENGINE=InnoDB AUTO_INCREMENT=44 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -104,7 +105,7 @@ CREATE TABLE `ItensFatura` (
   CONSTRAINT `fk_itensfatura_recorrencia` FOREIGN KEY (`id_recorrencia`) REFERENCES `Recorrencias` (`id_recorrencia`),
   CONSTRAINT `ItensFatura_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE,
   CONSTRAINT `ItensFatura_ibfk_2` FOREIGN KEY (`id_servico`) REFERENCES `Servicos` (`id_servico`)
-) ENGINE=InnoDB AUTO_INCREMENT=94 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=99 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -132,7 +133,7 @@ CREATE TABLE `NfseEmissoes` (
   PRIMARY KEY (`id_emissao`),
   KEY `id_fatura` (`id_fatura`),
   CONSTRAINT `NfseEmissoes_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
@@ -153,7 +154,7 @@ CREATE TABLE `Pagamentos` (
   UNIQUE KEY `e2eid` (`e2eid`),
   KEY `id_fatura` (`id_fatura`),
   CONSTRAINT `Pagamentos_ibfk_1` FOREIGN KEY (`id_fatura`) REFERENCES `Faturas` (`id_fatura`)
-) ENGINE=InnoDB AUTO_INCREMENT=119 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=120 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 
