@@ -373,6 +373,7 @@ if ($id_fatura) {
                         dataType: 'json',
                         success: function (response) {
                             if (response.success) {
+                                console.log(response.data);
                                 renderPix(response.data);
                             } else {
                                 alert('Erro ao gerar PIX: ' + response.message);
