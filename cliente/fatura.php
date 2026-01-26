@@ -334,6 +334,7 @@ if ($id_fatura) {
                         <p class="font-bold flex items-center justify-center mb-1"><span
                                 class="material-icons text-sm mr-1">sync</span> Aguardando pagamento...</p>
                         <p class="text-xs">Após pagar, a fatura será baixada automaticamente em instantes.</p>
+                        <p class="text-xs">Expira em: <span id="expiraEm"></span>.</p>
                     </div>
                 </div>
 
@@ -398,6 +399,30 @@ if ($id_fatura) {
                     $(el).css({ 'max-width': '100%', 'height': 'auto' });
                     $('#qrcodeDisplay').html('').append(el);
                     $('#pixCopiaColaInput').val(data.pixCopiaECola);
+                    // Calculando data de expiração e convertendo para GMT-3
+                    let expirationDate;
+                    if (data.expiraEm) {
+                        expirationDate = new Date(data.expiraEm);
+                    } else if (data.calendario && data.calendario.criacao) {
+                        const criacao = new Date(data.calendario.criacao);
+                        const seconds = data.calendario.expiracao || 0;
+                        expirationDate = new Date(criacao.getTime() + (seconds * 1000));
+                    }
+
+                    if (expirationDate) {
+                        $('#expiraEm').text(expirationDate.toLocaleString('pt-BR', {
+                            timeZone: 'America/Sao_Paulo',
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        }));
+                    } else {
+                        $('#expiraEm').text('');
+                    }
+
 
                     // Start Polling
                     startPolling(data.txid);
