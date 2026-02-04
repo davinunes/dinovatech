@@ -450,7 +450,6 @@ XML;
                 <DescontoIncondicionado>0.00</DescontoIncondicionado>
                 <DescontoCondicionado>0.00</DescontoCondicionado>
             </Valores>
-            </Valores>
             <IssRetido>$issRetido</IssRetido>
             $responsavelRetencaoTag
             <ItemListaServico>$itemLista</ItemListaServico>
