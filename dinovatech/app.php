@@ -1817,7 +1817,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             // 4. Prepare Input
-            $ambiente = ($config['ambiente_padrao'] == '1') ? 'producao' : 'homologacao'; // 1=Prod, 2=Homolog
+            // Fix: Check for 'producao' string, not '1'
+            $ambiente = ($config['ambiente_padrao'] === 'producao') ? 'producao' : 'homologacao';
+
             // RPS Number
             $nextRps = ($ambiente == 'producao') ? $config['ultimo_rps_producao'] + 1 : $config['ultimo_rps_homologacao'] + 1;
 
@@ -1878,7 +1880,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'codigo_nbs' => $taxSettings['nbs'],
                 'item_lista' => $taxSettings['item_lista'],
                 'codigo_tributacao' => $taxSettings['tributacao'],
-                'optante_simples' => ($config['optante_simples'] == '1') ? '1' : '2', // Force 1 or 2
+                'optante_simples' => ($config['optante_simples'] == '1') ? '1' : '2', // 1=Sim, 2=Nao
                 'tomador' => $tomadorData
             ];
 
