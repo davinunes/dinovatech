@@ -109,11 +109,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $serie_rps = mysqli_real_escape_string($link, $serie_rps);
                 $ultimo_rps_homologacao = (int) $ultimo_rps_homologacao;
                 $ultimo_rps_producao = (int) $ultimo_rps_producao;
+
+                // --- FILE UPLOAD (PFX) ---
+                if (isset($_FILES['arquivo_pfx']) && $_FILES['arquivo_pfx']['error'] === UPLOAD_ERR_OK) {
+                    $uploadDir = dirname(__DIR__) . '/certificado/';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+
+                    // Sanitiza nome do arquivo
+                    $ext = pathinfo($_FILES['arquivo_pfx']['name'], PATHINFO_EXTENSION);
+                    if (strtolower($ext) !== 'pfx') {
+                        $response['message'] = "Erro: Apenas arquivos .pfx são permitidos.";
+                        break;
+                    }
+
+                    $newFileName = 'certificado_' . time() . '.pfx'; // Nome único para evitar conflito
+                    $destPath = $uploadDir . $newFileName;
+
+                    if (move_uploaded_file($_FILES['arquivo_pfx']['tmp_name'], $destPath)) {
+                        // Salva caminho relativo para o DB, similar ao padrão anterior
+                        $caminho_certificado = 'certificado/' . $newFileName;
+                    } else {
+                        $response['message'] = "Erro ao mover arquivo de certificado.";
+                        break;
+                    }
+                }
+
                 $caminho_certificado = mysqli_real_escape_string($link, $caminho_certificado);
 
                 // Novos Campos de Integração
                 $api_inter_client_id = mysqli_real_escape_string($link, $_POST['api_inter_client_id'] ?? '');
+                $api_inter_chave_pix = mysqli_real_escape_string($link, $_POST['api_inter_chave_pix'] ?? '');
+                $api_inter_conta_corrente = mysqli_real_escape_string($link, $_POST['api_inter_conta_corrente'] ?? '');
+
                 $api_oracle_user = mysqli_real_escape_string($link, $_POST['api_oracle_user'] ?? '');
+                $api_oracle_url = mysqli_real_escape_string($link, $_POST['api_oracle_url'] ?? '');
 
                 // Segredos (Encrypt)
                 $api_inter_client_secret_raw = $_POST['api_inter_client_secret'] ?? '';
@@ -130,8 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Senha Certificado
                 $senha_sql_part = "";
                 if (!empty($senha_certificado)) {
-                    // Criptografar antes de salvar, se desejar. Por enquanto, mantendo compatibilidade com código legado que lê direto.
-                    // SE for para criptografar a senha do certificado também (user pediu "campos como Certificados Digitais (.pfx) e suas respectivas senhas sejam criptografados"):
+                    // Criptografar antes de salvar
                     try {
                         $senha_encrypted = EncryptionHelper::encrypt($senha_certificado);
                         $senha_sql_part = ", senha_certificado = '$senha_encrypted'";
@@ -166,7 +196,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 caminho_certificado='$caminho_certificado',
                                 endereco='$endereco', numero='$numero', complemento='$complemento',
                                 bairro='$bairro', cep='$cep', uf='$uf',
-                                api_inter_client_id='$api_inter_client_id', api_oracle_user='$api_oracle_user'
+                                api_inter_client_id='$api_inter_client_id', 
+                                api_inter_chave_pix='$api_inter_chave_pix',
+                                api_inter_conta_corrente='$api_inter_conta_corrente',
+                                api_oracle_user='$api_oracle_user',
+                                api_oracle_url='$api_oracle_url'
                                 $senha_sql_part
                                 $inter_secret_sql_part
                                 $oracle_pass_sql_part
@@ -183,14 +217,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
                                endereco, numero, complemento, bairro, cep, uf,
-                               api_inter_client_id, api_inter_client_secret, api_oracle_user, api_oracle_password)
+                               api_inter_client_id, api_inter_client_secret, 
+                               api_inter_chave_pix, api_inter_conta_corrente,
+                               api_oracle_user, api_oracle_password, api_oracle_url)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val,
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf',
-                               '$api_inter_client_id', $inter_secret_val, '$api_oracle_user', $oracle_pass_val)";
+                               '$api_inter_client_id', $inter_secret_val, 
+                               '$api_inter_chave_pix', '$api_inter_conta_corrente',
+                               '$api_oracle_user', $oracle_pass_val, '$api_oracle_url')";
                 }
 
                 if (DBExecute($link, $query)) {

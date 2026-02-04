@@ -183,20 +183,49 @@ if (!isset($_SESSION['usuario_id'])) {
                         <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
                             <span class="material-icons mr-2 text-cyan-600">vpn_key</span> Certificado Digital
                         </h3>
-                        <p class="text-gray-500 text-sm mb-4">Esta senha será criptografada no banco de dados.</p>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800">
+                            O certificado digital (A1 / PFX) é essencial para a emissão de notas fiscais.
+                            <br>A senha será armazenada de forma segura (criptografada).
+                        </div>
+
                         <div class="space-y-4">
+                            <!-- Upload Area -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Caminho do Arquivo
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo do Certificado
                                     (.pfx)</label>
-                                <input type="text" name="caminho_certificado" id="caminho_certificado"
-                                    placeholder="Ex: certificado/meu_arquivo.pfx"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                <div class="flex items-center gap-4">
+                                    <div class="flex-1">
+                                        <input type="file" name="arquivo_pfx" id="arquivo_pfx" accept=".pfx" class="block w-full text-sm text-slate-500
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-full file:border-0
+                                            file:text-sm file:font-semibold
+                                            file:bg-cyan-50 file:text-cyan-700
+                                            hover:file:bg-cyan-100
+                                            cursor-pointer border border-gray-300 rounded-lg">
+                                    </div>
+                                    <div class="text-xs text-gray-500" id="current_cert_info">
+                                        <!-- Will be populated via JS if exists -->
+                                        <div class="flex items-center">
+                                            <span
+                                                class="material-icons text-gray-400 text-sm mr-1">insert_drive_file</span>
+                                            <span id="caminho_certificado_display" class="font-mono">Nenhum salvo</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="caminho_certificado" id="caminho_certificado">
                             </div>
-                            <div>
+
+                            <div class="pt-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Certificado</label>
-                                <input type="password" name="senha_certificado" id="senha_certificado"
-                                    placeholder="Preencha apenas se quiser alterar a senha atual"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                <div class="relative">
+                                    <input type="password" name="senha_certificado" id="senha_certificado"
+                                        placeholder="Preencha apenas se fez novo upload ou deseja alterar"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
+                                    <button type="button" onclick="togglePass('senha_certificado')"
+                                        class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                        <span class="material-icons text-sm">visibility</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -209,21 +238,37 @@ if (!isset($_SESSION['usuario_id'])) {
 
                         <!-- Banco Inter -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-                            <div class="flex items-center mb-4">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
                                 <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Banco_Inter_logo.svg"
                                     alt="Inter" class="h-6 mr-3">
-                                <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança)</h4>
+                                <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança / PIX)</h4>
                             </div>
-                            <div class="grid grid-cols-1 gap-4">
-                                <div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
                                     <input type="text" name="api_inter_client_id" id="api_inter_client_id"
                                         class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
                                 </div>
-                                <div>
+                                <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
-                                    <input type="password" name="api_inter_client_secret" id="api_inter_client_secret"
-                                        placeholder="Preencha apenas para alterar"
+                                    <div class="relative">
+                                        <input type="password" name="api_inter_client_secret"
+                                            id="api_inter_client_secret" placeholder="••••••••••••••••"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
+                                        <button type="button" onclick="togglePass('api_inter_client_secret')"
+                                            class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                            <span class="material-icons text-sm">visibility</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave PIX</label>
+                                    <input type="text" name="api_inter_chave_pix" id="api_inter_chave_pix"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Conta Corrente</label>
+                                    <input type="text" name="api_inter_conta_corrente" id="api_inter_conta_corrente"
                                         class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                                 </div>
                             </div>
@@ -231,22 +276,35 @@ if (!isset($_SESSION['usuario_id'])) {
 
                         <!-- Oracle -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center mb-4">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
                                 <span class="material-icons text-red-600 mr-2">cloud</span>
                                 <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuário / Key ID</label>
-                                    <input type="text" name="api_oracle_user" id="api_oracle_user"
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
+                                        (Pre-Authenticated)</label>
+                                    <input type="text" name="api_oracle_url" id="api_oracle_url"
+                                        placeholder="https://objectstorage..."
                                         class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                    <p class="text-xs text-gray-500 mt-1">URL pública para upload direto sem necessidade
+                                        de auth adicional.</p>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave Secreta
-                                        (Password)</label>
-                                    <input type="password" name="api_oracle_password" id="api_oracle_password"
-                                        placeholder="Preencha apenas para alterar"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+
+                                <!-- Opcional: Manter User/Pass mas deixar claro que pode não ser usado -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">User / Key ID
+                                            (Opcional)</label>
+                                        <input type="text" name="api_oracle_user" id="api_oracle_user"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Secret
+                                            (Opcional)</label>
+                                        <input type="password" name="api_oracle_password" id="api_oracle_password"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -299,7 +357,16 @@ if (!isset($_SESSION['usuario_id'])) {
 
                     // New Fields (Integration)
                     if (d.api_inter_client_id) $('#api_inter_client_id').val(d.api_inter_client_id);
+                    if (d.api_inter_chave_pix) $('#api_inter_chave_pix').val(d.api_inter_chave_pix);
+                    if (d.api_inter_conta_corrente) $('#api_inter_conta_corrente').val(d.api_inter_conta_corrente);
+
                     if (d.api_oracle_user) $('#api_oracle_user').val(d.api_oracle_user);
+                    if (d.api_oracle_url) $('#api_oracle_url').val(d.api_oracle_url);
+
+                    if (d.caminho_certificado) {
+                        $('#caminho_certificado_display').text(d.caminho_certificado);
+                        $('#caminho_certificado').val(d.caminho_certificado);
+                    }
 
                     if (d.optante_simples == 1) {
                         $('#optante_simples').prop('checked', true);
@@ -321,14 +388,28 @@ if (!isset($_SESSION['usuario_id'])) {
             // Salvar
             $('#formConfigFiscal').on('submit', function (e) {
                 e.preventDefault();
-                $.post('app.php', $(this).serialize(), function (response) {
-                    if (response.success) {
-                        Swal.fire('Sucesso!', response.message, 'success');
-                    } else {
-                        Swal.fire('Erro!', response.message, 'error');
+                
+                var formData = new FormData(this);
+
+                $.ajax({
+                    url: 'app.php',
+                    type: 'POST',
+                    data: formData,
+                    dataType: 'json',
+                    processData: false, // Don't process the files
+                    contentType: false, // Set content type to false as jQuery will tell the server its a query string request
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire('Sucesso!', response.message, 'success').then(() => {
+                                location.reload(); // Reload to update file display
+                            });
+                        } else {
+                            Swal.fire('Erro!', response.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Erro!', 'Falha na comunicação com o servidor.', 'error');
                     }
-                }, 'json').fail(function () {
-                    Swal.fire('Erro!', 'Falha na comunicação com o servidor.', 'error');
                 });
             });
         });
