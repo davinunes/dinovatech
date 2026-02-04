@@ -348,6 +348,13 @@ function buildGerarNfseXml($input)
         $valorIss = number_format((float) $valorServicos * ((float) $aliquota / 100), 2, '.', '');
     }
 
+    // Responsavel Retencao (Required if IssRetido=1)
+    // 1 = Tomador, 2 = Intermediario
+    $responsavelRetencaoTag = "";
+    if ($issRetido == '1') {
+        $responsavelRetencaoTag = "<ResponsavelRetencao>1</ResponsavelRetencao>";
+    }
+
     // Configurable Optante Simples
     $optanteSimples = $input['optante_simples'] ?? '2';
 
@@ -371,6 +378,10 @@ function buildGerarNfseXml($input)
     $telefoneTomador = $cleanString($input['tomador']['telefone'] ?? '');
     $emailTomador = $cleanString($input['tomador']['email'] ?? '');
     $imTomador = $cleanString($input['tomador']['im'] ?? ''); // IM of the Client
+    $ieTomador = $cleanString($input['tomador']['ie'] ?? ''); // IE of the Client
+
+    // Validar se IE não é string vazia ou "ISENTO"
+    $ieTomadorTag = (!empty($ieTomador) && strtoupper($ieTomador) !== 'ISENTO') ? "<InscricaoEstadual>$ieTomador</InscricaoEstadual>" : "";
 
     // Decide if CPF or CNPJ
     $tomadorCpfCnpjTag = "";
@@ -439,7 +450,9 @@ XML;
                 <DescontoIncondicionado>0.00</DescontoIncondicionado>
                 <DescontoCondicionado>0.00</DescontoCondicionado>
             </Valores>
+            </Valores>
             <IssRetido>$issRetido</IssRetido>
+            $responsavelRetencaoTag
             <ItemListaServico>$itemLista</ItemListaServico>
             <CodigoCnae>$codigoCnae</CodigoCnae>
             <CodigoTributacaoMunicipio>$codigoTributacao</CodigoTributacaoMunicipio>
@@ -496,6 +509,7 @@ XML;
                     $tomadorCpfCnpjTag
                 </CpfCnpj>
                 $imTomadorTag
+                $ieTomadorTag
             </IdentificacaoTomador>
             <RazaoSocial>$razaoSocialTomador</RazaoSocial>
             <Endereco>

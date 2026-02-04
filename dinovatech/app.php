@@ -1839,7 +1839,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'codigo_municipio' => $fatura['codigo_municipio'] ?: '5300108',
                 'telefone' => $fatura['telefone'],
                 'email' => $fatura['email'],
-                'im' => $fatura['inscricao_municipal'] ?? ''
+                'im' => $fatura['inscricao_municipal'] ?? '',
+                'ie' => $fatura['inscricao_estadual'] ?? ''
             ];
 
             // VALIDATION: Check for mandatory address fields
@@ -1866,7 +1867,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Append Footer
             // Note: User requested literal \s\n for line break. This is specific to this API.
-            $discriminacaoFinal .= " Conforme documento auxiliar de cobranca numero " . $fatura['f_id'];
+            $discriminacaoFinal .= " \s\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
 
             $inputApi = [
                 'cnpj' => $config['cnpj'],
