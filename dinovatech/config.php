@@ -29,10 +29,21 @@ if (!function_exists('loadEnv')) {
 
 // Tenta carregar .env da raiz do projeto (subindo níveis a partir de dinovatech/config.php)
 // Estrutura esperada: root/.env
+// IMPORTANTE: Variáveis do ambiente do container (getenv) têm prioridade sobre o .env local.
+// A função loadEnv acima já respeita isso pois checa !array_key_exists antes de setar.
 $rootDir = dirname(__DIR__, 1); // e:\DEV\dinovatech
 loadEnv($rootDir . '/.env');
 
-// Definição de Constantes
+// Definição de Constantes Globais
+// 1. Chave Mestra para Criptografia (Critical)
+define('APP_MASTER_KEY', getenv('APP_MASTER_KEY'));
+
+// Verifica saúde da chave mestra (apenas aviso no log, health check real deve ser no boot da app)
+if (empty(APP_MASTER_KEY)) {
+    error_log("AVISO DE SEGURANÇA: APP_MASTER_KEY não definida. Criptografia não funcionará.");
+}
+
+// 2. Modo Veterinário
 define('APP_MODE_VET', getenv('APP_MODE_VET') === 'true' || getenv('APP_MODE_VET') === '1');
 
 // Outras configurações globais podem vir aqui

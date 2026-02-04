@@ -79,8 +79,8 @@ if (strpos($_SERVER['PHP_SELF'], '/modules/Vet/') !== false) {
 
         <a href="<?= $basePath ?>config_fiscal.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'config_fiscal.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">settings_applications</span>
-            <span class="font-medium">Configuração Fiscal</span>
+            <span class="material-icons text-xl mr-3">settings</span>
+            <span class="font-medium">Configurações</span>
         </a>
 
         <a href="<?= $basePath ?>contratos.php"
