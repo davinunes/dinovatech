@@ -1,6 +1,6 @@
 <?php
 // inter/config.php
-require_once __DIR__ . '/../dinovatech/database.php';
+require_once __DIR__ . '/../database.php';
 require_once __DIR__ . '/../dinovatech/config.php';
 require_once __DIR__ . '/../dinovatech/helpers/EncryptionHelper.php';
 
