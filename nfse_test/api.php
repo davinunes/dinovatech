@@ -500,7 +500,6 @@ XML;
                 <Cnpj>$cnpjPrestador</Cnpj>
             </CpfCnpj>
             <InscricaoMunicipal>$imPrestador</InscricaoMunicipal>
-            $iePrestadorTag
         </Prestador>
         <TomadorServico>
             <IdentificacaoTomador>
@@ -508,7 +507,6 @@ XML;
                     $tomadorCpfCnpjTag
                 </CpfCnpj>
                 $imTomadorTag
-                $ieTomadorTag
             </IdentificacaoTomador>
             <RazaoSocial>$razaoSocialTomador</RazaoSocial>
             <Endereco>
