@@ -5,6 +5,7 @@ session_start();
 
 include "../database.php"; // Seu arquivo com DBConnect, DBExecute, etc.
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers/AppHelper.php';
 require_once __DIR__ . '/helpers/EncryptionHelper.php';
 
 // ACTION GET: Toggle Status Cliente (Direct Link)
@@ -44,6 +45,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     switch ($action) {
         // NOVA ACTION: Registrar Vacina
         case 'register_vaccine':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
             $id_pet = $_POST['id_pet'] ?? '';
             $id_vacina = $_POST['id_vacina'] ?? '';
             $data_aplicacao = $_POST['data_aplicacao'] ?? date('Y-m-d');

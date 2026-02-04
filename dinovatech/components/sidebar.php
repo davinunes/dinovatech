@@ -10,7 +10,19 @@ $basePath = './';
 if (strpos($_SERVER['PHP_SELF'], '/modules/Vet/') !== false) {
     $basePath = '../../';
 }
+
+// Security Health Check
+// Apenas exibe se a chave for inválida ou inexistente.
+// A criptografia real falhará (Exception) se tentarem usar, interrompendo a operação.
+$hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY) || strlen(APP_MASTER_KEY) < 32;
 ?>
+<?php if ($hasSecurityIssue): ?>
+    <div
+        class="fixed top-0 left-0 w-full bg-red-600 text-white text-center p-3 z-[60] font-bold shadow-lg flex items-center justify-center">
+        <span class="material-icons text-xl mr-2">gpp_maybe</span>
+        PERIGO: APP_MASTER_KEY não configurada ou insegura. Criptografia desativada.
+    </div>
+<?php endif; ?>
 <!-- Mobile Overlay -->
 <div id="sidebar-overlay" onclick="toggleSidebar()"
     class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden lg:hidden transition-opacity"></div>
