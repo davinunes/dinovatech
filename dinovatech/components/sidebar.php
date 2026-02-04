@@ -14,7 +14,7 @@ if (strpos($_SERVER['PHP_SELF'], '/modules/Vet/') !== false) {
 // Security Health Check
 // Apenas exibe se a chave for inválida ou inexistente.
 // A criptografia real falhará (Exception) se tentarem usar, interrompendo a operação.
-$hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY) || strlen(APP_MASTER_KEY) < 32;
+$hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 ?>
 <?php if ($hasSecurityIssue): ?>
     <div
