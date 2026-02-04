@@ -44,6 +44,7 @@ if ($dbConfig && !empty($dbConfig['api_inter_client_secret'])) {
 
 $certFile = $dbConfig['api_inter_cert_path'] ? __DIR__ . '/../' . $dbConfig['api_inter_cert_path'] : '';
 $keyFile = $dbConfig['api_inter_key_path'] ? __DIR__ . '/../' . $dbConfig['api_inter_key_path'] : '';
+$caFile = $dbConfig['api_inter_ca_path'] ? __DIR__ . '/../' . $dbConfig['api_inter_ca_path'] : '';
 
 // Array de configuração
 $configuracoes = [
@@ -58,6 +59,7 @@ $configuracoes = [
         // Certs now come from absolute/relative paths from root
         'cert_path_abs' => $certFile,
         'key_path_abs' => $keyFile,
+        'ca_path_abs' => $caFile,
         'token_validity_seconds' => 3600,
         'debug_mode' => true,
     ],
@@ -71,6 +73,7 @@ $configuracoes = [
         'scope' => 'cob.write cob.read pix.write',
         'cert_path_abs' => $certFile,
         'key_path_abs' => $keyFile,
+        'ca_path_abs' => $caFile,
         'token_validity_seconds' => 3600,
         'debug_mode' => false,
     ],
@@ -82,6 +85,4 @@ $ambienteConfig = $configuracoes[$ambiente];
 // Exporta variáveis globais para manter compatibilidade com código existente (se houver)
 $sslCertFile = $ambienteConfig['cert_path_abs'];
 $sslKeyFile = $ambienteConfig['key_path_abs'];
-// CA File não é estritamente necessário para cURL modernos com certificados válidos na loja do sistema, mas se o Inter exigir CA específico (cadeia), precisaria ser gerenciado também. 
-// Por enquanto, vamos assumir que não precisa forçar CA bundle path se o ambiente tiver atualizado. Se precisar, podemos adicionar campo no futuro.
-$caInfoFile = '';
+$caInfoFile = $ambienteConfig['ca_path_abs'];

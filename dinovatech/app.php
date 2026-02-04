@@ -206,6 +206,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
 
+                // Handle CA upload
+                $api_inter_ca_path = '';
+                if (isset($_FILES['arquivo_inter_ca']) && $_FILES['arquivo_inter_ca']['error'] === UPLOAD_ERR_OK) {
+                    $uploadInterDir = dirname(__DIR__) . '/certificado/inter/';
+                    // dir created above if needed
+                    if (!is_dir($uploadInterDir)) {
+                        mkdir($uploadInterDir, 0755, true);
+                    }
+
+                    $ext = pathinfo($_FILES['arquivo_inter_ca']['name'], PATHINFO_EXTENSION);
+                    // Allow .crt for CA too
+                    if (strtolower($ext) !== 'crt') {
+                        $response['message'] = "Erro: Arquivo CA do Inter deve ser .crt";
+                        break;
+                    }
+                    $newFileName = 'ca_' . time() . '.crt';
+                    $destPath = $uploadInterDir . $newFileName;
+                    if (move_uploaded_file($_FILES['arquivo_inter_ca']['tmp_name'], $destPath)) {
+                        $api_inter_ca_path = 'certificado/inter/' . $newFileName;
+                    } else {
+                        $response['message'] = "Erro ao salvar arquivo CA do Inter.";
+                        break;
+                    }
+                }
+
                 // Prepared DB updates for Inter Files
                 $inter_files_sql_part = "";
                 if (!empty($api_inter_cert_path)) {
@@ -215,6 +240,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($api_inter_key_path)) {
                     $api_inter_key_path = mysqli_real_escape_string($link, $api_inter_key_path);
                     $inter_files_sql_part .= ", api_inter_key_path = '$api_inter_key_path'";
+                }
+                if (!empty($api_inter_ca_path)) {
+                    $api_inter_ca_path = mysqli_real_escape_string($link, $api_inter_ca_path);
+                    $inter_files_sql_part .= ", api_inter_ca_path = '$api_inter_ca_path'";
                 }
 
                 // Novos Campos de Integração
@@ -293,6 +322,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // For Insert, we use the variables directly (checked empty above)
                     $api_inter_cert_val = !empty($api_inter_cert_path) ? "'$api_inter_cert_path'" : "NULL";
                     $api_inter_key_val = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
+                    $api_inter_ca_val = !empty($api_inter_ca_path) ? "'$api_inter_ca_path'" : "NULL";
 
                     $query = "INSERT INTO ConfiguracoesEmissor 
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, 
@@ -302,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                endereco, numero, complemento, bairro, cep, uf,
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
-                               api_inter_cert_path, api_inter_key_path,
+                               api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
                                api_oracle_user, api_oracle_password, api_oracle_url)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$codigo_municipio',
@@ -312,7 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf',
                                '$api_inter_client_id', $inter_secret_val, 
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
-                               $api_inter_cert_val, $api_inter_key_val,
+                               $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,
                                '$api_oracle_user', $oracle_pass_val, '$api_oracle_url')";
                 }
 

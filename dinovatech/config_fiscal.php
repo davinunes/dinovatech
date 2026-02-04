@@ -302,6 +302,16 @@ if (!isset($_SESSION['usuario_id'])) {
                                             <span id="caminho_inter_key_display" class="font-mono">Nenhum salvo</span>
                                         </div>
                                     </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Cadeia CA
+                                            (.crt) - Opcional</label>
+                                        <input type="file" name="arquivo_inter_ca" id="arquivo_inter_ca" accept=".crt"
+                                            class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer border border-gray-300 rounded-lg">
+                                        <div class="text-xs text-gray-500 mt-1" id="current_inter_ca_info">
+                                            <span class="material-icons text-gray-400 text-[10px] mr-1">security</span>
+                                            <span id="caminho_inter_ca_display" class="font-mono">Nenhum salvo</span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Oracle -->
@@ -398,6 +408,9 @@ if (!isset($_SESSION['usuario_id'])) {
                     }
                     if (d.api_inter_key_path) {
                         $('#caminho_inter_key_display').text(d.api_inter_key_path);
+                    }
+                    if (d.api_inter_ca_path) {
+                        $('#caminho_inter_ca_display').text(d.api_inter_ca_path);
                     }
 
                     if (d.api_oracle_user) $('#api_oracle_user').val(d.api_oracle_user);
