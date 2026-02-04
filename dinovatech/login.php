@@ -5,6 +5,20 @@ if (isset($_SESSION['usuario_id'])) {
     header("Location: index.php");
     exit();
 }
+
+// Fetch Company Name from DB
+require_once 'database.php';
+$link = DBConnect();
+$empresa_nome = "DinoVet"; // Fallback
+if ($link) {
+    $q = "SELECT nome_fantasia, razao_social FROM ConfiguracoesEmissor LIMIT 1";
+    $r = DBExecute($link, $q);
+    if ($r && mysqli_num_rows($r) > 0) {
+        $row = mysqli_fetch_assoc($r);
+        $empresa_nome = !empty($row['nome_fantasia']) ? $row['nome_fantasia'] : (!empty($row['razao_social']) ? $row['razao_social'] : "DinoVet");
+    }
+    DBClose($link);
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -26,7 +40,7 @@ if (isset($_SESSION['usuario_id'])) {
     <div class="w-full max-w-md">
         <form action="login_process.php" method="POST" class="bg-white shadow-md rounded-xl px-8 pt-6 pb-8 mb-4">
             <div class="mb-6 text-center">
-                <h1 class="text-2xl font-bold text-gray-800"><span class="text-cyan-600">DinoVet</span> - Acesso
+                <h1 class="text-2xl font-bold text-gray-800"><span class="text-cyan-600"><?= htmlspecialchars($empresa_nome) ?></span> - Acesso
                     Administrativo</h1>
             </div>
 
