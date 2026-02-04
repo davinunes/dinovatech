@@ -260,6 +260,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                     <div class="relative">
                                         <input type="password" name="api_inter_client_secret"
                                             id="api_inter_client_secret" placeholder="••••••••••••••••"
+                                            autocomplete="new-password"
                                             class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
                                         <button type="button" onclick="togglePass('api_inter_client_secret')"
                                             class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
@@ -312,48 +313,46 @@ if (!isset($_SESSION['usuario_id'])) {
                                             <span id="caminho_inter_ca_display" class="font-mono">Nenhum salvo</span>
                                         </div>
                                     </div>
-                                </div>
-
-                                <!-- Oracle -->
-                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                    <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                        <span class="material-icons text-red-600 mr-2">cloud</span>
-                                        <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
-                                    </div>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
-                                                (Pre-Authenticated)</label>
-                                            <input type="text" name="api_oracle_url" id="api_oracle_url"
-                                                placeholder="https://objectstorage..."
-                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                                            <p class="text-xs text-gray-500 mt-1">URL pública para upload direto sem
-                                                necessidade
-                                                de auth adicional.</p>
-                                        </div>
-
-                                        <!-- Opcional: Manter User/Pass mas deixar claro que pode não ser usado -->
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">User / Key
-                                                    ID
-                                                    (Opcional)</label>
-                                                <input type="text" name="api_oracle_user" id="api_oracle_user"
-                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">Secret
-                                                    (Opcional)</label>
-                                                <input type="password" name="api_oracle_password"
-                                                    id="api_oracle_password"
-                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
 
+                        <!-- Oracle -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                <span class="material-icons text-red-600 mr-2">cloud</span>
+                                <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
                             </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
+                                        (Pre-Authenticated)</label>
+                                    <input type="text" name="api_oracle_url" id="api_oracle_url"
+                                        placeholder="https://objectstorage..."
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                    <p class="text-xs text-gray-500 mt-1">URL pública para upload direto sem necessidade
+                                        de auth adicional.</p>
+                                </div>
 
+                                <!-- Opcional: Manter User/Pass mas deixar claro que pode não ser usado -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">User / Key ID
+                                            (Opcional)</label>
+                                        <input type="text" name="api_oracle_user" id="api_oracle_user"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Secret
+                                            (Opcional)</label>
+                                        <input type="password" name="api_oracle_password" id="api_oracle_password"
+                                            autocomplete="new-password"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                             <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
                                 <button type="submit"
                                     class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
