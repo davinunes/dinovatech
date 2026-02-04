@@ -313,8 +313,9 @@ if (!isset($_SESSION['usuario_id'])) {
                                             <span id="caminho_inter_ca_display" class="font-mono">Nenhum salvo</span>
                                         </div>
                                     </div>
-                                    </div>
                                 </div>
+                            </div>
+                        </div>
 
                         <!-- Oracle -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -353,12 +354,12 @@ if (!isset($_SESSION['usuario_id'])) {
                         </div>
 
                     </div>
-                            <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
-                                <button type="submit"
-                                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
-                                    <span class="material-icons mr-2">save</span> Salvar Configurações
-                                </button>
-                            </div>
+                    <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
+                        <button type="submit"
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
+                            <span class="material-icons mr-2">save</span> Salvar Configurações
+                        </button>
+                    </div>
                 </form>
             </div>
 
