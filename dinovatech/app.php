@@ -102,8 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $razao_social = mysqli_real_escape_string($link, $razao_social);
                 $nome_fantasia = mysqli_real_escape_string($link, $nome_fantasia);
                 $cnpj = mysqli_real_escape_string($link, $cnpj);
-                $inscricao_municipal = mysqli_real_escape_string($link, $inscricao_municipal);
-                $codigo_municipio = mysqli_real_escape_string($link, $codigo_municipio);
+                $inscricao_municipal = mysqli_real_escape_string($link, $_POST['inscricao_municipal'] ?? '');
+                $inscricao_estadual = mysqli_real_escape_string($link, $_POST['inscricao_estadual'] ?? '');
+                $codigo_municipio = mysqli_real_escape_string($link, $_POST['codigo_municipio'] ?? '');
                 $regime_tributario = mysqli_real_escape_string($link, $regime_tributario);
                 $ambiente_padrao = mysqli_real_escape_string($link, $ambiente_padrao);
                 $serie_rps = mysqli_real_escape_string($link, $serie_rps);
@@ -253,6 +254,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $api_oracle_user = mysqli_real_escape_string($link, $_POST['api_oracle_user'] ?? '');
                 $api_oracle_url = mysqli_real_escape_string($link, $_POST['api_oracle_url'] ?? '');
+                $api_oracle_password_raw = $_POST['api_oracle_password'] ?? ''; // ADDED THIS LINE
 
                 // Segredos (Encrypt)
                 $api_inter_client_secret_raw = $_POST['api_inter_client_secret'] ?? '';
@@ -296,7 +298,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Update
                     $query = "UPDATE ConfiguracoesEmissor SET 
                                 razao_social='$razao_social', nome_fantasia='$nome_fantasia', cnpj='$cnpj', 
-                                inscricao_municipal='$inscricao_municipal', codigo_municipio='$codigo_municipio',
+                                inscricao_municipal='$inscricao_municipal', inscricao_estadual='$inscricao_estadual', codigo_municipio='$codigo_municipio',
                                 regime_tributario='$regime_tributario', optante_simples='$optante_simples',
                                 ambiente_padrao='$ambiente_padrao', serie_rps='$serie_rps', 
                                 ultimo_rps_homologacao='$ultimo_rps_homologacao', ultimo_rps_producao='$ultimo_rps_producao',
@@ -325,7 +327,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $api_inter_ca_val = !empty($api_inter_ca_path) ? "'$api_inter_ca_path'" : "NULL";
 
                     $query = "INSERT INTO ConfiguracoesEmissor 
-                              (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, 
+                              (razao_social, nome_fantasia, cnpj, inscricao_municipal, inscricao_estadual, codigo_municipio, 
                                regime_tributario, optante_simples, ambiente_padrao, serie_rps, 
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
@@ -335,7 +337,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
                                api_oracle_user, api_oracle_password, api_oracle_url)
                               VALUES 
-                              ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$codigo_municipio',
+                              ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val,
@@ -1864,11 +1866,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Append Footer
             // Note: User requested literal \s\n for line break. This is specific to this API.
-            $discriminacaoFinal .= "\\s\\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
+            $discriminacaoFinal .= "\s\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
 
             $inputApi = [
                 'cnpj' => $config['cnpj'],
                 'im' => $config['inscricao_municipal'],
+                'ie' => $config['inscricao_estadual'] ?? '',
                 'numero_rps' => $nextRps,
                 'serie_rps' => $config['serie_rps'],
                 'tipo_rps' => '1',

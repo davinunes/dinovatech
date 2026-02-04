@@ -241,6 +241,8 @@ function buildGerarNfseXml($input)
 {
     $cnpjPrestador = $input['cnpj'] ?? '61733714000101';
     $imPrestador = $input['im'] ?? '0841147200111';
+    $iePrestador = $input['ie'] ?? '';
+    $iePrestadorTag = !empty($iePrestador) ? "<InscricaoEstadual>$iePrestador</InscricaoEstadual>" : "";
     $numeroRps = $input['numero_rps'] ?? '';
     $serieRps = $input['serie_rps'] ?? '8';
     $tipoRps = $input['tipo_rps'] ?? '1';
@@ -486,6 +488,7 @@ XML;
                 <Cnpj>$cnpjPrestador</Cnpj>
             </CpfCnpj>
             <InscricaoMunicipal>$imPrestador</InscricaoMunicipal>
+            $iePrestadorTag
         </Prestador>
         <TomadorServico>
             <IdentificacaoTomador>

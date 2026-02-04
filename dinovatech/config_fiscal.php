@@ -79,6 +79,12 @@ if (!isset($_SESSION['usuario_id'])) {
                                 <input type="text" name="inscricao_municipal" id="inscricao_municipal" required
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Inscrição Estadual
+                                    (Opcional)</label>
+                                <input type="text" name="inscricao_estadual" id="inscricao_estadual"
+                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                            </div>
 
                             <!-- Endereço -->
                             <div class="md:col-span-2 border-t pt-4 mt-2">
@@ -381,6 +387,7 @@ if (!isset($_SESSION['usuario_id'])) {
                     $('#nome_fantasia').val(d.nome_fantasia);
                     $('#cnpj').val(d.cnpj);
                     $('#inscricao_municipal').val(d.inscricao_municipal);
+                    $('#inscricao_estadual').val(d.inscricao_estadual);
                     $('#codigo_municipio').val(d.codigo_municipio);
 
                     // Address
