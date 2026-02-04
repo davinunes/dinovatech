@@ -7,7 +7,7 @@ if (isset($_SESSION['usuario_id'])) {
 }
 
 // Fetch Company Name from DB
-require_once 'database.php';
+require_once '../database.php';
 $link = DBConnect();
 $empresa_nome = "DinoVet"; // Fallback
 if ($link) {
@@ -40,7 +40,8 @@ if ($link) {
     <div class="w-full max-w-md">
         <form action="login_process.php" method="POST" class="bg-white shadow-md rounded-xl px-8 pt-6 pb-8 mb-4">
             <div class="mb-6 text-center">
-                <h1 class="text-2xl font-bold text-gray-800"><span class="text-cyan-600"><?= htmlspecialchars($empresa_nome) ?></span> - Acesso
+                <h1 class="text-2xl font-bold text-gray-800"><span
+                        class="text-cyan-600"><?= htmlspecialchars($empresa_nome) ?></span> - Acesso
                     Administrativo</h1>
             </div>
 
