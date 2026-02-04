@@ -43,6 +43,14 @@ if ($id_fatura) {
         }
         $saldo_devedor = $fatura['valor_total_fatura'] - $total_pago;
 
+        // Fetch Company Config
+        $config_emissor = [];
+        $query_config = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
+        $res_config = DBExecute($link, $query_config);
+        if ($res_config && mysqli_num_rows($res_config) > 0) {
+            $config_emissor = mysqli_fetch_assoc($res_config);
+        }
+
     } else {
         $error_msg = "Fatura não encontrada ou acesso negado.";
     }
@@ -162,8 +170,17 @@ if ($id_fatura) {
                     <!-- Invoice Header -->
                     <div class="border-b border-gray-100 pb-8 mb-8 relative z-10">
                         <div class="w-full">
-                            <h1 class="text-3xl font-bold text-gray-900 mb-1">Digital Inovation Tecnologia</h1>
-                            <p class="text-gray-500 text-sm mb-2">CNPJ: 61.733.714/0001-01</p>
+                            <?php
+                            $empresaNome = $config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? 'Minha Empresa';
+                            $empresaCnpj = $config_emissor['cnpj'] ?? '00.000.000/0000-00';
+                            $empresaEndereco = $config_emissor['endereco'] . ', ' . $config_emissor['numero'];
+                            if (!empty($config_emissor['complemento']))
+                                $empresaEndereco .= ' - ' . $config_emissor['complemento'];
+                            $empresaEndereco .= ' - ' . $config_emissor['bairro'];
+                            ?>
+                            <h1 class="text-3xl font-bold text-gray-900 mb-1"><?= htmlspecialchars($empresaNome) ?></h1>
+                            <p class="text-gray-500 text-sm mb-2">CNPJ: <?= htmlspecialchars($empresaCnpj) ?></p>
+                            <p class="text-gray-500 text-sm mb-2"><?= htmlspecialchars($empresaEndereco) ?></p>
                             <p class="text-gray-400 text-xs uppercase tracking-wide">Fatura #
                                 <?= $id_fatura ?>
                             </p>

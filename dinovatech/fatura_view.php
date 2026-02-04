@@ -52,6 +52,14 @@ if ($id_fatura) {
         $res_nfse = DBExecute($link, $query_nfse);
         while ($row = mysqli_fetch_assoc($res_nfse))
             $nfse_list[] = $row;
+
+        // Fetch Company Config
+        $config_emissor = [];
+        $query_config = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
+        $res_config = DBExecute($link, $query_config);
+        if ($res_config && mysqli_num_rows($res_config) > 0) {
+            $config_emissor = mysqli_fetch_assoc($res_config);
+        }
     } else {
         $error_msg = "Fatura não encontrada.";
     }
@@ -164,8 +172,17 @@ if ($id_fatura) {
                             <?php endif; ?>
 
                             <div class="mb-8 border-b pb-6 relative z-10">
-                                <h1 class="text-2xl font-bold text-gray-800 mb-1">Digital Inovation Tecnologia</h1>
-                                <p class="text-sm text-gray-500 mb-1">CNPJ: 61.733.714/0001-01</p>
+                                <?php
+                                $empresaNome = $config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? 'Minha Empresa';
+                                $empresaCnpj = $config_emissor['cnpj'] ?? '00.000.000/0000-00';
+                                $empresaEndereco = $config_emissor['endereco'] . ', ' . $config_emissor['numero'];
+                                if (!empty($config_emissor['complemento']))
+                                    $empresaEndereco .= ' - ' . $config_emissor['complemento'];
+                                $empresaEndereco .= ' - ' . $config_emissor['bairro'];
+                                ?>
+                                <h1 class="text-2xl font-bold text-gray-800 mb-1"><?= htmlspecialchars($empresaNome) ?></h1>
+                                <p class="text-sm text-gray-500 mb-1">CNPJ: <?= htmlspecialchars($empresaCnpj) ?></p>
+                                <p class="text-sm text-gray-500 mb-1"><?= htmlspecialchars($empresaEndereco) ?></p>
                                 <p class="text-sm text-gray-400">Documento Auxiliar de Cobrança</p>
                             </div>
 
@@ -348,10 +365,10 @@ if ($id_fatura) {
                                                     <strong>RPS:</strong> <?= $nfse['numero_rps'] ?>/<?= $nfse['serie_rps'] ?><br>
                                                     <span class="text-[10px] text-gray-400"><?= ucfirst($nfse['ambiente']) ?></span>
                                                 </div>
-                                                
+
                                                 <div class="grid grid-cols-2 gap-2 mt-2">
-                                                    <a href="ver_nfse_xml.php?id=<?= $nfse['id_emissao'] ?>" target="_blank" 
-                                                       class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">
+                                                    <a href="ver_nfse_xml.php?id=<?= $nfse['id_emissao'] ?>" target="_blank"
+                                                        class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">
                                                         XML Assinado
                                                     </a>
                                                     <?php if ($nfse['url_pdf']): ?>
@@ -361,8 +378,8 @@ if ($id_fatura) {
                                                         </a>
                                                     <?php else: ?>
                                                         <button onclick="consultarUrlNfse(<?= $nfse['id_emissao'] ?>)"
-                                                                class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300"
-                                                                title="Tentar obter link PDF na Prefeitura">
+                                                            class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300"
+                                                            title="Tentar obter link PDF na Prefeitura">
                                                             Buscar PDF
                                                         </button>
                                                     <?php endif; ?>
