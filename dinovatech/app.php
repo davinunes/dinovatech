@@ -1884,6 +1884,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'codigo_nbs' => $taxSettings['nbs'],
                 'item_lista' => $taxSettings['item_lista'],
                 'codigo_tributacao' => $taxSettings['tributacao'],
+                'regime_tributario' => $config['regime_tributario'], // simples, lucro_presumido, lucro_real
                 'optante_simples' => ($config['optante_simples'] == '1') ? '1' : '2', // 1=Sim, 2=Nao
                 'tomador' => $tomadorData
             ];

@@ -358,6 +358,18 @@ function buildGerarNfseXml($input)
     // Configurable Optante Simples
     $optanteSimples = $input['optante_simples'] ?? '2';
 
+    // Regime Especial - Required usually if OptanteSimples=1
+    // Map from DB values or default to 6 (ME EPP) if Simples
+    // Common values: 1=Microempresa Municipal, 2=Estimativa, 3=Sociedade de Profissionais, 4=Cooperativa, 5=MEI, 6=ME EPP
+    $regimeEspecialTag = "";
+    if ($optanteSimples == '1') {
+        // If Simples, we assume ME EPP (6) typically unless specified otherwise.
+        // User's success XML had 6.
+        $regimeCode = '6';
+        // Logic could be expanded based on $input['regime_tributario'] if needed, but 'simples' maps well to 6 here.
+        $regimeEspecialTag = "<RegimeEspecialTributacao>$regimeCode</RegimeEspecialTributacao>";
+    }
+
     // We need a unique ID for InfDeclaracaoPrestacaoServico regardless of RPS
     // We need a unique ID for InfDeclaracaoPrestacaoServico regardless of RPS
     $rpsId = "rps" . ($numeroRps ?: rand(10000, 99999));
@@ -514,6 +526,7 @@ $enderecoBlock
             </Endereco>
             $contatoTag
         </TomadorServico>
+        $regimeEspecialTag
         <OptanteSimplesNacional>$optanteSimples</OptanteSimplesNacional>
         <IncentivoFiscal>2</IncentivoFiscal>
         $outrasInformacoesTag
