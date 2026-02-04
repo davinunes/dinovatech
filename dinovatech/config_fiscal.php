@@ -205,10 +205,16 @@ if (!isset($_SESSION['usuario_id'])) {
                                     </div>
                                     <div class="text-xs text-gray-500" id="current_cert_info">
                                         <!-- Will be populated via JS if exists -->
-                                        <div class="flex items-center">
-                                            <span
-                                                class="material-icons text-gray-400 text-sm mr-1">insert_drive_file</span>
-                                            <span id="caminho_certificado_display" class="font-mono">Nenhum salvo</span>
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex items-center">
+                                                <span
+                                                    class="material-icons text-gray-400 text-sm mr-1">insert_drive_file</span>
+                                                <span id="caminho_certificado_display" class="font-mono">Nenhum
+                                                    salvo</span>
+                                            </div>
+                                            <div id="cert_status_badge" class="hidden">
+                                                <!-- Populated via JS -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -366,6 +372,22 @@ if (!isset($_SESSION['usuario_id'])) {
                     if (d.caminho_certificado) {
                         $('#caminho_certificado_display').text(d.caminho_certificado);
                         $('#caminho_certificado').val(d.caminho_certificado);
+
+                        // Validate Status
+                        const statusBadge = $('#cert_status_badge');
+                        statusBadge.removeClass('hidden flex items-center bg-green-100 text-green-800 bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs mt-1');
+
+                        if (d.cert_validation) {
+                            if (d.cert_validation.valid) {
+                                statusBadge.addClass('flex items-center bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs mt-1 w-fit');
+                                statusBadge.html(`<span class="material-icons text-green-600 text-[10px] mr-1">check_circle</span> 
+                                                   ${d.cert_validation.message}`);
+                            } else {
+                                statusBadge.addClass('flex items-center bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs mt-1 w-fit');
+                                statusBadge.html(`<span class="material-icons text-red-600 text-[10px] mr-1">error</span> 
+                                                   ${d.cert_validation.message}`);
+                            }
+                        }
                     }
 
                     if (d.optante_simples == 1) {
@@ -388,7 +410,7 @@ if (!isset($_SESSION['usuario_id'])) {
             // Salvar
             $('#formConfigFiscal').on('submit', function (e) {
                 e.preventDefault();
-                
+
                 var formData = new FormData(this);
 
                 $.ajax({
@@ -398,7 +420,7 @@ if (!isset($_SESSION['usuario_id'])) {
                     dataType: 'json',
                     processData: false, // Don't process the files
                     contentType: false, // Set content type to false as jQuery will tell the server its a query string request
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success) {
                             Swal.fire('Sucesso!', response.message, 'success').then(() => {
                                 location.reload(); // Reload to update file display
@@ -407,7 +429,7 @@ if (!isset($_SESSION['usuario_id'])) {
                             Swal.fire('Erro!', response.message, 'error');
                         }
                     },
-                    error: function() {
+                    error: function () {
                         Swal.fire('Erro!', 'Falha na comunicação com o servidor.', 'error');
                     }
                 });

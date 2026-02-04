@@ -111,6 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ultimo_rps_producao = (int) $ultimo_rps_producao;
 
                 // --- FILE UPLOAD (PFX) ---
+                $pfxContent = null;
+                $pfxPathForValidation = null;
+
                 if (isset($_FILES['arquivo_pfx']) && $_FILES['arquivo_pfx']['error'] === UPLOAD_ERR_OK) {
                     $uploadDir = dirname(__DIR__) . '/certificado/';
                     if (!is_dir($uploadDir)) {
@@ -128,10 +131,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $destPath = $uploadDir . $newFileName;
 
                     if (move_uploaded_file($_FILES['arquivo_pfx']['tmp_name'], $destPath)) {
-                        // Salva caminho relativo para o DB, similar ao padrão anterior
+                        // Salva caminho relativo para o DB
                         $caminho_certificado = 'certificado/' . $newFileName;
+                        $pfxPathForValidation = $destPath;
                     } else {
-                        $response['message'] = "Erro ao mover arquivo de certificado.";
+                        $response['message'] = "Erro ao mover arquivo de certificado. Verifique permissões da pasta 'certificado'.";
+                        break;
+                    }
+                } elseif (!empty($caminho_certificado)) {
+                    // Se não houve upload novo, valida o existente com a nova senha (se fornecida)
+                    $pfxPathForValidation = dirname(__DIR__) . '/' . $caminho_certificado;
+                }
+
+                // --- VALIDATE CERTIFICATE ---
+                // Só valida se tivermos o arquivo E a senha (se a senha não foi enviada, assume que não mudou, mas pra validação "nova" precisaria dela...
+                // Na lógica atual, o front envia a senha se ela for digitada. Se for edição sem troca de senha, o front pode não enviar.
+                // Mas se houve upload, a senha É obrigatória se o pfx exigir.
+
+                if ($pfxPathForValidation && file_exists($pfxPathForValidation) && !empty($senha_certificado)) {
+                    $pfxContent = file_get_contents($pfxPathForValidation);
+                    $certs = [];
+                    if (!openssl_pkcs12_read($pfxContent, $certs, $senha_certificado)) {
+                        $response['message'] = "Erro de validação do Certificado: Senha incorreta ou arquivo inválido.";
+                        // Se falhou e foi um upload novo, talvez devêssemos apagar o arquivo? Por enquanto mantemos.
                         break;
                     }
                 }
@@ -148,7 +170,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Segredos (Encrypt)
                 $api_inter_client_secret_raw = $_POST['api_inter_client_secret'] ?? '';
-                $api_oracle_password_raw = $_POST['api_oracle_password'] ?? '';
 
                 // Address - Config Fiscal
                 $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
@@ -246,6 +267,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = DBExecute($link, $query);
             if ($result && mysqli_num_rows($result) > 0) {
                 $row = mysqli_fetch_assoc($result);
+
+                // --- VALIDATE CERTIFICATE ON LOAD ---
+                $certStatus = ['valid' => false, 'message' => 'Nenhum certificado configurado.', 'days_remaining' => 0];
+
+                if (!empty($row['caminho_certificado']) && !empty($row['senha_certificado'])) {
+                    $pfxPath = dirname(__DIR__) . '/' . $row['caminho_certificado'];
+                    if (file_exists($pfxPath)) {
+                        try {
+                            $certPass = EncryptionHelper::decrypt($row['senha_certificado']);
+
+                            if ($certPass) {
+                                $pfxContent = file_get_contents($pfxPath);
+                                $certs = [];
+                                if (openssl_pkcs12_read($pfxContent, $certs, $certPass)) {
+                                    $data = openssl_x509_parse($certs['cert']);
+                                    $validTo = $data['validTo_time_t'];
+                                    $daysRemaining = floor(($validTo - time()) / (60 * 60 * 24));
+
+                                    $certStatus['valid'] = ($daysRemaining >= 0);
+                                    $certStatus['days_remaining'] = $daysRemaining;
+                                    $certStatus['message'] = $certStatus['valid'] ? "Válido (Vence em " . date('d/m/Y', $validTo) . ")" : "Expirado em " . date('d/m/Y', $validTo);
+                                    $certStatus['expiration_date'] = date('d/m/Y', $validTo);
+                                } else {
+                                    $certStatus['message'] = "Senha incorreta ou arquivo corrompido.";
+                                }
+                            } else {
+                                $certStatus['message'] = "Erro ao descriptografar senha.";
+                            }
+                        } catch (Exception $e) {
+                            $certStatus['message'] = "Erro interno na validação.";
+                        }
+                    } else {
+                        $certStatus['message'] = "Arquivo não encontrado.";
+                    }
+                }
+                $row['cert_validation'] = $certStatus;
+
                 // Não retorna senha por segurança, ou retorna mascarado? 
                 // Melhor não retornar a senha para o front.
                 unset($row['senha_certificado']);
