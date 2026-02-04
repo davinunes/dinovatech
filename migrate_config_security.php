@@ -1,40 +1,49 @@
 <?php
 // migrate_config_security.php
-// Adiciona colunas para chaves de API e integração na tabela ConfiguracoesEmissor
+// Script para adicionar colunas de segurança na tabela ConfiguracoesEmissor
 
-require_once 'dinovatech/config.php';
-include 'dinovatech/database.php';
+// Ajuste o caminho se necessário. Assumindo que este arquivo está na raiz (e:\DEV\dinovatech\)
+// e database.php está em dinovatech/database.php
+if (file_exists(__DIR__ . '/dinovatech/database.php')) {
+    require_once __DIR__ . '/dinovatech/database.php';
+} elseif (file_exists(__DIR__ . '/database.php')) {
+    require_once __DIR__ . '/database.php';
+} else {
+    die("Erro: database.php não encontrado.");
+}
 
 $link = DBConnect();
+if (!$link) {
+    die("Erro de conexão com o banco de dados.");
+}
 
-echo "<h2>Migração de Segurança e Integrações</h2>";
-echo "<pre>";
+echo "Iniciando migração de segurança...\n";
 
-function addColumnIfNotExists($link, $table, $column, $definition)
-{
-    $check = mysqli_query($link, "SHOW COLUMNS FROM `$table` LIKE '$column'");
-    if (mysqli_num_rows($check) == 0) {
-        $sql = "ALTER TABLE `$table` ADD COLUMN `$column` $definition";
-        if (mysqli_query($link, $sql)) {
-            echo "[SUCCESS] Coluna '$column' adicionada em '$table'.\n";
+// Colunas a adicionar
+$columns = [
+    'api_inter_client_id' => 'TEXT',
+    'api_inter_client_secret' => 'TEXT', // Criptografado
+    'api_oracle_user' => 'VARCHAR(255)',
+    'api_oracle_password' => 'TEXT'      // Criptografado
+];
+
+foreach ($columns as $col => $type) {
+    // Verifica se a coluna existe
+    $checkQuery = "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE '$col'";
+    $res = DBExecute($link, $checkQuery);
+
+    if ($res && mysqli_num_rows($res) == 0) {
+        $alterQuery = "ALTER TABLE ConfiguracoesEmissor ADD COLUMN $col $type DEFAULT NULL";
+        if (DBExecute($link, $alterQuery)) {
+            echo "[SUCESSO] Coluna '$col' adicionada.\n";
         } else {
-            echo "[ERROR] Erro ao adicionar '$column': " . mysqli_error($link) . "\n";
+            echo "[ERRO] Falha ao adicionar coluna '$col': " . mysqli_error($link) . "\n";
         }
     } else {
-        echo "[INFO] Coluna '$column' já existe em '$table'.\n";
+        echo "[INFO] Coluna '$col' já existe.\n";
     }
 }
 
-// 1. Inter API
-addColumnIfNotExists($link, 'ConfiguracoesEmissor', 'api_inter_client_id', "TEXT DEFAULT NULL AFTER uf");
-addColumnIfNotExists($link, 'ConfiguracoesEmissor', 'api_inter_client_secret', "TEXT DEFAULT NULL AFTER api_inter_client_id"); // Encrypted
-addColumnIfNotExists($link, 'ConfiguracoesEmissor', 'api_inter_cert_path', "VARCHAR(255) DEFAULT NULL AFTER api_inter_client_secret"); // Path to .crt
-addColumnIfNotExists($link, 'ConfiguracoesEmissor', 'api_inter_key_path', "VARCHAR(255) DEFAULT NULL AFTER api_inter_cert_path"); // Path to .key
-
-// 2. Oracle API (Placeholder for future)
-addColumnIfNotExists($link, 'ConfiguracoesEmissor', 'api_oracle_user', "VARCHAR(255) DEFAULT NULL AFTER api_inter_key_path");
-addColumnIfNotExists($link, 'ConfiguracoesEmissor', 'api_oracle_password', "TEXT DEFAULT NULL AFTER api_oracle_user"); // Encrypted
-
-echo "\nConcluído.</pre>";
+echo "Migração concluída.\n";
 DBClose($link);
 ?>

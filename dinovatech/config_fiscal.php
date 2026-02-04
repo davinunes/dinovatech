@@ -31,14 +31,32 @@ if (!isset($_SESSION['usuario_id'])) {
             </div>
 
             <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <form id="formConfigFiscal" class="space-y-6">
+                <form id="formConfigFiscal">
                     <input type="hidden" name="action" value="save_config_fiscal">
                     <input type="hidden" name="id_config" id="id_config">
 
-                    <!-- Dados da Empresa -->
-                    <div class="border-b pb-4 mb-4">
+                    <!-- Tabs Header -->
+                    <div class="border-b border-gray-200 mb-6">
+                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                            <button type="button" onclick="switchTab('fiscal')" id="tab-fiscal"
+                                class="border-cyan-500 text-cyan-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Dados Fiscais
+                            </button>
+                            <button type="button" onclick="switchTab('certificado')" id="tab-certificado"
+                                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Certificado Digital
+                            </button>
+                            <button type="button" onclick="switchTab('integracoes')" id="tab-integracoes"
+                                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Integrações (API)
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- TAB: FISCAL -->
+                    <div id="content-fiscal" class="tab-content active">
                         <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                            <span class="material-icons mr-2 text-cyan-600">business</span> Dados da Empresa
+                            <span class="material-icons mr-2 text-cyan-600">business</span> Dados da Empresa e Emissão
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -62,7 +80,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                             </div>
 
-                            <!-- Endereço Empresa -->
+                            <!-- Endereço -->
                             <div class="md:col-span-2 border-t pt-4 mt-2">
                                 <h4 class="text-sm font-semibold text-gray-600 mb-3">Endereço (Obrigatório para NFSe)
                                 </h4>
@@ -124,49 +142,48 @@ if (!isset($_SESSION['usuario_id'])) {
                                 </label>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Configuração técnica -->
-                    <div class="border-b pb-4 mb-4">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                            <span class="material-icons mr-2 text-cyan-600">settings</span> Parâmetros NFS-e
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Ambiente Padrão</label>
-                                <select name="ambiente_padrao" id="ambiente_padrao"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50">
-                                    <option value="homologacao">Homologação (Teste)</option>
-                                    <option value="producao">Produção (Valendo)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Série RPS</label>
-                                <input type="text" name="serie_rps" id="serie_rps" value="8"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
-                                    (Homologação)</label>
-                                <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao" value="0"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                <p class="text-xs text-gray-500 mt-1">Ambiente de Teste</p>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
-                                    (Produção)</label>
-                                <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 border-orange-200">
-                                <p class="text-xs text-orange-600 mt-1 font-bold">Ambiente Oficial (Cuidado)</p>
+                        <div class="border-t pt-4 mt-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                <span class="material-icons mr-2 text-cyan-600">settings_remote</span> Parâmetros NFS-e
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ambiente Padrão</label>
+                                    <select name="ambiente_padrao" id="ambiente_padrao"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50">
+                                        <option value="homologacao">Homologação (Teste)</option>
+                                        <option value="producao">Produção (Valendo)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Série RPS</label>
+                                    <input type="text" name="serie_rps" id="serie_rps" value="8"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
+                                        (Homologação)</label>
+                                    <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao"
+                                        value="0"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
+                                        (Produção)</label>
+                                    <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 border-orange-200">
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Certificado Digital -->
-                    <div class="mb-4">
+                    <!-- TAB: CERTIFICADO -->
+                    <div id="content-certificado" class="tab-content hidden">
                         <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
                             <span class="material-icons mr-2 text-cyan-600">vpn_key</span> Certificado Digital
                         </h3>
+                        <p class="text-gray-500 text-sm mb-4">Esta senha será criptografada no banco de dados.</p>
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Caminho do Arquivo
@@ -174,21 +191,71 @@ if (!isset($_SESSION['usuario_id'])) {
                                 <input type="text" name="caminho_certificado" id="caminho_certificado"
                                     placeholder="Ex: certificado/meu_arquivo.pfx"
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                                <p class="text-xs text-gray-500 mt-1">Caminho relativo à raiz ou absoluto no servidor.
-                                </p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Certificado</label>
                                 <input type="password" name="senha_certificado" id="senha_certificado"
-                                    placeholder="Deixe em branco para não alterar"
+                                    placeholder="Preencha apenas se quiser alterar a senha atual"
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex justify-end pt-4 border-t border-gray-100">
+                    <!-- TAB: INTEGRAÇÕES -->
+                    <div id="content-integracoes" class="tab-content hidden">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                            <span class="material-icons mr-2 text-cyan-600">api</span> Integrações Externas
+                        </h3>
+
+                        <!-- Banco Inter -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                            <div class="flex items-center mb-4">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Banco_Inter_logo.svg"
+                                    alt="Inter" class="h-6 mr-3">
+                                <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança)</h4>
+                            </div>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                                    <input type="text" name="api_inter_client_id" id="api_inter_client_id"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                                    <input type="password" name="api_inter_client_secret" id="api_inter_client_secret"
+                                        placeholder="Preencha apenas para alterar"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Oracle -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center mb-4">
+                                <span class="material-icons text-red-600 mr-2">cloud</span>
+                                <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuário / Key ID</label>
+                                    <input type="text" name="api_oracle_user" id="api_oracle_user"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave Secreta
+                                        (Password)</label>
+                                    <input type="password" name="api_oracle_password" id="api_oracle_password"
+                                        placeholder="Preencha apenas para alterar"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
                         <button type="submit"
-                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg transition-colors flex items-center">
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
                             <span class="material-icons mr-2">save</span> Salvar Configurações
                         </button>
                     </div>
@@ -230,11 +297,26 @@ if (!isset($_SESSION['usuario_id'])) {
                     $('#ultimo_rps_producao').val(d.ultimo_rps_producao);
                     $('#caminho_certificado').val(d.caminho_certificado);
 
+                    // New Fields (Integration)
+                    if (d.api_inter_client_id) $('#api_inter_client_id').val(d.api_inter_client_id);
+                    if (d.api_oracle_user) $('#api_oracle_user').val(d.api_oracle_user);
+
                     if (d.optante_simples == 1) {
                         $('#optante_simples').prop('checked', true);
                     }
                 }
             }, 'json');
+
+            // Switch Tab Function
+            window.switchTab = function (tabName) {
+                // Headers
+                $('nav button').removeClass('border-cyan-500 text-cyan-600').addClass('border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300');
+                $('#tab-' + tabName).removeClass('border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300').addClass('border-cyan-500 text-cyan-600');
+
+                // Contents
+                $('.tab-content').addClass('hidden').removeClass('active');
+                $('#content-' + tabName).removeClass('hidden').addClass('active');
+            };
 
             // Salvar
             $('#formConfigFiscal').on('submit', function (e) {

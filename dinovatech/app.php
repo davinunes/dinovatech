@@ -4,6 +4,8 @@ session_set_cookie_params(0, '/');
 session_start();
 
 include "../database.php"; // Seu arquivo com DBConnect, DBExecute, etc.
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers/EncryptionHelper.php';
 
 // ACTION GET: Toggle Status Cliente (Direct Link)
 if (isset($_GET['action']) && $_GET['action'] === 'toggle_status_cliente') {
@@ -104,6 +106,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ultimo_rps_producao = (int) $ultimo_rps_producao;
                 $caminho_certificado = mysqli_real_escape_string($link, $caminho_certificado);
 
+                // Novos Campos de Integração
+                $api_inter_client_id = mysqli_real_escape_string($link, $_POST['api_inter_client_id'] ?? '');
+                $api_oracle_user = mysqli_real_escape_string($link, $_POST['api_oracle_user'] ?? '');
+
+                // Segredos (Encrypt)
+                $api_inter_client_secret_raw = $_POST['api_inter_client_secret'] ?? '';
+                $api_oracle_password_raw = $_POST['api_oracle_password'] ?? '';
+
                 // Address - Config Fiscal
                 $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
                 $numero = mysqli_real_escape_string($link, $_POST['numero'] ?? '');
@@ -112,12 +122,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
                 $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
 
-                // Senha: se vier vazia, não altera (se for update) ou insere vazia (se insert)
-                // Se vier preenchida, altera.
+                // Senha Certificado
                 $senha_sql_part = "";
                 if (!empty($senha_certificado)) {
-                    $senha_certificado = mysqli_real_escape_string($link, $senha_certificado);
-                    $senha_sql_part = ", senha_certificado = '$senha_certificado'";
+                    // Criptografar antes de salvar, se desejar. Por enquanto, mantendo compatibilidade com código legado que lê direto.
+                    // SE for para criptografar a senha do certificado também (user pediu "campos como Certificados Digitais (.pfx) e suas respectivas senhas sejam criptografados"):
+                    try {
+                        $senha_encrypted = EncryptionHelper::encrypt($senha_certificado);
+                        $senha_sql_part = ", senha_certificado = '$senha_encrypted'";
+                    } catch (Exception $e) {
+                        $response['message'] = "Erro ao criptografar senha certificado: " . $e->getMessage();
+                        break;
+                    }
+                }
+
+                // API Inter Secret
+                $inter_secret_sql_part = "";
+                if (!empty($api_inter_client_secret_raw)) {
+                    $enc = EncryptionHelper::encrypt($api_inter_client_secret_raw);
+                    $inter_secret_sql_part = ", api_inter_client_secret = '$enc'";
+                }
+
+                // API Oracle Password
+                $oracle_pass_sql_part = "";
+                if (!empty($api_oracle_password_raw)) {
+                    $enc = EncryptionHelper::encrypt($api_oracle_password_raw);
+                    $oracle_pass_sql_part = ", api_oracle_password = '$enc'";
                 }
 
                 if (!empty($id_config)) {
@@ -130,24 +160,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 ultimo_rps_homologacao='$ultimo_rps_homologacao', ultimo_rps_producao='$ultimo_rps_producao',
                                 caminho_certificado='$caminho_certificado',
                                 endereco='$endereco', numero='$numero', complemento='$complemento',
-                                bairro='$bairro', cep='$cep', uf='$uf'
+                                bairro='$bairro', cep='$cep', uf='$uf',
+                                api_inter_client_id='$api_inter_client_id', api_oracle_user='$api_oracle_user'
                                 $senha_sql_part
+                                $inter_secret_sql_part
+                                $oracle_pass_sql_part
                               WHERE id_config='$id_config'";
                 } else {
                     // Insert
-                    $senha_val = empty($senha_certificado) ? "NULL" : "'$senha_certificado'";
+                    $senha_val = empty($senha_certificado) ? "NULL" : "'" . EncryptionHelper::encrypt($senha_certificado) . "'";
+                    $inter_secret_val = empty($api_inter_client_secret_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_inter_client_secret_raw) . "'";
+                    $oracle_pass_val = empty($api_oracle_password_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_oracle_password_raw) . "'";
+
                     $query = "INSERT INTO ConfiguracoesEmissor 
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, 
                                regime_tributario, optante_simples, ambiente_padrao, serie_rps, 
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
-                               endereco, numero, complemento, bairro, cep, uf)
+                               endereco, numero, complemento, bairro, cep, uf,
+                               api_inter_client_id, api_inter_client_secret, api_oracle_user, api_oracle_password)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val,
-                               '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf')";
+                               '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf',
+                               '$api_inter_client_id', $inter_secret_val, '$api_oracle_user', $oracle_pass_val)";
                 }
 
                 if (DBExecute($link, $query)) {
@@ -168,6 +206,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Não retorna senha por segurança, ou retorna mascarado? 
                 // Melhor não retornar a senha para o front.
                 unset($row['senha_certificado']);
+                unset($row['api_inter_client_secret']);
+                unset($row['api_oracle_password']);
                 $response['success'] = true;
                 $response['data'] = $row;
             } else {
