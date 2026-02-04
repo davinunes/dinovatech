@@ -3,11 +3,13 @@
 // Versão: 1.0 (Com MySQLi e PHP 7.4 Compatível)
 
 include "database.php";
+require_once 'dinovatech/config.php';
+require_once 'dinovatech/helpers/AppHelper.php';
 
 $link = DBConnect();
 
 if (!$link) {
-    die("Erro Fatal: Não foi possível conectar ao banco de dados.");
+  die("Erro Fatal: Não foi possível conectar ao banco de dados.");
 }
 
 echo "<h1>Instalação do Banco de Dados (Semear Estrutura)</h1>";
@@ -220,9 +222,10 @@ execSql($link, "Tabela: Usuarios", "CREATE TABLE IF NOT EXISTS `Usuarios` (
 
 
 // --- 2. Tabelas Novas (Módulo Veterinário) ---
+if (AppHelper::isVetMode()) {
 
-// Pets
-execSql($link, "Tabela: Pets", "CREATE TABLE IF NOT EXISTS `Pets` (
+  // Pets
+  execSql($link, "Tabela: Pets", "CREATE TABLE IF NOT EXISTS `Pets` (
   `id_pet` int NOT NULL AUTO_INCREMENT,
   `id_cliente` int NOT NULL,
   `nome` varchar(100) NOT NULL,
@@ -238,8 +241,8 @@ execSql($link, "Tabela: Pets", "CREATE TABLE IF NOT EXISTS `Pets` (
   FOREIGN KEY (`id_cliente`) REFERENCES `Clientes`(`id_cliente`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-// Veterinarios
-execSql($link, "Tabela: Veterinarios", "CREATE TABLE IF NOT EXISTS `Veterinarios` (
+  // Veterinarios
+  execSql($link, "Tabela: Veterinarios", "CREATE TABLE IF NOT EXISTS `Veterinarios` (
   `id_vet` int NOT NULL AUTO_INCREMENT,
   `nome` varchar(100) NOT NULL,
   `crmv` varchar(20) NOT NULL,
@@ -249,8 +252,8 @@ execSql($link, "Tabela: Veterinarios", "CREATE TABLE IF NOT EXISTS `Veterinarios
   PRIMARY KEY (`id_vet`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-// Vacinas
-execSql($link, "Tabela: Vacinas", "CREATE TABLE IF NOT EXISTS `Vacinas` (
+  // Vacinas
+  execSql($link, "Tabela: Vacinas", "CREATE TABLE IF NOT EXISTS `Vacinas` (
   `id_vacina` int NOT NULL AUTO_INCREMENT,
   `nome` varchar(100) NOT NULL,
   `descricao` text,
@@ -258,8 +261,8 @@ execSql($link, "Tabela: Vacinas", "CREATE TABLE IF NOT EXISTS `Vacinas` (
   PRIMARY KEY (`id_vacina`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-// VacinaCiclos
-execSql($link, "Tabela: VacinaCiclos", "CREATE TABLE IF NOT EXISTS `VacinaCiclos` (
+  // VacinaCiclos
+  execSql($link, "Tabela: VacinaCiclos", "CREATE TABLE IF NOT EXISTS `VacinaCiclos` (
   `id_ciclo` int NOT NULL AUTO_INCREMENT,
   `id_vacina` int NOT NULL,
   `nome` varchar(100) NOT NULL,
@@ -268,8 +271,8 @@ execSql($link, "Tabela: VacinaCiclos", "CREATE TABLE IF NOT EXISTS `VacinaCiclos
   FOREIGN KEY (`id_vacina`) REFERENCES `Vacinas`(`id_vacina`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-// CarteiraVacinas
-execSql($link, "Tabela: CarteiraVacinas", "CREATE TABLE IF NOT EXISTS `CarteiraVacinas` (
+  // CarteiraVacinas
+  execSql($link, "Tabela: CarteiraVacinas", "CREATE TABLE IF NOT EXISTS `CarteiraVacinas` (
   `id_carteira` int NOT NULL AUTO_INCREMENT,
   `id_pet` int NOT NULL,
   `id_vacina` int NOT NULL,
@@ -283,8 +286,8 @@ execSql($link, "Tabela: CarteiraVacinas", "CREATE TABLE IF NOT EXISTS `CarteiraV
   FOREIGN KEY (`id_vacina`) REFERENCES `Vacinas`(`id_vacina`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-// Atendimentos
-execSql($link, "Tabela: Atendimentos", "CREATE TABLE IF NOT EXISTS `Atendimentos` (
+  // Atendimentos
+  execSql($link, "Tabela: Atendimentos", "CREATE TABLE IF NOT EXISTS `Atendimentos` (
   `id_atendimento` int NOT NULL AUTO_INCREMENT,
   `id_pet` int NOT NULL,
   `id_vet` int NOT NULL,
@@ -299,8 +302,8 @@ execSql($link, "Tabela: Atendimentos", "CREATE TABLE IF NOT EXISTS `Atendimentos
   FOREIGN KEY (`id_vet`) REFERENCES `Veterinarios`(`id_vet`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
-// DocumentosEmitidos
-execSql($link, "Tabela: DocumentosEmitidos", "CREATE TABLE IF NOT EXISTS `DocumentosEmitidos` (
+  // DocumentosEmitidos
+  execSql($link, "Tabela: DocumentosEmitidos", "CREATE TABLE IF NOT EXISTS `DocumentosEmitidos` (
   `id_documento` int NOT NULL AUTO_INCREMENT,
   `id_atendimento` int,
   `id_pet` int NOT NULL,
@@ -309,6 +312,7 @@ execSql($link, "Tabela: DocumentosEmitidos", "CREATE TABLE IF NOT EXISTS `Docume
   `data_emissao` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_documento`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+} // End Vet Mode
 
 
 // --- 3. Inserções Padrão (Seed) ---
@@ -317,25 +321,25 @@ execSql($link, "Tabela: DocumentosEmitidos", "CREATE TABLE IF NOT EXISTS `Docume
 $checkUser = mysqli_query($link, "SELECT count(*) as c FROM Usuarios WHERE email = 'admin@dinovet.com'");
 $rowUser = mysqli_fetch_assoc($checkUser);
 if ($rowUser['c'] == 0) {
-    echo "<p>Inserindo Usuário Admin Padrão...</p>";
-    $pass = password_hash('123456', PASSWORD_DEFAULT);
-    $sqlUser = "INSERT INTO Usuarios (nome, email, senha, nivel_acesso) VALUES ('Administrador', 'admin@dinovet.com', '$pass', 'admin')";
-    if (mysqli_query($link, $sqlUser)) {
-        echo "<strong style='color:green'>Usuário ADMIN criado (admin@dinovet.com / 123456)</strong><br>";
-    } else {
-        echo "<strong style='color:red'>Erro ao criar usuário: " . mysqli_error($link) . "</strong><br>";
-    }
+  echo "<p>Inserindo Usuário Admin Padrão...</p>";
+  $pass = password_hash('123456', PASSWORD_DEFAULT);
+  $sqlUser = "INSERT INTO Usuarios (nome, email, senha, nivel_acesso) VALUES ('Administrador', 'admin@dinovet.com', '$pass', 'admin')";
+  if (mysqli_query($link, $sqlUser)) {
+    echo "<strong style='color:green'>Usuário ADMIN criado (admin@dinovet.com / 123456)</strong><br>";
+  } else {
+    echo "<strong style='color:red'>Erro ao criar usuário: " . mysqli_error($link) . "</strong><br>";
+  }
 }
 
 // Configuração Padrão (Emissor)
 $checkConfig = mysqli_query($link, "SELECT count(*) as c FROM ConfiguracoesEmissor");
 $rowConfig = mysqli_fetch_assoc($checkConfig);
 if ($rowConfig['c'] == 0) {
-    echo "<p>Inserindo Configuração Inicial...</p>";
-    $sqlConfig = "INSERT INTO ConfiguracoesEmissor (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, ambiente_padrao) VALUES ('Minha Clínica Veterinária', 'DinoVET', '00000000000191', '00000000', '5300108', 'homologacao')";
-    if (mysqli_query($link, $sqlConfig)) {
-        echo "<strong style='color:green'>Configuração Inicial Criada</strong><br>";
-    }
+  echo "<p>Inserindo Configuração Inicial...</p>";
+  $sqlConfig = "INSERT INTO ConfiguracoesEmissor (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, ambiente_padrao) VALUES ('Minha Clínica Veterinária', 'DinoVET', '00000000000191', '00000000', '5300108', 'homologacao')";
+  if (mysqli_query($link, $sqlConfig)) {
+    echo "<strong style='color:green'>Configuração Inicial Criada</strong><br>";
+  }
 }
 
 echo "</pre>";
@@ -344,10 +348,10 @@ DBClose($link);
 
 function execSql($link, $label, $sql)
 {
-    if (mysqli_query($link, $sql)) {
-        echo "$label: <span style='color:green'>OK</span><br>";
-    } else {
-        echo "$label: <span style='color:red'>ERRO: " . mysqli_error($link) . "</span><br>";
-    }
+  if (mysqli_query($link, $sql)) {
+    echo "$label: <span style='color:green'>OK</span><br>";
+  } else {
+    echo "$label: <span style='color:red'>ERRO: " . mysqli_error($link) . "</span><br>";
+  }
 }
 ?>

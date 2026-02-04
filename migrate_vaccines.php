@@ -3,6 +3,13 @@ include "database.php";
 
 $link = DBConnect();
 
+require_once 'dinovatech/config.php';
+require_once 'dinovatech/helpers/AppHelper.php';
+
+if (!AppHelper::isVetMode()) {
+    die("<h2>Migração Cancelada</h2><p>O modo Veterinário (APP_MODE_VET) não está ativo.</p>");
+}
+
 echo "<h2>Migrando Vacinas (Ciclos)</h2>";
 echo "<pre>";
 

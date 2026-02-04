@@ -1,10 +1,16 @@
 <?php
 session_start();
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
+    header("Location: ../../login.php");
     exit();
 }
-include "../database.php";
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../helpers/AppHelper.php';
+if (!AppHelper::isVetMode()) {
+    header("Location: ../../dashboard.php");
+    exit();
+}
+include "../../../database.php";
 
 $link = DBConnect();
 if (!$link) {
@@ -125,7 +131,7 @@ DBClose($link);
     <title>
         <?= $is_edit ? 'Editar Pet' : 'Novo Pet' ?> - DinoVet
     </title>
-    <?php include 'components/layout_head.php'; ?>
+    <?php include '../../components/layout_head.php'; ?>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -145,7 +151,7 @@ DBClose($link);
 </head>
 
 <body class="bg-gray-50 flex">
-    <?php include 'components/sidebar.php'; ?>
+    <?php include '../../components/sidebar.php'; ?>
 
     <div class="flex-1 flex flex-col lg:ml-64 min-h-screen transition-all duration-300">
         <main class="flex-1 p-6 mt-16 lg:mt-0">
@@ -223,12 +229,12 @@ DBClose($link);
                                 <div class="flex gap-4 pt-2">
                                     <label class="inline-flex items-center">
                                         <input type="radio" name="sexo" value="M" <?= $sexo == 'M' ? 'checked' : '' ?>
-                                        class="form-radio text-cyan-600">
+                                            class="form-radio text-cyan-600">
                                         <span class="ml-2">Macho</span>
                                     </label>
                                     <label class="inline-flex items-center">
                                         <input type="radio" name="sexo" value="F" <?= $sexo == 'F' ? 'checked' : '' ?>
-                                        class="form-radio text-pink-600">
+                                            class="form-radio text-pink-600">
                                         <span class="ml-2">Fêmea</span>
                                     </label>
                                 </div>

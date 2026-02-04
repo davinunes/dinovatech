@@ -1,10 +1,16 @@
 <?php
 session_start();
 if (!isset($_SESSION['usuario_id'])) {
-    header("Location: login.php");
+    header("Location: ../../login.php");
     exit();
 }
-include "../database.php";
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../helpers/AppHelper.php';
+if (!AppHelper::isVetMode()) {
+    header("Location: ../../dashboard.php");
+    exit();
+}
+include "../../../database.php";
 
 $link = DBConnect();
 if (!$link)
@@ -65,11 +71,11 @@ DBClose($link);
 
 <head>
     <title><?= $is_edit ? "Editar" : "Novo" ?> Veterinário - DinoVet</title>
-    <?php include 'components/layout_head.php'; ?>
+    <?php include '../../components/layout_head.php'; ?>
 </head>
 
 <body class="bg-gray-50 flex">
-    <?php include 'components/sidebar.php'; ?>
+    <?php include '../../components/sidebar.php'; ?>
 
     <div class="flex-1 flex flex-col lg:ml-64 min-h-screen transition-all duration-300">
         <main class="flex-1 p-6 mt-16 lg:mt-0">
