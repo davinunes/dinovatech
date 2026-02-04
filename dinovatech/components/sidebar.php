@@ -1,5 +1,15 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+require_once dirname(__DIR__) . '/config.php';
+require_once dirname(__DIR__) . '/helpers/AppHelper.php';
+
+// Determine base path for links
+// If we are deep in modules, we need to go up.
+// Simple check: are we in modules/Vet?
+$basePath = './';
+if (strpos($_SERVER['PHP_SELF'], '/modules/Vet/') !== false) {
+    $basePath = '../../';
+}
 ?>
 <!-- Mobile Overlay -->
 <div id="sidebar-overlay" onclick="toggleSidebar()"
@@ -10,12 +20,12 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     class="fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-xl flex flex-col">
     <!-- Logo area -->
     <div class="h-16 flex items-center justify-center border-b border-slate-800">
-        <h1 class="text-xl font-bold tracking-wider text-cyan-400">DINOVATECH</h1>
+        <h1 class="text-xl font-bold tracking-wider text-cyan-400">DINOVET</h1>
     </div>
 
     <!-- Navigation -->
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-        <a href="dashboard.php"
+        <a href="<?= $basePath ?>dashboard.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'dashboard.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">dashboard</span>
             <span class="font-medium">Dashboard</span>
@@ -25,29 +35,55 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cadastros</p>
         </div>
 
-        <a href="clientes.php"
+        <a href="<?= $basePath ?>clientes.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'clientes.php' || $currentPage == 'cliente_form.php' || $currentPage == 'cliente_detalhes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">people</span>
             <span class="font-medium">Clientes</span>
         </a>
 
-        <a href="servicos.php"
+        <?php if (AppHelper::isVetMode()): ?>
+            <a href="<?= $basePath ?>modules/Vet/pets.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'pets.php' || $currentPage == 'pet_form.php' || $currentPage == 'pet_detalhes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3">pets</span>
+                <span class="font-medium">Pets</span>
+            </a>
+        <?php endif; ?>
+
+        <a href="<?= $basePath ?>servicos.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'servicos.php' || $currentPage == 'servico_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">build</span>
             <span class="font-medium">Serviços</span>
         </a>
 
+        <?php if (AppHelper::isVetMode()): ?>
+            <div class="pt-4 pb-2">
+                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Clínico</p>
+            </div>
+
+            <a href="<?= $basePath ?>modules/Vet/vacinas.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'vacinas.php' || $currentPage == 'vacina_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3">vaccines</span>
+                <span class="font-medium">Vacinas (Catálogo)</span>
+            </a>
+
+            <a href="<?= $basePath ?>modules/Vet/veterinarios.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3">medical_services</span>
+                <span class="font-medium">Veterinários</span>
+            </a>
+        <?php endif; ?>
+
         <div class="pt-4 pb-2">
             <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gestão</p>
         </div>
 
-        <a href="config_fiscal.php"
+        <a href="<?= $basePath ?>config_fiscal.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'config_fiscal.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">settings_applications</span>
             <span class="font-medium">Configuração Fiscal</span>
         </a>
 
-        <a href="contratos.php"
+        <a href="<?= $basePath ?>contratos.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'contratos.php' || $currentPage == 'contrato_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">repeat</span>
             <span class="font-medium">Recorrência</span>
@@ -68,7 +104,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
     <!-- User Profile / Logout -->
     <div class="p-4 border-t border-slate-800">
-        <a href="logout.php"
+        <a href="<?= $basePath ?>logout.php"
             class="flex items-center px-4 py-2 text-slate-400 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors">
             <span class="material-icons text-xl mr-3">logout</span>
             <span class="font-medium">Sair</span>
@@ -83,7 +119,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <button onclick="toggleSidebar()" class="text-slate-600 focus:outline-none">
             <span class="material-icons text-2xl">menu</span>
         </button>
-        <span class="ml-4 font-bold text-gray-800">Dinovatech</span>
+        <span class="ml-4 font-bold text-gray-800">DinoVet</span>
     </div>
 </header>
 

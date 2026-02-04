@@ -40,6 +40,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
+        // NOVA ACTION: Registrar Vacina
+        case 'register_vaccine':
+            $id_pet = $_POST['id_pet'] ?? '';
+            $id_vacina = $_POST['id_vacina'] ?? '';
+            $data_aplicacao = $_POST['data_aplicacao'] ?? date('Y-m-d');
+            $data_proxima = $_POST['data_proxima'] ?? NULL;
+            $lote = $_POST['lote'] ?? '';
+            $observacoes = $_POST['observacoes'] ?? '';
+
+            if (empty($id_pet) || empty($id_vacina) || empty($data_aplicacao)) {
+                $response['message'] = "Pet, Vacina e Data de Aplicação são obrigatórios.";
+            } else {
+                $id_pet = (int) $id_pet;
+                $id_vacina = (int) $id_vacina;
+                $data_aplicacao = mysqli_real_escape_string($link, $data_aplicacao);
+                $data_proxima_val = $data_proxima ? "'" . mysqli_real_escape_string($link, $data_proxima) . "'" : "NULL";
+                $lote = mysqli_real_escape_string($link, $lote);
+                $observacoes = mysqli_real_escape_string($link, $observacoes);
+
+                $query = "INSERT INTO CarteiraVacinas (id_pet, id_vacina, data_aplicacao, data_vencimento, lote, observacao) 
+                          VALUES ($id_pet, $id_vacina, '$data_aplicacao', $data_proxima_val, '$lote', '$observacoes')";
+
+                if (DBExecute($link, $query)) {
+                    $response['success'] = true;
+                    $response['message'] = "Vacina registrada com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao registrar vacina: " . mysqli_error($link);
+                }
+            }
+            break;
+
         // NOVA ACTION: Configuração Fiscal
         case 'save_config_fiscal':
             // Recebe dados do POST

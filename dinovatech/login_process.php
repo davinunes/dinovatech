@@ -38,7 +38,7 @@ if ($result && mysqli_num_rows($result) === 1) {
         $_SESSION['nivel_acesso'] = $usuario['nivel_acesso'];
 
         DBClose($link);
-        header('Location: clientes.php'); // Redireciona para o painel principal
+        header('Location: clientes.php'); // Redireciona para o painel principal (Clientes)
         exit();
     }
 }
