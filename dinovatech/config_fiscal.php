@@ -277,52 +277,79 @@ if (!isset($_SESSION['usuario_id'])) {
                                     <input type="text" name="api_inter_conta_corrente" id="api_inter_conta_corrente"
                                         class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                                 </div>
-                            </div>
-                        </div>
 
-                        <!-- Oracle -->
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                <span class="material-icons text-red-600 mr-2">cloud</span>
-                                <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
-                            </div>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
-                                        (Pre-Authenticated)</label>
-                                    <input type="text" name="api_oracle_url" id="api_oracle_url"
-                                        placeholder="https://objectstorage..."
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                                    <p class="text-xs text-gray-500 mt-1">URL pública para upload direto sem necessidade
-                                        de auth adicional.</p>
-                                </div>
-
-                                <!-- Opcional: Manter User/Pass mas deixar claro que pode não ser usado -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50">
+                                <!-- Inter Certificates -->
+                                <div
+                                    class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 pt-4 mt-2">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">User / Key ID
-                                            (Opcional)</label>
-                                        <input type="text" name="api_oracle_user" id="api_oracle_user"
-                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Certificado
+                                            (.crt)</label>
+                                        <input type="file" name="arquivo_inter_crt" id="arquivo_inter_crt" accept=".crt"
+                                            class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer border border-gray-300 rounded-lg">
+                                        <div class="text-xs text-gray-500 mt-1" id="current_inter_crt_info">
+                                            <span
+                                                class="material-icons text-gray-400 text-[10px] mr-1">description</span>
+                                            <span id="caminho_inter_crt_display" class="font-mono">Nenhum salvo</span>
+                                        </div>
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Secret
-                                            (Opcional)</label>
-                                        <input type="password" name="api_oracle_password" id="api_oracle_password"
-                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Chave
+                                            (.key)</label>
+                                        <input type="file" name="arquivo_inter_key" id="arquivo_inter_key" accept=".key"
+                                            class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer border border-gray-300 rounded-lg">
+                                        <div class="text-xs text-gray-500 mt-1" id="current_inter_key_info">
+                                            <span class="material-icons text-gray-400 text-[10px] mr-1">vpn_key</span>
+                                            <span id="caminho_inter_key_display" class="font-mono">Nenhum salvo</span>
+                                        </div>
                                     </div>
                                 </div>
+
+                                <!-- Oracle -->
+                                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                    <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                        <span class="material-icons text-red-600 mr-2">cloud</span>
+                                        <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
+                                                (Pre-Authenticated)</label>
+                                            <input type="text" name="api_oracle_url" id="api_oracle_url"
+                                                placeholder="https://objectstorage..."
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                            <p class="text-xs text-gray-500 mt-1">URL pública para upload direto sem
+                                                necessidade
+                                                de auth adicional.</p>
+                                        </div>
+
+                                        <!-- Opcional: Manter User/Pass mas deixar claro que pode não ser usado -->
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">User / Key
+                                                    ID
+                                                    (Opcional)</label>
+                                                <input type="text" name="api_oracle_user" id="api_oracle_user"
+                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-1">Secret
+                                                    (Opcional)</label>
+                                                <input type="password" name="api_oracle_password"
+                                                    id="api_oracle_password"
+                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
-                        </div>
 
-                    </div>
-
-                    <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
-                        <button type="submit"
-                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
-                            <span class="material-icons mr-2">save</span> Salvar Configurações
-                        </button>
-                    </div>
+                            <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
+                                <button type="submit"
+                                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
+                                    <span class="material-icons mr-2">save</span> Salvar Configurações
+                                </button>
+                            </div>
                 </form>
             </div>
 
@@ -365,6 +392,13 @@ if (!isset($_SESSION['usuario_id'])) {
                     if (d.api_inter_client_id) $('#api_inter_client_id').val(d.api_inter_client_id);
                     if (d.api_inter_chave_pix) $('#api_inter_chave_pix').val(d.api_inter_chave_pix);
                     if (d.api_inter_conta_corrente) $('#api_inter_conta_corrente').val(d.api_inter_conta_corrente);
+
+                    if (d.api_inter_cert_path) {
+                        $('#caminho_inter_crt_display').text(d.api_inter_cert_path);
+                    }
+                    if (d.api_inter_key_path) {
+                        $('#caminho_inter_key_display').text(d.api_inter_key_path);
+                    }
 
                     if (d.api_oracle_user) $('#api_oracle_user').val(d.api_oracle_user);
                     if (d.api_oracle_url) $('#api_oracle_url').val(d.api_oracle_url);

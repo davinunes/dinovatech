@@ -160,6 +160,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $caminho_certificado = mysqli_real_escape_string($link, $caminho_certificado);
 
+                // --- INTER CERTIFICATES UPLOAD ---
+                $api_inter_cert_path = ''; // Will update if new file uploaded
+                $api_inter_key_path = '';
+
+                // Handle CRT upload
+                if (isset($_FILES['arquivo_inter_crt']) && $_FILES['arquivo_inter_crt']['error'] === UPLOAD_ERR_OK) {
+                    $uploadInterDir = dirname(__DIR__) . '/certificado/inter/';
+                    if (!is_dir($uploadInterDir)) {
+                        mkdir($uploadInterDir, 0755, true);
+                    }
+                    $ext = pathinfo($_FILES['arquivo_inter_crt']['name'], PATHINFO_EXTENSION);
+                    if (strtolower($ext) !== 'crt') {
+                        $response['message'] = "Erro: Arquivo do certificado Inter deve ser .crt";
+                        break;
+                    }
+                    $newFileName = 'inter_' . time() . '.crt';
+                    $destPath = $uploadInterDir . $newFileName;
+                    if (move_uploaded_file($_FILES['arquivo_inter_crt']['tmp_name'], $destPath)) {
+                        $api_inter_cert_path = 'certificado/inter/' . $newFileName;
+                    } else {
+                        $response['message'] = "Erro ao salvar arquivo .crt do Inter.";
+                        break;
+                    }
+                }
+
+                // Handle KEY upload
+                if (isset($_FILES['arquivo_inter_key']) && $_FILES['arquivo_inter_key']['error'] === UPLOAD_ERR_OK) {
+                    $uploadInterDir = dirname(__DIR__) . '/certificado/inter/';
+                    if (!is_dir($uploadInterDir)) {
+                        mkdir($uploadInterDir, 0755, true);
+                    }
+                    $ext = pathinfo($_FILES['arquivo_inter_key']['name'], PATHINFO_EXTENSION);
+                    if (strtolower($ext) !== 'key') {
+                        $response['message'] = "Erro: Arquivo de chave Inter deve ser .key";
+                        break;
+                    }
+                    $newFileName = 'inter_' . time() . '.key';
+                    $destPath = $uploadInterDir . $newFileName;
+                    if (move_uploaded_file($_FILES['arquivo_inter_key']['tmp_name'], $destPath)) {
+                        $api_inter_key_path = 'certificado/inter/' . $newFileName;
+                    } else {
+                        $response['message'] = "Erro ao salvar arquivo .key do Inter.";
+                        break;
+                    }
+                }
+
+                // Prepared DB updates for Inter Files
+                $inter_files_sql_part = "";
+                if (!empty($api_inter_cert_path)) {
+                    $api_inter_cert_path = mysqli_real_escape_string($link, $api_inter_cert_path);
+                    $inter_files_sql_part .= ", api_inter_cert_path = '$api_inter_cert_path'";
+                }
+                if (!empty($api_inter_key_path)) {
+                    $api_inter_key_path = mysqli_real_escape_string($link, $api_inter_key_path);
+                    $inter_files_sql_part .= ", api_inter_key_path = '$api_inter_key_path'";
+                }
+
                 // Novos Campos de Integração
                 $api_inter_client_id = mysqli_real_escape_string($link, $_POST['api_inter_client_id'] ?? '');
                 $api_inter_chave_pix = mysqli_real_escape_string($link, $_POST['api_inter_chave_pix'] ?? '');
@@ -225,12 +282,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $senha_sql_part
                                 $inter_secret_sql_part
                                 $oracle_pass_sql_part
+                                $inter_files_sql_part
                               WHERE id_config='$id_config'";
                 } else {
                     // Insert
                     $senha_val = empty($senha_certificado) ? "NULL" : "'" . EncryptionHelper::encrypt($senha_certificado) . "'";
                     $inter_secret_val = empty($api_inter_client_secret_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_inter_client_secret_raw) . "'";
                     $oracle_pass_val = empty($api_oracle_password_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_oracle_password_raw) . "'";
+
+                    // For Insert, we use the variables directly (checked empty above)
+                    $api_inter_cert_val = !empty($api_inter_cert_path) ? "'$api_inter_cert_path'" : "NULL";
+                    $api_inter_key_val = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
 
                     $query = "INSERT INTO ConfiguracoesEmissor 
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, codigo_municipio, 
@@ -240,6 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                endereco, numero, complemento, bairro, cep, uf,
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
+                               api_inter_cert_path, api_inter_key_path,
                                api_oracle_user, api_oracle_password, api_oracle_url)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$codigo_municipio',
@@ -249,6 +312,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf',
                                '$api_inter_client_id', $inter_secret_val, 
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
+                               $api_inter_cert_val, $api_inter_key_val,
                                '$api_oracle_user', $oracle_pass_val, '$api_oracle_url')";
                 }
 
