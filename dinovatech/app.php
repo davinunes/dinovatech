@@ -1714,7 +1714,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
             }
 
+
             // 2. Fetch Fatura & Client
+            // Decrypt Certificate Password
+            if (!empty($config['senha_certificado'])) {
+                try {
+                    $decrypted = EncryptionHelper::decrypt($config['senha_certificado']);
+                    if ($decrypted) {
+                        $config['senha_certificado'] = $decrypted;
+                    }
+                } catch (Exception $e) {
+                    // Ignore, might be plaintext or invalid
+                }
+            }
+
             $queryFat = "SELECT F.*, C.*, C.nome as nome_tomador, F.id_fatura as f_id FROM Faturas F JOIN Clientes C ON F.id_cliente=C.id_cliente WHERE F.id_fatura='$id_fatura'";
             $resFat = DBExecute($link, $queryFat);
             $fatura = mysqli_fetch_assoc($resFat);
