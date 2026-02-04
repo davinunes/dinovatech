@@ -245,7 +245,7 @@ if (!isset($_SESSION['usuario_id'])) {
                         <!-- Banco Inter -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
                             <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Banco_Inter_logo.svg"
+                                <img src="https://api-financeiro.agilize.com.br/api/image/inter-ce9e01981d.png"
                                     alt="Inter" class="h-6 mr-3">
                                 <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança / PIX)</h4>
                             </div>
