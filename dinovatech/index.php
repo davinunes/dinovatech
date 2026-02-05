@@ -13,6 +13,7 @@ if (!isset($_SESSION['usuario_id'])) {
 
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,178 +23,415 @@ if (!isset($_SESSION['usuario_id'])) {
     <!-- Inclua jQuery UI para autocomplete e dialog (modal) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
     <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/themes/smoothness/jquery-ui.css">
-	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
 
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .container { max-width: 960px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1, h2 { text-align: center; color: #333; }
-        .controls { text-align: center; margin-bottom: 20px; }
-        .controls button { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
-        .controls button.primary { background-color: #007bff; color: white; }
-        .controls button.primary:hover { background-color: #0056b3; }
-        .controls button.secondary { background-color: #6c757d; color: white; }
-        .controls button.secondary:hover { background-color: #5a6268; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
 
-        .search-area { margin-top: 30px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #e9ecef; }
-        .search-area label { display: block; margin-bottom: 8px; font-weight: bold; }
-        .search-area input[type="text"] { width: calc(100% - 22px); padding: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        .client-info, .fatura-info { margin-top: 20px; padding: 15px; border: 1px solid #bce8f1; background-color: #d9edf7; border-radius: 8px; }
-        .fatura-list { margin-top: 15px; }
-        .fatura-list table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .fatura-list th, .fatura-list td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
-        .fatura-list th { background-color: #e9ecef; font-weight: bold; }
-        .fatura-list tr:nth-child(even) { background-color: #f8f9fa; }
-        .fatura-list .action-buttons button { padding: 5px 10px; margin-right: 5px; font-size: 0.9em; }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .controls button.primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .controls button.primary:hover {
+            background-color: #0056b3;
+        }
+
+        .controls button.secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .controls button.secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .search-area {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #e9ecef;
+        }
+
+        .search-area label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .search-area input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .client-info,
+        .fatura-info {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #bce8f1;
+            background-color: #d9edf7;
+            border-radius: 8px;
+        }
+
+        .fatura-list {
+            margin-top: 15px;
+        }
+
+        .fatura-list table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .fatura-list th,
+        .fatura-list td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .fatura-list th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+
+        .fatura-list tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .fatura-list .action-buttons button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            font-size: 0.9em;
+        }
 
         /* Estilo para modais (jQuery UI Dialog) */
-        .ui-dialog { z-index: 1000 !important; }
-        .ui-dialog .ui-dialog-content { padding: 1.5em !important; }
-        .ui-dialog label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .ui-dialog input[type="text"], 
-        .ui-dialog input[type="email"], 
-        .ui-dialog input[type="number"], 
+        .ui-dialog {
+            z-index: 1000 !important;
+        }
+
+        .ui-dialog .ui-dialog-content {
+            padding: 1.5em !important;
+        }
+
+        .ui-dialog label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .ui-dialog input[type="text"],
+        .ui-dialog input[type="email"],
+        .ui-dialog input[type="number"],
         .ui-dialog input[type="date"],
         .ui-dialog select,
-        .ui-dialog textarea { /* Adicionado textarea */
-            width: calc(100% - 20px); 
-            padding: 8px; 
-            margin-bottom: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
+        .ui-dialog textarea {
+            /* Adicionado textarea */
+            width: calc(100% - 20px);
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
-        .ui-dialog button.submit { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
-        .ui-dialog button.submit:hover { background-color: #218838; }
 
-        #faturaItensTable th, #faturaItensTable td { padding: 5px; font-size: 0.9em; }
-        #faturaItensTable .item-actions button { margin-right: 5px; padding: 3px 8px; font-size: 0.8em; }
-        #faturaItensTable .item-actions .btn-edit { background-color: #ffffff; color: #333; }
-        #faturaItensTable .item-actions .btn-edit:hover { background-color: #e0a800; }
-        #faturaItensTable .item-actions .btn-remove { background-color: #ffffff; color: white; }
-        #faturaItensTable .item-actions .btn-remove:hover { background-color: #c82333; }
+        .ui-dialog button.submit {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-        .service-search-area { margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #e9ecef; }
-        .service-search-area button { background-color: #ffc107; color: #333; }
-        .service-search-area button:hover { background-color: #e0a800; }
+        .ui-dialog button.submit:hover {
+            background-color: #218838;
+        }
+
+        #faturaItensTable th,
+        #faturaItensTable td {
+            padding: 5px;
+            font-size: 0.9em;
+        }
+
+        #faturaItensTable .item-actions button {
+            margin-right: 5px;
+            padding: 3px 8px;
+            font-size: 0.8em;
+        }
+
+        #faturaItensTable .item-actions .btn-edit {
+            background-color: #ffffff;
+            color: #333;
+        }
+
+        #faturaItensTable .item-actions .btn-edit:hover {
+            background-color: #e0a800;
+        }
+
+        #faturaItensTable .item-actions .btn-remove {
+            background-color: #ffffff;
+            color: white;
+        }
+
+        #faturaItensTable .item-actions .btn-remove:hover {
+            background-color: #c82333;
+        }
+
+        .service-search-area {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #e9ecef;
+        }
+
+        .service-search-area button {
+            background-color: #ffc107;
+            color: #333;
+        }
+
+        .service-search-area button:hover {
+            background-color: #e0a800;
+        }
 
         /* Estilos para Recorrências */
-        #recorrenciasList table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        #recorrenciasList th, #recorrenciasList td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
-        #recorrenciasList th { background-color: #e9ecef; font-weight: bold; }
-        #recorrenciasList tr:nth-child(even) { background-color: #f8f9fa; }
-        #recorrenciasList .action-buttons button { padding: 3px 8px; font-size: 0.8em; }
-        .recorrencia-item { font-size: 0.9em; margin-bottom: 5px; padding: 5px; background-color: #f0f8ff; border-radius: 3px; }
+        #recorrenciasList table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #recorrenciasList th,
+        #recorrenciasList td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #recorrenciasList th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+
+        #recorrenciasList tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        #recorrenciasList .action-buttons button {
+            padding: 3px 8px;
+            font-size: 0.8em;
+        }
+
+        .recorrencia-item {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            padding: 5px;
+            background-color: #f0f8ff;
+            border-radius: 3px;
+        }
 
         /* Estilos para Pagamentos */
-        #pagamentosList table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        #pagamentosList th, #pagamentosList td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
-        #pagamentosList th { background-color: #e9ecef; font-weight: bold; }
-        #pagamentosList tr:nth-child(even) { background-color: #f8f9fa; }
-        .pagamento-status-Confirmado { color: #28a745; font-weight: bold; }
-        .pagamento-status-Pendente { color: #ffc107; font-weight: bold; }
-        .pagamento-status-Cancelado { color: #dc3545; font-weight: bold; }
-        
+        #pagamentosList table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #pagamentosList th,
+        #pagamentosList td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: left;
+        }
+
+        #pagamentosList th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+
+        #pagamentosList tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .pagamento-status-Confirmado {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .pagamento-status-Pendente {
+            color: #ffc107;
+            font-weight: bold;
+        }
+
+        .pagamento-status-Cancelado {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
         /* Estilos para seleção de itens de pagamento */
-        #itensPagosSelection table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        #itensPagosSelection th, #itensPagosSelection td { border: 1px solid #eee; padding: 5px; text-align: left; font-size: 0.9em; }
-        #itensPagosSelection th { background-color: #f9f9f9; }
-        #itensPagosSelection input[type="checkbox"] { margin-right: 5px; }
-        #itensPagosSelection .item-pagamento-checkbox-row { /* Estilo para a linha do item selecionável */
+        #itensPagosSelection table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        #itensPagosSelection th,
+        #itensPagosSelection td {
+            border: 1px solid #eee;
+            padding: 5px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        #itensPagosSelection th {
+            background-color: #f9f9f9;
+        }
+
+        #itensPagosSelection input[type="checkbox"] {
+            margin-right: 5px;
+        }
+
+        #itensPagosSelection .item-pagamento-checkbox-row {
+            /* Estilo para a linha do item selecionável */
             background-color: #fdfdfd;
         }
+
         #itensPagosSelection .item-pagamento-checkbox-row:hover {
             background-color: #f0f0f0;
         }
+
         #itensPagosSelection .item-pagamento-checkbox-row.selected {
-            background-color: #e6f7ff; /* Cor mais clara para itens selecionados */
+            background-color: #e6f7ff;
+            /* Cor mais clara para itens selecionados */
         }
+
         .saldo-devedor-fatura-display {
             font-weight: bold;
-            color: #d9534f; /* Cor para saldo devedor */
+            color: #d9534f;
+            /* Cor para saldo devedor */
         }
-		
-.fatura-cards {
-    display: grid;
-    gap: 10px;
-}
 
-.card-fatura {
-    display: flex;
-    flex-wrap: wrap;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px 15px;
-    align-items: center;
-    transition: 0.2s ease-in-out;
-    box-shadow: 1px 1px 5px rgba(0,0,0,0.05);
-}
+        .fatura-cards {
+            display: grid;
+            gap: 10px;
+        }
 
-.card-fatura.header {
-    background: #f2f2f2;
-    font-weight: bold;
-    box-shadow: none;
-}
+        .card-fatura {
+            display: flex;
+            flex-wrap: wrap;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px 15px;
+            align-items: center;
+            transition: 0.2s ease-in-out;
+            box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.05);
+        }
 
-.card-fatura .campo {
-    flex: 1 1 150px;
-    padding: 5px 10px;
-}
+        .card-fatura.header {
+            background: #f2f2f2;
+            font-weight: bold;
+            box-shadow: none;
+        }
 
-.card-fatura .botoes {
-    display: flex;
-    gap: 12px;
-}
+        .card-fatura .campo {
+            flex: 1 1 150px;
+            padding: 5px 10px;
+        }
 
-.icon-acao {
-    font-size: 1.2em;
-    cursor: pointer;
-    color: #007bff;
-    transition: color 0.2s;
-}
+        .card-fatura .botoes {
+            display: flex;
+            gap: 12px;
+        }
 
-.icon-acao:hover {
-    color: #0056b3;
-}
+        .icon-acao {
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #007bff;
+            transition: color 0.2s;
+        }
 
-.icon-acao.verde {
-    color: #28a745;
-}
+        .icon-acao:hover {
+            color: #0056b3;
+        }
 
-.icon-acao.verde:hover {
-    color: #1e7e34;
-}
+        .icon-acao.verde {
+            color: #28a745;
+        }
 
-@media (max-width: 768px) {
-    .card-fatura.header {
-        display: none;
-    }
-    .card-fatura {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .card-fatura .campo {
-        flex: none;
-        width: 100%;
-    }
-    .card-fatura .botoes {
-        margin-top: 10px;
-    }
-}
+        .icon-acao.verde:hover {
+            color: #1e7e34;
+        }
 
-.card-fatura.liquidada {
-    background-color: #e6f9e6; /* verde claro */
-    border-left: 4px solid #28a745;
-}
+        @media (max-width: 768px) {
+            .card-fatura.header {
+                display: none;
+            }
 
+            .card-fatura {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
+            .card-fatura .campo {
+                flex: none;
+                width: 100%;
+            }
 
+            .card-fatura .botoes {
+                margin-top: 10px;
+            }
+        }
+
+        .card-fatura.liquidada {
+            background-color: #e6f9e6;
+            /* verde claro */
+            border-left: 4px solid #28a745;
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
-        <h1>Dinovatech - Painel de Administração</h1>
+        <h1><?= AppHelper::getCompanyName() ?> - Painel de Administração</h1>
 
         <div class="controls">
             <button class="primary" onclick="window.location.href='clientes.php'">Gerenciar Clientes</button>
@@ -232,7 +470,7 @@ if (!isset($_SESSION['usuario_id'])) {
             <button class="secondary" id="btnEditarServico" disabled>Editar Serviço Selecionado</button>
             <div id="servicoSearchResultsEdit" style="margin-top: 10px;"></div>
         </div>
-		-->
+        -->
 
 
     </div>
@@ -261,12 +499,17 @@ if (!isset($_SESSION['usuario_id'])) {
         <div id="faturaDetalhesHeader">
             <p><strong>Fatura ID:</strong> <span id="detalheFaturaId"></span></p>
             <p><strong>Cliente:</strong> <span id="detalheFaturaCliente"></span></p>
-            <p><strong>Emissão:</strong> <span id="detalheFaturaEmissao"></span> | <strong>Vencimento:</strong> <span id="detalheFaturaVencimento"></span></p>
-            <p><strong>Status:</strong> <span id="detalheFaturaStatus"></span> | <strong>Total:</strong> R$ <span id="detalheFaturaTotal"></span></p>
+            <p><strong>Emissão:</strong> <span id="detalheFaturaEmissao"></span> | <strong>Vencimento:</strong> <span
+                    id="detalheFaturaVencimento"></span></p>
+            <p><strong>Status:</strong> <span id="detalheFaturaStatus"></span> | <strong>Total:</strong> R$ <span
+                    id="detalheFaturaTotal"></span></p>
             <p><strong>Total Pago:</strong> R$ <span id="detalheFaturaTotalPago">0,00</span></p>
             <p><strong>Saldo Devedor:</strong> R$ <span id="detalheFaturaSaldoDevedor">0,00</span></p>
-            <button id="btnIncorporarRecorrencias" class="secondary" style="margin-top: 10px;">Incorporar Recorrências do Mês</button>
-            <button id="btnRegistrarPagamento" class="primary btn-registrar-pagamento" style="margin-top: 10px; margin-left: 10px;">Registrar Pagamento</button> <!-- ADICIONADO CLASSE btn-registrar-pagamento -->
+            <button id="btnIncorporarRecorrencias" class="secondary" style="margin-top: 10px;">Incorporar Recorrências
+                do Mês</button>
+            <button id="btnRegistrarPagamento" class="primary btn-registrar-pagamento"
+                style="margin-top: 10px; margin-left: 10px;">Registrar Pagamento</button>
+            <!-- ADICIONADO CLASSE btn-registrar-pagamento -->
         </div>
 
         <h3>Adicionar Novo Item</h3>
@@ -291,54 +534,58 @@ if (!isset($_SESSION['usuario_id'])) {
         <div id="itemFaturaMessage" class="mensagem"></div>
 
         <h3>Itens da Fatura</h3>
-		<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
-        <div id="itensFaturaList">
-            <table class='table-auto' id="faturaItensTable">
-                <thead>
-                    <tr>
-                        <th>Serviço</th>
-                        <th>Qtd</th>
-                        <th>Valor Unit.</th>
-                        <th>Subtotal</th>
-                        <th>Tag</th>
-                        <th>Ações</th> 
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Itens serão carregados aqui via JS -->
-                </tbody>
-            </table>
+        <div
+            class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
+            <div id="itensFaturaList">
+                <table class='table-auto' id="faturaItensTable">
+                    <thead>
+                        <tr>
+                            <th>Serviço</th>
+                            <th>Qtd</th>
+                            <th>Valor Unit.</th>
+                            <th>Subtotal</th>
+                            <th>Tag</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Itens serão carregados aqui via JS -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-		</div>
 
         <h3>Pagamentos Recebidos</h3>
-		<div class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
-        <div id="pagamentosList">
-            <table class='table-auto' id="faturaPagamentosTable">
-                <thead>
-                    <tr>
-                        <th>ID Pagamento</th>
-                        <th>Valor Pago</th>
-                        <th>Data</th>
-                        <th>Status</th>
-                        <th>Observação</th>
-                        <th>Ações</th> <!-- Nova coluna para o botão Estornar -->
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Pagamentos serão carregados aqui via JS -->
-                </tbody>
-            </table>
-            <p id="noPaymentsMessage" style="text-align: center; margin-top: 10px; display: none;">Nenhum pagamento registrado para esta fatura.</p>
+        <div
+            class="relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border">
+            <div id="pagamentosList">
+                <table class='table-auto' id="faturaPagamentosTable">
+                    <thead>
+                        <tr>
+                            <th>ID Pagamento</th>
+                            <th>Valor Pago</th>
+                            <th>Data</th>
+                            <th>Status</th>
+                            <th>Observação</th>
+                            <th>Ações</th> <!-- Nova coluna para o botão Estornar -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Pagamentos serão carregados aqui via JS -->
+                    </tbody>
+                </table>
+                <p id="noPaymentsMessage" style="text-align: center; margin-top: 10px; display: none;">Nenhum pagamento
+                    registrado para esta fatura.</p>
+            </div>
         </div>
-    </div></div>
+    </div>
 
     <!-- Modal de Edição de Item da Fatura -->
     <div id="modalEditarItemFatura" title="Editar Item da Fatura" style="display: none;">
         <form id="formEditarItemFatura">
             <input type="hidden" id="editItemFaturaId" name="id_fatura">
             <input type="hidden" id="editItemId" name="id_item_fatura">
-            
+
             <p>Serviço: <strong id="editServicoNomeDisplay"></strong></p>
             <input type="hidden" id="editServicoId" name="id_servico">
 
@@ -373,7 +620,8 @@ if (!isset($_SESSION['usuario_id'])) {
             <input type="number" id="addRecorrenciaQuantidade" name="quantidade" min="1" value="1" required>
 
             <label for="addRecorrenciaValorSugerido">Valor Sugerido (R$):</label>
-            <input type="number" id="addRecorrenciaValorSugerido" name="valor_sugerido_recorrencia" step="0.01" min="0.01" required>
+            <input type="number" id="addRecorrenciaValorSugerido" name="valor_sugerido_recorrencia" step="0.01"
+                min="0.01" required>
 
             <label for="addRecorrenciaTipoPeriodo">Tipo de Período:</label>
             <select id="addRecorrenciaTipoPeriodo" name="tipo_periodo" required>
@@ -387,7 +635,8 @@ if (!isset($_SESSION['usuario_id'])) {
             <input type="number" id="addRecorrenciaIntervalo" name="intervalo" min="1" value="1" required>
 
             <label for="addRecorrenciaDataInicio">Data de Início da Cobrança:</label>
-            <input type="date" id="addRecorrenciaDataInicio" name="data_inicio_cobranca" value="<?= date('Y-m-d') ?>" required>
+            <input type="date" id="addRecorrenciaDataInicio" name="data_inicio_cobranca" value="<?= date('Y-m-d') ?>"
+                required>
 
             <label for="addRecorrenciaDataFim">Data de Fim (Opcional):</label>
             <input type="date" id="addRecorrenciaDataFim" name="data_fim_cobranca">
@@ -410,7 +659,8 @@ if (!isset($_SESSION['usuario_id'])) {
             <p>Cliente: <strong id="pagamentoClienteNomeDisplay"></strong></p>
             <p>Total da Fatura: R$ <strong id="pagamentoFaturaTotalDisplay"></strong></p>
             <p>Total Pago: R$ <strong id="pagamentoFaturaTotalPagoDisplay"></strong></p>
-            <p>Saldo Devedor: R$ <strong id="pagamentoFaturaSaldoDevedorDisplay" class="saldo-devedor-fatura-display"></strong></p>
+            <p>Saldo Devedor: R$ <strong id="pagamentoFaturaSaldoDevedorDisplay"
+                    class="saldo-devedor-fatura-display"></strong></p>
 
             <label for="valorPagamento">Valor do Pagamento (R$):</label>
             <input type="number" id="valorPagamento" name="valor_pago" step="0.01" min="0.00" required>
@@ -442,23 +692,23 @@ if (!isset($_SESSION['usuario_id'])) {
 
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Configuração dos modais com jQuery UI
             $("#modalCadastrarCliente").dialog({
                 autoOpen: false,
                 modal: true,
                 width: 400,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
-            $("#modalEditarCliente").dialog({ 
+            $("#modalEditarCliente").dialog({
                 autoOpen: false,
                 modal: true,
                 width: 400,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
@@ -467,16 +717,16 @@ if (!isset($_SESSION['usuario_id'])) {
                 modal: true,
                 width: 400,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
-            $("#modalEditarServico").dialog({ 
+            $("#modalEditarServico").dialog({
                 autoOpen: false,
                 modal: true,
                 width: 400,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
@@ -485,16 +735,16 @@ if (!isset($_SESSION['usuario_id'])) {
                 modal: true,
                 width: 450,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
-            
+
             $("#modalFaturaDetalhes").dialog({
                 autoOpen: false,
                 modal: true,
                 width: 700, // Largura padrão
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
@@ -503,7 +753,7 @@ if (!isset($_SESSION['usuario_id'])) {
                 modal: true,
                 width: 450,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
@@ -512,7 +762,7 @@ if (!isset($_SESSION['usuario_id'])) {
                 modal: true,
                 width: 700,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
@@ -522,75 +772,75 @@ if (!isset($_SESSION['usuario_id'])) {
                 modal: true,
                 width: 500,
                 buttons: {
-                    "Fechar": function() { $(this).dialog("close"); }
+                    "Fechar": function () { $(this).dialog("close"); }
                 }
             });
 
 
             // Botões de Abertura de Modal
-            $("#btnCadastrarCliente").on("click", function() {
+            $("#btnCadastrarCliente").on("click", function () {
                 $("#formCadastrarCliente")[0].reset(); // Limpa o formulário
                 $("#clienteMessage").text(""); // Limpa mensagens
                 $("#modalCadastrarCliente").dialog("open");
             });
 
-            $("#btnCadastrarServico").on("click", function() {
+            $("#btnCadastrarServico").on("click", function () {
                 $("#formCadastrarServico")[0].reset(); // Limpa o formulário
                 $("#servicoMessage").text(""); // Limpa mensagens
                 $("#modalCadastrarServico").dialog("open");
             });
 
             // SANITIZAÇÃO CPF/CNPJ: Garante que apenas números sejam digitados
-            $("#clienteCpfCnpj, #editClienteCpfCnpj").on("keyup", function() { // Aplicado a ambos os campos
+            $("#clienteCpfCnpj, #editClienteCpfCnpj").on("keyup", function () { // Aplicado a ambos os campos
                 let value = $(this).val();
                 $(this).val(value.replace(/[^0-9]/g, '')); // Remove tudo que não for número
             });
-			
-			// --- LÓGICA DE AUTO-CARREGAMENTO ---
-			const urlParams = new URLSearchParams(window.location.search);
-			const clienteIdFromUrl = urlParams.get('cliente_id');
 
-			if (clienteIdFromUrl) {
-				$(".search-area").hide();
-				$.ajax({
-					url: 'app.php', type: 'POST', dataType: 'json',
-					data: { action: 'get_cliente_details', id_cliente: clienteIdFromUrl },
-					success: function(response) {
-						if (response.success && response.data) {
-							const cliente = response.data;
-							$("#selectedClientId").val(cliente.id_cliente);
-							$("#selectedClientName").text(`${cliente.nome} (${cliente.cpf_cnpj})`);
-							$("#selectedClientCpfCnpj").text(cliente.cpf_cnpj);
-							$("#clientDetailsSection").show();
-							loadClientFaturas(cliente.id_cliente);
-						} else {
-							alert("Cliente não encontrado.");
-							$(".search-area").show();
-						}
-					}
-				});
-			}
+            // --- LÓGICA DE AUTO-CARREGAMENTO ---
+            const urlParams = new URLSearchParams(window.location.search);
+            const clienteIdFromUrl = urlParams.get('cliente_id');
+
+            if (clienteIdFromUrl) {
+                $(".search-area").hide();
+                $.ajax({
+                    url: 'app.php', type: 'POST', dataType: 'json',
+                    data: { action: 'get_cliente_details', id_cliente: clienteIdFromUrl },
+                    success: function (response) {
+                        if (response.success && response.data) {
+                            const cliente = response.data;
+                            $("#selectedClientId").val(cliente.id_cliente);
+                            $("#selectedClientName").text(`${cliente.nome} (${cliente.cpf_cnpj})`);
+                            $("#selectedClientCpfCnpj").text(cliente.cpf_cnpj);
+                            $("#clientDetailsSection").show();
+                            loadClientFaturas(cliente.id_cliente);
+                        } else {
+                            alert("Cliente não encontrado.");
+                            $(".search-area").show();
+                        }
+                    }
+                });
+            }
 
 
             // Formulário de Cadastro de Cliente (AJAX)
-            $("#formCadastrarCliente").on("submit", function(e) {
+            $("#formCadastrarCliente").on("submit", function (e) {
                 e.preventDefault();
                 const formData = $(this).serialize() + "&action=criar_cliente";
                 $("#clienteMessage").text("Cadastrando...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#clienteMessage").text(response.message);
                         if (response.success) {
                             $("#formCadastrarCliente")[0].reset();
                             // Opcional: Atualizar a lista de clientes no autocomplete
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#clienteMessage").text("Erro de comunicação com o servidor: " + textStatus);
                         console.error("AJAX Error (criar_cliente):", textStatus, errorThrown, jqXHR);
                     }
@@ -598,20 +848,20 @@ if (!isset($_SESSION['usuario_id'])) {
             });
 
             // Lógica para o botão EDITAR CLIENTE
-            $("#btnEditarCliente").on("click", function() {
+            $("#btnEditarCliente").on("click", function () {
                 const clientId = $("#selectedClientId").val();
                 if (clientId) {
                     $.ajax({
-                        url: 'app.php', 
+                        url: 'app.php',
                         type: 'POST',
                         dataType: 'json',
                         data: {
-                            action: 'get_cliente_details', 
+                            action: 'get_cliente_details',
                             id_cliente: clientId
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success && response.data) {
-                                $("#editClienteId").val(response.data.id_cliente); 
+                                $("#editClienteId").val(response.data.id_cliente);
                                 $("#editClienteNome").val(response.data.nome);
                                 $("#editClienteCpfCnpj").val(response.data.cpf_cnpj);
                                 $("#editClienteTelefone").val(response.data.telefone);
@@ -622,7 +872,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                 alert("Erro ao carregar dados do cliente para edição: " + response.message);
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             alert("Erro de comunicação ao carregar dados do cliente: " + textStatus);
                             console.error("AJAX Error (get_cliente_details):", textStatus, errorThrown, jqXHR);
                         }
@@ -634,26 +884,26 @@ if (!isset($_SESSION['usuario_id'])) {
             });
 
             // Formulário de Edição de Cliente (AJAX)
-            $("#formEditarCliente").on("submit", function(e) {
+            $("#formEditarCliente").on("submit", function (e) {
                 e.preventDefault();
                 const formData = $(this).serialize() + "&action=editar_cliente";
                 $("#editClienteMessage").text("Salvando alterações...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#editClienteMessage").text(response.message);
                         if (response.success) {
                             $("#modalEditarCliente").dialog("close");
                             $("#selectedClientName").text($("#editClienteNome").val());
                             $("#selectedClientCpfCnpj").text($("#editClienteCpfCnpj").val());
-                            loadClientFaturas($("#selectedClientId").val()); 
+                            loadClientFaturas($("#selectedClientId").val());
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#clienteMessage").text("Erro de comunicação com o servidor: " + textStatus);
                         console.error("AJAX Error (editar_cliente):", textStatus, errorThrown, jqXHR);
                     }
@@ -662,23 +912,23 @@ if (!isset($_SESSION['usuario_id'])) {
 
 
             // Formulário de Cadastro de Serviço (AJAX)
-            $("#formCadastrarServico").on("submit", function(e) {
+            $("#formCadastrarServico").on("submit", function (e) {
                 e.preventDefault();
                 const formData = $(this).serialize() + "&action=criar_servico";
                 $("#servicoMessage").text("Cadastrando...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#servicoMessage").text(response.message);
                         if (response.success) {
                             $("#formCadastrarServico")[0].reset();
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#servicoMessage").text("Erro de comunicação com o servidor: " + textStatus);
                         console.error("AJAX Error (criar_servico):", textStatus, errorThrown, jqXHR);
                     }
@@ -687,18 +937,18 @@ if (!isset($_SESSION['usuario_id'])) {
 
             // AutoComplete para Buscar Serviço para Edição
             $("#servicoSearchEdit").autocomplete({
-                source: function(request, response) {
+                source: function (request, response) {
                     $.ajax({
-                        url: 'app.php', 
+                        url: 'app.php',
                         type: 'POST',
                         dataType: 'json',
                         data: {
-                            action: 'buscar_servicos', 
+                            action: 'buscar_servicos',
                             termo: request.term
                         },
-                        success: function(data) {
+                        success: function (data) {
                             if (data.success && data.data.length > 0) {
-                                response($.map(data.data, function(item) {
+                                response($.map(data.data, function (item) {
                                     return {
                                         label: item.nome_servico + " (R$ " + parseFloat(item.valor_sugerido).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ")",
                                         value: item.nome_servico,
@@ -711,34 +961,34 @@ if (!isset($_SESSION['usuario_id'])) {
                                 response([{ label: "Nenhum serviço encontrado", value: "" }]);
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             console.error("AJAX Error (buscar_servicos para edicao):", textStatus, errorThrown, jqXHR);
                             response([{ label: "Erro na busca de serviços", value: "" }]);
                         }
                     });
                 },
                 minLength: 2,
-                select: function(event, ui) {
+                select: function (event, ui) {
                     const selectedServico = ui.item;
                     $("#selectedServicoIdEdit").val(selectedServico.id);
-                    $("#btnEditarServico").prop('disabled', false); 
+                    $("#btnEditarServico").prop('disabled', false);
                     return false;
                 }
             });
 
             // Lógica para o botão EDITAR SERVIÇO
-            $("#btnEditarServico").on("click", function() {
+            $("#btnEditarServico").on("click", function () {
                 const servicoId = $("#selectedServicoIdEdit").val();
                 if (servicoId) {
                     $.ajax({
-                        url: 'app.php', 
+                        url: 'app.php',
                         type: 'POST',
                         dataType: 'json',
                         data: {
-                            action: 'get_servico_details', 
+                            action: 'get_servico_details',
                             id_servico: servicoId
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success && response.data) {
                                 $("#editServicoId").val(response.data.id_servico);
                                 $("#editServicoNome").val(response.data.nome_servico);
@@ -749,7 +999,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                 alert("Erro ao carregar dados do serviço para edição: " + response.message);
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             alert("Erro de comunicação ao carregar dados do serviço: " + textStatus);
                             console.error("AJAX Error (get_servico_details):", textStatus, errorThrown, jqXHR);
                         }
@@ -760,25 +1010,25 @@ if (!isset($_SESSION['usuario_id'])) {
             });
 
             // Formulário de Edição de Serviço (AJAX)
-            $("#formEditarServico").on("submit", function(e) {
+            $("#formEditarServico").on("submit", function (e) {
                 e.preventDefault();
                 const formData = $(this).serialize() + "&action=editar_servico";
                 $("#editServicoMessage").text("Salvando alterações...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#editServicoMessage").text(response.message);
                         if (response.success) {
                             $("#modalEditarServico").dialog("close");
-                            $("#servicoSearchEdit").val(''); 
-                            $("#btnEditarServico").prop('disabled', true); 
+                            $("#servicoSearchEdit").val('');
+                            $("#btnEditarServico").prop('disabled', true);
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#editServicoMessage").text("Erro de comunicação com o servidor: " + textStatus);
                         console.error("AJAX Error (editar_servico):", textStatus, errorThrown, jqXHR);
                     }
@@ -788,21 +1038,21 @@ if (!isset($_SESSION['usuario_id'])) {
 
             // AutoComplete para Busca de Clientes
             $("#clienteSearch").autocomplete({
-                source: function(request, response) {
+                source: function (request, response) {
                     $.ajax({
-                        url: 'app.php', 
+                        url: 'app.php',
                         type: 'POST',
                         dataType: 'json',
                         data: {
                             action: 'buscar_clientes',
                             termo: request.term
                         },
-                        success: function(data) {
+                        success: function (data) {
                             if (data.success && data.data.length > 0) {
-                                response($.map(data.data, function(item) {
+                                response($.map(data.data, function (item) {
                                     return {
                                         label: item.nome + " (" + item.cpf_cnpj + ")",
-                                        value: item.nome, 
+                                        value: item.nome,
                                         id: item.id_cliente,
                                         nome: item.nome,
                                         cpf_cnpj: item.cpf_cnpj
@@ -812,43 +1062,43 @@ if (!isset($_SESSION['usuario_id'])) {
                                 response([{ label: "Nenhum cliente encontrado", value: "" }]);
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             console.error("AJAX Error (buscar_clientes):", textStatus, errorThrown, jqXHR);
                             response([{ label: "Erro na busca de clientes", value: "" }]);
                         }
                     });
                 },
-                minLength: 2, 
-                select: function(event, ui) {
+                minLength: 2,
+                select: function (event, ui) {
                     const selectedClient = ui.item;
                     $("#selectedClientId").val(selectedClient.id);
                     $("#selectedClientName").text(selectedClient.nome);
                     $("#selectedClientCpfCnpj").text(selectedClient.cpf_cnpj);
                     $("#clientDetailsSection").show();
-                    loadClientFaturas(selectedClient.id); 
-                    return false; 
+                    loadClientFaturas(selectedClient.id);
+                    return false;
                 }
             });
 
-// Função para carregar faturas do cliente
-function loadClientFaturas(clientId) {
-	
-    $("#clientFaturasList").html("<p>Carregando faturas...</p>");
-    $.ajax({
-        url: 'app.php', type: 'POST', dataType: 'json',
-        data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
-        success: function(response) {
-            if (response.success && response.data.length > 0) {
-				
-			// Ordena por data de vencimento (mais recente primeiro)
-			response.data.sort((a, b) => {
-				return new Date(b.data_vencimento) - new Date(a.data_vencimento);
-			}); 
-		
-                let html = `<div class="fatura-cards">`;
+            // Função para carregar faturas do cliente
+            function loadClientFaturas(clientId) {
 
-                // Cabeçalho
-                html += `
+                $("#clientFaturasList").html("<p>Carregando faturas...</p>");
+                $.ajax({
+                    url: 'app.php', type: 'POST', dataType: 'json',
+                    data: { action: 'buscar_faturas_cliente', id_cliente: clientId },
+                    success: function (response) {
+                        if (response.success && response.data.length > 0) {
+
+                            // Ordena por data de vencimento (mais recente primeiro)
+                            response.data.sort((a, b) => {
+                                return new Date(b.data_vencimento) - new Date(a.data_vencimento);
+                            });
+
+                            let html = `<div class="fatura-cards">`;
+
+                            // Cabeçalho
+                            html += `
                     <div class="card-fatura header">
                         <div class="campo"><strong>ID</strong></div>
                         
@@ -859,10 +1109,10 @@ function loadClientFaturas(clientId) {
                     </div>
                 `;
 
-                // Faturas
-                response.data.forEach(fatura => {
-					const dataVenc = new Date(fatura.data_vencimento + 'T00:00:00-03:00').toLocaleDateString('pt-BR');
-                    html += `
+                            // Faturas
+                            response.data.forEach(fatura => {
+                                const dataVenc = new Date(fatura.data_vencimento + 'T00:00:00-03:00').toLocaleDateString('pt-BR');
+                                html += `
                         <div class="card-fatura${fatura.status === 'Liquidada' ? ' liquidada' : ''}">
                             <div class="campo">${fatura.id_fatura}</div>
                             
@@ -875,29 +1125,29 @@ function loadClientFaturas(clientId) {
                             </div>
                         </div>
                     `;
-                });
+                            });
 
-                html += `</div>`;
-                $("#clientFaturasList").html(html);
-            } else {
-                $("#clientFaturasList").html("<p>Nenhuma fatura encontrada para este cliente.</p>");
+                            html += `</div>`;
+                            $("#clientFaturasList").html(html);
+                        } else {
+                            $("#clientFaturasList").html("<p>Nenhuma fatura encontrada para este cliente.</p>");
+                        }
+                    }
+                });
             }
-        }
-    });
-}
 
 
 
 
             // Botão Criar Nova Fatura
-            $("#btnCriarFatura").on("click", function() {
+            $("#btnCriarFatura").on("click", function () {
                 const clientId = $("#selectedClientId").val();
                 const clientName = $("#selectedClientName").text();
                 if (clientId) {
                     $("#faturaClienteIdInput").val(clientId);
                     $("#faturaClienteNomeDisplay").text(clientName);
-                    $("#faturaDataEmissao").val('<?= date('Y-m-d') ?>'); 
-                    $("#faturaDataVencimento").val(''); 
+                    $("#faturaDataEmissao").val('<?= date('Y-m-d') ?>');
+                    $("#faturaDataVencimento").val('');
                     $("#faturaMessage").text("");
                     $("#modalCriarFatura").dialog("open");
                 } else {
@@ -906,26 +1156,26 @@ function loadClientFaturas(clientId) {
             });
 
             // Formulário de Criar Fatura (AJAX)
-            $("#formCriarFatura").on("submit", function(e) {
+            $("#formCriarFatura").on("submit", function (e) {
                 e.preventDefault();
                 const formData = $(this).serialize() + "&action=criar_fatura";
                 $("#faturaMessage").text("Criando fatura...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#faturaMessage").text(response.message);
                         if (response.success) {
                             $("#formCriarFatura")[0].reset();
                             $("#modalCriarFatura").dialog("close");
                             openFaturaDetalhesModal(response.id_fatura);
-                            loadClientFaturas($("#selectedClientId").val()); 
+                            loadClientFaturas($("#selectedClientId").val());
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#faturaMessage").text("Erro de comunicação com o servidor: " + textStatus);
                         console.error("AJAX Error (criar_fatura):", textStatus, errorThrown, jqXHR);
                     }
@@ -933,7 +1183,7 @@ function loadClientFaturas(clientId) {
             });
 
             // Abrir Modal de Detalhes da Fatura
-            $(document).on("click", ".btn-ver-fatura", function() {
+            $(document).on("click", ".btn-ver-fatura", function () {
                 const faturaId = $(this).data("id-fatura");
                 openFaturaDetalhesModal(faturaId);
             });
@@ -943,7 +1193,7 @@ function loadClientFaturas(clientId) {
                 // Ajusta a largura do modal antes de abrir
                 const newWidth = Math.min($(window).width() * 0.9, 1200);
                 $("#modalFaturaDetalhes").dialog("option", "width", newWidth);
-				$("#itemFaturaId").val(faturaId);
+                $("#itemFaturaId").val(faturaId);
                 $("#modalFaturaDetalhes").dialog("open");
                 // RECRIAÇÃO DO HEADER COM OS DADOS DA FATURA E BOTÕES COM DATA ATTRIBUTES
                 $("#faturaDetalhesHeader").html(`
@@ -957,28 +1207,28 @@ function loadClientFaturas(clientId) {
                     <button class="primary btn-registrar-pagamento" style="margin-top: 10px; margin-left: 10px;"
                             data-id-fatura="${faturaId}" 
                             data-cliente-id="${$("#selectedClientId").val()}">Registrar Pagamento</button>
-                `); 
-                $("#itensFaturaList tbody").html("<tr><td colspan='6'>Carregando itens...</td></tr>"); 
-                $("#pagamentosList tbody").html("<tr><td colspan='6'>Carregando pagamentos...</td></tr>"); 
-                $("#noPaymentsMessage").hide(); 
+                `);
+                $("#itensFaturaList tbody").html("<tr><td colspan='6'>Carregando itens...</td></tr>");
+                $("#pagamentosList tbody").html("<tr><td colspan='6'>Carregando pagamentos...</td></tr>");
+                $("#noPaymentsMessage").hide();
                 $("#itemFaturaMessage").text("");
                 $("#formAdicionarItemFatura")[0].reset();
-                $("#itemServicoSearch").val(''); 
-                $("#itemServicoSelectedId").val(''); 
-                $("#itemValorUnitario").val(''); 
-                $("#itemTag").val(''); 
+                $("#itemServicoSearch").val('');
+                $("#itemServicoSelectedId").val('');
+                $("#itemValorUnitario").val('');
+                $("#itemTag").val('');
 
                 // Carrega detalhes da fatura e pagamentos
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     dataType: 'json',
                     data: {
                         action: 'get_fatura_detalhes',
                         id_fatura: faturaId
                     },
-                    success: function(response) {
-                        console.log("Response from get_fatura_detalhes:", response); 
+                    success: function (response) {
+                        console.log("Response from get_fatura_detalhes:", response);
                         if (response.success && response.data.fatura) {
                             const fatura = response.data.fatura;
                             $("#detalheFaturaId").text(fatura.id_fatura);
@@ -987,41 +1237,41 @@ function loadClientFaturas(clientId) {
                             $("#detalheFaturaVencimento").text(new Date(fatura.data_vencimento).toLocaleDateString('pt-BR'));
                             $("#detalheFaturaStatus").text(fatura.status);
                             $("#detalheFaturaTotal").text(parseFloat(fatura.valor_total_fatura).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
-                            
+
                             const totalPago = parseFloat(fatura.total_pago || 0);
-                            const saldoDevedor = parseFloat(fatura.valor_total_fatura) - totalPago; 
+                            const saldoDevedor = parseFloat(fatura.valor_total_fatura) - totalPago;
                             $("#detalheFaturaTotalPago").text(totalPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
                             $("#detalheFaturaSaldoDevedor").text(saldoDevedor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
 
-                            populateItensFaturaTable(faturaId, response.data.itens); 
-                            populatePagamentosTable(faturaId, response.data.pagamentos); 
+                            populateItensFaturaTable(faturaId, response.data.itens);
+                            populatePagamentosTable(faturaId, response.data.pagamentos);
                         } else {
                             $("#faturaDetalhesHeader").append("<p style='color: red;'>" + response.message + "</p>");
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.error("AJAX Error (get_fatura_detalhes):", textStatus, errorThrown, jqXHR); 
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.error("AJAX Error (get_fatura_detalhes):", textStatus, errorThrown, jqXHR);
                         $("#faturaDetalhesHeader").append("<p style='color: red;'>Erro ao carregar detalhes da fatura. Verifique o console para mais informações.</p>");
                     }
                 });
 
                 // AutoComplete para buscar serviços no modal de adição de item
                 $("#itemServicoSearch").autocomplete({
-                    source: function(request, response) {
+                    source: function (request, response) {
                         $.ajax({
-                            url: 'app.php', 
+                            url: 'app.php',
                             type: 'POST',
                             dataType: 'json',
                             data: {
-                                action: 'buscar_servicos', 
+                                action: 'buscar_servicos',
                                 termo: request.term
                             },
-                            success: function(data) {
+                            success: function (data) {
                                 if (data.success && data.data.length > 0) {
-                                    response($.map(data.data, function(item) {
+                                    response($.map(data.data, function (item) {
                                         return {
                                             label: item.nome_servico + " (R$ " + parseFloat(item.valor_sugerido).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ")",
-                                            value: item.nome_servico, 
+                                            value: item.nome_servico,
                                             id: item.id_servico,
                                             valor_sugerido: item.valor_sugerido
                                         };
@@ -1033,11 +1283,11 @@ function loadClientFaturas(clientId) {
                         });
                     },
                     minLength: 2,
-                    select: function(event, ui) {
+                    select: function (event, ui) {
                         const selectedServico = ui.item;
-                        $("#itemServicoSelectedId").val(selectedServico.id); 
-                        $("#itemValorUnitario").val(parseFloat(selectedServico.valor_sugerido).toFixed(2)); 
-                        return false; 
+                        $("#itemServicoSelectedId").val(selectedServico.id);
+                        $("#itemValorUnitario").val(parseFloat(selectedServico.valor_sugerido).toFixed(2));
+                        return false;
                     }
                 });
             }
@@ -1050,8 +1300,8 @@ function loadClientFaturas(clientId) {
                     itens.forEach(item => {
                         const subtotal = parseFloat(item.quantidade) * parseFloat(item.valor_unitario);
                         totalItensCalculated += subtotal;
-                        const isRecorrente = item.tag && item.tag.includes('Recorrência'); 
-                        const recorrenteIcon = isRecorrente ? '<span class="recorrente-icon" title="Serviço Recorrente">&#x1F504;</span>' : ''; 
+                        const isRecorrente = item.tag && item.tag.includes('Recorrência');
+                        const recorrenteIcon = isRecorrente ? '<span class="recorrente-icon" title="Serviço Recorrente">&#x1F504;</span>' : '';
                         tbodyHtml += `
                             <tr>
                                 <td>${item.nome_servico} ${recorrenteIcon}</td>
@@ -1066,11 +1316,11 @@ function loadClientFaturas(clientId) {
                                             data-quantidade="${item.quantidade}" 
                                             data-valor-unitario="${item.valor_unitario}"
                                             data-tag="${item.tag ? item.tag : ''}">✏️</button>
-											
-									
+                                            
+                                    
                                 </td>
-								<td class="item-actions">
-								<button class="btn-remove" data-id-item="${item.id_item_fatura}" 
+                                <td class="item-actions">
+                                <button class="btn-remove" data-id-item="${item.id_item_fatura}" 
                                             data-id-fatura="${faturaId}">💣</button><td>
                             </tr>
                         `;
@@ -1082,7 +1332,7 @@ function loadClientFaturas(clientId) {
                         </tr>
                     `;
                 } else {
-                    tbodyHtml = '<tr><td colspan="6">Nenhum item adicionado a esta fatura ainda.</td></tr>'; 
+                    tbodyHtml = '<tr><td colspan="6">Nenhum item adicionado a esta fatura ainda.</td></tr>';
                 }
                 $("#faturaItensTable tbody").html(tbodyHtml);
             }
@@ -1097,7 +1347,7 @@ function loadClientFaturas(clientId) {
                         const valor = parseFloat(pagamento.valor_pago).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
                         const data = new Date(pagamento.data_pagamento).toLocaleDateString('pt-BR');
                         const statusClass = `pagamento-status-${pagamento.status_pagamento}`;
-                        const estornarButton = (pagamento.status_pagamento === 'Confirmado' || pagamento.status_pagamento === 'Pendente') ? 
+                        const estornarButton = (pagamento.status_pagamento === 'Confirmado' || pagamento.status_pagamento === 'Pendente') ?
                             `<button class="btn-estornar-pagamento secondary" data-id-pagamento="${pagamento.id_pagamento}" data-id-fatura="${faturaId}">Estornar</button>` : '';
 
                         tbodyHtml += `
@@ -1114,8 +1364,8 @@ function loadClientFaturas(clientId) {
                     $("#faturaPagamentosTable tbody").html(tbodyHtml);
                     $("#noPaymentsMessage").hide();
                 } else {
-                    $("#faturaPagamentosTable tbody").html(''); 
-                    $("#noPaymentsMessage").show(); 
+                    $("#faturaPagamentosTable tbody").html('');
+                    $("#noPaymentsMessage").show();
                 }
             }
 
@@ -1145,13 +1395,13 @@ function loadClientFaturas(clientId) {
 
                 // Dispara a atualização do JSON Base64 inicial e do valor do pagamento
                 updateItensPagosJson();
-                updateValorPagamento(); 
+                updateValorPagamento();
             }
 
             // Função para atualizar o campo de JSON Base64 dos itens pagos
             function updateItensPagosJson() {
                 const selectedItems = [];
-                $('#itensPagosSelection .item-pagamento-checkbox:checked').each(function() {
+                $('#itensPagosSelection .item-pagamento-checkbox:checked').each(function () {
                     selectedItems.push({
                         id_item: $(this).data('item-id'),
                         valor: parseFloat($(this).data('item-value'))
@@ -1165,7 +1415,7 @@ function loadClientFaturas(clientId) {
             // Função para atualizar o valor do campo de pagamento
             function updateValorPagamento() {
                 let totalSelecionado = 0;
-                $('#itensPagosSelection .item-pagamento-checkbox:checked').each(function() {
+                $('#itensPagosSelection .item-pagamento-checkbox:checked').each(function () {
                     const itemValue = parseFloat($(this).data('item-value'));
                     if (!isNaN(itemValue)) { // Garante que é um número
                         totalSelecionado += itemValue;
@@ -1174,7 +1424,7 @@ function loadClientFaturas(clientId) {
                     }
                 });
                 console.log("Total selecionado dos itens:", totalSelecionado);
-                
+
                 // Pega o saldo devedor atual da fatura do display
                 // Certifique-se de que o texto do span é limpo corretamente antes de parsear
                 const saldoDevedorText = $("#detalheFaturaSaldoDevedor").text();
@@ -1195,18 +1445,18 @@ function loadClientFaturas(clientId) {
 
                 // O valor do pagamento não deve exceder o saldo devedor da fatura
                 const valorFinalPagamento = Math.max(0, Math.min(totalSelecionado, saldoDevedorFaturaDisplay));
-                
+
                 $("#valorPagamento").val(valorFinalPagamento.toFixed(2));
             }
 
             // Event listener para checkboxes de itens de pagamento
-            $(document).on('change', '.item-pagamento-checkbox', function() {
+            $(document).on('change', '.item-pagamento-checkbox', function () {
                 updateItensPagosJson();
-                updateValorPagamento(); 
+                updateValorPagamento();
             });
 
             // Adiciona/remove classe 'selected' na linha do checkbox
-            $(document).on('change', '.item-pagamento-checkbox', function() {
+            $(document).on('change', '.item-pagamento-checkbox', function () {
                 if ($(this).is(':checked')) {
                     $(this).closest('tr').addClass('selected');
                 } else {
@@ -1214,13 +1464,13 @@ function loadClientFaturas(clientId) {
                 }
             });
             // Inicializa a classe 'selected' ao popular a tabela
-            $(document).on('populateSelectableItemsForPayment', function() {
+            $(document).on('populateSelectableItemsForPayment', function () {
                 $('#itensPagosSelection .item-pagamento-checkbox:checked').closest('tr').addClass('selected');
             });
 
 
             // Formulário de Adicionar Item à Fatura (AJAX)
-            $("#formAdicionarItemFatura").on("submit", function(e) {
+            $("#formAdicionarItemFatura").on("submit", function (e) {
                 e.preventDefault();
                 if (!$("#itemServicoSelectedId").val()) {
                     $("#itemFaturaMessage").text("Por favor, selecione um serviço válido na lista.");
@@ -1231,23 +1481,23 @@ function loadClientFaturas(clientId) {
                 $("#itemFaturaMessage").text("Adicionando item...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#itemFaturaMessage").text(response.message);
                         if (response.success) {
                             $("#formAdicionarItemFatura")[0].reset();
-                            $("#itemServicoSearch").val(''); 
-                            $("#itemServicoSelectedId").val(''); 
-                            $("#itemValorUnitario").val(''); 
-                            $("#itemTag").val(''); 
+                            $("#itemServicoSearch").val('');
+                            $("#itemServicoSelectedId").val('');
+                            $("#itemValorUnitario").val('');
+                            $("#itemTag").val('');
                             openFaturaDetalhesModal($("#itemFaturaId").val());
-                            loadClientFaturas($("#selectedClientId").val()); 
+                            loadClientFaturas($("#selectedClientId").val());
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#itemFaturaMessage").text("Erro de comunicação ao adicionar item: " + textStatus);
                         console.error("AJAX Error (adicionar_item_fatura):", textStatus, errorThrown, jqXHR);
                     }
@@ -1255,45 +1505,45 @@ function loadClientFaturas(clientId) {
             });
 
             // Lógica para o botão EDITAR item da fatura
-            $(document).on("click", ".btn-edit", function() {
+            $(document).on("click", ".btn-edit", function () {
                 const itemId = $(this).data("id-item");
                 const faturaId = $(this).data("id-fatura");
                 const servicoNome = $(this).data("servico-nome");
                 const quantidade = $(this).data("quantidade");
                 const valorUnitario = $(this).data("valor-unitario");
-                const tag = $(this).data("tag"); 
+                const tag = $(this).data("tag");
 
                 $("#editItemFaturaId").val(faturaId);
                 $("#editItemId").val(itemId);
                 $("#editServicoNomeDisplay").text(servicoNome);
                 $("#editQuantidade").val(quantidade);
                 $("#editValorUnitario").val(parseFloat(valorUnitario).toFixed(2));
-                $("#editTag").val(tag); 
+                $("#editTag").val(tag);
                 $("#editItemMessage").text("");
 
                 $("#modalEditarItemFatura").dialog("open");
             });
 
             // Formulário de Edição de Item da Fatura (AJAX)
-            $(document).on("submit", "#formEditarItemFatura", function(e) { 
+            $(document).on("submit", "#formEditarItemFatura", function (e) {
                 e.preventDefault();
                 const formData = $(this).serialize() + "&action=editar_item_fatura";
                 $("#editItemMessage").text("Salvando edição...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#editItemMessage").text(response.message);
                         if (response.success) {
                             $("#modalEditarItemFatura").dialog("close");
                             openFaturaDetalhesModal($("#editItemFaturaId").val());
-                            loadClientFaturas($("#selectedClientId").val()); 
+                            loadClientFaturas($("#selectedClientId").val());
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#editItemMessage").text("Erro de comunicação ao editar item: " + textStatus);
                         console.error("AJAX Error (editar_item_fatura):", textStatus, errorThrown, jqXHR);
                     }
@@ -1301,28 +1551,28 @@ function loadClientFaturas(clientId) {
             });
 
             // Lógica para o botão REMOVER item da fatura
-            $(document).on("click", ".btn-remove", function() {
+            $(document).on("click", ".btn-remove", function () {
                 const itemId = $(this).data("id-item");
                 const faturaId = $(this).data("id-fatura");
 
                 if (confirm("Tem certeza que deseja remover este item da fatura?")) {
                     $.ajax({
-                        url: 'app.php', 
+                        url: 'app.php',
                         type: 'POST',
                         dataType: 'json',
                         data: {
                             action: 'remover_item_fatura',
                             id_item_fatura: itemId,
-                            id_fatura: faturaId 
+                            id_fatura: faturaId
                         },
-                        success: function(response) {
-                            alert(response.message); 
+                        success: function (response) {
+                            alert(response.message);
                             if (response.success) {
                                 openFaturaDetalhesModal(faturaId);
-                                loadClientFaturas($("#selectedClientId").val()); 
+                                loadClientFaturas($("#selectedClientId").val());
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             alert("Erro de comunicação ao remover item: " + textStatus);
                             console.error("AJAX Error (remover_item_fatura):", textStatus, errorThrown, jqXHR);
                         }
@@ -1331,20 +1581,20 @@ function loadClientFaturas(clientId) {
             });
 
             // Lógica para o botão VINCULAR RECORRÊNCIA
-            $("#btnVincularRecorrencia").on("click", function() {
+            $("#btnVincularRecorrencia").on("click", function () {
                 const clientId = $("#selectedClientId").val();
                 const clientName = $("#selectedClientName").text();
                 if (clientId) {
                     $("#recorrenciaClienteId").val(clientId);
                     $("#recorrenciaClienteNomeDisplay").text(clientName);
-                    $("#addRecorrenciaClienteId").val(clientId); 
+                    $("#addRecorrenciaClienteId").val(clientId);
                     $("#formAdicionarRecorrencia")[0].reset();
                     $("#addRecorrenciaMessage").text("");
-                    $("#addRecorrenciaServicoSearch").val(''); 
-                    $("#addRecorrenciaServicoSelectedId").val(''); 
-                    $("#addRecorrenciaValorSugerido").val(''); 
+                    $("#addRecorrenciaServicoSearch").val('');
+                    $("#addRecorrenciaServicoSelectedId").val('');
+                    $("#addRecorrenciaValorSugerido").val('');
 
-                    loadClienteRecorrencias(clientId); 
+                    loadClienteRecorrencias(clientId);
                     $("#modalVincularRecorrencia").dialog("open");
                 } else {
                     alert("Por favor, selecione um cliente para vincular recorrências.");
@@ -1353,21 +1603,21 @@ function loadClientFaturas(clientId) {
 
             // AutoComplete para buscar serviços no modal de Vincular Recorrência
             $("#addRecorrenciaServicoSearch").autocomplete({
-                source: function(request, response) {
+                source: function (request, response) {
                     $.ajax({
-                        url: 'app.php', 
+                        url: 'app.php',
                         type: 'POST',
                         dataType: 'json',
                         data: {
-                            action: 'buscar_servicos', 
+                            action: 'buscar_servicos',
                             termo: request.term
                         },
-                        success: function(data) {
+                        success: function (data) {
                             if (data.success && data.data.length > 0) {
-                                response($.map(data.data, function(item) {
+                                response($.map(data.data, function (item) {
                                     return {
                                         label: item.nome_servico + " (R$ " + parseFloat(item.valor_sugerido).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ")",
-                                        value: item.nome_servico, 
+                                        value: item.nome_servico,
                                         id: item.id_servico,
                                         valor_sugerido: item.valor_sugerido
                                     };
@@ -1376,23 +1626,23 @@ function loadClientFaturas(clientId) {
                                 response([{ label: "Nenhum serviço encontrado", value: "" }]);
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             console.error("AJAX Error (buscar_servicos para edicao):", textStatus, errorThrown, jqXHR);
                             response([{ label: "Erro na busca de serviços", value: "" }]);
                         }
                     });
                 },
                 minLength: 2,
-                select: function(event, ui) {
+                select: function (event, ui) {
                     const selectedServico = ui.item;
-                    $("#addRecorrenciaServicoSelectedId").val(selectedServico.id); 
-                    $("#addRecorrenciaValorSugerido").val(parseFloat(selectedServico.valor_sugerido).toFixed(2)); 
-                    return false; 
+                    $("#addRecorrenciaServicoSelectedId").val(selectedServico.id);
+                    $("#addRecorrenciaValorSugerido").val(parseFloat(selectedServico.valor_sugerido).toFixed(2));
+                    return false;
                 }
             });
 
             // Formulário para Adicionar Recorrência
-            $("#formAdicionarRecorrencia").on("submit", function(e) {
+            $("#formAdicionarRecorrencia").on("submit", function (e) {
                 e.preventDefault();
                 if (!$("#addRecorrenciaServicoSelectedId").val()) {
                     $("#addRecorrenciaMessage").text("Por favor, selecione um serviço válido na lista.");
@@ -1402,21 +1652,21 @@ function loadClientFaturas(clientId) {
                 $("#addRecorrenciaMessage").text("Adicionando recorrência...");
 
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#addRecorrenciaMessage").text(response.message);
                         if (response.success) {
                             $("#formAdicionarRecorrencia")[0].reset();
                             $("#addRecorrenciaServicoSearch").val('');
                             $("#addRecorrenciaServicoSelectedId").val('');
                             $("#addRecorrenciaValorSugerido").val('');
-                            loadClienteRecorrencias($("#recorrenciaClienteId").val()); 
+                            loadClienteRecorrencias($("#recorrenciaClienteId").val());
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#addRecorrenciaMessage").text("Erro de comunicação: " + textStatus);
                         console.error("AJAX Error (vincular_recorrencia):", textStatus, errorThrown, jqXHR);
                     }
@@ -1427,14 +1677,14 @@ function loadClientFaturas(clientId) {
             function loadClienteRecorrencias(clientId) {
                 $("#recorrenciasList").html("<p>Carregando recorrências...</p>");
                 $.ajax({
-                    url: 'app.php', 
+                    url: 'app.php',
                     type: 'POST',
                     dataType: 'json',
                     data: {
                         action: 'get_cliente_recorrencias',
                         id_cliente: clientId
                     },
-                    success: function(response) {
+                    success: function (response) {
                         console.log("Recorrências do cliente:", response);
                         if (response.success && response.data.length > 0) {
                             let recorrenciaHtml = "<div class=\"relative flex flex-col w-full h-full overflow-scroll text-gray-700 bg-white shadow-md rounded-xl bg-clip-border\"><table class='table-auto'><thead><tr><th>Serviço</th><th>Qtd</th><th>Valor Sug.</th><th>Período</th><th>Início</th><th>Fim</th><th>Ações</th></tr></thead><tbody>";
@@ -1460,7 +1710,7 @@ function loadClientFaturas(clientId) {
                             $("#recorrenciasList").html("<p>Nenhuma recorrência vinculada a este cliente.</p>");
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#recorrenciasList").html("<p style='color: red;'>Erro ao carregar recorrências.</p>");
                         console.error("AJAX Error (get_cliente_recorrencias):", textStatus, errorThrown, jqXHR);
                     }
@@ -1468,7 +1718,7 @@ function loadClientFaturas(clientId) {
             }
 
             // Lógica para remover recorrência
-            $(document).on("click", ".btn-remove-recorrencia", function() {
+            $(document).on("click", ".btn-remove-recorrencia", function () {
                 const recorrenciaId = $(this).data("id-recorrencia");
                 const clientId = $(this).data("id-cliente");
                 if (confirm("Tem certeza que deseja remover esta recorrência?")) {
@@ -1480,13 +1730,13 @@ function loadClientFaturas(clientId) {
                             action: 'remover_recorrencia',
                             id_recorrencia: recorrenciaId
                         },
-                        success: function(response) {
+                        success: function (response) {
                             alert(response.message);
                             if (response.success) {
-                                loadClienteRecorrencias(clientId); 
+                                loadClienteRecorrencias(clientId);
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             alert("Erro ao remover recorrência: " + textStatus);
                             console.error("AJAX Error (remover_recorrencia):", textStatus, errorThrown, jqXHR);
                         }
@@ -1495,10 +1745,10 @@ function loadClientFaturas(clientId) {
             });
 
             // Lógica para o botão INCORPORAR RECORRÊNCIAS DO MÊS
-            $(document).on("click", "#btnIncorporarRecorrencias", function() {
+            $(document).on("click", "#btnIncorporarRecorrencias", function () {
                 const faturaId = $("#detalheFaturaId").text();
-                const clienteId = $("#selectedClientId").val(); 
-                const dataVencimentoFatura = $("#detalheFaturaVencimento").text(); 
+                const clienteId = $("#selectedClientId").val();
+                const dataVencimentoFatura = $("#detalheFaturaVencimento").text();
 
                 if (!faturaId || !clienteId || !dataVencimentoFatura) {
                     alert("Não foi possível identificar a fatura ou o cliente.");
@@ -1510,7 +1760,7 @@ function loadClientFaturas(clientId) {
                     alert("Formato de data de vencimento inválido para incorporar recorrências.");
                     return;
                 }
-                const mesAnoVencimento = `${partesData[2]}-${partesData[1]}`; 
+                const mesAnoVencimento = `${partesData[2]}-${partesData[1]}`;
 
                 if (confirm(`Deseja incorporar os serviços recorrentes do cliente para o mês de ${partesData[1]}/${partesData[2]} nesta fatura?`)) {
                     $.ajax({
@@ -1523,14 +1773,14 @@ function loadClientFaturas(clientId) {
                             id_cliente: clienteId,
                             mes_ano_fatura: mesAnoVencimento
                         },
-                        success: function(response) {
+                        success: function (response) {
                             alert(response.message);
                             if (response.success) {
-                                openFaturaDetalhesModal(faturaId); 
-                                loadClientFaturas(clienteId); 
+                                openFaturaDetalhesModal(faturaId);
+                                loadClientFaturas(clienteId);
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             alert("Erro ao incorporar recorrências: " + textStatus);
                             console.error("AJAX Error (incorporar_recorrencias_na_fatura):", textStatus, errorThrown, jqXHR);
                         }
@@ -1539,7 +1789,7 @@ function loadClientFaturas(clientId) {
             });
 
             // Lógica para o botão REGISTRAR PAGAMENTO (agora com seletor delegado)
-            $(document).on("click", ".btn-registrar-pagamento", function() { // Seleção delegada
+            $(document).on("click", ".btn-registrar-pagamento", function () { // Seleção delegada
                 const faturaId = $(this).data("id-fatura");
                 const clienteId = $(this).data("cliente-id"); // Pega o ID do cliente do data attribute do botão
 
@@ -1549,10 +1799,10 @@ function loadClientFaturas(clientId) {
                     type: 'POST',
                     dataType: 'json',
                     data: {
-                        action: 'get_fatura_detalhes', 
+                        action: 'get_fatura_detalhes',
                         id_fatura: faturaId
                     },
-                    success: function(response) {
+                    success: function (response) {
                         if (response.success && response.data.fatura) {
                             const fatura = response.data.fatura;
                             const totalPago = parseFloat(fatura.total_pago || 0);
@@ -1564,10 +1814,10 @@ function loadClientFaturas(clientId) {
                             $("#pagamentoFaturaTotalDisplay").text(parseFloat(fatura.valor_total_fatura).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
                             $("#pagamentoFaturaTotalPagoDisplay").text(totalPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
                             $("#pagamentoFaturaSaldoDevedorDisplay").text(saldoDevedor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }));
-                            
-                            $("#valorPagamento").val(saldoDevedor > 0 ? saldoDevedor.toFixed(2) : '0.00'); 
-                            $("#dataPagamento").val('<?= date('Y-m-d') ?>'); 
-                            $("#statusPagamento").val('Confirmado'); 
+
+                            $("#valorPagamento").val(saldoDevedor > 0 ? saldoDevedor.toFixed(2) : '0.00');
+                            $("#dataPagamento").val('<?= date('Y-m-d') ?>');
+                            $("#statusPagamento").val('Confirmado');
                             $("#observacaoPagamento").val('');
                             $("#itensPagosJson").val(''); // Limpa o campo hidden
                             $("#pagamentoMessage").text('');
@@ -1580,7 +1830,7 @@ function loadClientFaturas(clientId) {
                             alert("Erro ao carregar detalhes da fatura para registro de pagamento: " + response.message);
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         alert("Erro de comunicação ao carregar detalhes da fatura para pagamento: " + textStatus);
                         console.error("AJAX Error (get_fatura_detalhes for payment):", textStatus, errorThrown, jqXHR);
                     }
@@ -1588,11 +1838,11 @@ function loadClientFaturas(clientId) {
             });
 
             // Formulário de Registrar Pagamento (AJAX)
-            $("#formRegistrarPagamento").on("submit", function(e) {
+            $("#formRegistrarPagamento").on("submit", function (e) {
                 e.preventDefault();
                 // Garante que o JSON dos itens pagos esteja atualizado antes de enviar
-                updateItensPagosJson(); 
-                
+                updateItensPagosJson();
+
                 const formData = $(this).serialize() + "&action=registrar_pagamento";
                 $("#pagamentoMessage").text("Registrando pagamento...");
 
@@ -1601,15 +1851,15 @@ function loadClientFaturas(clientId) {
                     type: 'POST',
                     data: formData,
                     dataType: 'json',
-                    success: function(response) {
+                    success: function (response) {
                         $("#pagamentoMessage").text(response.message);
                         if (response.success) {
                             $("#modalRegistrarPagamento").dialog("close");
                             openFaturaDetalhesModal($("#pagamentoFaturaId").val());
-                            loadClientFaturas($("#selectedClientId").val()); 
+                            loadClientFaturas($("#selectedClientId").val());
                         }
                     },
-                    error: function(jqXHR, textStatus, errorThrown) {
+                    error: function (jqXHR, textStatus, errorThrown) {
                         $("#pagamentoMessage").text("Erro de comunicação ao registrar pagamento: " + textStatus);
                         console.error("AJAX Error (registrar_pagamento):", textStatus, errorThrown, jqXHR);
                     }
@@ -1617,7 +1867,7 @@ function loadClientFaturas(clientId) {
             });
 
             // Lógica para o botão ESTORNAR PAGAMENTO
-            $(document).on("click", ".btn-estornar-pagamento", function() {
+            $(document).on("click", ".btn-estornar-pagamento", function () {
                 const pagamentoId = $(this).data("id-pagamento");
                 const faturaId = $(this).data("id-fatura");
 
@@ -1631,14 +1881,14 @@ function loadClientFaturas(clientId) {
                             id_pagamento: pagamentoId,
                             id_fatura: faturaId // Passa o ID da fatura para recalcular o total e status
                         },
-                        success: function(response) {
+                        success: function (response) {
                             alert(response.message);
                             if (response.success) {
                                 openFaturaDetalhesModal(faturaId); // Recarrega os detalhes da fatura
                                 loadClientFaturas($("#selectedClientId").val()); // Recarrega a lista de faturas do cliente
                             }
                         },
-                        error: function(jqXHR, textStatus, errorThrown) {
+                        error: function (jqXHR, textStatus, errorThrown) {
                             alert("Erro ao estornar pagamento: " + textStatus);
                             console.error("AJAX Error (estornar_pagamento):", textStatus, errorThrown, jqXHR);
                         }
@@ -1647,17 +1897,18 @@ function loadClientFaturas(clientId) {
             });
 
         });
-		
-function formatarDataBR(dataISO) {
-    const data = new Date(dataISO);
-    if (isNaN(data)) return dataISO;
-    const dia = String(data.getDate()).padStart(2, '0');
-    const mes = String(data.getMonth() + 1).padStart(2, '0');
-    const ano = data.getFullYear();
-    return `${dia}/${mes}/${ano}`;
-}
 
-		
+        function formatarDataBR(dataISO) {
+            const data = new Date(dataISO);
+            if (isNaN(data)) return dataISO;
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            return `${dia}/${mes}/${ano}`;
+        }
+
+
     </script>
 </body>
+
 </html>

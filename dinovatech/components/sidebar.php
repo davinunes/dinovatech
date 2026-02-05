@@ -32,7 +32,7 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
     class="fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-xl flex flex-col">
     <!-- Logo area -->
     <div class="h-16 flex items-center justify-center border-b border-slate-800">
-        <h1 class="text-xl font-bold tracking-wider text-cyan-400">DINOVET</h1>
+        <h1 class="text-xl font-bold tracking-wider text-cyan-400"><?= strtoupper(AppHelper::getCompanyName()) ?></h1>
     </div>
 
     <!-- Navigation -->

@@ -1,3 +1,8 @@
+<?php
+session_start();
+require_once 'dinovatech/helpers/AppHelper.php';
+$empresaNome = AppHelper::getCompanyName();
+?>
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -22,20 +27,30 @@
         <div class="bg-white p-10 rounded-xl shadow-lg">
 
             <h1 class="text-3xl font-bold text-gray-800 mb-4">
-                Bem-vindo ao <br><span class="text-cyan-600">DinoVet</span>
+                Bem-vindo ao <br><span class="text-cyan-600">
+                    <?= $empresaNome ?>
+                </span>
             </h1>
             <p class="text-gray-600 mb-8">
-                ...
+                Sistema de Gestão Integrado
             </p>
-            <a href="./cliente/"
+            <a href="./dinovatech/cliente/"
                 class="block w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-colors duration-300 text-lg">
                 Acessar Área do Cliente
             </a>
         </div>
         <div class="mt-6 text-center">
-            <a href="./dinovatech/login.php" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">
-                Acesso Restrito
-            </a></br>
+            <?php if (isset($_SESSION['usuario_id'])): ?>
+                <a href="./dinovatech/index.php"
+                    class="text-sm font-bold text-cyan-700 hover:text-cyan-900 hover:underline">
+                    &raquo; Acessar Painel Administrativo
+                </a></br>
+            <?php else: ?>
+                <a href="./dinovatech/login.php" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">
+                    Acesso Restrito (Login)
+                </a></br>
+            <?php endif; ?>
+
             <a href="termos.html" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">
                 Termos de Uso
             </a></br>

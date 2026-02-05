@@ -5,6 +5,7 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 include "../database.php";
+include "helpers/AppHelper.php";
 include "components/layout_head.php";
 
 $id_cliente = $_GET['id'] ?? null;
@@ -41,17 +42,20 @@ if ($id_cliente) {
             $contratos[] = $row;
         }
 
-        // Get Pets (Patients)
+        // Get Pets (Patients) - Only if VET Mode
         $pets = [];
-        $query_pets = "SELECT p.*, (SELECT MAX(data_atendimento) FROM Atendimentos WHERE id_pet = p.id_pet) as ultimo_atend FROM Pets p WHERE p.id_cliente = '$id_safe' ORDER BY p.nome ASC";
-        $result_pets = DBExecute($link, $query_pets);
-        if ($result_pets) {
-            while ($row = mysqli_fetch_assoc($result_pets)) {
-                $pets[] = $row;
+        if (AppHelper::isVetMode()) {
+            $query_pets = "SELECT p.*, (SELECT MAX(data_atendimento) FROM Atendimentos WHERE id_pet = p.id_pet) as ultimo_atend FROM Pets p WHERE p.id_cliente = '$id_safe' ORDER BY p.nome ASC";
+            $result_pets = DBExecute($link, $query_pets);
+            if ($result_pets) {
+                while ($row = mysqli_fetch_assoc($result_pets)) {
+                    $pets[] = $row;
+                }
             }
         }
     }
-    DBClose($link);
+    // Moved DBClose to end of file to ensure connection stays open for any intermediate needs (though rare)
+    // DBClose($link);
 } else {
     $error_msg = "ID do cliente não fornecido.";
 }
@@ -130,97 +134,99 @@ if ($id_cliente) {
                 </div>
 
                 <!-- Pets Section (Full Width) -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
-                            <span class="material-icons text-cyan-600 mr-2">pets</span> Meus Pets (Pacientes)
-                        </h3>
-                        <a href="pet_form.php?client_id=<?= $cliente['id_cliente'] ?>"
-                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors shadow-sm">
-                            <span class="material-icons mr-2">add_circle</span> Novo Pet
-                        </a>
-                    </div>
-
-                    <?php if (empty($pets)): ?>
-                        <div class="p-8 text-center bg-gray-50">
-                            <span class="material-icons text-4xl text-gray-300 mb-2">pets</span>
-                            <p class="text-gray-500 font-medium">Este cliente ainda não possui pets cadastrados.</p>
-                            <p class="text-sm text-gray-400 mt-1">Clique em "Novo Pet" para adicionar o primeiro paciente.</p>
+                <?php if (AppHelper::isVetMode()): ?>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                        <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                                <span class="material-icons text-cyan-600 mr-2">pets</span> Meus Pets (Pacientes)
+                            </h3>
+                            <a href="pet_form.php?client_id=<?= $cliente['id_cliente'] ?>"
+                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors shadow-sm">
+                                <span class="material-icons mr-2">add_circle</span> Novo Pet
+                            </a>
                         </div>
-                    <?php else: ?>
-                        <!-- Desktop Table -->
-                        <div class="hidden md:block overflow-x-auto">
-                            <table class="w-full text-left">
-                                <thead class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
-                                    <tr>
-                                        <th class="p-4 pl-6">Nome / Espécie</th>
-                                        <th class="p-4">Raça / Sexo</th>
-                                        <th class="p-4">Idade</th>
-                                        <th class="p-4">Último Atendimento</th>
-                                        <th class="p-4 text-right pr-6">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
-                                    <?php foreach ($pets as $pet):
-                                        $idade_str = '-';
-                                        if ($pet['data_nascimento']) {
-                                            $dob = new DateTime($pet['data_nascimento']);
-                                            $diff = $dob->diff(new DateTime());
-                                            $idade_str = $diff->y . ' anos';
-                                        }
-                                        ?>
-                                        <tr class="hover:bg-gray-50 transition">
-                                            <td class="p-4 pl-6">
-                                                <div class="font-bold text-gray-900 text-base"><?= htmlspecialchars($pet['nome']) ?>
-                                                </div>
-                                                <div class="flex items-center mt-1">
-                                                    <span
-                                                        class="text-xs uppercase font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded mr-2"><?= htmlspecialchars($pet['especie']) ?></span>
-                                                </div>
-                                            </td>
-                                            <td class="p-4">
-                                                <div class="text-gray-900"><?= htmlspecialchars($pet['raca'] ?: 'Indefinida') ?>
-                                                </div>
-                                                <div class="text-xs text-gray-500 mt-1 flex items-center">
-                                                    <?= $pet['sexo'] == 'M' ? '<span class="text-blue-600 font-bold">Macho</span>' : '<span class="text-pink-600 font-bold">Fêmea</span>' ?>
-                                                </div>
-                                            </td>
-                                            <td class="p-4 font-medium"><?= $idade_str ?></td>
-                                            <td class="p-4 text-gray-500">
-                                                <?= $pet['ultimo_atend'] ? date('d/m/Y', strtotime($pet['ultimo_atend'])) : 'Nunca atendido' ?>
-                                            </td>
-                                            <td class="p-4 text-right pr-6">
-                                                <a href="pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
-                                                    class="text-cyan-600 hover:text-cyan-800 font-bold bg-cyan-50 hover:bg-cyan-100 px-3 py-1.5 rounded-lg transition-colors inline-block">
-                                                    Prontuário
-                                                </a>
-                                            </td>
+
+                        <?php if (empty($pets)): ?>
+                            <div class="p-8 text-center bg-gray-50">
+                                <span class="material-icons text-4xl text-gray-300 mb-2">pets</span>
+                                <p class="text-gray-500 font-medium">Este cliente ainda não possui pets cadastrados.</p>
+                                <p class="text-sm text-gray-400 mt-1">Clique em "Novo Pet" para adicionar o primeiro paciente.</p>
+                            </div>
+                        <?php else: ?>
+                            <!-- Desktop Table -->
+                            <div class="hidden md:block overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                                        <tr>
+                                            <th class="p-4 pl-6">Nome / Espécie</th>
+                                            <th class="p-4">Raça / Sexo</th>
+                                            <th class="p-4">Idade</th>
+                                            <th class="p-4">Último Atendimento</th>
+                                            <th class="p-4 text-right pr-6">Ações</th>
                                         </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
+                                        <?php foreach ($pets as $pet):
+                                            $idade_str = '-';
+                                            if ($pet['data_nascimento']) {
+                                                $dob = new DateTime($pet['data_nascimento']);
+                                                $diff = $dob->diff(new DateTime());
+                                                $idade_str = $diff->y . ' anos';
+                                            }
+                                            ?>
+                                            <tr class="hover:bg-gray-50 transition">
+                                                <td class="p-4 pl-6">
+                                                    <div class="font-bold text-gray-900 text-base"><?= htmlspecialchars($pet['nome']) ?>
+                                                    </div>
+                                                    <div class="flex items-center mt-1">
+                                                        <span
+                                                            class="text-xs uppercase font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded mr-2"><?= htmlspecialchars($pet['especie']) ?></span>
+                                                    </div>
+                                                </td>
+                                                <td class="p-4">
+                                                    <div class="text-gray-900"><?= htmlspecialchars($pet['raca'] ?: 'Indefinida') ?>
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 mt-1 flex items-center">
+                                                        <?= $pet['sexo'] == 'M' ? '<span class="text-blue-600 font-bold">Macho</span>' : '<span class="text-pink-600 font-bold">Fêmea</span>' ?>
+                                                    </div>
+                                                </td>
+                                                <td class="p-4 font-medium"><?= $idade_str ?></td>
+                                                <td class="p-4 text-gray-500">
+                                                    <?= $pet['ultimo_atend'] ? date('d/m/Y', strtotime($pet['ultimo_atend'])) : 'Nunca atendido' ?>
+                                                </td>
+                                                <td class="p-4 text-right pr-6">
+                                                    <a href="pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
+                                                        class="text-cyan-600 hover:text-cyan-800 font-bold bg-cyan-50 hover:bg-cyan-100 px-3 py-1.5 rounded-lg transition-colors inline-block">
+                                                        Prontuário
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        <!-- Mobile Cards -->
-                        <div class="md:hidden grid grid-cols-1 gap-4 p-4 bg-gray-50">
-                            <?php foreach ($pets as $pet): ?>
-                                <div
-                                    class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                                    <div>
-                                        <h4 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($pet['nome']) ?></h4>
-                                        <div class="text-sm text-gray-500 mt-1">
-                                            <?= htmlspecialchars($pet['especie']) ?> • <?= htmlspecialchars($pet['raca']) ?>
+                            <!-- Mobile Cards -->
+                            <div class="md:hidden grid grid-cols-1 gap-4 p-4 bg-gray-50">
+                                <?php foreach ($pets as $pet): ?>
+                                    <div
+                                        class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($pet['nome']) ?></h4>
+                                            <div class="text-sm text-gray-500 mt-1">
+                                                <?= htmlspecialchars($pet['especie']) ?> • <?= htmlspecialchars($pet['raca']) ?>
+                                            </div>
                                         </div>
+                                        <a href="pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
+                                            class="bg-gray-100 text-cyan-600 p-2 rounded-full">
+                                            <span class="material-icons">arrow_forward</span>
+                                        </a>
                                     </div>
-                                    <a href="pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
-                                        class="bg-gray-100 text-cyan-600 p-2 rounded-full">
-                                        <span class="material-icons">arrow_forward</span>
-                                    </a>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
@@ -491,5 +497,7 @@ if ($id_cliente) {
         });
     </script>
 </body>
+<?php if (isset($link))
+    DBClose($link); ?>
 
 </html>
