@@ -27,8 +27,8 @@ $nome_cliente = $_SESSION['cliente_nome'] ?? '';
     <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-100">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-800 tracking-tight">Dinovatech <span
-                    class="text-cyan-600">Cliente</span></h1>
+            <h1 class="text-xl font-bold text-gray-800 tracking-tight"><a href="../index.php">Área do <span
+                        class="text-cyan-600">Cliente</span></a></h1>
             <?php if ($cliente_logado): ?>
                 <div class="flex items-center gap-4">
                     <span class="text-sm text-gray-600 hidden md:inline">Olá, <strong>
