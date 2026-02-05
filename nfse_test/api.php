@@ -522,7 +522,8 @@ XML;
             <Endereco>
 $enderecoBlock
             </Endereco>
-            $contatoTag
+            </Endereco>
+            <!-- $contatoTag removed to match Success XML structure -->
         </TomadorServico>
         $regimeEspecialTag
         <OptanteSimplesNacional>$optanteSimples</OptanteSimplesNacional>
