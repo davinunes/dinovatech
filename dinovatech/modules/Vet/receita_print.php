@@ -57,6 +57,11 @@ DBClose($link);
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
             .no-print {
                 display: none !important;
             }
@@ -64,6 +69,7 @@ DBClose($link);
             body {
                 background: white;
                 -webkit-print-color-adjust: exact;
+                margin: 0;
             }
 
             .print-container {
@@ -73,6 +79,8 @@ DBClose($link);
                 width: 100%;
                 max-width: 100%;
                 margin: 0;
+                min-height: auto !important;
+                height: auto !important;
             }
         }
 
@@ -108,7 +116,7 @@ DBClose($link);
     <div class="print-container flex flex-col justify-between">
 
         <!-- Header -->
-        <header class="border-b-2 border-cyan-800 pb-6 mb-8 flex items-center justify-between">
+        <header class="border-b-2 border-cyan-800 pb-4 mb-4 flex items-center justify-between">
             <div>
                 <?php if (!empty($empresa['logo_url'])): ?>
                     <img src="../../<?= $empresa['logo_url'] ?>" alt="Logo" class="h-20 object-contain">
@@ -145,7 +153,7 @@ DBClose($link);
         <div class="flex-1">
 
             <!-- Info Cards Grid -->
-            <div class="grid grid-cols-2 gap-6 mb-6 text-sm">
+            <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
 
                 <!-- Vet Info (Left) -->
                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
