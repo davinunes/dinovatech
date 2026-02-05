@@ -832,12 +832,23 @@ XML;
         'Content-Type: text/xml; charset=utf-8',
         'SOAPAction: "' . $soapAction . '"',
         'Content-Length: ' . strlen($soapEnvelope),
-        'Accept: text/xml',
-        'Accept-Language: pt-BR',
-        'Connection: keep-alive'
+        'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language: pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Connection: keep-alive',
+        'Upgrade-Insecure-Requests: 1',
+        'Sec-Fetch-Dest: document',
+        'Sec-Fetch-Mode: navigate',
+        'Sec-Fetch-Site: none',
+        'Sec-Fetch-User: ?1',
+        'Cache-Control: max-age=0',
+        'Pragma: no-cache'
     ]);
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+    // Use a very specific Chrome UA
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36');
     curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
+
+    // Enable automated decoding if CF returns gzipped content
+    curl_setopt($ch, CURLOPT_ENCODING, 'gzip, deflate, br');
 
     if (!empty($certsA1)) {
         $certPemFile = tempnam(sys_get_temp_dir(), 'cert');
@@ -847,6 +858,9 @@ XML;
         curl_setopt($ch, CURLOPT_SSLCERT, $certPemFile);
         curl_setopt($ch, CURLOPT_SSLKEY, $keyPemFile);
     }
+
+    // Cipher Suite Tweak (Sometimes required for legacy IIS/CF)
+    // curl_setopt($ch, CURLOPT_SSL_CIPHER_LIST, 'DEFAULT@SECLEVEL=1'); 
 
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
