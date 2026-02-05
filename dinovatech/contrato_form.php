@@ -50,6 +50,18 @@ DBClose($link);
         <?= $is_edit ? 'Editar Contrato' : 'Novo Contrato' ?> - Dinovatech
     </title>
     <?php include 'components/layout_head.php'; ?>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container .select2-selection--single {
+            height: 50px !important;
+            border-color: #d1d5db !important;
+            border-radius: 0.5rem !important;
+            padding-top: 10px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 48px !important;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50 flex">
@@ -99,7 +111,7 @@ DBClose($link);
                                 <label for="id_cliente"
                                     class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
                                 <select id="id_cliente" name="id_cliente" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white select2-enable">
                                     <option value="">Selecione um cliente...</option>
                                     <?php foreach ($clientes as $c): ?>
                                         <option value="<?= $c['id_cliente'] ?>" <?= ($contrato['id_cliente'] ?? $pre_cliente_id) == $c['id_cliente'] ? 'selected' : '' ?>>
@@ -288,7 +300,16 @@ DBClose($link);
     </div>
 
     <?php include 'components/layout_scripts.php'; ?>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
+        $(document).ready(function() {
+            $('.select2-enable').select2({
+                width: '100%',
+                placeholder: 'Selecione...'
+            });
+            $('#id_servico').on('select2:select', function(e) { updateValorSugerido(); });
+        });
+
         function updateValorSugerido() {
             const select = document.getElementById('id_servico');
             const valorInput = document.getElementById('valor_sugerido_recorrencia');

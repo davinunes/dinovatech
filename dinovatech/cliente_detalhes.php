@@ -140,7 +140,7 @@ if ($id_cliente) {
                             <h3 class="text-xl font-bold text-gray-800 flex items-center">
                                 <span class="material-icons text-cyan-600 mr-2">pets</span> Meus Pets (Pacientes)
                             </h3>
-                            <a href="pet_form.php?client_id=<?= $cliente['id_cliente'] ?>"
+                            <a href="modules/Vet/pet_form.php?client_id=<?= $cliente['id_cliente'] ?>"
                                 class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors shadow-sm">
                                 <span class="material-icons mr-2">add_circle</span> Novo Pet
                             </a>
@@ -195,7 +195,7 @@ if ($id_cliente) {
                                                     <?= $pet['ultimo_atend'] ? date('d/m/Y', strtotime($pet['ultimo_atend'])) : 'Nunca atendido' ?>
                                                 </td>
                                                 <td class="p-4 text-right pr-6">
-                                                    <a href="pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
+                                                    <a href="modules/Vet/pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
                                                         class="text-cyan-600 hover:text-cyan-800 font-bold bg-cyan-50 hover:bg-cyan-100 px-3 py-1.5 rounded-lg transition-colors inline-block">
                                                         Prontuário
                                                     </a>
@@ -217,7 +217,7 @@ if ($id_cliente) {
                                                 <?= htmlspecialchars($pet['especie']) ?> • <?= htmlspecialchars($pet['raca']) ?>
                                             </div>
                                         </div>
-                                        <a href="pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
+                                        <a href="modules/Vet/pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
                                             class="bg-gray-100 text-cyan-600 p-2 rounded-full">
                                             <span class="material-icons">arrow_forward</span>
                                         </a>
