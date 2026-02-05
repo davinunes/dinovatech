@@ -495,10 +495,14 @@ XML;
     // Usually <Endereco> tag is mandatory for <Tomador>. If all children empty, we might send empty wrapper.
     // <Endereco></Endereco> is valid if children are optional.
 
-    // Outras Informações (Legal Text) - Merged into Discriminacao above
-    // Code removed to resolve Schema Error
-
-    $outrasInformacoesTag = ""; // Force empty
+    // Outras Informações (Legal Text) - Required for Simples Nacional
+    $outrasInformacoesTag = "";
+    if ($optanteSimples == '1') {
+        $textoSimples = 'I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL"; e \s\n II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE IPI."';
+        // Optional: Add PROCON info if needed, matching success XML
+        $textoProcon = '\s\nPROCON: TEL 151- SETOR COMERCIAL SUL, QUADRA 8, BLOCO B-60, SALA 240- BRASILIA - DF';
+        $outrasInformacoesTag = "<OutrasInformacoes>$textoSimples$textoProcon</OutrasInformacoes>";
+    }
 
     $infRps .= <<<XML
             <Discriminacao>$discriminacao</Discriminacao>
