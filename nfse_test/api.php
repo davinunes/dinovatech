@@ -44,9 +44,13 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
     $endpoint_url = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx'; // Default Homolog
 
     if ($endpoint_type === 'official') {
-        $endpoint_url = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'; // Check if this is truly homolog 'official'
+        $endpoint_url = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
     } elseif ($endpoint_type === 'producao') {
-        $endpoint_url = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'; // Production URL per app.php
+        $endpoint_url = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx';
+    } elseif ($endpoint_type === 'producao_real') {
+        // Source: https://df.issnetonline.com.br/webservicenfse204/nfse.asmx
+        // Note: df.issnetonline.com.br vs www.issnetonline.com.br
+        $endpoint_url = 'https://df.issnetonline.com.br/webservicenfse204/nfse.asmx';
     }
 
     // Connect to DB to get credentials
