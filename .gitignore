@@ -6,3 +6,5 @@ certificado/certificado.php
 assets/logo_empresa.*
 certificado/*   
 inter/config.php_old
+dados.sql
+estrutura.sql   
