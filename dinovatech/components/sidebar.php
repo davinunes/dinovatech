@@ -33,7 +33,7 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
     <!-- Logo area -->
     <div class="h-16 flex items-center justify-center border-b border-slate-800">
         <h2 class="text-xl font-bold tracking-wider text-cyan-400"><a
-                href="<?= $basePath ?>index.php"><?= strtoupper(AppHelper::getCompanyName()) ?></a></h2>
+                href="<?= $basePath ?>../index.php"><?= strtoupper(AppHelper::getCompanyName()) ?></a></h2>
     </div>
 
     <!-- Navigation -->
