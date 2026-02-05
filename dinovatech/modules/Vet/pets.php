@@ -135,7 +135,8 @@ if ($link) {
                                         </div>
                                     </td>
                                     <td class="p-4 font-medium text-cyan-700">
-                                        <a href="cliente_detalhes.php?id=<?= $pet['id_cliente'] ?>" class="hover:underline">
+                                        <a href="../../cliente_detalhes.php?id=<?= $pet['id_cliente'] ?>"
+                                            class="hover:underline">
                                             <?= htmlspecialchars($pet['nome_tutor']) ?>
                                         </a>
                                     </td>

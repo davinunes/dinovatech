@@ -175,7 +175,7 @@ function calcularIdade($data_nasc)
                             <h3 class="font-bold text-gray-700 flex items-center">
                                 <span class="material-icons text-gray-400 mr-2">person</span> Tutor Responsável
                             </h3>
-                            <a href="cliente_detalhes.php?id=<?= $pet['id_cliente'] ?>"
+                            <a href="../../cliente_detalhes.php?id=<?= $pet['id_cliente'] ?>"
                                 class="text-xs font-medium text-cyan-600 hover:text-cyan-800">Ver Perfil</a>
                         </div>
                         <div class="p-6 flex-1 flex flex-col justify-center">
