@@ -2067,7 +2067,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pfxContent = file_get_contents($finalPfxPath);
             $certs = [];
-            if (!openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado'])) {
+
+            // Decrypt Password
+            $senhaDecrypted = null;
+            try {
+                $senhaDecrypted = \EncryptionHelper::decrypt($config['senha_certificado']);
+            } catch (Exception $e) {
+                // Ignore error, try raw
+            }
+
+            // Attempt 1: Decrypted
+            $status = false;
+            if ($senhaDecrypted) {
+                $status = openssl_pkcs12_read($pfxContent, $certs, $senhaDecrypted);
+            }
+
+            // Attempt 2: Raw (Fallback)
+            if (!$status) {
+                $status = openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado']);
+            }
+
+            if (!$status) {
                 $response['message'] = "Senha do certificado incorreta.";
                 break;
             }
@@ -2106,7 +2126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $finalXml = assinarRoot($rootXml, $certs, $uriRef, $variation);
 
                 $endpoint = ($emissao['ambiente'] == 'producao')
-                    ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
+                    ? 'https://df.issnetonline.com.br/webservicenfse204/nfse.asmx'
                     : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
                 return sendSoap($finalXml, $endpoint, $certs, $variation, 'consultar_url', true);
