@@ -79,8 +79,8 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
         exit;
     }
 
-    // Fetch Config
-    $query = "SELECT * FROM ConfiguracoesEmissor WHERE id=1";
+    // Fetch Config (Get the first/only record)
+    $query = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
     $resConfig = mysqli_query($link, $query);
 
     if (!$resConfig) {
