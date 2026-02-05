@@ -2242,9 +2242,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $nomeOriginalSafe = mysqli_real_escape_string($link, $nomeOriginal);
                 $urlPublicaSafe = mysqli_real_escape_string($link, $urlUpload);
                 $mimeTypeSafe = mysqli_real_escape_string($link, $mimeType);
+                $descricao = $_POST['descricao'] ?? '';
+                $descricaoSafe = mysqli_real_escape_string($link, $descricao);
 
-                $queryArquivo = "INSERT INTO Arquivos (nome_original, url_publica, tamanho_bytes, tipo_mime) 
-                                 VALUES ('$nomeOriginalSafe', '$urlPublicaSafe', '$tamanhoBytes', '$mimeTypeSafe')";
+                $queryArquivo = "INSERT INTO Arquivos (nome_original, url_publica, tamanho_bytes, tipo_mime, descricao) 
+                                 VALUES ('$nomeOriginalSafe', '$urlPublicaSafe', '$tamanhoBytes', '$mimeTypeSafe', '$descricaoSafe')";
 
                 if (DBExecute($link, $queryArquivo)) {
                     $idArquivo = mysqli_insert_id($link);
@@ -2278,7 +2280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = "ID Atendimento invalido";
             } else {
                 $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
-                $query = "SELECT A.id_arquivo, A.nome_original, A.url_publica, A.tamanho_bytes, A.data_upload 
+                $query = "SELECT A.id_arquivo, A.nome_original, A.url_publica, A.tamanho_bytes, A.data_upload, A.descricao 
                           FROM Arquivos A
                           JOIN AtendimentoArquivos AA ON A.id_arquivo = AA.id_arquivo
                           WHERE AA.id_atendimento = '$id_atendimento'
