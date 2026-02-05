@@ -4,3 +4,5 @@ inter/production/*
 oci-s3.php
 certificado/certificado.php
 assets/logo_empresa.*
+certificado/*   
+inter/config.php_old
