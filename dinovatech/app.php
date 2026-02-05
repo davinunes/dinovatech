@@ -2316,6 +2316,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         case 'salvar_receita':
             $id_atendimento = $_POST['id_atendimento'] ?? '';
+            $id_receita = $_POST['id_receita'] ?? ''; // New param for Edit
             $itens = json_decode($_POST['itens'] ?? '[]', true);
             $observacoes = $_POST['observacoes'] ?? '';
 
@@ -2331,28 +2332,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
             $observacoes = mysqli_real_escape_string($link, $observacoes);
 
-            // Criar Receita
-            $queryReceita = "INSERT INTO Receitas (id_atendimento, observacoes, data_receita) VALUES ('$id_atendimento', '$observacoes', NOW())";
-            if (DBExecute($link, $queryReceita)) {
-                $idReceita = mysqli_insert_id($link);
-
-                // Inserir Itens
-                foreach ($itens as $item) {
-                    $nome = mysqli_real_escape_string($link, $item['nome_medicamento'] ?? '');
-                    $qtd = mysqli_real_escape_string($link, $item['quantidade'] ?? '');
-                    $uso = mysqli_real_escape_string($link, $item['uso'] ?? '');
-                    $cat = mysqli_real_escape_string($link, $item['categoria'] ?? 'Veterinaria');
-                    $pos = mysqli_real_escape_string($link, $item['posologia'] ?? '');
-
-                    $queryItem = "INSERT INTO ItensReceita (id_receita, nome_medicamento, quantidade, uso, categoria, posologia)
-                                  VALUES ('$idReceita', '$nome', '$qtd', '$uso', '$cat', '$pos')";
-                    DBExecute($link, $queryItem);
+            if (!empty($id_receita)) {
+                // UPDATE MODE
+                $id_receita = mysqli_real_escape_string($link, $id_receita);
+                $qUpdate = "UPDATE Receitas SET observacoes = '$observacoes' WHERE id_receita = '$id_receita' AND id_atendimento = '$id_atendimento'";
+                if (!DBExecute($link, $qUpdate)) {
+                    $response['message'] = "Erro ao atualizar receita: " . mysqli_error($link);
+                    break;
                 }
-                $response['success'] = true;
-                $response['message'] = "Receita salva com sucesso!";
+                // Clear old items to replace with new ones
+                DBExecute($link, "DELETE FROM ItensReceita WHERE id_receita = '$id_receita'");
+                $idReceita = $id_receita; // Use existing ID
+                $actionMsg = "atualizada";
             } else {
-                $response['message'] = "Erro ao criar receita: " . mysqli_error($link);
+                // INSERT MODE
+                $queryReceita = "INSERT INTO Receitas (id_atendimento, observacoes, data_receita) VALUES ('$id_atendimento', '$observacoes', NOW())";
+                if (DBExecute($link, $queryReceita)) {
+                    $idReceita = mysqli_insert_id($link);
+                    $actionMsg = "criada";
+                } else {
+                    $response['message'] = "Erro ao criar receita: " . mysqli_error($link);
+                    break;
+                }
             }
+
+            // Insert Items (Common for both)
+            foreach ($itens as $item) {
+                $nome = mysqli_real_escape_string($link, $item['nome_medicamento'] ?? '');
+                $qtd = mysqli_real_escape_string($link, $item['quantidade'] ?? '');
+                $uso = mysqli_real_escape_string($link, $item['uso'] ?? '');
+                $cat = mysqli_real_escape_string($link, $item['categoria'] ?? 'Veterinaria');
+                $pos = mysqli_real_escape_string($link, $item['posologia'] ?? '');
+
+                $queryItem = "INSERT INTO ItensReceita (id_receita, nome_medicamento, quantidade, uso, categoria, posologia)
+                              VALUES ('$idReceita', '$nome', '$qtd', '$uso', '$cat', '$pos')";
+                DBExecute($link, $queryItem);
+            }
+            $response['success'] = true;
+            $response['message'] = "Receita $actionMsg com sucesso!";
             break;
 
         case 'get_receitas_atendimento':

@@ -304,7 +304,7 @@ DBClose($link);
                 <?php else: ?>
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold text-gray-800">Receitas Emitidas</h3>
-                        <button onclick="toggleModalReceita(true)"
+                        <button onclick="novaReceita()"
                             class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded flex items-center">
                             <span class="material-icons mr-2">add_circle</span> Nova Receita
                         </button>
@@ -600,19 +600,28 @@ DBClose($link);
 
         // --- RECEITAS ---
         let itensReceita = [];
+        let idReceitaEdicao = ''; // Guarda ID se estiver editando
 
         function toggleModalReceita(show) {
             if (show) {
                 $('#modal-receita').removeClass('hidden');
-                itensReceita = [];
-                renderItensReceita();
-                $('#receita-obs').val('');
-                $('#item-nome').val('');
-                $('#item-qtd').val('');
-                $('#item-pos').val('');
+                // Se não for edição (chamado pelo botão Nova Receita), limpa tudo
+                // Se for edição, o editarReceita já setou as vars, então não faz nada ou apenas show
             } else {
                 $('#modal-receita').addClass('hidden');
             }
+        }
+
+        function novaReceita() {
+            idReceitaEdicao = '';
+            itensReceita = [];
+            $('#receita-obs').val('');
+            $('#item-nome').val('');
+            $('#item-qtd').val('');
+            $('#item-pos').val('');
+            $('#modal-title').text('Nova Receita');
+            renderItensReceita();
+            toggleModalReceita(true);
         }
 
         function adicionarItemReceita() {
@@ -679,6 +688,7 @@ DBClose($link);
             $.post(BASE_URL, {
                 action: 'salvar_receita',
                 id_atendimento: ID_ATENDIMENTO,
+                id_receita: idReceitaEdicao, // Passa ID se for edição
                 observacoes: obs,
                 itens: JSON.stringify(itensReceita)
             }, function (res) {
@@ -686,8 +696,7 @@ DBClose($link);
                 if (res.success) {
                     toggleModalReceita(false);
                     carregarReceitas();
-                    alert('Receita salva com sucesso!');
-                    // TODO: Abrir PDF para imprimir
+                    alert(res.message);
                 } else {
                     alert('Erro ao salvar receita: ' + res.message);
                 }
@@ -702,6 +711,8 @@ DBClose($link);
                     if (res.data.length === 0) html = '<p class="text-gray-500 text-center py-4">Nenhuma receita emitida.</p>';
                     else {
                         res.data.forEach(r => {
+                            // Serialize to pass to edit function
+                            let jsonR = JSON.stringify(r).replace(/"/g, '&quot;');
                             let itensHtml = r.itens.map(i => `<li><b>${i.nome_medicamento}</b> (${i.quantidade}) - ${i.uso}: ${i.posologia}</li>`).join('');
                             html += `
                                 <div class="bg-white border rounded-lg p-4 shadow-sm mb-4">
@@ -714,6 +725,7 @@ DBClose($link);
                                     </ul>
                                     ${r.observacoes ? `<p class="text-sm text-gray-500 italic mb-2">Obs: ${r.observacoes}</p>` : ''}
                                     <div class="flex justify-end space-x-2">
+                                        <button onclick="editarReceita(${jsonR})" class="text-blue-600 hover:underline text-sm font-bold flex items-center"><span class="material-icons text-sm mr-1">edit</span> Editar</button>
                                         <button onclick="window.open('../../modules/Vet/receita_print.php?id=${r.id_receita}', '_blank')" class="text-cyan-600 hover:underline text-sm font-bold flex items-center"><span class="material-icons text-sm mr-1">print</span> Imprimir</button>
                                         <button onclick="excluirReceita(${r.id_receita})" class="text-red-600 hover:underline text-sm font-bold flex items-center"><span class="material-icons text-sm mr-1">delete</span> Excluir</button>
                                     </div>
@@ -724,6 +736,21 @@ DBClose($link);
                     $('#lista-receitas').html(html);
                 }
             });
+        }
+
+        function editarReceita(r) {
+            idReceitaEdicao = r.id_receita;
+            $('#receita-obs').val(r.observacoes);
+            itensReceita = r.itens.map(i => ({
+                nome_medicamento: i.nome_medicamento,
+                quantidade: i.quantidade,
+                uso: i.uso,
+                posologia: i.posologia,
+                categoria: i.categoria
+            }));
+            $('#modal-title').text('Editar Receita #' + r.id_receita);
+            renderItensReceita();
+            toggleModalReceita(true);
         }
 
         function excluirReceita(id) {

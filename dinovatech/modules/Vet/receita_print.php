@@ -144,67 +144,51 @@ DBClose($link);
         <!-- Body -->
         <div class="flex-1">
 
-            <!-- Patient Info -->
-            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100 mb-8 text-sm">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <span class="block text-xs font-bold text-gray-400 uppercase">Tutor</span>
-                        <span class="text-gray-800 font-medium">
-                            <?= htmlspecialchars($receita['tutor_nome']) ?>
-                        </span>
-                    </div>
+            <!-- Info Cards Grid -->
+            <div class="grid grid-cols-2 gap-6 mb-6 text-sm">
+
+                <!-- Vet Info (Left) -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h5 class="text-xs font-bold text-gray-500 uppercase mb-2 border-b pb-1">Veterinário Responsável
+                    </h5>
+                    <p class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($receita['vet_nome']) ?></p>
+                    <p class="text-gray-600">CRMV <?= htmlspecialchars($receita['crmv']) ?></p>
                 </div>
-                <div class="grid grid-cols-4 gap-4 mt-3 pt-3 border-t border-gray-200">
-                    <div>
-                        <span class="block text-xs font-bold text-gray-400 uppercase">Paciente</span>
-                        <span class="text-gray-800 font-medium">
-                            <?= htmlspecialchars($receita['pet_nome']) ?>
-                        </span>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-400 uppercase">Espécie</span>
-                        <span class="text-gray-800">
-                            <?= htmlspecialchars($receita['especie']) ?>
-                        </span>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-400 uppercase">Raça</span>
-                        <span class="text-gray-800">
-                            <?= htmlspecialchars($receita['raca'] ?: 'SRD') ?>
-                        </span>
-                    </div>
-                    <div>
-                        <span class="block text-xs font-bold text-gray-400 uppercase">Peso</span>
-                        <span class="text-gray-800">
-                            <?= $receita['peso'] ? number_format($receita['peso'], 2) . ' kg' : '-' ?>
-                        </span>
+
+                <!-- Patient Info (Right) -->
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h5 class="text-xs font-bold text-gray-500 uppercase mb-2 border-b pb-1">Paciente / Tutor</h5>
+                    <div class="flex justify-between">
+                        <div>
+                            <span class="block text-xs text-gray-400 uppercase">Paciente</span>
+                            <span class="font-bold text-gray-800"><?= htmlspecialchars($receita['pet_nome']) ?></span>
+                            <span class="text-xs text-gray-500">(<?= htmlspecialchars($receita['especie']) ?>)</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-xs text-gray-400 uppercase">Tutor</span>
+                            <span class="text-gray-800"><?= htmlspecialchars($receita['tutor_nome']) ?></span>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Prescription Items -->
-            <div class="mb-8">
+            <div class="mb-4">
                 <h3 class="text-lg font-bold text-cyan-900 border-b border-gray-200 pb-2 mb-4">Prescrição Terapêutica
                 </h3>
-
-                <div class="space-y-6">
+                <div class="space-y-4">
                     <?php foreach ($itens as $idx => $item): ?>
-                        <div class="pl-4 border-l-4 border-cyan-100">
+                        <div class="pl-4 border-l-4 border-cyan-200 py-1">
                             <div class="flex justify-between items-baseline mb-1">
                                 <h4 class="text-lg font-bold text-gray-800">
-                                    <?= htmlspecialchars($item['nome_medicamento']) ?>
-                                </h4>
-                                <span class="text-sm font-medium bg-gray-100 px-2 py-1 rounded text-gray-600">Qtd:
-                                    <?= htmlspecialchars($item['quantidade']) ?>
-                                </span>
+                                    <?= htmlspecialchars($item['nome_medicamento']) ?></h4>
+                                <span class="text-sm font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-600">Qtd:
+                                    <?= htmlspecialchars($item['quantidade']) ?></span>
                             </div>
-                            <div class="text-gray-700">
-                                <span class="font-bold text-xs uppercase tracking-wide text-gray-400 block mb-1">Uso
-                                    <?= htmlspecialchars($item['uso']) ?>
-                                </span>
-                                <p class="text-base leading-relaxed">
-                                    <?= nl2br(htmlspecialchars($item['posologia'])) ?>
-                                </p>
+                            <div class="text-gray-700 text-sm">
+                                <span class="font-bold text-xs uppercase tracking-wide text-gray-400 block mb-0.5">Uso
+                                    <?= htmlspecialchars($item['uso']) ?></span>
+                                <p class="leading-snug"><?= nl2br(htmlspecialchars($item['posologia'])) ?></p>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -212,11 +196,9 @@ DBClose($link);
             </div>
 
             <?php if (!empty($receita['observacoes'])): ?>
-                <div class="mt-8 pt-6 border-t border-dashed border-gray-300">
-                    <h4 class="text-sm font-bold text-gray-500 uppercase mb-2">Observações Adicionais</h4>
-                    <p class="text-sm text-gray-600 italic">
-                        <?= nl2br(htmlspecialchars($receita['observacoes'])) ?>
-                    </p>
+                <div class="mt-4 pt-4 border-t border-dashed border-gray-300">
+                    <h4 class="text-xs font-bold text-gray-500 uppercase mb-1">Observações</h4>
+                    <p class="text-sm text-gray-600 italic"><?= nl2br(htmlspecialchars($receita['observacoes'])) ?></p>
                 </div>
             <?php endif; ?>
 
