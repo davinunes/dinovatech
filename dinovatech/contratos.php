@@ -45,7 +45,7 @@ $expirados = [];
 $hoje = date('Y-m-d');
 
 foreach ($contratos as $c) {
-    if (!empty($c['data_fim']) && $c['data_fim'] < $hoje) {
+    if (!empty($c['data_fim_cobranca']) && $c['data_fim_cobranca'] < $hoje) {
         $expirados[] = $c;
     } else {
         $ativos[] = $c;
@@ -128,10 +128,12 @@ foreach ($contratos as $c) {
                                     <?php foreach ($ativos as $contrato): ?>
                                         <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0">
                                             <td class="p-4 font-medium text-gray-900">
-                                                <?= htmlspecialchars($contrato['nome_cliente']) ?></td>
+                                                <?= htmlspecialchars($contrato['nome_cliente']) ?>
+                                            </td>
                                             <td class="p-4"><?= htmlspecialchars($contrato['nome_servico']) ?></td>
                                             <td class="p-4">R$
-                                                <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></td>
+                                                <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?>
+                                            </td>
                                             <td class="p-4 capitalize"><?= htmlspecialchars($contrato['tipo_periodo']) ?></td>
                                             <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?>
                                             </td>
@@ -215,11 +217,13 @@ foreach ($contratos as $c) {
                                             </td>
                                             <td class="p-4"><?= htmlspecialchars($contrato['nome_servico']) ?></td>
                                             <td class="p-4">R$
-                                                <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></td>
+                                                <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?>
+                                            </td>
                                             <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?>
                                             </td>
                                             <td class="p-4 font-bold text-red-600">
-                                                <?= date('d/m/Y', strtotime($contrato['data_fim'])) ?></td>
+                                                <?= date('d/m/Y', strtotime($contrato['data_fim'])) ?>
+                                            </td>
                                             <td class="p-4 text-right">
                                                 <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
                                                     class="text-gray-500 hover:text-gray-700 font-medium text-sm">Ver</a>
