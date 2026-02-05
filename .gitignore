@@ -9,3 +9,4 @@ inter/config.php_old
 dados.sql
 estrutura.sql
 dinovatech/assets/*
+google/api-php-client/*
