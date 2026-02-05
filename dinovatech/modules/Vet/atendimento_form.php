@@ -144,12 +144,21 @@ DBClose($link);
             @apply text-lg font-bold text-gray-800 mb-4 flex items-center;
         }
 
+        /* Improved Tabs */
+        .tabs-nav {
+            @apply flex space-x-2 bg-gray-100 p-1 rounded-lg mb-6;
+        }
+
         .tab-btn {
-            @apply px-6 py-3 font-medium text-gray-600 border-b-2 border-transparent hover:text-cyan-600 transition-colors cursor-pointer;
+            @apply flex-1 py-2.5 px-4 text-sm font-medium text-gray-500 rounded-md transition-all duration-200 text-center focus:outline-none;
+        }
+
+        .tab-btn:hover {
+            @apply text-gray-700 bg-gray-200;
         }
 
         .tab-btn.active {
-            @apply text-cyan-700 border-cyan-600 font-bold bg-cyan-50 rounded-t-lg;
+            @apply text-cyan-700 bg-white shadow-sm font-bold;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -173,13 +182,19 @@ DBClose($link);
                             (<?= htmlspecialchars($pet['especie']) ?>)</p>
                     </div>
                 </div>
+            </div>
 
-                <!-- Tabs Navigation -->
-                <div class="flex border-b border-gray-200">
-                    <button type="button" class="tab-btn active" onclick="openTab('prontuario')">Prontuário</button>
-                    <button type="button" class="tab-btn" onclick="openTab('receitas')">Receitas</button>
-                    <button type="button" class="tab-btn" onclick="openTab('anexos')">Anexos / Docs</button>
-                </div>
+            <!-- Tabs Navigation -->
+            <div class="max-w-5xl mx-auto tabs-nav">
+                <button type="button" class="tab-btn active" onclick="openTab('prontuario')">
+                    <span class="material-icons text-sm align-middle mr-1">assignment</span> Prontuário
+                </button>
+                <button type="button" class="tab-btn" onclick="openTab('receitas')">
+                    <span class="material-icons text-sm align-middle mr-1">receipt</span> Receitas
+                </button>
+                <button type="button" class="tab-btn" onclick="openTab('anexos')">
+                    <span class="material-icons text-sm align-middle mr-1">attach_file</span> Anexos / Docs
+                </button>
             </div>
 
             <!-- TABS CONTENT -->
@@ -312,14 +327,33 @@ DBClose($link);
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                         <h3 class="text-xl font-bold text-gray-800 mb-4">Arquivos e Documentos</h3>
 
-                        <div
-                            class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-gray-50 mb-6 hover:bg-gray-100 transition">
-                            <span class="material-icons text-4xl text-gray-400 mb-2">cloud_upload</span>
-                            <p class="text-gray-600 font-medium">Clique para selecionar ou arraste arquivos aqui</p>
-                            <input type="file" id="input-arquivo-upload" class="hidden" onchange="uploadArquivo()">
-                            <button onclick="document.getElementById('input-arquivo-upload').click()"
-                                class="mt-3 text-cyan-600 font-bold hover:underline">Selecionar Arquivo</button>
-                            <p id="upload-status" class="text-sm text-gray-400 mt-2"></p>
+                        <div class="border border-gray-200 rounded-lg p-6 bg-gray-50 mb-6">
+                            <h4 class="font-bold text-gray-700 mb-3">Novo Arquivo</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Descrição do Arquivo
+                                        (Opcional)</label>
+                                    <input type="text" id="arquivo-desc" class="w-full border-gray-300 rounded p-2 border"
+                                        placeholder="Ex: Exame de Sangue, Raio-X...">
+                                </div>
+                                <div class="flex items-end">
+                                    <input type="file" id="input-arquivo-upload" class="hidden" onchange="updateFileName()">
+                                    <button onclick="document.getElementById('input-arquivo-upload').click()"
+                                        class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded shadow-sm hover:bg-gray-50 mr-2 w-full text-center">
+                                        <span class="material-icons text-sm align-middle">folder_open</span> Selecionar
+                                        Arquivo
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="file-name-display" class="text-sm text-gray-500 mt-2 italic hidden"></div>
+
+                            <div class="mt-4 flex justify-end">
+                                <button onclick="uploadArquivo()"
+                                    class="bg-cyan-600 text-white px-6 py-2 rounded shadow hover:bg-cyan-700 font-bold flex items-center">
+                                    <span class="material-icons text-sm mr-2">cloud_upload</span> Enviar Arquivo
+                                </button>
+                            </div>
+                            <p id="upload-status" class="text-sm text-gray-400 mt-2 text-right"></p>
                         </div>
 
                         <div class="overflow-x-auto">
@@ -329,6 +363,9 @@ DBClose($link);
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Arquivo</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Descrição</th>
                                         <th
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Data</th>
@@ -460,6 +497,15 @@ DBClose($link);
         }
 
         // --- ANEXOS ---
+        function updateFileName() {
+            let input = document.getElementById('input-arquivo-upload');
+            if (input.files.length > 0) {
+                $('#file-name-display').text('Selecionado: ' + input.files[0].name).removeClass('hidden');
+            } else {
+                $('#file-name-display').addClass('hidden').text('');
+            }
+        }
+
         function carregarArquivos() {
             $.post(BASE_URL, { action: 'get_atendimento_arquivos', id_atendimento: ID_ATENDIMENTO }, function (res) {
                 try {
@@ -467,7 +513,7 @@ DBClose($link);
                     if (res.success) {
                         let html = '';
                         if (res.data.length === 0) {
-                            html = '<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">Nenhum arquivo anexado.</td></tr>';
+                            html = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhum arquivo anexado.</td></tr>';
                         } else {
                             res.data.forEach(arq => {
                                 html += `
@@ -478,6 +524,7 @@ DBClose($link);
                                             </a>
                                             <span class="text-xs text-gray-400">${(arq.tamanho_bytes / 1024).toFixed(1)} KB</span>
                                         </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${arq.descricao || '-'}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(arq.data_upload).toLocaleString('pt-BR')}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button onclick="excluirArquivo(${arq.id_arquivo})" class="text-red-600 hover:text-red-900 px-2">Excluir</button>
@@ -494,13 +541,18 @@ DBClose($link);
 
         function uploadArquivo() {
             let fileInput = document.getElementById('input-arquivo-upload');
-            if (fileInput.files.length === 0) return;
+            if (fileInput.files.length === 0) {
+                alert('Selecione um arquivo primeiro.');
+                return;
+            }
 
             let file = fileInput.files[0];
+            let desc = $('#arquivo-desc').val();
             let formData = new FormData();
             formData.append('action', 'upload_arquivo_atendimento');
             formData.append('id_atendimento', ID_ATENDIMENTO);
             formData.append('arquivo', file);
+            formData.append('descricao', desc);
 
             $('#upload-status').text('Enviando...').removeClass('text-red-500').addClass('text-blue-500');
 
@@ -514,16 +566,19 @@ DBClose($link);
                     try {
                         res = typeof res === 'string' ? JSON.parse(res) : res;
                         if (res.success) {
-                            $('#upload-status').text('');
+                            $('#upload-status').text('Arquivo enviado com sucesso!').addClass('text-green-600').removeClass('text-blue-500');
                             carregarArquivos();
-                            alert('Arquivo anexado com sucesso!');
+                            // Reset form
+                            fileInput.value = '';
+                            $('#arquivo-desc').val('');
+                            $('#file-name-display').addClass('hidden');
+                            setTimeout(() => $('#upload-status').text(''), 3000);
                         } else {
                             $('#upload-status').text('Erro: ' + res.message).addClass('text-red-500');
                         }
                     } catch (e) {
                         $('#upload-status').text('Erro no servidor.').addClass('text-red-500');
                     }
-                    fileInput.value = ''; // Reset
                 },
                 error: function () {
                     $('#upload-status').text('Falha na conexão.').addClass('text-red-500');
