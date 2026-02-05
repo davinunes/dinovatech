@@ -7,4 +7,5 @@ assets/logo_empresa.*
 certificado/*   
 inter/config.php_old
 dados.sql
-estrutura.sql   
+estrutura.sql
+dinovatech/assets/*
