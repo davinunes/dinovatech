@@ -126,8 +126,25 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
     if ($action === 'direct_a1') {
         $pfxContent = file_get_contents($certificado_pfx);
         $certs = [];
-        if (!openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado)) {
-            echo json_encode(['status' => 'error', 'message' => "Cert Password Incorrect or Invalid PFX"]);
+
+        // Attempt 1: Use Decrypted Password
+        $status = openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado);
+
+        // Attempt 2: If failed, try Raw Password (Fallback for unencrypted legacy data)
+        if (!$status) {
+            $rawPass = $configRow['senha_certificado'];
+            if ($rawPass !== $senhaCertificado) {
+                $status = openssl_pkcs12_read($pfxContent, $certs, $rawPass);
+            }
+        }
+
+        if (!$status) {
+            // Debug Info
+            $debugPath = basename($certificado_pfx);
+            echo json_encode([
+                'status' => 'error',
+                'message' => "Cert Password Incorrect or Invalid PFX. File: $debugPath"
+            ]);
             exit;
         }
         // The original code had an 'exit;' here, which would prevent further execution.
