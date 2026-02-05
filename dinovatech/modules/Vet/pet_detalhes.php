@@ -267,6 +267,89 @@ function calcularIdade($data_nasc)
                         </div>
                     </div>
 
+                    <!-- Receitas Column (New) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-fit mt-6">
+                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800 flex items-center">
+                                <span class="material-icons text-indigo-500 mr-2">receipt</span> Receitas
+                            </h3>
+                        </div>
+                        <div class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+                            <?php
+                            $q_rec = "SELECT r.*, a.data_atendimento, (SELECT COUNT(*) FROM ItensReceita WHERE id_receita = r.id_receita) as qtd_itens 
+                                      FROM Receitas r
+                                      JOIN Atendimentos a ON r.id_atendimento = a.id_atendimento
+                                      WHERE a.id_pet = '$id_safe'
+                                      ORDER BY r.data_receita DESC";
+                            $res_rec = DBExecute($link, $q_rec);
+                            if ($res_rec && mysqli_num_rows($res_rec) > 0):
+                                while ($rec = mysqli_fetch_assoc($res_rec)):
+                                    ?>
+                                    <div class="p-4 hover:bg-gray-50 transition cursor-pointer"
+                                        onclick="window.location.href='atendimento_form.php?id=<?= $rec['id_atendimento'] ?>&pet_id=<?= $id_safe ?>'">
+                                        <div class="flex justify-between items-start">
+                                            <span class="font-bold text-gray-700">Receita #<?= $rec['id_receita'] ?></span>
+                                            <span
+                                                class="text-xs text-gray-400"><?= date('d/m/y', strtotime($rec['data_receita'])) ?></span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1"><?= $rec['qtd_itens'] ?> medicamento(s)</p>
+                                    </div>
+                                    <?php
+                                endwhile;
+                            else:
+                                ?>
+                                <div class="p-6 text-center text-gray-400">
+                                    <p class="text-sm">Nenhuma receita.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Documentos Column (New) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-fit mt-6">
+                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-800 flex items-center">
+                                <span class="material-icons text-orange-500 mr-2">folder</span> Documentos
+                            </h3>
+                        </div>
+                        <div class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
+                            <?php
+                            $q_docs = "SELECT arq.*, a.data_atendimento 
+                                       FROM Arquivos arq
+                                       JOIN AtendimentoArquivos aa ON arq.id_arquivo = aa.id_arquivo
+                                       JOIN Atendimentos a ON aa.id_atendimento = a.id_atendimento
+                                       WHERE a.id_pet = '$id_safe'
+                                       ORDER BY arq.data_upload DESC";
+                            $res_docs = DBExecute($link, $q_docs);
+                            if ($res_docs && mysqli_num_rows($res_docs) > 0):
+                                while ($doc = mysqli_fetch_assoc($res_docs)):
+                                    ?>
+                                    <div class="p-4 hover:bg-gray-50 transition">
+                                        <a href="<?= $doc['url_publica'] ?>" target="_blank"
+                                            class="flex justify-between items-center group">
+                                            <div class="flex items-center overflow-hidden">
+                                                <span
+                                                    class="material-icons text-gray-400 group-hover:text-cyan-600 text-sm mr-2">description</span>
+                                                <span
+                                                    class="text-sm text-gray-700 truncate group-hover:text-cyan-700 font-medium"><?= htmlspecialchars($doc['nome_original']) ?></span>
+                                            </div>
+                                        </a>
+                                        <div class="mt-1 flex justify-between text-xs text-gray-400 ml-6">
+                                            <span><?= date('d/m/y', strtotime($doc['data_upload'])) ?></span>
+                                            <span><?= number_format($doc['tamanho_bytes'] / 1024, 1) ?> KB</span>
+                                        </div>
+                                    </div>
+                                    <?php
+                                endwhile;
+                            else:
+                                ?>
+                                <div class="p-6 text-center text-gray-400">
+                                    <p class="text-sm">Nenhum documento.</p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
                     <!-- Clinical History (Full Width on Mobile, 2 cols on Desktop) -->
                     <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="p-4 border-b border-gray-100 flex justify-between items-center">

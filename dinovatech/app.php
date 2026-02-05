@@ -2181,6 +2181,220 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['debug_xml'] = $respXml;
             }
             break;
+
+        // --- MÓDULO VET: ARQUIVOS E RECEITAS ---
+
+        case 'upload_arquivo_atendimento':
+            $id_atendimento = $_POST['id_atendimento'] ?? '';
+
+            if (empty($id_atendimento) || !isset($_FILES['arquivo']) || $_FILES['arquivo']['error'] !== UPLOAD_ERR_OK) {
+                $response['message'] = "Atendimento ou arquivo inválido.";
+                break;
+            }
+
+            $maxSize = 10 * 1024 * 1024;
+            if ($_FILES['arquivo']['size'] > $maxSize) {
+                $response['message'] = "Arquivo excede 10MB.";
+                break;
+            }
+
+            $nomeOriginal = $_FILES['arquivo']['name'];
+            $extensao = pathinfo($nomeOriginal, PATHINFO_EXTENSION);
+            $nomeArquivoBucket = 'arquivos_vet/' . time() . '_' . $id_atendimento . '_' . substr(md5(uniqid()), 0, 8) . '.' . $extensao;
+
+            $pathConfig = __DIR__ . '/../oci-s3.php';
+            if (file_exists($pathConfig)) {
+                include $pathConfig;
+            } else {
+                $response['message'] = "Erro na conf de storage.";
+                break;
+            }
+
+            if (!isset($urlBucketPreauth)) {
+                $response['message'] = "URL Bucket não definida.";
+                break;
+            }
+
+            $urlUpload = $urlBucketPreauth . $nomeArquivoBucket;
+            $caminhoTemp = $_FILES['arquivo']['tmp_name'];
+            $tamanhoBytes = $_FILES['arquivo']['size'];
+            $mimeType = mime_content_type($caminhoTemp);
+            $conteudoArquivo = file_get_contents($caminhoTemp);
+
+            $ch = curl_init($urlUpload);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $conteudoArquivo);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: ' . $mimeType,
+                'Content-Length: ' . strlen($conteudoArquivo)
+            ]);
+
+            $resultCurl = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($httpCode >= 200 && $httpCode < 300) {
+                $link = DBConnect();
+                if (!$link)
+                    $link = DBConnect();
+
+                $nomeOriginalSafe = mysqli_real_escape_string($link, $nomeOriginal);
+                $urlPublicaSafe = mysqli_real_escape_string($link, $urlUpload);
+                $mimeTypeSafe = mysqli_real_escape_string($link, $mimeType);
+
+                $queryArquivo = "INSERT INTO Arquivos (nome_original, url_publica, tamanho_bytes, tipo_mime) 
+                                 VALUES ('$nomeOriginalSafe', '$urlPublicaSafe', '$tamanhoBytes', '$mimeTypeSafe')";
+
+                if (DBExecute($link, $queryArquivo)) {
+                    $idArquivo = mysqli_insert_id($link);
+                    $idAtendimentoSafe = mysqli_real_escape_string($link, $id_atendimento);
+                    $queryVinculo = "INSERT INTO AtendimentoArquivos (id_atendimento, id_arquivo) VALUES ('$idAtendimentoSafe', '$idArquivo')";
+
+                    if (DBExecute($link, $queryVinculo)) {
+                        $response['success'] = true;
+                        $response['message'] = "Arquivo anexado ao atendimento!";
+                        // Retornar dados para atualizar a lista via JS
+                        $response['arquivo'] = [
+                            'id_arquivo' => $idArquivo,
+                            'nome_original' => $nomeOriginal,
+                            'url_publica' => $urlUpload,
+                            'tamanho_bytes' => $tamanhoBytes
+                        ];
+                    } else {
+                        $response['message'] = "Erro ao vincular no atendimento: " . mysqli_error($link);
+                    }
+                } else {
+                    $response['message'] = "Erro db arquivo: " . mysqli_error($link);
+                }
+            } else {
+                $response['message'] = "Upload Cloud falhou. HTTP $httpCode";
+            }
+            break;
+
+        case 'get_atendimento_arquivos':
+            $id_atendimento = $_POST['id_atendimento'] ?? '';
+            if (empty($id_atendimento)) {
+                $response['message'] = "ID Atendimento invalido";
+            } else {
+                $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
+                $query = "SELECT A.id_arquivo, A.nome_original, A.url_publica, A.tamanho_bytes, A.data_upload 
+                          FROM Arquivos A
+                          JOIN AtendimentoArquivos AA ON A.id_arquivo = AA.id_arquivo
+                          WHERE AA.id_atendimento = '$id_atendimento'
+                          ORDER BY A.data_upload DESC";
+                $result = DBExecute($link, $query);
+                $arquivos = [];
+                if ($result) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $arquivos[] = $row;
+                    }
+                    $response['success'] = true;
+                    $response['data'] = $arquivos;
+                }
+            }
+            break;
+
+        case 'excluir_arquivo_atendimento':
+            $id_arquivo = $_POST['id_arquivo'] ?? '';
+            if (empty($id_arquivo)) {
+                $response['message'] = "ID necessário";
+            } else {
+                $id_arquivo = mysqli_real_escape_string($link, $id_arquivo);
+                // Remove de Arquivos. A FK Cascade limpa AtendimentoArquivos.
+                $query = "DELETE FROM Arquivos WHERE id_arquivo = '$id_arquivo'";
+                if (DBExecute($link, $query)) {
+                    $response['success'] = true;
+                    $response['message'] = "Arquivo removido.";
+                } else {
+                    $response['message'] = "Erro ao excluir: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'salvar_receita':
+            $id_atendimento = $_POST['id_atendimento'] ?? '';
+            $itens = json_decode($_POST['itens'] ?? '[]', true);
+            $observacoes = $_POST['observacoes'] ?? '';
+
+            if (empty($id_atendimento)) {
+                $response['message'] = "Atendimento obrigatório.";
+                break;
+            }
+            if (empty($itens) || !is_array($itens)) {
+                $response['message'] = "Nenhum item na receita.";
+                break;
+            }
+
+            $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
+            $observacoes = mysqli_real_escape_string($link, $observacoes);
+
+            // Criar Receita
+            $queryReceita = "INSERT INTO Receitas (id_atendimento, observacoes, data_receita) VALUES ('$id_atendimento', '$observacoes', NOW())";
+            if (DBExecute($link, $queryReceita)) {
+                $idReceita = mysqli_insert_id($link);
+
+                // Inserir Itens
+                foreach ($itens as $item) {
+                    $nome = mysqli_real_escape_string($link, $item['nome_medicamento'] ?? '');
+                    $qtd = mysqli_real_escape_string($link, $item['quantidade'] ?? '');
+                    $uso = mysqli_real_escape_string($link, $item['uso'] ?? '');
+                    $cat = mysqli_real_escape_string($link, $item['categoria'] ?? 'Veterinaria');
+                    $pos = mysqli_real_escape_string($link, $item['posologia'] ?? '');
+
+                    $queryItem = "INSERT INTO ItensReceita (id_receita, nome_medicamento, quantidade, uso, categoria, posologia)
+                                  VALUES ('$idReceita', '$nome', '$qtd', '$uso', '$cat', '$pos')";
+                    DBExecute($link, $queryItem);
+                }
+                $response['success'] = true;
+                $response['message'] = "Receita salva com sucesso!";
+            } else {
+                $response['message'] = "Erro ao criar receita: " . mysqli_error($link);
+            }
+            break;
+
+        case 'get_receitas_atendimento':
+            $id_atendimento = $_POST['id_atendimento'] ?? '';
+            if (empty($id_atendimento)) {
+                $response['message'] = "ID necessário";
+                break;
+            }
+            $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
+
+            // Buscar receitas
+            $qReceitas = "SELECT * FROM Receitas WHERE id_atendimento = '$id_atendimento' ORDER BY data_receita DESC";
+            $resReceitas = DBExecute($link, $qReceitas);
+            $receitas = [];
+            while ($r = mysqli_fetch_assoc($resReceitas)) {
+                $r['itens'] = [];
+                // Buscar itens desta receita
+                $idR = $r['id_receita'];
+                $qItens = "SELECT * FROM ItensReceita WHERE id_receita = '$idR'";
+                $resItens = DBExecute($link, $qItens);
+                while ($i = mysqli_fetch_assoc($resItens)) {
+                    $r['itens'][] = $i;
+                }
+                $receitas[] = $r;
+            }
+            $response['success'] = true;
+            $response['data'] = $receitas;
+            break;
+
+        case 'excluir_receita':
+            $id_receita = $_POST['id_receita'] ?? '';
+            if (empty($id_receita)) {
+                $response['message'] = "ID inválido";
+                break;
+            }
+            $id_receita = mysqli_real_escape_string($link, $id_receita);
+            $query = "DELETE FROM Receitas WHERE id_receita = '$id_receita'";
+            if (DBExecute($link, $query)) {
+                $response['success'] = true;
+                $response['message'] = "Receita excluída.";
+            } else {
+                $response['message'] = "Erro ao excluir: " . mysqli_error($link);
+            }
+            break;
     }
 } else {
     $response['message'] = "Requisição inválida (apenas POST permitido).";
