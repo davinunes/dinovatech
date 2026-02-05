@@ -1928,7 +1928,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 8. Send
             // Determine endpoint
             $endpoint = ($ambiente == 'producao')
-                ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
+                ? 'https://df.issnetonline.com.br/webservicenfse204/nfse.asmx'
                 : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
 
             $resultSoap = sendSoap($xmlSigned, $endpoint, $certs, 'support_combo', 'gerar', true);
