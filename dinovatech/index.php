@@ -9,6 +9,7 @@ if (!isset($_SESSION['usuario_id'])) {
     exit(); // Garante que o restante do script não seja executado.
 }
 
+require_once __DIR__ . '/helpers/AppHelper.php';
 ?>
 
 <!DOCTYPE html>
