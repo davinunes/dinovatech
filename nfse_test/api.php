@@ -422,7 +422,8 @@ function buildGerarNfseXml($input)
         $contatoTag = "<Contato><Telefone>$telefoneTomador</Telefone></Contato>";
     }
 
-    $infRps = "<InfDeclaracaoPrestacaoServico Id=\"$rpsId\">";
+    // ID Removed to match Success XML and rely on URI="" signature of RPS root
+    $infRps = "<InfDeclaracaoPrestacaoServico>";
 
     // Check for "Avulso" generation (No RPS block)
     if ($serieRps && (strtoupper($serieRps) === 'AVULSO' || strtoupper($serieRps) === 'NONE')) {
