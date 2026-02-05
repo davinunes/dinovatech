@@ -469,11 +469,9 @@ XML;
             <CodigoTributacaoMunicipio>$codigoTributacao</CodigoTributacaoMunicipio>
 XML;
 
-    // Use default NBS from Success XML if empty (115080000)
-    $codigoNbs = $input['codigo_nbs'] ?? '115080000';
-    if (!empty($codigoNbs)) {
-        $infRps .= "<CodigoNbs>$codigoNbs</CodigoNbs>";
-    }
+
+    // CodigoNbs removed to match ABRASF Schema (Not supported in Servico tag)
+
 
     // Build Dynamic Address Block
     $enderecoBlock = "";
