@@ -437,7 +437,7 @@ function calcularIdade($data_nasc)
         </div>
     </div>
 
-    <?php include '../../components/layout_scripts.php'; ?>
+    <?php include dirname(__DIR__, 2) . '/components/layout_scripts.php'; ?>
     <script>
         function openVacinaModal() {
             $('#modalVacina').removeClass('hidden');
