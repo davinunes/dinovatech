@@ -64,7 +64,16 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
     }
     require_once $helperFile;
 
-    $link = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+    // Load DB Helper
+    $dbFile = __DIR__ . '/../database.php';
+    if (!file_exists($dbFile)) {
+        echo json_encode(['status' => 'error', 'message' => "DB Helper File Not Found: $dbFile"]);
+        exit;
+    }
+    require_once $dbFile;
+
+    // Connect
+    $link = DBConnect();
     if (!$link) {
         echo json_encode(['status' => 'error', 'message' => "DB Connection Failed"]);
         exit;
@@ -81,7 +90,7 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
 
     // Decrypt Password
     try {
-        $senhaCertificado = \Helpers\EncryptionHelper::decrypt($configRow['senha_certificado']);
+        $senhaCertificado = \EncryptionHelper::decrypt($configRow['senha_certificado']);
     } catch (Exception $e) {
         echo json_encode(['status' => 'error', 'message' => "Decryption Failed: " . $e->getMessage()]);
         exit;
