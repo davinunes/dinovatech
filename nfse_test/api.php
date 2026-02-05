@@ -80,7 +80,14 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
     }
 
     // Fetch Config
-    $resConfig = mysqli_query($link, "SELECT * FROM ConfiguracoesEmissor WHERE id=1");
+    $query = "SELECT * FROM ConfiguracoesEmissor WHERE id=1";
+    $resConfig = mysqli_query($link, $query);
+
+    if (!$resConfig) {
+        echo json_encode(['status' => 'error', 'message' => "DB Query Failed: " . mysqli_error($link)]);
+        exit;
+    }
+
     $configRow = mysqli_fetch_assoc($resConfig);
 
     if (!$configRow) {
