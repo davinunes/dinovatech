@@ -105,20 +105,46 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
 
     // Path Handling
     $pfxPath = $configRow['caminho_certificado_pfx'];
-    $certificado_pfx = __DIR__ . '/../' . $pfxPath;
 
-    if (!file_exists($certificado_pfx)) {
-        // Try checking if path already includes 'dinovatech'
-        $certificado_pfx = __DIR__ . '/../dinovatech/' . basename($pfxPath);
-
-        if (!file_exists($certificado_pfx)) {
-            // Try common uploads folder
-            $certificado_pfx = __DIR__ . '/../dinovatech/certificado/' . basename($pfxPath);
+    // Auto-discovery if DB path is empty
+    if (empty($pfxPath)) {
+        // Look in ../certificado/
+        $candidates = glob(__DIR__ . '/../certificado/*.pfx');
+        if ($candidates && isset($candidates[0])) {
+            $pfxPath = 'certificado/' . basename($candidates[0]);
+        } else {
+            // Look in ../dinovatech/certificado/
+            $candidates = glob(__DIR__ . '/../dinovatech/certificado/*.pfx');
+            if ($candidates && isset($candidates[0])) {
+                $pfxPath = 'dinovatech/certificado/' . basename($candidates[0]);
+            }
         }
     }
 
-    if (!file_exists($certificado_pfx)) {
-        echo json_encode(['status' => 'error', 'message' => "Certificate File Not Found ($pfxPath)"]);
+    // Construct Absolute Path
+    // If path starts with 'dinovatech/', good. If 'certificado/', we assume relative to root.
+    // nfse_test is in root.
+
+    $certificado_pfx = __DIR__ . '/../' . $pfxPath;
+
+    // Redundant check for deep nesting or different base
+    if (!file_exists($certificado_pfx) && !empty($pfxPath)) {
+        // Try finding it aggressively
+        $basename = basename($pfxPath);
+        $possible = [
+            __DIR__ . '/../certificado/' . $basename,
+            __DIR__ . '/../dinovatech/certificado/' . $basename
+        ];
+        foreach ($possible as $p) {
+            if (file_exists($p)) {
+                $certificado_pfx = $p;
+                break;
+            }
+        }
+    }
+
+    if (!file_exists($certificado_pfx) || is_dir($certificado_pfx)) {
+        echo json_encode(['status' => 'error', 'message' => "Certificate File Not Found. Config: '$pfxPath'"]);
         exit;
     }
 
