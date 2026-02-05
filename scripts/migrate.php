@@ -3,7 +3,7 @@
 // Usage: php scripts/migrate.php
 
 require_once __DIR__ . '/../dinovatech/config.php';
-include __DIR__ . '/../dinovatech/database.php';
+include __DIR__ . '/../database.php';
 
 $link = DBConnect();
 if (!$link) {

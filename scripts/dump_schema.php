@@ -3,7 +3,7 @@
 // Usage: php scripts/dump_schema.php > schema.sql
 
 require_once __DIR__ . '/../dinovatech/config.php';
-include __DIR__ . '/../dinovatech/database.php';
+include __DIR__ . '/../database.php';
 
 $link = DBConnect();
 if (!$link) {
@@ -17,8 +17,8 @@ while ($row = mysqli_fetch_row($result)) {
 }
 
 echo "-- Schema Dump: " . date('Y-m-d H:i:s') . "\n";
-echo "-- Host: " . DB_SERVER . "\n";
-echo "-- Database: " . DB_NAME . "\n\n";
+echo "-- Host: " . DB_HOSTNAME . "\n";
+echo "-- Database: " . DB_DATABASE . "\n\n";
 
 foreach ($tables as $table) {
     $res = DBExecute($link, "SHOW CREATE TABLE `$table`");
