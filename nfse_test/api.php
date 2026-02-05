@@ -496,13 +496,25 @@ XML;
     // <Endereco></Endereco> is valid if children are optional.
 
     // Outras Informações (Legal Text) - Required for Simples Nacional
-    $outrasInformacoesTag = "";
+    // NOTE: OutrasInformacoes tag is NOT valid in InfDeclaracaoPrestacaoServico (RPS).
+    // It belongs to InfNfse (Output). We must append to Discriminacao to ensure it appears.
+    $textoLegal = "";
     if ($optanteSimples == '1') {
-        $textoSimples = 'I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL"; e \s\n II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE IPI."';
-        // Optional: Add PROCON info if needed, matching success XML
+        $textoLegal = '\s\nI - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL"; e \s\nII - "NÃO GERA DIREITO A CRÉDITO FISCAL DE IPI."';
+        // Optional: Add PROCON info
         $textoProcon = '\s\nPROCON: TEL 151- SETOR COMERCIAL SUL, QUADRA 8, BLOCO B-60, SALA 240- BRASILIA - DF';
-        $outrasInformacoesTag = "<OutrasInformacoes>$textoSimples$textoProcon</OutrasInformacoes>";
+        $textoLegal .= $textoProcon;
     }
+
+    // Append to Discriminacao
+    if (!empty($textoLegal)) {
+        // Ensure we don't duplicate if already present (basic check)
+        if (strpos($discriminacao, "DOCUMENTO EMITIDO POR ME") === false) {
+            $discriminacao .= $textoLegal;
+        }
+    }
+
+    $outrasInformacoesTag = ""; // Tag must be empty for Schema compliance
 
     $infRps .= <<<XML
             <Discriminacao>$discriminacao</Discriminacao>
