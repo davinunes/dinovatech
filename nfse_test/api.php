@@ -457,11 +457,11 @@ XML;
                 <ValorInss>0.00</ValorInss>
                 <ValorIr>0.00</ValorIr>
                 <ValorCsll>0.00</ValorCsll>
-                <OutrasRetencoes>0.00</OutrasRetencoes>
+                <OutrasRetencoes>0</OutrasRetencoes>
                 <ValorIss>$valorIss</ValorIss>
                 <Aliquota>$aliquota</Aliquota>
-                <DescontoIncondicionado>0.00</DescontoIncondicionado>
-                <DescontoCondicionado>0.00</DescontoCondicionado>
+                <DescontoIncondicionado>0</DescontoIncondicionado>
+                <DescontoCondicionado>0</DescontoCondicionado>
             </Valores>
             <IssRetido>$issRetido</IssRetido>
             $responsavelRetencaoTag
@@ -536,7 +536,8 @@ XML;
     // for PROVEN_PROTOCOL, we need it.
 
     // Structure for Signature: Wrapper <Rps> contains <Inf...> and <Signature>
-    $rootXml = "<Rps>$infRps</Rps>";
+    // Add Namespace to ensure Signature Canonicalization matches the Envelope context
+    $rootXml = '<Rps xmlns="http://www.abrasf.org.br/nfse.xsd">' . $infRps . '</Rps>';
 
     return ['root' => $rootXml, 'id' => $rpsId, 'wrapper' => 'GerarNfseEnvio'];
 }
