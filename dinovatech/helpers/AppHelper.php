@@ -17,6 +17,10 @@ class AppHelper
     public static function getCompanyName()
     {
         $dbPath = dirname(__DIR__) . '/database.php';
+        if (!file_exists($dbPath)) {
+            $dbPath = dirname(__DIR__, 2) . '/database.php';
+        }
+
         if (file_exists($dbPath)) {
             require_once $dbPath;
         }
