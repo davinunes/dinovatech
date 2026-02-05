@@ -140,10 +140,11 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
 
         if (!$status) {
             // Debug Info
-            $debugPath = basename($certificado_pfx);
+            $debugPath = $certificado_pfx;
+            $rawDbPath = $configRow['caminho_certificado_pfx'];
             echo json_encode([
                 'status' => 'error',
-                'message' => "Cert Password Incorrect or Invalid PFX. File: $debugPath"
+                'message' => "Cert Password Incorrect or Invalid PFX. RawDB: '$rawDbPath' | Resolved: '$debugPath'"
             ]);
             exit;
         }
