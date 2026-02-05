@@ -70,6 +70,7 @@ date_default_timezone_set('UTC'); // Reset to predictable base
                         <select class="form-select" id="endpoint">
                             <option value="fictitious" selected>Homologação Fictícia (Sem WAF)</option>
                             <option value="official">Homologação Oficial (WAF Blocked)</option>
+                            <option value="producao">Produção (REAL)</option>
                         </select>
                     </div>
                     <div class="col-md-3 text-end">

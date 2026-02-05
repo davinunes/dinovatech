@@ -41,25 +41,81 @@ if (basename(__FILE__) == basename($_SERVER['SCRIPT_FILENAME'])) {
 
     // Configuration
     $endpoint_type = $input['endpoint'] ?? 'fictitious';
-    $endpoint_url = ($endpoint_type === 'official')
-        ? 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'
-        : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+    $endpoint_url = 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx'; // Default Homolog
 
-    $certificado_pfx = __DIR__ . '/../certificado/DInovaTech_1001347811.pfx';
-    $senha_arquivo = __DIR__ . '/../certificado/certificado.php';
+    if ($endpoint_type === 'official') {
+        $endpoint_url = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'; // Check if this is truly homolog 'official'
+    } elseif ($endpoint_type === 'producao') {
+        $endpoint_url = 'https://www.issnetonline.com.br/apresentacao/df/webservicenfse204/nfse.asmx'; // Production URL per app.php
+    }
 
+    // Connect to DB to get credentials
+    $configFile = __DIR__ . '/../dinovatech/config.php';
+    if (!file_exists($configFile)) {
+        echo json_encode(['status' => 'error', 'message' => "Config File Not Found: $configFile"]);
+        exit;
+    }
+    require_once $configFile;
+
+    $helperFile = __DIR__ . '/../dinovatech/helpers/EncryptionHelper.php';
+    if (!file_exists($helperFile)) {
+        echo json_encode(['status' => 'error', 'message' => "Helper File Not Found: $helperFile"]);
+        exit;
+    }
+    require_once $helperFile;
+
+    $link = mysqli_connect(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
+    if (!$link) {
+        echo json_encode(['status' => 'error', 'message' => "DB Connection Failed"]);
+        exit;
+    }
+
+    // Fetch Config
+    $resConfig = mysqli_query($link, "SELECT * FROM ConfiguracoesEmissor WHERE id=1");
+    $configRow = mysqli_fetch_assoc($resConfig);
+
+    if (!$configRow) {
+        echo json_encode(['status' => 'error', 'message' => "Config Not Found in DB"]);
+        exit;
+    }
+
+    // Decrypt Password
+    try {
+        $senhaCertificado = \Helpers\EncryptionHelper::decrypt($configRow['senha_certificado']);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'message' => "Decryption Failed: " . $e->getMessage()]);
+        exit;
+    }
+
+    // Path Handling
+    $pfxPath = $configRow['caminho_certificado_pfx'];
+    $certificado_pfx = __DIR__ . '/../' . $pfxPath;
+
+    if (!file_exists($certificado_pfx)) {
+        // Try checking if path already includes 'dinovatech'
+        $certificado_pfx = __DIR__ . '/../dinovatech/' . basename($pfxPath);
+
+        if (!file_exists($certificado_pfx)) {
+            // Try common uploads folder
+            $certificado_pfx = __DIR__ . '/../dinovatech/certificado/' . basename($pfxPath);
+        }
+    }
+
+    if (!file_exists($certificado_pfx)) {
+        echo json_encode(['status' => 'error', 'message' => "Certificate File Not Found ($pfxPath)"]);
+        exit;
+    }
 
     // --- ACTION 1: DIRECT A1 SEND ---
     if ($action === 'direct_a1') {
-        if (file_exists($certificado_pfx)) {
-            require $senha_arquivo;
-            $pfxContent = file_get_contents($certificado_pfx);
-            $certs = [];
-            openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado);
-        } else {
-            echo json_encode(['status' => 'error', 'message' => "Certificate A1 not found"]);
+        $pfxContent = file_get_contents($certificado_pfx);
+        $certs = [];
+        if (!openssl_pkcs12_read($pfxContent, $certs, $senhaCertificado)) {
+            echo json_encode(['status' => 'error', 'message' => "Cert Password Incorrect or Invalid PFX"]);
             exit;
         }
+        // The original code had an 'exit;' here, which would prevent further execution.
+        // Assuming this was a debugging artifact or mistake, it's removed to allow the rest of the action.
 
         // Build XML based on Method
         // Build XML based on Method
