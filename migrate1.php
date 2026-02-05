@@ -87,17 +87,17 @@ addColumnIfNotExists($link, 'Recorrencias', 'iss_retido', "TINYINT(1) DEFAULT NU
 // Description override
 addColumnIfNotExists($link, 'Recorrencias', 'descricao_fiscal', "TEXT DEFAULT NULL");
 
-// --- 5. FaturaItens ---
-echo "\n--- FaturaItens ---\n";
+// --- 5. ItensFatura ---
+echo "\n--- ItensFatura ---\n";
 // Ensure link to recurrence if generated from one
-addColumnIfNotExists($link, 'FaturaItens', 'item_recorrencia_id', "INT DEFAULT NULL");
-addColumnIfNotExists($link, 'FaturaItens', 'descricao_fiscal', "TEXT DEFAULT NULL");
-addColumnIfNotExists($link, 'FaturaItens', 'codigo_cnae', "VARCHAR(20) DEFAULT NULL");
-addColumnIfNotExists($link, 'FaturaItens', 'codigo_nbs', "VARCHAR(20) DEFAULT NULL");
-addColumnIfNotExists($link, 'FaturaItens', 'item_lista_servico', "VARCHAR(10) DEFAULT NULL");
-addColumnIfNotExists($link, 'FaturaItens', 'codigo_tributacao_municipio', "VARCHAR(20) DEFAULT NULL");
-addColumnIfNotExists($link, 'FaturaItens', 'aliquota_iss', "DECIMAL(5,2) DEFAULT 0.00");
-addColumnIfNotExists($link, 'FaturaItens', 'iss_retido', "TINYINT(1) DEFAULT 0");
+addColumnIfNotExists($link, 'ItensFatura', 'item_recorrencia_id', "INT DEFAULT NULL");
+addColumnIfNotExists($link, 'ItensFatura', 'descricao_fiscal', "TEXT DEFAULT NULL");
+addColumnIfNotExists($link, 'ItensFatura', 'codigo_cnae', "VARCHAR(20) DEFAULT NULL");
+addColumnIfNotExists($link, 'ItensFatura', 'codigo_nbs', "VARCHAR(20) DEFAULT NULL");
+addColumnIfNotExists($link, 'ItensFatura', 'item_lista_servico', "VARCHAR(10) DEFAULT NULL");
+addColumnIfNotExists($link, 'ItensFatura', 'codigo_tributacao_municipio', "VARCHAR(20) DEFAULT NULL");
+addColumnIfNotExists($link, 'ItensFatura', 'aliquota_iss', "DECIMAL(5,2) DEFAULT 0.00");
+addColumnIfNotExists($link, 'ItensFatura', 'iss_retido', "TINYINT(1) DEFAULT 0");
 
 
 echo "\nMigração concluída.\n";
