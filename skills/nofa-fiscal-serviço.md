@@ -1,0 +1,1 @@
+tenha o maximo de cautela ao lidar com essa api, pois foi bastante trabalhoso estabilizar ela e aparentemente está funcionando bem agora. 
