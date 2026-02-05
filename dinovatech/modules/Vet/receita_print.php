@@ -111,7 +111,7 @@ DBClose($link);
         <header class="border-b-2 border-cyan-800 pb-6 mb-8 flex items-center justify-between">
             <div>
                 <?php if (!empty($empresa['logo_url'])): ?>
-                    <img src="<?= $empresa['logo_url'] ?>" alt="Logo" class="h-20 object-contain">
+                    <img src="../../<?= $empresa['logo_url'] ?>" alt="Logo" class="h-20 object-contain">
                 <?php else: ?>
                     <h1 class="text-3xl font-bold text-cyan-800 tracking-tight">
                         <?= htmlspecialchars($empresa['razao_social'] ?? 'Clínica Veterinária') ?>
@@ -181,7 +181,8 @@ DBClose($link);
                         <div class="pl-4 border-l-4 border-cyan-200 py-1">
                             <div class="flex justify-between items-baseline mb-1">
                                 <h4 class="text-lg font-bold text-gray-800">
-                                    <?= htmlspecialchars($item['nome_medicamento']) ?></h4>
+                                    <?= htmlspecialchars($item['nome_medicamento']) ?>
+                                </h4>
                                 <span class="text-sm font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-600">Qtd:
                                     <?= htmlspecialchars($item['quantidade']) ?></span>
                             </div>

@@ -85,6 +85,29 @@ if (!isset($_SESSION['usuario_id'])) {
                                 <input type="text" name="inscricao_estadual" id="inscricao_estadual"
                                     class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                             </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                                <input type="text" name="telefone" id="telefone"
+                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                            </div>
+                            <div class="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Logo da Empresa</label>
+                                <div class="flex items-center space-x-4">
+                                    <div
+                                        class="flex-shrink-0 h-16 w-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                                        <img id="logo_preview" src="" alt="Logo"
+                                            class="h-full w-full object-contain hidden">
+                                        <span id="logo_placeholder" class="material-icons text-gray-400">image</span>
+                                    </div>
+                                    <div class="flex-1">
+                                        <input type="file" name="arquivo_logo" id="arquivo_logo"
+                                            accept=".png, .jpg, .jpeg, .webp"
+                                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 transition-colors">
+                                        <p class="text-xs text-gray-500 mt-1">Recomendado: 200x200px (PNG ou JPG). O
+                                            arquivo será sobrescrito ao atualizar.</p>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- Endereço -->
                             <div class="md:col-span-2 border-t pt-4 mt-2">
@@ -389,6 +412,15 @@ if (!isset($_SESSION['usuario_id'])) {
                     $('#inscricao_municipal').val(d.inscricao_municipal);
                     $('#inscricao_estadual').val(d.inscricao_estadual);
                     $('#codigo_municipio').val(d.codigo_municipio);
+                    $('#telefone').val(d.telefone);
+
+                    if (d.logo_url) {
+                        $('#logo_preview').attr('src', d.logo_url + '?' + new Date().getTime()).removeClass('hidden'); // Timestamp to force refresh
+                        $('#logo_placeholder').addClass('hidden');
+                    } else {
+                        $('#logo_preview').addClass('hidden');
+                        $('#logo_placeholder').removeClass('hidden');
+                    }
 
                     // Address
                     $('#endereco').val(d.endereco);

@@ -110,6 +110,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $serie_rps = mysqli_real_escape_string($link, $serie_rps);
                 $ultimo_rps_homologacao = (int) $ultimo_rps_homologacao;
                 $ultimo_rps_producao = (int) $ultimo_rps_producao;
+                $telefone = mysqli_real_escape_string($link, $_POST['telefone'] ?? '');
+
+                // --- LOGO UPLOAD ---
+                $logo_url_update = "";
+                if (isset($_FILES['arquivo_logo']) && $_FILES['arquivo_logo']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['arquivo_logo']['name'], PATHINFO_EXTENSION));
+                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                        $uploadLogoDir = __DIR__ . '/assets/';
+                        if (!is_dir($uploadLogoDir))
+                            mkdir($uploadLogoDir, 0755, true);
+
+                        $newLogoName = 'logo_empresa.png'; // Sempre salvar como PNG ou manter original? 
+                        // User requested overwrite. Let's fix name.
+                        // Convert to preferred ext or keep orig? Using orig ext allow overwrite but user said "overwrite same file".
+                        // If user uploads png then jpg, we might have 2 files if we use extension.
+                        // Let's force a name 'logo_empresa' and extension.
+                        // Better: 'logo_empresa_TIMESTAMP.ext' and store in DB? 
+                        // User said: "sobrescrever o mesmo arquivo ... pra não ficar sobrando nada".
+                        // So 'assets/logo_empresa.png' (if we convert) or just 'assets/logo_empresa.ext'.
+                        // Let's use 'assets/logo_empresa.png' and just support that or strictly use uploaded ext?
+                        // Simple: 'logo_empresa.png' (assuming usually png/jpg). 
+
+                        // Actually, let's stick to 'logo_empresa.png' for simplicity in print templates.
+                        // If uploaded is JPG, it's fine to rename to .png? No, bad for mime.
+                        // Let's try to detect valid image. 
+                        // "logo_empresa" + ext. But then we have multiple.
+                        // Cleanup: remove any glob('assets/logo_empresa.*')?
+
+                        // Let's try simple overwrite: 'assets/logo_empresa.' . $ext
+                        // And clean others? 
+                        // User: "sobrescrever o mesmo arquivo" -> implies one file.
+                        // I will clean old variations.
+                        $baseLogo = $uploadLogoDir . 'logo_empresa';
+                        array_map('unlink', glob($baseLogo . '.*'));
+
+                        $destLogo = $baseLogo . '.' . $ext;
+                        if (move_uploaded_file($_FILES['arquivo_logo']['tmp_name'], $destLogo)) {
+                            $logo_url_update = 'assets/logo_empresa.' . $ext;
+                        }
+                    }
+                }
 
                 // --- FILE UPLOAD (PFX) ---
                 $pfxContent = null;
@@ -294,6 +335,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $oracle_pass_sql_part = ", api_oracle_password = '$enc'";
                 }
 
+                // Logo URL SQL (Update only if present)
+                $logo_sql_part = "";
+                if (!empty($logo_url_update)) {
+                    $logo_url_update_safe = mysqli_real_escape_string($link, $logo_url_update);
+                    $logo_sql_part = ", logo_url = '$logo_url_update_safe'";
+                }
+
                 if (!empty($id_config)) {
                     // Update
                     $query = "UPDATE ConfiguracoesEmissor SET 
@@ -304,7 +352,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 ultimo_rps_homologacao='$ultimo_rps_homologacao', ultimo_rps_producao='$ultimo_rps_producao',
                                 caminho_certificado='$caminho_certificado',
                                 endereco='$endereco', numero='$numero', complemento='$complemento',
-                                bairro='$bairro', cep='$cep', uf='$uf',
+                                bairro='$bairro', cep='$cep', uf='$uf', telefone='$telefone',
                                 api_inter_client_id='$api_inter_client_id', 
                                 api_inter_chave_pix='$api_inter_chave_pix',
                                 api_inter_conta_corrente='$api_inter_conta_corrente',
@@ -314,6 +362,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $inter_secret_sql_part
                                 $oracle_pass_sql_part
                                 $inter_files_sql_part
+                                $logo_sql_part
                               WHERE id_config='$id_config'";
                 } else {
                     // Insert
@@ -325,13 +374,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $api_inter_cert_val = !empty($api_inter_cert_path) ? "'$api_inter_cert_path'" : "NULL";
                     $api_inter_key_val = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
                     $api_inter_ca_val = !empty($api_inter_ca_path) ? "'$api_inter_ca_path'" : "NULL";
+                    $logo_val = !empty($logo_url_update) ? "'" . mysqli_real_escape_string($link, $logo_url_update) . "'" : "NULL";
 
                     $query = "INSERT INTO ConfiguracoesEmissor 
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, inscricao_estadual, codigo_municipio, 
                                regime_tributario, optante_simples, ambiente_padrao, serie_rps, 
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
-                               endereco, numero, complemento, bairro, cep, uf,
+                               endereco, numero, complemento, bairro, cep, uf, telefone, logo_url,
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
                                api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
@@ -341,7 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val,
-                               '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf',
+                               '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$telefone', $logo_val,
                                '$api_inter_client_id', $inter_secret_val, 
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
                                $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,
