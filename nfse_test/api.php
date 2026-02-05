@@ -628,10 +628,10 @@ XML;
 
     // Append to Discriminacao
     if (!empty($textoLegal)) {
-        // Ensure we don't duplicate if already present (basic check)
-        if (strpos($discriminacao, "DOCUMENTO EMITIDO POR ME") === false) {
-            $discriminacao .= $textoLegal;
-        }
+        // REMOVED: User reported duplication. Server likely adds this to OutrasInformacoes automatically.
+        // if (strpos($discriminacao, "DOCUMENTO EMITIDO POR ME") === false) {
+        //    $discriminacao .= $textoLegal;
+        // }
     }
 
     $outrasInformacoesTag = ""; // Tag must be empty for Schema compliance
