@@ -37,7 +37,9 @@ if ($link) {
         }
     }
     DBClose($link);
+}
 // Separate Active/Expired
+
 $ativos = [];
 $expirados = [];
 $hoje = date('Y-m-d');
@@ -125,19 +127,24 @@ foreach ($contratos as $c) {
                                 <?php if (!empty($ativos)): ?>
                                     <?php foreach ($ativos as $contrato): ?>
                                         <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0">
-                                            <td class="p-4 font-medium text-gray-900"><?= htmlspecialchars($contrato['nome_cliente']) ?></td>
+                                            <td class="p-4 font-medium text-gray-900">
+                                                <?= htmlspecialchars($contrato['nome_cliente']) ?></td>
                                             <td class="p-4"><?= htmlspecialchars($contrato['nome_servico']) ?></td>
-                                            <td class="p-4">R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></td>
+                                            <td class="p-4">R$
+                                                <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></td>
                                             <td class="p-4 capitalize"><?= htmlspecialchars($contrato['tipo_periodo']) ?></td>
-                                            <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></td>
+                                            <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?>
+                                            </td>
                                             <td class="p-4 text-right">
-                                                <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>" class="text-cyan-600 hover:text-cyan-800 font-medium text-sm">Editar</a>
+                                                <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
+                                                    class="text-cyan-600 hover:text-cyan-800 font-medium text-sm">Editar</a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" class="p-8 text-center text-gray-500">Nenhum contrato ativo encontrado.</td>
+                                        <td colspan="6" class="p-8 text-center text-gray-500">Nenhum contrato ativo
+                                            encontrado.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -151,32 +158,39 @@ foreach ($contratos as $c) {
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                                 <div class="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 class="font-bold text-gray-900"><?= htmlspecialchars($contrato['nome_cliente']) ?></h3>
+                                        <h3 class="font-bold text-gray-900"><?= htmlspecialchars($contrato['nome_cliente']) ?>
+                                        </h3>
                                         <p class="text-sm text-gray-600"><?= htmlspecialchars($contrato['nome_servico']) ?></p>
                                     </div>
                                     <div class="text-right">
-                                        <span class="block font-bold text-gray-900">R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
-                                        <span class="text-xs text-gray-500 uppercase"><?= htmlspecialchars($contrato['tipo_periodo']) ?></span>
+                                        <span class="block font-bold text-gray-900">R$
+                                            <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
+                                        <span
+                                            class="text-xs text-gray-500 uppercase"><?= htmlspecialchars($contrato['tipo_periodo']) ?></span>
                                     </div>
                                 </div>
                                 <div class="text-sm text-gray-600 mb-4 flex justify-between">
                                     <span>Início: <?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></span>
                                 </div>
                                 <div class="pt-3 border-t border-gray-200/50 flex justify-end">
-                                    <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>" class="w-full text-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">Editar Contrato</a>
+                                    <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
+                                        class="w-full text-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">Editar
+                                        Contrato</a>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center text-gray-500">Nenhum contrato ativo.</div>
+                        <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center text-gray-500">
+                            Nenhum contrato ativo.</div>
                     <?php endif; ?>
                 </div>
             </div>
 
             <!-- Content: EXPIRADOS -->
             <div id="tab-expirados" class="hidden">
-                 <!-- Desktop List -->
-                 <div class="hidden md:block bg-gray-50 rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <!-- Desktop List -->
+                <div
+                    class="hidden md:block bg-gray-50 rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
@@ -192,23 +206,30 @@ foreach ($contratos as $c) {
                             <tbody class="text-gray-600 text-sm">
                                 <?php if (!empty($expirados)): ?>
                                     <?php foreach ($expirados as $contrato): ?>
-                                        <tr class="transition border-b border-gray-200 last:border-b-0 opacity-75 hover:opacity-100 bg-gray-50">
+                                        <tr
+                                            class="transition border-b border-gray-200 last:border-b-0 opacity-75 hover:opacity-100 bg-gray-50">
                                             <td class="p-4 font-medium">
                                                 <?= htmlspecialchars($contrato['nome_cliente']) ?>
-                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Vencido</span>
+                                                <span
+                                                    class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Vencido</span>
                                             </td>
                                             <td class="p-4"><?= htmlspecialchars($contrato['nome_servico']) ?></td>
-                                            <td class="p-4">R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></td>
-                                            <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></td>
-                                            <td class="p-4 font-bold text-red-600"><?= date('d/m/Y', strtotime($contrato['data_fim'])) ?></td>
+                                            <td class="p-4">R$
+                                                <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></td>
+                                            <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?>
+                                            </td>
+                                            <td class="p-4 font-bold text-red-600">
+                                                <?= date('d/m/Y', strtotime($contrato['data_fim'])) ?></td>
                                             <td class="p-4 text-right">
-                                                <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>" class="text-gray-500 hover:text-gray-700 font-medium text-sm">Ver</a>
+                                                <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
+                                                    class="text-gray-500 hover:text-gray-700 font-medium text-sm">Ver</a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" class="p-8 text-center text-gray-500">Nenhum contrato expirado encontrado.</td>
+                                        <td colspan="6" class="p-8 text-center text-gray-500">Nenhum contrato expirado
+                                            encontrado.</td>
                                     </tr>
                                 <?php endif; ?>
                             </tbody>
@@ -222,24 +243,32 @@ foreach ($contratos as $c) {
                             <div class="bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-200 opacity-80">
                                 <div class="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 class="font-bold text-gray-700"><?= htmlspecialchars($contrato['nome_cliente']) ?></h3>
+                                        <h3 class="font-bold text-gray-700"><?= htmlspecialchars($contrato['nome_cliente']) ?>
+                                        </h3>
                                         <p class="text-sm text-gray-500"><?= htmlspecialchars($contrato['nome_servico']) ?></p>
-                                        <span class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Vencido</span>
+                                        <span
+                                            class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Vencido</span>
                                     </div>
                                     <div class="text-right">
-                                        <span class="block font-bold text-gray-700">R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
+                                        <span class="block font-bold text-gray-700">R$
+                                            <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
                                     </div>
                                 </div>
-                                <div class="text-sm text-gray-600 mb-4 flex justify-between bg-white p-2 rounded border border-gray-100">
-                                    <span>Fim: <strong class="text-red-600"><?= date('d/m/Y', strtotime($contrato['data_fim'])) ?></strong></span>
+                                <div
+                                    class="text-sm text-gray-600 mb-4 flex justify-between bg-white p-2 rounded border border-gray-100">
+                                    <span>Fim: <strong
+                                            class="text-red-600"><?= date('d/m/Y', strtotime($contrato['data_fim'])) ?></strong></span>
                                 </div>
                                 <div class="pt-3 border-t border-gray-200/50 flex justify-end">
-                                    <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>" class="w-full text-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 py-2 rounded-lg text-sm font-medium transition-colors">Ver Detalhes</a>
+                                    <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
+                                        class="w-full text-center bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 py-2 rounded-lg text-sm font-medium transition-colors">Ver
+                                        Detalhes</a>
                                 </div>
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <div class="bg-gray-50 p-8 rounded-xl shadow-sm border border-gray-200 text-center text-gray-500">Nenhum contrato expirado.</div>
+                        <div class="bg-gray-50 p-8 rounded-xl shadow-sm border border-gray-200 text-center text-gray-500">
+                            Nenhum contrato expirado.</div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -254,13 +283,13 @@ foreach ($contratos as $c) {
                     if (tab === 'ativos') {
                         tabAtivos.classList.remove('hidden');
                         tabExpirados.classList.add('hidden');
-                        
+
                         btnAtivos.className = 'px-6 py-2 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors';
                         btnExpirados.className = 'px-6 py-2 text-gray-500 hover:text-gray-700 font-medium transition-colors';
                     } else {
                         tabAtivos.classList.add('hidden');
                         tabExpirados.classList.remove('hidden');
-                        
+
                         btnExpirados.className = 'px-6 py-2 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors';
                         btnAtivos.className = 'px-6 py-2 text-gray-500 hover:text-gray-700 font-medium transition-colors';
                     }
