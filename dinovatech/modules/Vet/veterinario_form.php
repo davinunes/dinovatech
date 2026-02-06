@@ -6,7 +6,6 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers/AppHelper.php';
-if (!AppHelper::isVetMode()) {
 // Vet Mode restriction removed
 include "../../../database.php";
 
@@ -58,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $telefone = $_POST['telefone'] ?? '';
     $email = $_POST['email'] ?? '';
     $google_calendar_id = $_POST['google_calendar_id'] ?? '';
-    
+
     // Auto-fill CRMV/UF if not Vet Mode (Modularity)
     if (!AppHelper::isVetMode()) {
         $crmv = $crmv ?: '-';
@@ -95,7 +94,10 @@ DBClose($link);
 <html lang="pt-BR">
 
 <head>
-    <title><?= $is_edit ? "Editar" : "Novo" ?> <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?> - DinoVet</title>
+    <title>
+        <?= $is_edit ? "Editar" : "Novo" ?>
+        <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?> - DinoVet
+    </title>
     <?php include '../../components/layout_head.php'; ?>
 </head>
 
@@ -111,12 +113,16 @@ DBClose($link);
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-2xl font-bold text-gray-800"><?= $is_edit ? "Editar" : "Novo" ?> <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?>
+                        <h2 class="text-2xl font-bold text-gray-800">
+                            <?= $is_edit ? "Editar" : "Novo" ?>
+                            <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?>
                         </h2>
                     </div>
 
                     <?php if ($erro): ?>
-                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-6"><?= $erro ?></div>
+                        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 m-6">
+                            <?= $erro ?>
+                        </div>
                     <?php endif; ?>
 
                     <form method="POST" class="p-6 space-y-6">
@@ -127,19 +133,19 @@ DBClose($link);
                         </div>
 
                         <?php if (AppHelper::isVetMode()): ?>
-                        <div class="grid grid-cols-3 gap-4">
-                            <div class="col-span-2">
-                                <label class="block text-gray-700 font-medium mb-1">CRMV *</label>
-                                <input type="text" name="crmv" value="<?= htmlspecialchars($vet['crmv'] ?? '') ?>"
-                                    required class="w-full border-gray-300 rounded-lg p-3 border">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="col-span-2">
+                                    <label class="block text-gray-700 font-medium mb-1">CRMV *</label>
+                                    <input type="text" name="crmv" value="<?= htmlspecialchars($vet['crmv'] ?? '') ?>"
+                                        required class="w-full border-gray-300 rounded-lg p-3 border">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 font-medium mb-1">UF *</label>
+                                    <input type="text" name="uf_crmv"
+                                        value="<?= htmlspecialchars($vet['uf_crmv'] ?? 'SP') ?>" maxlength="2" required
+                                        class="w-full border-gray-300 rounded-lg p-3 border uppercase">
+                                </div>
                             </div>
-                            <div>
-                                <label class="block text-gray-700 font-medium mb-1">UF *</label>
-                                <input type="text" name="uf_crmv"
-                                    value="<?= htmlspecialchars($vet['uf_crmv'] ?? 'SP') ?>" maxlength="2" required
-                                    class="w-full border-gray-300 rounded-lg p-3 border uppercase">
-                            </div>
-                        </div>
                         <?php endif; ?>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -166,22 +172,26 @@ DBClose($link);
                                 antes de salvar.</p>
                             <?php if ($googleEmailHint): ?>
                                 <div class="mt-4 bg-blue-50 text-blue-800 p-4 rounded-lg border border-blue-100 text-sm">
-                                    <strong class="block mb-2 text-blue-900 border-b border-blue-200 pb-1">Passo a passo para integração:</strong>
+                                    <strong class="block mb-2 text-blue-900 border-b border-blue-200 pb-1">Passo a passo
+                                        para integração:</strong>
                                     <ol class="list-decimal list-inside space-y-1 ml-1 text-blue-900/80">
                                         <li>No Google Calendar, crie uma nova agenda (ou use a principal).</li>
                                         <li>Vá em <strong>Configurações e compart.</strong> dessa agenda.</li>
                                         <li>Em "Compartilhar com pessoas...", adicione o e-mail abaixo:</li>
                                         <div class="py-2 pl-4">
-                                            <code class="select-all bg-white px-2 py-1 rounded border border-blue-200 text-xs font-mono block w-fit"><?= $googleEmailHint ?></code>
+                                            <code
+                                                class="select-all bg-white px-2 py-1 rounded border border-blue-200 text-xs font-mono block w-fit"><?= $googleEmailHint ?></code>
                                         </div>
-                                        <li>Marque a permissão: <strong>"Fazer alterações nos eventos"</strong> (Importante!).</li>
+                                        <li>Marque a permissão: <strong>"Fazer alterações nos eventos"</strong>
+                                            (Importante!).</li>
                                         <li>Role até "Integrar agenda" e copie o <strong>ID da agenda</strong>.</li>
                                         <li>Cole o ID no campo acima e salve aqui no sistema.</li>
                                     </ol>
                                 </div>
                             <?php else: ?>
                                 <div class="mt-2 text-xs bg-yellow-50 text-yellow-800 p-2 rounded border border-yellow-100">
-                                    <strong>Atenção:</strong> Configure a integração com Google (JSON) em "Configurações" primeiro.
+                                    <strong>Atenção:</strong> Configure a integração com Google (JSON) em "Configurações"
+                                    primeiro.
                                 </div>
                             <?php endif; ?>
                         </div>

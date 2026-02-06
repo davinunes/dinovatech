@@ -113,8 +113,8 @@ switch ($action) {
             $events[] = [
                 'id' => $row['id_agendamento'],
                 'title' => $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
-                'start' => $row['data_inicio'],
-                'end' => $row['data_fim'],
+                'start' => date('c', strtotime($row['data_inicio'])), // ISO 8601
+                'end' => date('c', strtotime($row['data_fim'])),
                 'color' => $color,
                 'extendedProps' => [
                     'descricao' => $row['descricao'],
