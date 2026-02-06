@@ -46,4 +46,7 @@ if (empty(APP_MASTER_KEY)) {
 // 2. Modo Veterinário
 define('APP_MODE_VET', getenv('APP_MODE_VET') === 'true' || getenv('APP_MODE_VET') === '1');
 
+// 3. Timezone Default
+date_default_timezone_set(getenv('TZ') ?: 'America/Sao_Paulo');
+
 // Outras configurações globais podem vir aqui
