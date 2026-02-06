@@ -108,19 +108,11 @@ class GoogleCalendarHelper
             ],
         ];
 
-        // Debug Payload
-        $payloadJson = json_encode($payload);
-        file_put_contents(__DIR__ . '/../debug_agenda.log', date('Y-m-d H:i:s') . " - Helper Sending Payload: " . $payloadJson . "\n", FILE_APPEND);
-
         try {
             $response = $this->httpClient->post($this->baseUri . urlencode($this->calendarId) . '/events', [
                 'json' => $payload
             ]);
             $body = (string) $response->getBody();
-            $status = $response->getStatusCode();
-
-            $logMsg = date('Y-m-d H:i:s') . " - Helper Success: Status $status | Body: $body\n";
-            file_put_contents(__DIR__ . '/../debug_agenda.log', $logMsg, FILE_APPEND);
 
             $event = json_decode($body, true);
             return $event['id'] ?? null;
@@ -129,8 +121,6 @@ class GoogleCalendarHelper
             if (method_exists($e, 'getResponse') && $e->getResponse()) {
                 $msg .= " | Body: " . (string) $e->getResponse()->getBody();
             }
-            $logErr = date('Y-m-d H:i:s') . " - Helper Create Error: " . $msg . "\n";
-            file_put_contents(__DIR__ . '/../debug_agenda.log', $logErr, FILE_APPEND);
             error_log("GoogleCalendarHelper Error (createEvent): " . $msg);
             return null;
         }
