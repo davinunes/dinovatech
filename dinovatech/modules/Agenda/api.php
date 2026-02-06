@@ -4,6 +4,8 @@ session_start();
 header('Content-Type: application/json');
 
 include '../../../database.php';
+include '../../config.php';
+
 // Include helper if exists
 if (file_exists('../../helpers/GoogleCalendarHelper.php')) {
     include '../../helpers/GoogleCalendarHelper.php';
