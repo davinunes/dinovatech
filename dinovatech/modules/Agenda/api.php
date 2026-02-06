@@ -135,6 +135,7 @@ switch ($action) {
         $titulo = mysqli_real_escape_string($link, $_POST['titulo']);
         $start = $_POST['start']; // Format: Y-m-d H:i:s
         $end = $_POST['end'];
+        error_log("API Debug SAVE Input: ID=$id Start=$start End=$end"); // DEBUG INPUT
         $descricao = mysqli_real_escape_string($link, $_POST['descricao'] ?? '');
         $status = $_POST['status'] ?? 'Agendado';
 
@@ -213,6 +214,7 @@ switch ($action) {
         $id = $_POST['id'];
         $start = $_POST['start'];
         $end = $_POST['end'];
+        error_log("API Debug DROP Input: ID=$id Start=$start End=$end"); // DEBUG INPUT
 
         $qGet = "SELECT * FROM Agendamentos WHERE id_agendamento = '$id'";
         $row = mysqli_fetch_assoc(DBExecute($link, $qGet));
