@@ -94,7 +94,7 @@ if ($id_cliente) {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label for="email"
-                                        class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                                        class="block text-sm font-medium text-gray-700 mb-1">E-mail (Opcional)</label>
                                     <input type="email" id="email" name="email" value="<?= $cliente['email'] ?? '' ?>"
                                         class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
                                 </div>
