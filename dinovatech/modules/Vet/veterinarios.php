@@ -6,10 +6,7 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers/AppHelper.php';
-if (!AppHelper::isVetMode()) {
-    header("Location: ../../dashboard.php");
-    exit();
-}
+// Vet Mode Restriction Removed for modularity (Collaborator Mode)
 include "../../../database.php";
 
 $veterinarios = [];
@@ -49,12 +46,17 @@ if ($link) {
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-800">Corpo Clínico</h2>
-                    <p class="text-gray-500">Gerencie os veterinários cadastrados.</p>
+                    <h2 class="text-3xl font-bold text-gray-800">
+                        <?= AppHelper::isVetMode() ? 'Corpo Clínico' : 'Colaboradores' ?>
+                    </h2>
+                    <p class="text-gray-500">Gerencie os
+                        <?= AppHelper::isVetMode() ? 'veterinários' : 'colaboradores' ?> cadastrados.
+                    </p>
                 </div>
                 <a href="veterinario_form.php"
                     class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors">
-                    <span class="material-icons mr-2">add</span> Novo Veterinário
+                    <span class="material-icons mr-2">add</span> Novo
+                    <?= AppHelper::isVetMode() ? 'Veterinário' : 'Colaborador' ?>
                 </a>
             </div>
 
@@ -66,7 +68,7 @@ if ($link) {
                             <span class="material-icons">search</span>
                         </span>
                         <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
-                            placeholder="Buscar Veterinário (Nome ou CRMV)..."
+                            placeholder="Buscar <?= AppHelper::isVetMode() ? 'Veterinário (Nome ou CRMV)' : 'Colaborador' ?>..."
                             class="w-full py-2 pl-10 pr-4 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-cyan-500 focus:bg-white focus:ring-0">
                     </div>
                 </form>
@@ -75,7 +77,7 @@ if ($link) {
             <!-- List -->
             <?php if (empty($veterinarios)): ?>
                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center text-gray-500">
-                    Nenhum veterinário cadastrado.
+                    Nenhum <?= AppHelper::isVetMode() ? 'veterinário' : 'colaborador' ?> cadastrado.
                 </div>
             <?php else: ?>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -92,10 +94,12 @@ if ($link) {
                                         <h3 class="font-bold text-gray-900">
                                             <?= htmlspecialchars($vet['nome']) ?>
                                         </h3>
-                                        <p class="text-sm text-gray-500">CRMV:
-                                            <?= htmlspecialchars($vet['crmv']) ?> /
-                                            <?= htmlspecialchars($vet['uf_crmv']) ?>
-                                        </p>
+                                        <?php if (AppHelper::isVetMode()): ?>
+                                            <p class="text-sm text-gray-500">CRMV:
+                                                <?= htmlspecialchars($vet['crmv']) ?> /
+                                                <?= htmlspecialchars($vet['uf_crmv']) ?>
+                                            </p>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="mt-4 space-y-2 text-sm text-gray-600">

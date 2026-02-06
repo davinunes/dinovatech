@@ -51,19 +51,18 @@ DBClose($link);
                 </div>
             </div>
 
-            <?php if (AppHelper::isVetMode()): ?>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Veterinário</label>
-                    <select name="id_vet" id="eventVet" class="w-full border rounded-lg p-2 select2-modal">
-                        <option value="">Selecione...</option>
-                        <?php foreach ($vets as $v): ?>
-                            <option value="<?= $v['id_vet'] ?>">
-                                <?= htmlspecialchars($v['nome']) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-            <?php endif; ?>
+            <div>
+                <label
+                    class="block text-sm font-medium text-gray-700"><?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?></label>
+                <select name="id_vet" id="eventVet" class="w-full border rounded-lg p-2 select2-modal">
+                    <option value="">Selecione...</option>
+                    <?php foreach ($vets as $v): ?>
+                        <option value="<?= $v['id_vet'] ?>">
+                            <?= htmlspecialchars($v['nome']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Cliente</label>

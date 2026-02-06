@@ -7,9 +7,7 @@ if (!isset($_SESSION['usuario_id'])) {
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers/AppHelper.php';
 if (!AppHelper::isVetMode()) {
-    header("Location: ../../dashboard.php");
-    exit();
-}
+// Vet Mode restriction removed
 include "../../../database.php";
 
 $link = DBConnect();
@@ -60,6 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $telefone = $_POST['telefone'] ?? '';
     $email = $_POST['email'] ?? '';
     $google_calendar_id = $_POST['google_calendar_id'] ?? '';
+    
+    // Auto-fill CRMV/UF if not Vet Mode (Modularity)
+    if (!AppHelper::isVetMode()) {
+        $crmv = $crmv ?: '-';
+        $uf_crmv = $uf_crmv ?: 'XX';
+    }
 
     if (empty($nome) || empty($crmv) || empty($uf_crmv)) {
         $erro = "Nome, CRMV e UF são obrigatórios.";
@@ -91,7 +95,7 @@ DBClose($link);
 <html lang="pt-BR">
 
 <head>
-    <title><?= $is_edit ? "Editar" : "Novo" ?> Veterinário - DinoVet</title>
+    <title><?= $is_edit ? "Editar" : "Novo" ?> <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?> - DinoVet</title>
     <?php include '../../components/layout_head.php'; ?>
 </head>
 
@@ -107,7 +111,7 @@ DBClose($link);
 
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-2xl font-bold text-gray-800"><?= $is_edit ? "Editar" : "Novo" ?> Veterinário
+                        <h2 class="text-2xl font-bold text-gray-800"><?= $is_edit ? "Editar" : "Novo" ?> <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?>
                         </h2>
                     </div>
 
@@ -122,6 +126,7 @@ DBClose($link);
                                 class="w-full border-gray-300 rounded-lg p-3 border">
                         </div>
 
+                        <?php if (AppHelper::isVetMode()): ?>
                         <div class="grid grid-cols-3 gap-4">
                             <div class="col-span-2">
                                 <label class="block text-gray-700 font-medium mb-1">CRMV *</label>
@@ -135,6 +140,7 @@ DBClose($link);
                                     class="w-full border-gray-300 rounded-lg p-3 border uppercase">
                             </div>
                         </div>
+                        <?php endif; ?>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>

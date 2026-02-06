@@ -74,6 +74,12 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             <span class="font-medium">Serviços</span>
         </a>
 
+        <a href="<?= $basePath ?>modules/Vet/veterinarios.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3"><?= AppHelper::isVetMode() ? 'medical_services' : 'badge' ?></span>
+            <span class="font-medium"><?= AppHelper::isVetMode() ? 'Veterinários' : 'Colaboradores' ?></span>
+        </a>
+
         <?php if (AppHelper::isVetMode()): ?>
             <div class="pt-4 pb-2">
                 <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Clínico</p>
@@ -83,12 +89,6 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                 class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'vacinas.php' || $currentPage == 'vacina_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
                 <span class="material-icons text-xl mr-3">vaccines</span>
                 <span class="font-medium">Vacinas (Catálogo)</span>
-            </a>
-
-            <a href="<?= $basePath ?>modules/Vet/veterinarios.php"
-                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                <span class="material-icons text-xl mr-3">medical_services</span>
-                <span class="font-medium">Veterinários</span>
             </a>
         <?php endif; ?>
 

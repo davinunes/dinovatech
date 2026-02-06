@@ -60,7 +60,8 @@ DBClose($link);
                 <div class="flex items-center gap-4 w-full md:w-auto">
                     <div class="w-full md:w-64">
                         <select id="filterVet" class="w-full border rounded-lg p-2">
-                            <option value="">Todos os Veterinários</option>
+                            <option value="">Todos os <?= AppHelper::isVetMode() ? 'Veterinários' : 'Colaboradores' ?>
+                            </option>
                             <?php foreach ($vets as $v): ?>
                                 <option value="<?= $v['id_vet'] ?>">
                                     <?= htmlspecialchars($v['nome']) ?>
@@ -68,10 +69,6 @@ DBClose($link);
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <button onclick="openEventModal()"
-                        class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg flex items-center font-medium shadow-sm transition">
-                        <span class="material-icons mr-1">add</span> Novo Agendamento
-                    </button>
                 </div>
             </div>
 
