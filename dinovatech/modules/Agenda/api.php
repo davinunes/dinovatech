@@ -125,7 +125,9 @@ switch ($action) {
                 ]
             ];
         }
-        echo json_encode($events);
+        $json = json_encode($events);
+        error_log("API Debug Events: " . $json); // DEBUG TIMEZONE
+        echo $json;
         break;
 
     case 'save':
