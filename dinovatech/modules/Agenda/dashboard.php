@@ -122,45 +122,45 @@ DBClose($link);
                         });
                     }
                 },
-            select: function (info) {
-                openEventModal({
-                    start: info.startStr,
-                    end: info.endStr
-                });
-            },
-            eventClick: function (info) {
-                openEventModal(info.event);
-            },
-            eventDrop: function (info) {
-                // Update DB on drag & drop
-                $.post('api.php', {
-                    action: 'update_drop',
-                    id: info.event.id,
-                    start: info.event.startStr, // ISO
-                    end: info.event.endStr
-                }).fail(function () {
-                    info.revert();
-                });
-            },
-            eventResize: function (info) {
-                $.post('api.php', {
-                    action: 'update_drop',
-                    id: info.event.id,
-                    start: info.event.startStr,
-                    end: info.event.endStr
-                }).fail(function () {
-                    info.revert();
-                });
-            }
+                select: function (info) {
+                    openEventModal({
+                        start: info.startStr,
+                        end: info.endStr
+                    });
+                },
+                eventClick: function (info) {
+                    openEventModal(info.event);
+                },
+                eventDrop: function (info) {
+                    // Update DB on drag & drop
+                    $.post('api.php', {
+                        action: 'update_drop',
+                        id: info.event.id,
+                        start: formatDateLocal(info.event.start),
+                        end: formatDateLocal(info.event.end)
+                    }).fail(function () {
+                        info.revert();
+                    });
+                },
+                eventResize: function (info) {
+                    $.post('api.php', {
+                        action: 'update_drop',
+                        id: info.event.id,
+                        start: formatDateLocal(info.event.start),
+                        end: formatDateLocal(info.event.end)
+                    }).fail(function () {
+                        info.revert();
+                    });
+                }
             });
 
-        calendar.render();
+            calendar.render();
 
-        // Filter Change
-        $('#filterVet').select2({ placeholder: "Filtrar por Veterinário", allowClear: true });
-        $('#filterVet').on('change', function () {
-            calendar.refetchEvents();
-        });
+            // Filter Change
+            $('#filterVet').select2({ placeholder: "Filtrar por Veterinário", allowClear: true });
+            $('#filterVet').on('change', function () {
+                calendar.refetchEvents();
+            });
         });
 
     </script>

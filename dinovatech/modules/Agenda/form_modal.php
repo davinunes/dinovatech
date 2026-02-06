@@ -222,9 +222,9 @@ DBClose($link);
 
     // Helper to format Date for input[type=datetime-local] (YYYY-MM-DDTHH:mm)
     function formatDateLocal(dateInput) {
-        let date = new Date(dateInput);
-        // Correct timezone offset
-        date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+        if (!dateInput) return '';
+        // In UTC mode, the date object/string is already the desired "clock time".
+        let date = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
         return date.toISOString().slice(0, 16);
     }
 
