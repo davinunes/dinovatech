@@ -5,9 +5,9 @@ require_once dirname(__DIR__) . '/helpers/AppHelper.php';
 
 // Determine base path for links
 // If we are deep in modules, we need to go up.
-// Simple check: are we in modules/Vet?
+// Simple check: are we in modules/Vet or modules/Agenda?
 $basePath = './';
-if (strpos($_SERVER['PHP_SELF'], '/modules/Vet/') !== false) {
+if (strpos($_SERVER['PHP_SELF'], '/modules/Vet/') !== false || strpos($_SERVER['PHP_SELF'], '/modules/Agenda/') !== false) {
     $basePath = '../../';
 }
 
