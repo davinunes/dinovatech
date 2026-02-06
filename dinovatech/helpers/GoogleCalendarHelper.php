@@ -108,6 +108,10 @@ class GoogleCalendarHelper
             ],
         ];
 
+        // Debug Payload
+        $payloadJson = json_encode($payload);
+        file_put_contents(__DIR__ . '/../debug_agenda.log', date('Y-m-d H:i:s') . " - Helper Sending Payload: " . $payloadJson . "\n", FILE_APPEND);
+
         try {
             $response = $this->httpClient->post($this->baseUri . urlencode($this->calendarId) . '/events', [
                 'json' => $payload
