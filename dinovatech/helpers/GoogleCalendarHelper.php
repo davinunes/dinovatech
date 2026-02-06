@@ -112,9 +112,13 @@ class GoogleCalendarHelper
             $response = $this->httpClient->post($this->baseUri . urlencode($this->calendarId) . '/events', [
                 'json' => $payload
             ]);
-            $event = json_decode($response->getBody(), true);
-            // Debug Log
-            error_log("Google Create Response: " . print_r($event, true));
+            $body = (string) $response->getBody();
+            $status = $response->getStatusCode();
+
+            $logMsg = date('Y-m-d H:i:s') . " - Helper Success: Status $status | Body: $body\n";
+            file_put_contents(__DIR__ . '/../../debug_agenda.log', $logMsg, FILE_APPEND);
+
+            $event = json_decode($body, true);
             return $event['id'] ?? null;
         } catch (Exception $e) {
             $msg = $e->getMessage();
