@@ -121,6 +121,8 @@ class GoogleCalendarHelper
             if (method_exists($e, 'getResponse') && $e->getResponse()) {
                 $msg .= " | Body: " . (string) $e->getResponse()->getBody();
             }
+            $logErr = date('Y-m-d H:i:s') . " - Helper Create Error: " . $msg . "\n";
+            file_put_contents(__DIR__ . '/../../debug_agenda.log', $logErr, FILE_APPEND);
             error_log("GoogleCalendarHelper Error (createEvent): " . $msg);
             return null;
         }
