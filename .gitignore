@@ -1,4 +1,4 @@
-database.php
+
 inter/sandbox/*
 inter/production/*
 oci-s3.php
