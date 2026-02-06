@@ -335,6 +335,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $oracle_pass_sql_part = ", api_oracle_password = '$enc'";
                 }
 
+                // Google Service Account JSON
+                $google_json_sql_part = "";
+                if (isset($_FILES['arquivo_google_json']) && $_FILES['arquivo_google_json']['error'] === UPLOAD_ERR_OK) {
+                    $jsonContent = file_get_contents($_FILES['arquivo_google_json']['tmp_name']);
+                    // Basic validation
+                    if (json_decode($jsonContent)) {
+                        $enc = EncryptionHelper::encrypt($jsonContent);
+                        $google_json_sql_part = ", google_service_account_json = '$enc'";
+                    } else {
+                        $response['message'] = "Erro: Arquivo Google Service Account inválido (não é um JSON).";
+                        break;
+                    }
+                }
+
                 // Logo URL SQL (Update only if present)
                 $logo_sql_part = "";
                 if (!empty($logo_url_update)) {
@@ -361,6 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $senha_sql_part
                                 $inter_secret_sql_part
                                 $oracle_pass_sql_part
+                                $google_json_sql_part
                                 $inter_files_sql_part
                                 $logo_sql_part
                               WHERE id_config='$id_config'";
@@ -369,6 +384,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $senha_val = empty($senha_certificado) ? "NULL" : "'" . EncryptionHelper::encrypt($senha_certificado) . "'";
                     $inter_secret_val = empty($api_inter_client_secret_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_inter_client_secret_raw) . "'";
                     $oracle_pass_val = empty($api_oracle_password_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_oracle_password_raw) . "'";
+
+                    // JSON Google (variable defined above if upload happened, else NULL)
+                    // Wait, logic above only defines google_json_sql_part. For insert need value.
+                    // Let's grab value from the part if exists or handle it cleanly.
+                    // Actually, simpler to just re-use logic or adapt.
+                    // I'll assume if upload happened, $google_json_sql_part has content.
+                    // Extract value or just use a variable.
+
+                    // Fixed logic:
+                    $google_json_val = "NULL";
+                    if (isset($_FILES['arquivo_google_json']) && $_FILES['arquivo_google_json']['error'] === UPLOAD_ERR_OK) {
+                        $jsonContent = file_get_contents($_FILES['arquivo_google_json']['tmp_name']);
+                        if (json_decode($jsonContent)) {
+                            $google_json_val = "'" . EncryptionHelper::encrypt($jsonContent) . "'";
+                        }
+                    }
 
                     // For Insert, we use the variables directly (checked empty above)
                     $api_inter_cert_val = !empty($api_inter_cert_path) ? "'$api_inter_cert_path'" : "NULL";
@@ -385,7 +416,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
                                api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
-                               api_oracle_user, api_oracle_password, api_oracle_url)
+                               api_oracle_user, api_oracle_password, api_oracle_url, google_service_account_json)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
@@ -395,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                '$api_inter_client_id', $inter_secret_val, 
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
                                $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,
-                               '$api_oracle_user', $oracle_pass_val, '$api_oracle_url')";
+                               '$api_oracle_user', $oracle_pass_val, '$api_oracle_url', $google_json_val)";
                 }
 
                 if (DBExecute($link, $query)) {
@@ -455,6 +486,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($row['senha_certificado']);
                 unset($row['api_inter_client_secret']);
                 unset($row['api_oracle_password']);
+
+                $row['google_json_configured'] = !empty($row['google_service_account_json']);
+                unset($row['google_service_account_json']);
+
                 $response['success'] = true;
                 $response['data'] = $row;
             } else {

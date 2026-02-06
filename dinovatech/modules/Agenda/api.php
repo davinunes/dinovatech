@@ -1,0 +1,239 @@
+<?php
+// dinovatech/modules/Agenda/api.php
+session_start();
+header('Content-Type: application/json');
+
+include '../../database.php';
+// Include helper if exists
+if (file_exists('../../dinovatech/helpers/GoogleCalendarHelper.php')) {
+    include '../../dinovatech/helpers/GoogleCalendarHelper.php';
+}
+
+if (!isset($_SESSION['usuario_id'])) {
+    echo json_encode(['success' => false, 'message' => 'Não autorizado']);
+    exit;
+}
+
+$link = DBConnect();
+$action = $_REQUEST['action'] ?? '';
+
+// Função auxiliar para sync Google
+function syncGoogle($link, $id_vet, $agendamentoData, $eventId = null)
+{
+    // 1. Check if vet has google_calendar_id
+    $qVet = "SELECT google_calendar_id FROM Veterinarios WHERE id_vet = '$id_vet'";
+    $resVet = DBExecute($link, $qVet);
+    $vet = mysqli_fetch_assoc($resVet);
+
+    if ($vet && !empty($vet['google_calendar_id'])) {
+        try {
+            $google = new GoogleCalendarHelper($vet['google_calendar_id']);
+
+            $gData = [
+                'summary' => $agendamentoData['titulo'],
+                'description' => $agendamentoData['descricao'] ?? '',
+                'start' => $agendamentoData['data_inicio'], // ISO 8601
+                'end' => $agendamentoData['data_fim']
+            ];
+
+            if ($eventId) {
+                // Update
+                return $google->updateEvent($eventId, $gData);
+            } else {
+                // Create
+                return $google->createEvent($gData);
+            }
+        } catch (Exception $e) {
+            error_log("Google Sync Failed: " . $e->getMessage());
+            return null; // Fail silently but log
+        }
+    }
+    return null;
+}
+
+function deleteGoogle($link, $id_vet, $eventId)
+{
+    if (!$eventId)
+        return;
+    $qVet = "SELECT google_calendar_id FROM Veterinarios WHERE id_vet = '$id_vet'";
+    $resVet = DBExecute($link, $qVet);
+    $vet = mysqli_fetch_assoc($resVet);
+
+    if ($vet && !empty($vet['google_calendar_id'])) {
+        try {
+            $google = new GoogleCalendarHelper($vet['google_calendar_id']);
+            $google->deleteEvent($eventId);
+        } catch (Exception $e) {
+            error_log("Google Delete Failed: " . $e->getMessage());
+        }
+    }
+}
+
+
+switch ($action) {
+    case 'get_events':
+        $start = $_GET['start'] ?? date('Y-m-01');
+        $end = $_GET['end'] ?? date('Y-m-t');
+        $id_vet = $_GET['id_vet'] ?? '';
+
+        $start = mysqli_real_escape_string($link, $start);
+        $end = mysqli_real_escape_string($link, $end);
+
+        $where = "WHERE data_inicio BETWEEN '$start' AND '$end'";
+        if (!empty($id_vet)) {
+            $id_vet = mysqli_real_escape_string($link, $id_vet);
+            $where .= " AND A.id_vet = '$id_vet'";
+        }
+
+        $query = "SELECT A.*, V.nome as nome_vet, C.nome as nome_cliente, P.nome as nome_pet 
+                  FROM Agendamentos A
+                  JOIN Veterinarios V ON A.id_vet = V.id_vet
+                  LEFT JOIN Clientes C ON A.id_cliente = C.id_cliente
+                  LEFT JOIN Pets P ON A.id_pet = P.id_pet
+                  $where";
+
+        $result = DBExecute($link, $query);
+        $events = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $color = '#3788d8'; // Default Blue
+            if ($row['status'] == 'Realizado')
+                $color = '#10b981'; // Green
+            if ($row['status'] == 'Cancelado')
+                $color = '#ef4444'; // Red
+            if ($row['status'] == 'Falta')
+                $color = '#f59e0b'; // Orange
+
+            $events[] = [
+                'id' => $row['id_agendamento'],
+                'title' => $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
+                'start' => $row['data_inicio'],
+                'end' => $row['data_fim'],
+                'color' => $color,
+                'extendedProps' => [
+                    'descricao' => $row['descricao'],
+                    'id_vet' => $row['id_vet'],
+                    'id_cliente' => $row['id_cliente'],
+                    'id_pet' => $row['id_pet'],
+                    'status' => $row['status']
+                ]
+            ];
+        }
+        echo json_encode($events);
+        break;
+
+    case 'save':
+        $id = $_POST['id'] ?? '';
+        $id_vet = $_POST['id_vet'];
+        $titulo = mysqli_real_escape_string($link, $_POST['titulo']);
+        $start = $_POST['start']; // Format: Y-m-d H:i:s
+        $end = $_POST['end'];
+        $descricao = mysqli_real_escape_string($link, $_POST['descricao'] ?? '');
+        $id_cliente = !empty($_POST['id_cliente']) ? $_POST['id_cliente'] : 'NULL';
+        $id_pet = !empty($_POST['id_pet']) ? $_POST['id_pet'] : 'NULL';
+        $status = $_POST['status'] ?? 'Agendado';
+
+        if (empty($id)) {
+            // Insert
+            $query = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, descricao, data_inicio, data_fim, status)
+                      VALUES ('$id_vet', $id_cliente, $id_pet, '$titulo', '$descricao', '$start', '$end', '$status')";
+            if (DBExecute($link, $query)) {
+                $newId = mysqli_insert_id($link);
+
+                // Google Sync
+                $gEventId = syncGoogle($link, $id_vet, [
+                    'titulo' => $titulo,
+                    'descricao' => $descricao,
+                    'data_inicio' => str_replace(' ', 'T', $start), // Simple ISO conversion
+                    'data_fim' => str_replace(' ', 'T', $end)
+                ]);
+
+                if ($gEventId) {
+                    DBExecute($link, "UPDATE Agendamentos SET google_event_id = '$gEventId' WHERE id_agendamento = $newId");
+                }
+
+                echo json_encode(['success' => true, 'id' => $newId]);
+            } else {
+                echo json_encode(['success' => false, 'message' => mysqli_error($link)]);
+            }
+        } else {
+            // Update
+            $query = "UPDATE Agendamentos SET 
+                        id_vet = '$id_vet',
+                        id_cliente = $id_cliente,
+                        id_pet = $id_pet,
+                        titulo = '$titulo',
+                        descricao = '$descricao',
+                        data_inicio = '$start',
+                        data_fim = '$end',
+                        status = '$status'
+                      WHERE id_agendamento = '$id'";
+            if (DBExecute($link, $query)) {
+                // Get current Google ID
+                $curr = mysqli_fetch_assoc(DBExecute($link, "SELECT google_event_id FROM Agendamentos WHERE id_agendamento = '$id'"));
+                $gEventId = $curr['google_event_id'] ?? null;
+
+                $newGEventId = syncGoogle($link, $id_vet, [
+                    'titulo' => $titulo,
+                    'descricao' => $descricao,
+                    'data_inicio' => str_replace(' ', 'T', $start),
+                    'data_fim' => str_replace(' ', 'T', $end)
+                ], $gEventId);
+
+                if (!$gEventId && $newGEventId) {
+                    DBExecute($link, "UPDATE Agendamentos SET google_event_id = '$newGEventId' WHERE id_agendamento = $id");
+                }
+
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => mysqli_error($link)]);
+            }
+        }
+        break;
+
+    case 'update_drop':
+        // Just updating time from Drag & Drop
+        $id = $_POST['id'];
+        $start = $_POST['start'];
+        $end = $_POST['end'];
+
+        $qGet = "SELECT * FROM Agendamentos WHERE id_agendamento = '$id'";
+        $row = mysqli_fetch_assoc(DBExecute($link, $qGet));
+
+        $query = "UPDATE Agendamentos SET data_inicio = '$start', data_fim = '$end' WHERE id_agendamento = '$id'";
+        if (DBExecute($link, $query)) {
+            // Sync Google
+            if ($row['google_event_id']) {
+                syncGoogle($link, $row['id_vet'], [
+                    'titulo' => $row['titulo'], // Keep original title
+                    'descricao' => $row['descricao'],
+                    'data_inicio' => str_replace(' ', 'T', $start),
+                    'data_fim' => str_replace(' ', 'T', $end)
+                ], $row['google_event_id']);
+            }
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false]);
+        }
+        break;
+
+    case 'delete':
+        $id = $_POST['id'];
+        // Get Google ID before delete
+        $curr = mysqli_fetch_assoc(DBExecute($link, "SELECT id_vet, google_event_id FROM Agendamentos WHERE id_agendamento = '$id'"));
+
+        if (DBExecute($link, "DELETE FROM Agendamentos WHERE id_agendamento = '$id'")) {
+            if ($curr && $curr['google_event_id']) {
+                deleteGoogle($link, $curr['id_vet'], $curr['google_event_id']);
+            }
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false]);
+        }
+        break;
+
+    default:
+        echo json_encode(['success' => false, 'message' => 'Action required']);
+}
+
+DBClose($link);
+?>

@@ -382,6 +382,34 @@ if (!isset($_SESSION['usuario_id'])) {
                             </div>
                         </div>
 
+                        <!-- Google Service Account -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                <span class="material-icons text-blue-600 mr-2">event</span>
+                                <h4 class="font-bold text-gray-800">Google Calendar (Service Account)</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Upload do arquivo JSON da conta de serviço para
+                                sincronização com Google Agenda.</p>
+
+                            <div class="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo JSON (Service
+                                        Account)</label>
+                                    <input type="file" name="arquivo_google_json" id="arquivo_google_json"
+                                        accept=".json"
+                                        class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg">
+
+                                    <div class="text-xs text-gray-500 mt-2" id="current_google_json_info">
+                                        <div class="flex items-center">
+                                            <span class="material-icons text-gray-400 text-sm mr-1">check_circle</span>
+                                            <span id="google_json_status" class="font-medium text-gray-600">Não
+                                                configurado</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                     <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
                         <button type="submit"
