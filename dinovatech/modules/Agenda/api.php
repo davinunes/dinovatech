@@ -150,8 +150,8 @@ switch ($action) {
                 $gEventId = syncGoogle($link, $id_vet, [
                     'titulo' => $titulo,
                     'descricao' => $descricao,
-                    'data_inicio' => date('Y-m-d\TH:i:s', strtotime($start)),
-                    'data_fim' => date('Y-m-d\TH:i:s', strtotime($end))
+                    'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
+                    'data_fim' => (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s')
                 ]);
 
                 if ($gEventId) {
@@ -182,8 +182,8 @@ switch ($action) {
                 $newGEventId = syncGoogle($link, $id_vet, [
                     'titulo' => $titulo,
                     'descricao' => $descricao,
-                    'data_inicio' => date('Y-m-d\TH:i:s', strtotime($start)),
-                    'data_fim' => date('Y-m-d\TH:i:s', strtotime($end))
+                    'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
+                    'data_fim' => (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s')
                 ], $gEventId);
 
                 if (!$gEventId && $newGEventId) {
@@ -213,8 +213,8 @@ switch ($action) {
                 syncGoogle($link, $row['id_vet'], [
                     'titulo' => $row['titulo'], // Keep original title
                     'descricao' => $row['descricao'],
-                    'data_inicio' => date('Y-m-d\TH:i:s', strtotime($start)),
-                    'data_fim' => date('Y-m-d\TH:i:s', strtotime($end))
+                    'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
+                    'data_fim' => (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s')
                 ], $row['google_event_id']);
             }
             echo json_encode(['success' => true]);
