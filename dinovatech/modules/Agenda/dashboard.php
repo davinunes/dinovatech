@@ -97,7 +97,7 @@ DBClose($link);
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                timeZone: 'local', // Force browser local time
+                timeZone: 'UTC', // Force absolute time rendering (WYSIWYG)
                 locale: 'pt-br',
                 slotDuration: '00:30:00',
                 slotMinTime: '06:00:00',
