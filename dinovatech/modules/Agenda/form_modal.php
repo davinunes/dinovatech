@@ -105,8 +105,14 @@ DBClose($link);
             </div>
 
             <div class="flex justify-between items-center pt-4">
-                <button type="button" id="btnDelete" onclick="deleteEvent()"
-                    class="text-red-500 hover:text-red-700 font-medium hidden">Excluir</button>
+                <div class="flex gap-4">
+                    <button type="button" id="btnDelete" onclick="deleteEvent()"
+                        class="text-red-500 hover:text-red-700 font-medium hidden">Excluir</button>
+                    <a href="#" id="btnStartConsultation"
+                        class="text-green-600 hover:text-green-800 font-medium hidden flex items-center">
+                        <span class="material-icons text-sm mr-1">medical_services</span> Iniciar Atendimento
+                    </a>
+                </div>
                 <div class="flex justify-end gap-2 w-full">
                     <button type="button" onclick="closeEventModal()"
                         class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
@@ -140,6 +146,7 @@ DBClose($link);
         $('#eventForm')[0].reset();
         $('#eventId').val('');
         $('#btnDelete').addClass('hidden');
+        $('#btnStartConsultation').addClass('hidden'); // Hide start button
         $('#modalTitle').text('Novo Agendamento');
         $('#eventVet').val('').trigger('change');
         $('#eventClient').val('').trigger('change');
@@ -165,7 +172,14 @@ DBClose($link);
             $('#eventStatus').val(props.status);
             $('#eventDesc').val(props.descricao);
 
+            $('#eventDesc').val(props.descricao);
+
             $('#btnDelete').removeClass('hidden');
+
+            // Show Start Consultation if not new
+            const startBtn = $('#btnStartConsultation');
+            startBtn.removeClass('hidden');
+            startBtn.attr('href', `../Vet/atendimento_form.php?id_agendamento=${eventOrDate.id}`);
         } else { // Create (Date Click)
             let start = eventOrDate.start || new Date(); // ISO String or Date
             let end = eventOrDate.end;
