@@ -130,32 +130,38 @@ switch ($action) {
 
     case 'save':
         $id = $_POST['id'] ?? '';
-        $id_vet = $_POST['id_vet'];
         $titulo = mysqli_real_escape_string($link, $_POST['titulo']);
         $start = $_POST['start']; // Format: Y-m-d H:i:s
         $end = $_POST['end'];
         $descricao = mysqli_real_escape_string($link, $_POST['descricao'] ?? '');
+        $status = $_POST['status'] ?? 'Agendado';
+
+        // Nullable fields
+        $id_vet = !empty($_POST['id_vet']) ? "'" . mysqli_real_escape_string($link, $_POST['id_vet']) . "'" : 'NULL';
+        $id_vet_val = !empty($_POST['id_vet']) ? $_POST['id_vet'] : null;
+
         $id_cliente = !empty($_POST['id_cliente']) ? $_POST['id_cliente'] : 'NULL';
         $id_pet = !empty($_POST['id_pet']) ? $_POST['id_pet'] : 'NULL';
-        $status = $_POST['status'] ?? 'Agendado';
 
         if (empty($id)) {
             // Insert
             $query = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, descricao, data_inicio, data_fim, status)
-                      VALUES ('$id_vet', $id_cliente, $id_pet, '$titulo', '$descricao', '$start', '$end', '$status')";
+                      VALUES ($id_vet, $id_cliente, $id_pet, '$titulo', '$descricao', '$start', '$end', '$status')";
             if (DBExecute($link, $query)) {
                 $newId = mysqli_insert_id($link);
 
-                // Google Sync
-                $gEventId = syncGoogle($link, $id_vet, [
-                    'titulo' => $titulo,
-                    'descricao' => $descricao,
-                    'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
-                    'data_fim' => (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s')
-                ]);
+                // Google Sync (Only if Vet is selected)
+                if ($id_vet_val) {
+                    $gEventId = syncGoogle($link, $id_vet_val, [
+                        'titulo' => $titulo,
+                        'descricao' => $descricao,
+                        'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
+                        'data_fim' => (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s')
+                    ]);
 
-                if ($gEventId) {
-                    DBExecute($link, "UPDATE Agendamentos SET google_event_id = '$gEventId' WHERE id_agendamento = $newId");
+                    if ($gEventId) {
+                        DBExecute($link, "UPDATE Agendamentos SET google_event_id = '$gEventId' WHERE id_agendamento = $newId");
+                    }
                 }
 
                 echo json_encode(['success' => true, 'id' => $newId]);
@@ -165,7 +171,7 @@ switch ($action) {
         } else {
             // Update
             $query = "UPDATE Agendamentos SET 
-                        id_vet = '$id_vet',
+                        id_vet = $id_vet,
                         id_cliente = $id_cliente,
                         id_pet = $id_pet,
                         titulo = '$titulo',
@@ -175,19 +181,22 @@ switch ($action) {
                         status = '$status'
                       WHERE id_agendamento = '$id'";
             if (DBExecute($link, $query)) {
-                // Get current Google ID
-                $curr = mysqli_fetch_assoc(DBExecute($link, "SELECT google_event_id FROM Agendamentos WHERE id_agendamento = '$id'"));
-                $gEventId = $curr['google_event_id'] ?? null;
 
-                $newGEventId = syncGoogle($link, $id_vet, [
-                    'titulo' => $titulo,
-                    'descricao' => $descricao,
-                    'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
-                    'data_fim' => (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s')
-                ], $gEventId);
+                if ($id_vet_val) {
+                    // Get current Google ID
+                    $curr = mysqli_fetch_assoc(DBExecute($link, "SELECT google_event_id FROM Agendamentos WHERE id_agendamento = '$id'"));
+                    $gEventId = $curr['google_event_id'] ?? null;
 
-                if (!$gEventId && $newGEventId) {
-                    DBExecute($link, "UPDATE Agendamentos SET google_event_id = '$newGEventId' WHERE id_agendamento = $id");
+                    $newGEventId = syncGoogle($link, $id_vet_val, [
+                        'titulo' => $titulo,
+                        'descricao' => $descricao,
+                        'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
+                        'data_fim' => (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s')
+                    ], $gEventId);
+
+                    if (!$gEventId && $newGEventId) {
+                        DBExecute($link, "UPDATE Agendamentos SET google_event_id = '$newGEventId' WHERE id_agendamento = $id");
+                    }
                 }
 
                 echo json_encode(['success' => true]);

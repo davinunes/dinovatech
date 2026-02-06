@@ -1,5 +1,6 @@
 <?php
 // dinovatech/modules/Agenda/form_modal.php
+include_once __DIR__ . '/../../helpers/AppHelper.php';
 
 // Re-open DB link to fetch data for dropdowns
 $link = DBConnect();
@@ -50,17 +51,19 @@ DBClose($link);
                 </div>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Veterinário</label>
-                <select name="id_vet" id="eventVet" required class="w-full border rounded-lg p-2 select2-modal">
-                    <option value="">Selecione...</option>
-                    <?php foreach ($vets as $v): ?>
-                        <option value="<?= $v['id_vet'] ?>">
-                            <?= htmlspecialchars($v['nome']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+            <?php if (AppHelper::isVetMode()): ?>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Veterinário</label>
+                    <select name="id_vet" id="eventVet" class="w-full border rounded-lg p-2 select2-modal">
+                        <option value="">Selecione...</option>
+                        <?php foreach ($vets as $v): ?>
+                            <option value="<?= $v['id_vet'] ?>">
+                                <?= htmlspecialchars($v['nome']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Cliente</label>
@@ -75,18 +78,20 @@ DBClose($link);
                 </select>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Pet</label>
-                <select name="id_pet" id="eventPet" class="w-full border rounded-lg p-2 select2-modal">
-                    <option value="">(Opcional)</option>
-                    <!-- Options populated via JS or PHP -->
-                    <?php foreach ($pets as $p): ?>
-                        <option value="<?= $p['id_pet'] ?>" data-client="<?= $p['id_cliente'] ?>">
-                            <?= htmlspecialchars($p['nome']) ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+            <?php if (AppHelper::isVetMode()): ?>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Pet</label>
+                    <select name="id_pet" id="eventPet" class="w-full border rounded-lg p-2 select2-modal">
+                        <option value="">(Opcional)</option>
+                        <!-- Options populated via JS or PHP -->
+                        <?php foreach ($pets as $p): ?>
+                            <option value="<?= $p['id_pet'] ?>" data-client="<?= $p['id_cliente'] ?>">
+                                <?= htmlspecialchars($p['nome']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            <?php endif; ?>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700">Status</label>
