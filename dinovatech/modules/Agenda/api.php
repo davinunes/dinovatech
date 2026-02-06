@@ -127,7 +127,7 @@ switch ($action) {
         }
         $json = json_encode($events);
         error_log("API Debug Events: " . $json); // DEBUG TIMEZONE
-        file_put_contents(__DIR__ . '/debug_api.log', "API Debug Events: " . $json . "\n", FILE_APPEND);
+
         echo $json;
         break;
 
@@ -137,7 +137,7 @@ switch ($action) {
         $start = $_POST['start']; // Format: Y-m-d H:i:s
         $end = $_POST['end'];
         error_log("API Debug SAVE Input: ID=$id Start=$start End=$end"); // DEBUG INPUT
-        file_put_contents(__DIR__ . '/debug_api.log', "API Debug SAVE Input: ID=$id Start=$start End=$end\n", FILE_APPEND);
+
         $descricao = mysqli_real_escape_string($link, $_POST['descricao'] ?? '');
         $status = $_POST['status'] ?? 'Agendado';
 
@@ -217,7 +217,7 @@ switch ($action) {
         $start = $_POST['start'];
         $end = $_POST['end'];
         error_log("API Debug DROP Input: ID=$id Start=$start End=$end"); // DEBUG INPUT
-        file_put_contents(__DIR__ . '/debug_api.log', "API Debug DROP Input: ID=$id Start=$start End=$end\n", FILE_APPEND);
+
 
         $qGet = "SELECT * FROM Agendamentos WHERE id_agendamento = '$id'";
         $row = mysqli_fetch_assoc(DBExecute($link, $qGet));
