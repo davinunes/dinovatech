@@ -3,10 +3,10 @@
 session_start();
 header('Content-Type: application/json');
 
-include '../../database.php';
+include '../../../database.php';
 // Include helper if exists
-if (file_exists('../../dinovatech/helpers/GoogleCalendarHelper.php')) {
-    include '../../dinovatech/helpers/GoogleCalendarHelper.php';
+if (file_exists('../../helpers/GoogleCalendarHelper.php')) {
+    include '../../helpers/GoogleCalendarHelper.php';
 }
 
 if (!isset($_SESSION['usuario_id'])) {

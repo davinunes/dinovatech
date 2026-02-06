@@ -507,6 +507,25 @@ if (!isset($_SESSION['usuario_id'])) {
                     if (d.optante_simples == 1) {
                         $('#optante_simples').prop('checked', true);
                     }
+
+                    // Google JSON Status
+                    const gStatus = $('#google_json_status');
+                    const gInfo = $('#current_google_json_info');
+                    if (d.google_json_configured) {
+                        gStatus.text('Configurado').removeClass('text-gray-600').addClass('text-green-600');
+                        gInfo.find('.material-icons').removeClass('text-gray-400').addClass('text-green-600');
+
+                        // Show Email Hint
+                        if (d.google_email) {
+                            gInfo.append('<div class="mt-2 p-2 bg-blue-50 text-blue-800 text-xs rounded border border-blue-100">' +
+                                '<strong>Dica:</strong> Compartilhe suas agendas do Google Calendar com este e-mail:<br>' +
+                                '<code class="select-all font-mono bg-white px-1 rounded border border-blue-200">' + d.google_email + '</code>' +
+                                '</div>');
+                        }
+                    } else {
+                        gStatus.text('Não configurado').removeClass('text-green-600').addClass('text-gray-600');
+                        gInfo.find('.material-icons').removeClass('text-green-600').addClass('text-gray-400');
+                    }
                 }
             }, 'json');
 

@@ -5,7 +5,7 @@ if (!isset($_SESSION['usuario_id'])) {
     header("Location: ../../login.php");
     exit();
 }
-include '../../database.php';
+include '../../../database.php';
 $link = DBConnect();
 
 // Fetch Vets for filter

@@ -44,6 +44,12 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             <span class="font-medium">Dashboard</span>
         </a>
 
+        <a href="<?= $basePath ?>modules/Agenda/dashboard.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= strpos($_SERVER['PHP_SELF'], 'modules/Agenda/') !== false ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3">calendar_month</span>
+            <span class="font-medium">Agenda</span>
+        </a>
+
         <div class="pt-4 pb-2">
             <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cadastros</p>
         </div>

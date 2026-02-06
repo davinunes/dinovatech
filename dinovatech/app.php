@@ -488,6 +488,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 unset($row['api_oracle_password']);
 
                 $row['google_json_configured'] = !empty($row['google_service_account_json']);
+                $row['google_email'] = '';
+
+                if ($row['google_json_configured']) {
+                    try {
+                        $jsonDecrypted = EncryptionHelper::decrypt($row['google_service_account_json']);
+                        $data = json_decode($jsonDecrypted, true);
+                        if ($data && isset($data['client_email'])) {
+                            $row['google_email'] = $data['client_email'];
+                        }
+                    } catch (Exception $e) {
+                    }
+                }
+
                 unset($row['google_service_account_json']);
 
                 $response['success'] = true;
