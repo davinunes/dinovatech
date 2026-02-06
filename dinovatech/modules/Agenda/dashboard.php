@@ -102,20 +102,25 @@ DBClose($link);
                 slotDuration: '00:30:00',
                 slotMinTime: '06:00:00',
                 slotMaxTime: '22:00:00',
-                navLinks: true, // can click day/week names to navigate views
+                navLinks: true, // can click day/week names
                 editable: true,
                 selectable: true,
                 dayMaxEvents: true, // allow "more" link when too many events
                 events: {
                     url: 'api.php',
-                };
-            },
-                success: function (rawEvents) {
-                    console.log("🔥 Raw Events from API:", rawEvents);
-                    rawEvents.forEach(e => {
-                        console.log(`Event: ${e.title} | Start: ${e.start} | End: ${e.end}`);
-                    });
-                }
+                    extraParams: function () {
+                        return {
+                            action: 'get_events',
+                            id_vet: $('#filterVet').val(),
+                            _: new Date().getTime() // Cache buster
+                        };
+                    },
+                    success: function (rawEvents) {
+                        console.log("🔥 Raw Events from API:", rawEvents);
+                        rawEvents.forEach(e => {
+                            console.log(`Event: ${e.title} | Start: ${e.start} | End: ${e.end}`);
+                        });
+                    }
                 },
             select: function (info) {
                 openEventModal({
