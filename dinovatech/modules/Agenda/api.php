@@ -157,8 +157,8 @@ switch ($action) {
                 $gEventId = syncGoogle($link, $id_vet, [
                     'titulo' => $titulo,
                     'descricao' => $descricao,
-                    'data_inicio' => str_replace(' ', 'T', $start), // Simple ISO conversion
-                    'data_fim' => str_replace(' ', 'T', $end)
+                    'data_inicio' => date('Y-m-d\TH:i:s', strtotime($start)),
+                    'data_fim' => date('Y-m-d\TH:i:s', strtotime($end))
                 ]);
 
                 if ($gEventId) {
@@ -189,8 +189,8 @@ switch ($action) {
                 $newGEventId = syncGoogle($link, $id_vet, [
                     'titulo' => $titulo,
                     'descricao' => $descricao,
-                    'data_inicio' => str_replace(' ', 'T', $start),
-                    'data_fim' => str_replace(' ', 'T', $end)
+                    'data_inicio' => date('Y-m-d\TH:i:s', strtotime($start)),
+                    'data_fim' => date('Y-m-d\TH:i:s', strtotime($end))
                 ], $gEventId);
 
                 if (!$gEventId && $newGEventId) {
@@ -220,8 +220,8 @@ switch ($action) {
                 syncGoogle($link, $row['id_vet'], [
                     'titulo' => $row['titulo'], // Keep original title
                     'descricao' => $row['descricao'],
-                    'data_inicio' => str_replace(' ', 'T', $start),
-                    'data_fim' => str_replace(' ', 'T', $end)
+                    'data_inicio' => date('Y-m-d\TH:i:s', strtotime($start)),
+                    'data_fim' => date('Y-m-d\TH:i:s', strtotime($end))
                 ], $row['google_event_id']);
             }
             echo json_encode(['success' => true]);
