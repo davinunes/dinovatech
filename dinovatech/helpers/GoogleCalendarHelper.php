@@ -116,7 +116,7 @@ class GoogleCalendarHelper
             $status = $response->getStatusCode();
 
             $logMsg = date('Y-m-d H:i:s') . " - Helper Success: Status $status | Body: $body\n";
-            file_put_contents(__DIR__ . '/../../debug_agenda.log', $logMsg, FILE_APPEND);
+            file_put_contents(__DIR__ . '/../debug_agenda.log', $logMsg, FILE_APPEND);
 
             $event = json_decode($body, true);
             return $event['id'] ?? null;
@@ -126,7 +126,7 @@ class GoogleCalendarHelper
                 $msg .= " | Body: " . (string) $e->getResponse()->getBody();
             }
             $logErr = date('Y-m-d H:i:s') . " - Helper Create Error: " . $msg . "\n";
-            file_put_contents(__DIR__ . '/../../debug_agenda.log', $logErr, FILE_APPEND);
+            file_put_contents(__DIR__ . '/../debug_agenda.log', $logErr, FILE_APPEND);
             error_log("GoogleCalendarHelper Error (createEvent): " . $msg);
             return null;
         }
