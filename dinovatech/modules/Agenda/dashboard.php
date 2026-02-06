@@ -97,6 +97,7 @@ DBClose($link);
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
+                timeZone: 'local', // Force browser local time
                 locale: 'pt-br',
                 slotDuration: '00:30:00',
                 slotMinTime: '06:00:00',
@@ -110,7 +111,8 @@ DBClose($link);
                     extraParams: function () {
                         return {
                             action: 'get_events',
-                            id_vet: $('#filterVet').val()
+                            id_vet: $('#filterVet').val(),
+                            _: new Date().getTime() // Cache buster
                         };
                     }
                 },
@@ -151,7 +153,7 @@ DBClose($link);
             // Filter Change
             $('#filterVet').select2({ placeholder: "Filtrar por Veterinário", allowClear: true });
             $('#filterVet').on('change', function () {
-                calendar.refetchEvents();
+     calendar.refetchEvents();
             });
         });
 

@@ -113,8 +113,8 @@ switch ($action) {
             $events[] = [
                 'id' => $row['id_agendamento'],
                 'title' => $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
-                'start' => date('Y-m-d\TH:i:s', strtotime($row['data_inicio'])), // Floating Time (Local Clock)
-                'end' => date('Y-m-d\TH:i:s', strtotime($row['data_fim'])),
+                'start' => str_replace(' ', 'T', $row['data_inicio']), // Raw DB value
+                'end' => str_replace(' ', 'T', $row['data_fim']),
                 'color' => $color,
                 'extendedProps' => [
                     'descricao' => $row['descricao'],
