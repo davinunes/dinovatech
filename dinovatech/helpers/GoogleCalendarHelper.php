@@ -4,15 +4,14 @@
 // Adjust path if necessary based on where you installed google/api-php-client
 require_once __DIR__ . '/../../google/api-php-client/autoload.php';
 
-use Google\Client;
-use Google\Service\Calendar;
-use Google\Service\Calendar\Event;
+use Google\Auth\Credentials\ServiceAccountCredentials;
+use GuzzleHttp\Client as GuzzleClient;
 
 class GoogleCalendarHelper
 {
-    private $client;
-    private $service;
+    private $httpClient;
     private $calendarId;
+    private $baseUri = 'https://www.googleapis.com/calendar/v3/calendars/';
 
     public function __construct($calendarId = 'primary')
     {
@@ -24,8 +23,6 @@ class GoogleCalendarHelper
     {
         // 1. Fetch encrypted JSON from DB
         $link = DBConnect();
-        // Assuming ConfiguracoesEmissor has the field 'google_service_account_json'
-        // We fetch the first record as usual
         $query = "SELECT google_service_account_json FROM ConfiguracoesEmissor LIMIT 1";
         $res = DBExecute($link, $query);
         $row = mysqli_fetch_assoc($res);
@@ -48,14 +45,21 @@ class GoogleCalendarHelper
             throw new Exception("JSON das credenciais do Google inválido.");
         }
 
-        // 3. Setup Google Client
-        $this->client = new Client();
-        $this->client->setAuthConfig($credentials);
-        $this->client->addScope(Calendar::CALENDAR_EVENTS); // Read/Write events
-        $this->client->setApplicationName('DinoVet App');
+        // 3. Setup Authenticated Guzzle Client using Google Auth directly
+        // This avoids missing Google\Client wrapper
+        $sa = new ServiceAccountCredentials(
+            'https://www.googleapis.com/auth/calendar',
+            $credentials
+        );
 
-        // 4. Init Service
-        $this->service = new Calendar($this->client);
+        $middleware = new Google\Auth\Middleware\AuthTokenMiddleware($sa);
+        $stack = GuzzleHttp\HandlerStack::create();
+        $stack->push($middleware);
+
+        $this->httpClient = new GuzzleClient([
+            'handler' => $stack,
+            'auth' => 'google_auth'
+        ]);
     }
 
     /*
@@ -63,16 +67,19 @@ class GoogleCalendarHelper
      */
     public function listEvents($startDateTime, $endDateTime)
     {
-        $optParams = array(
+        $query = [
             'orderBy' => 'startTime',
-            'singleEvents' => true,
-            'timeMin' => $startDateTime, // e.g., '2026-02-05T10:00:00-03:00'
+            'singleEvents' => 'true',
+            'timeMin' => $startDateTime,
             'timeMax' => $endDateTime,
-        );
+        ];
 
         try {
-            $results = $this->service->events->listEvents($this->calendarId, $optParams);
-            return $results->getItems();
+            $response = $this->httpClient->get($this->baseUri . urlencode($this->calendarId) . '/events', [
+                'query' => $query
+            ]);
+            $data = json_decode($response->getBody(), true);
+            return $data['items'] ?? [];
         } catch (Exception $e) {
             error_log("GoogleCalendarHelper Error (listEvents): " . $e->getMessage());
             return [];
@@ -81,26 +88,28 @@ class GoogleCalendarHelper
 
     /*
      * Create Event
-     * $data = ['summary' => '', 'description' => '', 'start' => 'ISO', 'end' => 'ISO']
      */
     public function createEvent($data)
     {
-        $event = new Event(array(
+        $payload = [
             'summary' => $data['summary'],
             'description' => $data['description'] ?? '',
-            'start' => array(
+            'start' => [
                 'dateTime' => $data['start'],
                 'timeZone' => 'America/Sao_Paulo',
-            ),
-            'end' => array(
+            ],
+            'end' => [
                 'dateTime' => $data['end'],
                 'timeZone' => 'America/Sao_Paulo',
-            ),
-        ));
+            ],
+        ];
 
         try {
-            $event = $this->service->events->insert($this->calendarId, $event);
-            return $event->id;
+            $response = $this->httpClient->post($this->baseUri . urlencode($this->calendarId) . '/events', [
+                'json' => $payload
+            ]);
+            $event = json_decode($response->getBody(), true);
+            return $event['id'] ?? null;
         } catch (Exception $e) {
             error_log("GoogleCalendarHelper Error (createEvent): " . $e->getMessage());
             return null;
@@ -109,29 +118,33 @@ class GoogleCalendarHelper
 
     public function updateEvent($eventId, $data)
     {
+        // First we might need to get the event to patch it, or just PATCH/PUT
+        // We'll use PATCH logic if possible, but here we just construct the body from what we have.
+        // Google Calendar API supports PATCH to update only fields present.
+
+        $payload = ['summary' => $data['summary']];
+        if (isset($data['description']))
+            $payload['description'] = $data['description'];
+
+        if (isset($data['start'])) {
+            $payload['start'] = [
+                'dateTime' => $data['start'],
+                'timeZone' => 'America/Sao_Paulo',
+            ];
+        }
+        if (isset($data['end'])) {
+            $payload['end'] = [
+                'dateTime' => $data['end'],
+                'timeZone' => 'America/Sao_Paulo',
+            ];
+        }
+
         try {
-            $event = $this->service->events->get($this->calendarId, $eventId);
-
-            $event->setSummary($data['summary']);
-            if (isset($data['description']))
-                $event->setDescription($data['description']);
-
-            if (isset($data['start'])) {
-                $start = new Google\Service\Calendar\EventDateTime();
-                $start->setDateTime($data['start']);
-                $start->setTimeZone('America/Sao_Paulo');
-                $event->setStart($start);
-            }
-
-            if (isset($data['end'])) {
-                $end = new Google\Service\Calendar\EventDateTime();
-                $end->setDateTime($data['end']);
-                $end->setTimeZone('America/Sao_Paulo');
-                $event->setEnd($end);
-            }
-
-            $updatedEvent = $this->service->events->update($this->calendarId, $eventId, $event);
-            return $updatedEvent->id;
+            $response = $this->httpClient->patch($this->baseUri . urlencode($this->calendarId) . '/events/' . $eventId, [
+                'json' => $payload
+            ]);
+            $event = json_decode($response->getBody(), true);
+            return $event['id'] ?? null;
         } catch (Exception $e) {
             error_log("GoogleCalendarHelper Error (updateEvent): " . $e->getMessage());
             return false;
@@ -141,7 +154,7 @@ class GoogleCalendarHelper
     public function deleteEvent($eventId)
     {
         try {
-            $this->service->events->delete($this->calendarId, $eventId);
+            $this->httpClient->delete($this->baseUri . urlencode($this->calendarId) . '/events/' . $eventId);
             return true;
         } catch (Exception $e) {
             error_log("GoogleCalendarHelper Error (deleteEvent): " . $e->getMessage());
