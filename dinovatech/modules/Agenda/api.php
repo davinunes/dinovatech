@@ -36,17 +36,29 @@ function syncGoogle($link, $id_vet, $agendamentoData, $eventId = null)
                 'end' => $agendamentoData['data_fim']
             ];
 
+            // Debug File
+            $logMsg = date('Y-m-d H:i:s') . " - Syncing Vet: {$id_vet} (CalID: {$vet['google_calendar_id']})\n";
+            file_put_contents(__DIR__ . '/../../debug_agenda.log', $logMsg, FILE_APPEND);
+
             if ($eventId) {
                 // Update
-                return $google->updateEvent($eventId, $gData);
+                $res = $google->updateEvent($eventId, $gData);
+                file_put_contents(__DIR__ . '/../../debug_agenda.log', "Update Result: " . json_encode($res) . "\n", FILE_APPEND);
+                return $res;
             } else {
                 // Create
-                return $google->createEvent($gData);
+                $res = $google->createEvent($gData);
+                file_put_contents(__DIR__ . '/../../debug_agenda.log', "Create Result: " . json_encode($res) . "\n", FILE_APPEND);
+                return $res;
             }
         } catch (Exception $e) {
-            error_log("Google Sync Failed: " . $e->getMessage());
-            return null; // Fail silently but log
+            $err = "Google Sync Failed: " . $e->getMessage();
+            file_put_contents(__DIR__ . '/../../debug_agenda.log', $err . "\n", FILE_APPEND);
+            error_log($err);
+            return null;
         }
+    } else {
+        file_put_contents(__DIR__ . '/../../debug_agenda.log', date('Y-m-d H:i:s') . " - Vet {$id_vet} has no Calendar ID.\n", FILE_APPEND);
     }
     return null;
 }

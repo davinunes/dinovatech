@@ -81,7 +81,11 @@ class GoogleCalendarHelper
             $data = json_decode($response->getBody(), true);
             return $data['items'] ?? [];
         } catch (Exception $e) {
-            error_log("GoogleCalendarHelper Error (listEvents): " . $e->getMessage());
+            $msg = $e->getMessage();
+            if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                $msg .= " | Body: " . (string) $e->getResponse()->getBody();
+            }
+            error_log("GoogleCalendarHelper Error (listEvents): " . $msg);
             return [];
         }
     }
@@ -109,9 +113,15 @@ class GoogleCalendarHelper
                 'json' => $payload
             ]);
             $event = json_decode($response->getBody(), true);
+            // Debug Log
+            error_log("Google Create Response: " . print_r($event, true));
             return $event['id'] ?? null;
         } catch (Exception $e) {
-            error_log("GoogleCalendarHelper Error (createEvent): " . $e->getMessage());
+            $msg = $e->getMessage();
+            if (method_exists($e, 'getResponse') && $e->getResponse()) {
+                $msg .= " | Body: " . (string) $e->getResponse()->getBody();
+            }
+            error_log("GoogleCalendarHelper Error (createEvent): " . $msg);
             return null;
         }
     }
