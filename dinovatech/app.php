@@ -1792,6 +1792,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+        case 'preview_nfse_data':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            $calcData = AppHelper::calculateNfseData($link, $id_fatura);
+
+            if ($calcData['success']) {
+                $response['success'] = true;
+                $response['data'] = [
+                    'tomador' => $calcData['tomador'],
+                    'discriminacao' => $calcData['discriminacao'],
+                    'tax_settings' => $calcData['tax_settings'],
+                    'total_servicos' => $calcData['total_servicos'],
+                    'validation_errors' => $calcData['validation_errors'],
+                    'ambiente' => $calcData['ambiente']
+                ];
+            } else {
+                $response['message'] = $calcData['message'];
+            }
+            break;
+
         case 'gerar_nfse':
             require_once '../nfse_test/api.php';
 
@@ -1800,22 +1819,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = "ID Fatura obrigatório";
                 break;
             }
-            $id_fatura = mysqli_real_escape_string($link, $id_fatura);
 
-            // 1. Fetch Config
-            $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
-            $config = mysqli_fetch_assoc($resConf);
-            if (!$config) {
-                $response['message'] = "Configuração Fiscal não encontrada";
+            // 1. Calculate Data via Helper
+            $calcData = AppHelper::calculateNfseData($link, $id_fatura);
+            if (!$calcData['success']) {
+                $response['message'] = $calcData['message'];
                 break;
             }
+
+            $fatura = $calcData['fatura'];
+            $config = $calcData['config'];
+            $taxSettings = $calcData['tax_settings'];
+            $discriminacaoFinal = $calcData['discriminacao'];
+            $tomadorData = $calcData['tomador'];
+            $totalServicos = $calcData['total_servicos'];
+            $ambiente = $calcData['ambiente'];
+
+            // Check Validations
+            if (!empty($calcData['validation_errors'])) {
+                $response['success'] = false;
+                $response['message'] = "Erro de Validação: Complete o cadastro do cliente.";
+                $response['details'] = "Campos obrigatórios faltando: " . implode(", ", $calcData['validation_errors']);
+                break;
+            }
+
             if (empty($config['caminho_certificado'])) {
                 $response['message'] = "Certificado não configurado";
                 break;
             }
 
-
-            // 2. Fetch Fatura & Client
             // Decrypt Certificate Password
             if (!empty($config['senha_certificado'])) {
                 try {
@@ -1824,148 +1856,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $config['senha_certificado'] = $decrypted;
                     }
                 } catch (Exception $e) {
-                    // Ignore, might be plaintext or invalid
                 }
             }
-
-            $queryFat = "SELECT F.*, C.*, C.nome as nome_tomador, F.id_fatura as f_id FROM Faturas F JOIN Clientes C ON F.id_cliente=C.id_cliente WHERE F.id_fatura='$id_fatura'";
-            $resFat = DBExecute($link, $queryFat);
-            $fatura = mysqli_fetch_assoc($resFat);
-            if (!$fatura) {
-                $response['message'] = "Fatura não encontrada";
-                break;
-            }
-
-            // 3. Fetch Items
-            $queryItems = "SELECT I.*, S.*, I.id_recorrencia as item_recorrencia_id FROM ItensFatura I JOIN Servicos S ON I.id_servico=S.id_servico WHERE I.id_fatura='$id_fatura'";
-            $resItems = DBExecute($link, $queryItems);
-            $items = [];
-            $totalServicos = 0.0;
-            // $discriminacaoParts = []; // This is no longer used for building the main description
-
-            $taxSettings = null; // Will hold {cnae, nbs, item_lista, tributacao}
-
-            $discriminacaoFinal = "";
-            $firstItem = true;
-
-            while ($row = mysqli_fetch_assoc($resItems)) {
-                $items[] = $row;
-                $totalServicos += ($row['quantidade'] * $row['valor_unitario']);
-
-                if ($firstItem) {
-                    // Strategy: Recorrencia Fiscal > Servico Fiscal > Servico Nome
-                    $descItem = $row['descricao_fiscal'] ?? ''; // From Service
-
-                    // Check Recorrencia Override
-                    if (!empty($row['item_recorrencia_id'])) {
-                        $idRec = $row['item_recorrencia_id'];
-                        $resRec = DBExecute($link, "SELECT descricao_fiscal FROM Recorrencias WHERE id_recorrencia = '$idRec'");
-                        if ($resRec && mysqli_num_rows($resRec) > 0) {
-                            $recRow = mysqli_fetch_assoc($resRec);
-                            if (!empty($recRow['descricao_fiscal'])) {
-                                $descItem = $recRow['descricao_fiscal'];
-                            }
-                        }
-                    }
-
-                    if (empty($descItem)) {
-                        $descItem = $row['nome_servico'];
-                    }
-
-                    $discriminacaoFinal = $descItem;
-                    $firstItem = false;
-                }
-
-                // Determine Tax Settings (Prioritize First Item with Recurrence Override)
-                if (!$taxSettings) {
-                    // Defaults from Service
-                    $taxSettings = [
-                        'cnae' => $row['codigo_cnae'],
-                        'nbs' => $row['codigo_nbs'],
-                        'item_lista' => $row['item_lista_servico'],
-                        'tributacao' => $row['codigo_tributacao_municipio'],
-                        'aliquota' => $row['aliquota_iss'],
-                        'iss_retido' => $row['iss_retido']
-                    ];
-
-                    // Check Recurrence Override
-                    if (!empty($row['item_recorrencia_id'])) {
-                        $id_rec = $row['item_recorrencia_id'];
-                        $resRec = DBExecute($link, "SELECT codigo_cnae, codigo_nbs, codigo_tributacao_municipio, aliquota_iss, iss_retido FROM Recorrencias WHERE id_recorrencia='$id_rec'");
-                        $recRow = mysqli_fetch_assoc($resRec);
-                        if ($recRow) {
-                            if (!empty($recRow['codigo_cnae']))
-                                $taxSettings['cnae'] = $recRow['codigo_cnae'];
-                            if (!empty($recRow['codigo_nbs']))
-                                $taxSettings['nbs'] = $recRow['codigo_nbs'];
-                            if (!empty($recRow['codigo_tributacao_municipio']))
-                                $taxSettings['tributacao'] = $recRow['codigo_tributacao_municipio'];
-
-                            // Only override if not null in recurrence (assuming NULL means 'use default')
-                            if (!is_null($recRow['aliquota_iss']))
-                                $taxSettings['aliquota'] = $recRow['aliquota_iss'];
-                            if (!is_null($recRow['iss_retido']))
-                                $taxSettings['iss_retido'] = $recRow['iss_retido'];
-                        }
-                    }
-                }
-            }
-
-            if (empty($items)) {
-                $response['message'] = "Fatura sem itens";
-                break;
-            }
-
-            // 4. Prepare Input
-            // Fix: Check for 'producao' string, not '1'
-            $ambiente = ($config['ambiente_padrao'] === 'producao') ? 'producao' : 'homologacao';
 
             // RPS Number
             $nextRps = ($ambiente == 'producao') ? $config['ultimo_rps_producao'] + 1 : $config['ultimo_rps_homologacao'] + 1;
-
-            // Clean/Construct Address for Tomador
-            $tomadorData = [
-                'razao_social' => $fatura['nome_tomador'],
-                'cpf_cnpj' => $fatura['cpf_cnpj'],
-                'endereco' => $fatura['endereco'],
-                // Try to split number if stuck in address, but assuming columns are populated now
-                'numero' => $fatura['numero'] ?: 'S/N',
-                'complemento' => $fatura['complemento'],
-                'bairro' => $fatura['bairro'] ?: 'Centro',
-                'cep' => $fatura['cep'],
-                'uf' => $fatura['uf'],
-                'codigo_municipio' => $fatura['codigo_municipio'] ?: '5300108',
-                'telefone' => $fatura['telefone'],
-                'email' => $fatura['email'],
-                'im' => $fatura['inscricao_municipal'] ?? '',
-                'ie' => $fatura['inscricao_estadual'] ?? ''
-            ];
-
-            // VALIDATION: Check for mandatory address fields
-            $missingFields = [];
-            if (empty($tomadorData['endereco']))
-                $missingFields[] = "Endereço";
-            if (empty($tomadorData['numero']))
-                $missingFields[] = "Número";
-            if (empty($tomadorData['bairro']))
-                $missingFields[] = "Bairro";
-            if (empty($tomadorData['cep']))
-                $missingFields[] = "CEP";
-            if (empty($tomadorData['uf']))
-                $missingFields[] = "UF";
-            if (empty($tomadorData['codigo_municipio']))
-                $missingFields[] = "Município (IBGE)";
-
-            if (!empty($missingFields)) {
-                $response['success'] = false;
-                $response['message'] = "Erro de Validação: Complete o cadastro do cliente.";
-                $response['details'] = "Campos obrigatórios faltando: " . implode(", ", $missingFields);
-                break;
-            }
-
-            // Append Footer
-            // Note: We use standard \n here. The API helper (nfse_test/api.php) converts \n to \s\n.
-            $discriminacaoFinal .= "\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
 
             $inputApi = [
                 'cnpj' => $config['cnpj'],
@@ -1976,19 +1871,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'tipo_rps' => '1',
                 'valor' => number_format($totalServicos, 2, '.', ''),
                 'iss_retido' => $taxSettings['iss_retido'] ? '1' : '2',
-                'aliquota' => $taxSettings['aliquota'],
+                'aliquota' => $taxSettings['aliquota_iss'],
                 'discriminacao' => $discriminacaoFinal,
-                'codigo_cnae' => $taxSettings['cnae'],
-                'codigo_nbs' => $taxSettings['nbs'],
-                'item_lista' => $taxSettings['item_lista'],
-                'codigo_tributacao' => $taxSettings['tributacao'],
-                'regime_tributario' => $config['regime_tributario'], // simples, lucro_presumido, lucro_real
-                'optante_simples' => ($config['optante_simples'] == '1') ? '1' : '2', // 1=Sim, 2=Nao
+                'codigo_cnae' => $taxSettings['codigo_cnae'],
+                'codigo_nbs' => $taxSettings['codigo_nbs'],
+                'item_lista' => $taxSettings['item_lista_servico'],
+                'codigo_tributacao' => $taxSettings['codigo_tributacao_municipio'],
+                'regime_tributario' => $config['regime_tributario'],
+                'optante_simples' => ($config['optante_simples'] == '1') ? '1' : '2',
                 'tomador' => $tomadorData
             ];
 
             // 5. Build XML
-            // Assuming buildGerarNfseXml is available from require
             if (!function_exists('buildGerarNfseXml')) {
                 $response['message'] = "Erro interno: Biblioteca NFSe não carregada.";
                 break;
@@ -1998,8 +1892,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 6. Load Cert
             $pfxPath = $config['caminho_certificado'];
             $finalPfxPath = null;
-
-            // Check Paths (Absolute, Relative to App, Relative to Root)
             if (file_exists($pfxPath)) {
                 $finalPfxPath = $pfxPath;
             } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
@@ -2024,7 +1916,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $xmlSigned = assinarRoot($xmlData['root'], $certs, "", 'support_combo');
 
             // 8. Send
-            // Determine endpoint
             $endpoint = ($ambiente == 'producao')
                 ? 'https://df.issnetonline.com.br/webservicenfse204/nfse.asmx'
                 : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
@@ -2034,14 +1925,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // 9. Process Response
             $status = 'Erro';
-            // Check for explicit Success tag or absence of messages
-            // XML Response usually has <NumeroLote> or <Inscricao>
-            // With 'GerarNfse', success returns <CompNfse>...<Numero>X</Numero>...
             if (strpos($responseSoap, '<Numero>') !== false && strpos($responseSoap, '<CompNfse>') !== false) {
                 $status = 'concluido';
             } elseif (strpos($responseSoap, '<ListaMensagemRetorno>') === false && strpos($responseSoap, '<Fault>') === false && !empty($responseSoap)) {
-                // Sometimes success is just raw XML without Fault
-                // But safer to check for typical success tags
+                // Potential raw success
             }
 
             $xml_envio_esc = mysqli_real_escape_string($link, $xmlSigned);
@@ -2049,13 +1936,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Prepare snapshot data
             $valor_servico = number_format($totalServicos, 2, '.', '');
-            $aliquota = $taxSettings['aliquota'] ?: '0.00';
-            $iss_retido_val = ($taxSettings['iss_retido'] == '1') ? 1 : 0; // 1=Sim, 2=Nao, but bool in DB? DB is boolean, so 1/0
-            // Wait, schema says boolean DEFAULT false. 
-            // In DB boolean is tinyint(1).
-            // Logic: if iss_retido string is '1' (Sim), store 1. If '2' (Nao), store 0.
+            $aliquota = $taxSettings['aliquota_iss'] ?: '0.00';
+            $iss_retido_val = ($taxSettings['iss_retido'] == '1') ? 1 : 0;
 
-            $item_lista = $taxSettings['item_lista'];
+            $item_lista = $taxSettings['item_lista_servico'];
             $discriminacao_esc = mysqli_real_escape_string($link, $discriminacaoFinal);
 
             $queryLog = "INSERT INTO NfseEmissoes (
@@ -2076,7 +1960,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if ($status == 'concluido') {
-                // Update RPS Counter
                 if ($ambiente == 'producao') {
                     DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_producao=$nextRps WHERE id_config={$config['id_config']}");
                 } else {
@@ -2087,7 +1970,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $response['success'] = false;
                 $response['message'] = "Erro ao gerar NFS-e / Recusada.";
-                // Extract error message roughly
                 $details = "";
                 if (preg_match_all('/<Mensagem>(.*?)<\/Mensagem>/', $responseSoap, $matches)) {
                     $details = implode("\n", $matches[1]);

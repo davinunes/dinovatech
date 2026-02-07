@@ -398,6 +398,31 @@ if ($id_fatura) {
                                 ?>
 
                                 <?php if (!$hasAuthorized): ?>
+                                    <!-- NFS-e Preview Card -->
+                                    <div id="nfsePreviewCard"
+                                        class="hidden bg-blue-50 p-3 rounded-lg border border-blue-100 mb-3">
+                                        <h4
+                                            class="text-[10px] font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center">
+                                            <span class="material-icons text-xs mr-1">info</span> Resumo Fiscal (Prévia)
+                                        </h4>
+                                        <div class="text-[11px] text-blue-900 space-y-1 leading-tight">
+                                            <div class="grid grid-cols-2 gap-1">
+                                                <p><strong>CNAE:</strong> <span id="nfseCnae">...</span></p>
+                                                <p><strong>LC116:</strong> <span id="nfseItList">...</span></p>
+                                                <p><strong>NBS:</strong> <span id="nfseNbs">...</span></p>
+                                                <p><strong>Aliq:</strong> <span id="nfseAliq">...</span>%</p>
+                                                <p><strong>Retido:</strong> <span id="nfseRet">...</span></p>
+                                            </div>
+                                            <p class="truncate" title=""><strong>Desc:</strong> <span id="nfseDesc">...</span>
+                                            </p>
+                                            <p class="truncate"><strong>Tomador:</strong> <span id="nfseTomador">...</span></p>
+
+                                            <div id="nfseErrors"
+                                                class="hidden mt-2 p-2 bg-red-100 text-red-700 rounded border border-red-200">
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <button id="btnGerarNfse" onclick="gerarNfse()"
                                         class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-medium transition shadow-md mb-2 flex justify-center items-center">
                                         <span class="material-icons text-sm mr-2">receipt</span> Gerar NFS-e
@@ -761,6 +786,34 @@ if ($id_fatura) {
             }, 'json');
         }
 
+        function loadNfsePreview() {
+            $.post('app.php', { action: 'preview_nfse_data', id_fatura: <?= $id_fatura ?> }, function (res) {
+                if (res.success) {
+                    $('#nfsePreviewCard').removeClass('hidden');
+                    $('#nfseDesc').text(res.data.discriminacao).attr('title', res.data.discriminacao);
+                    $('#nfseCnae').text(res.data.tax_settings.codigo_cnae);
+                    $('#nfseItList').text(res.data.tax_settings.item_lista_servico);
+                    $('#nfseNbs').text(res.data.tax_settings.codigo_nbs);
+                    $('#nfseAliq').text(res.data.tax_settings.aliquota_iss);
+                    $('#nfseRet').text(res.data.tax_settings.iss_retido == '1' ? 'SIM' : 'NÃO');
+
+                    let tomadorText = res.data.tomador.razao_social;
+                    if (res.data.tomador.codigo_municipio) tomadorText += ' (Mun: ' + res.data.tomador.codigo_municipio + ')';
+
+                    $('#nfseTomador').text(tomadorText);
+
+                    if (res.data.validation_errors.length > 0) {
+                        $('#nfseErrors').removeClass('hidden').html('<strong>Erros:</strong> ' + res.data.validation_errors.join(', '));
+                        $('#btnGerarNfse').prop('disabled', true).addClass('opacity-50 cursor-not-allowed').attr('title', 'Corrija os erros do cliente antes de gerar.');
+                    } else {
+                        $('#nfseErrors').addClass('hidden');
+                        $('#btnGerarNfse').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');
+                    }
+                }
+            }, 'json');
+        }
+
+
         function gerarNfse() {
             if (!confirm('Deseja iniciar a geração da NFS-e para esta fatura?')) return;
 
@@ -794,6 +847,11 @@ if ($id_fatura) {
         $(document).ready(function () {
             // Load Attachments
             carregarAnexos();
+
+            // Load NFSe Preview
+            <?php if (!$hasAuthorized): // Only load if we can generate ?>
+                loadNfsePreview();
+            <?php endif; ?>
 
             // Autocomplete for services
             $("#servicoSearch").autocomplete({

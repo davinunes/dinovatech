@@ -40,4 +40,137 @@ class AppHelper
         DBClose($link);
         return $name;
     }
+    public static function calculateNfseData($link, $id_fatura)
+    {
+        $id_fatura = mysqli_real_escape_string($link, $id_fatura);
+
+        // 1. Fetch Config
+        $resConf = mysqli_query($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+        $config = mysqli_fetch_assoc($resConf);
+        if (!$config)
+            return ['success' => false, 'message' => 'Configuração Fiscal não encontrada'];
+
+        // 2. Fetch Fatura & Client
+        $queryFat = "SELECT F.*, C.*, C.nome as nome_tomador, F.id_fatura as f_id FROM Faturas F JOIN Clientes C ON F.id_cliente=C.id_cliente WHERE F.id_fatura='$id_fatura'";
+        $resFat = mysqli_query($link, $queryFat);
+        $fatura = mysqli_fetch_assoc($resFat);
+        if (!$fatura)
+            return ['success' => false, 'message' => 'Fatura não encontrada'];
+
+        // 3. Fetch Items
+        $queryItems = "SELECT I.*, S.*, I.id_recorrencia as item_recorrencia_id FROM ItensFatura I JOIN Servicos S ON I.id_servico=S.id_servico WHERE I.id_fatura='$id_fatura'";
+        $resItems = mysqli_query($link, $queryItems);
+
+        $items = [];
+        $totalServicos = 0.0;
+        $taxSettings = null;
+        $discriminacaoFinal = "";
+        $firstItem = true;
+
+        while ($row = mysqli_fetch_assoc($resItems)) {
+            $items[] = $row;
+            $totalServicos += ($row['quantidade'] * $row['valor_unitario']);
+
+            if ($firstItem) {
+                // Strategy: Recorrencia Fiscal > Servico Fiscal > Servico Nome
+                $descItem = $row['descricao_fiscal'] ?? '';
+
+                // Check Recorrencia Override
+                if (!empty($row['item_recorrencia_id'])) {
+                    $idRec = $row['item_recorrencia_id'];
+                    $resRec = mysqli_query($link, "SELECT descricao_fiscal, codigo_cnae, codigo_nbs, codigo_tributacao_municipio, aliquota_iss, iss_retido FROM Recorrencias WHERE id_recorrencia = '$idRec'");
+                    if ($resRec && mysqli_num_rows($resRec) > 0) {
+                        $recRow = mysqli_fetch_assoc($resRec);
+                        if (!empty($recRow['descricao_fiscal'])) {
+                            $descItem = $recRow['descricao_fiscal'];
+                        }
+                        // Store recRow for Tax Settings Check below
+                        $row['rec_override'] = $recRow;
+                    }
+                }
+
+                if (empty($descItem)) {
+                    $descItem = $row['nome_servico'];
+                }
+
+                $discriminacaoFinal = $descItem;
+                $firstItem = false;
+            }
+
+            // Determine Tax Settings (Prioritize First Item)
+            if (!$taxSettings) {
+                $taxSettings = [
+                    'codigo_cnae' => $row['codigo_cnae'],
+                    'codigo_nbs' => $row['codigo_nbs'],
+                    'item_lista_servico' => $row['item_lista_servico'],
+                    'codigo_tributacao_municipio' => $row['codigo_tributacao_municipio'],
+                    'aliquota_iss' => $row['aliquota_iss'],
+                    'iss_retido' => $row['iss_retido']
+                ];
+
+                // Check Recurrence Override
+                if (!empty($row['rec_override'])) {
+                    $recRow = $row['rec_override'];
+                    if (!empty($recRow['codigo_cnae']))
+                        $taxSettings['codigo_cnae'] = $recRow['codigo_cnae'];
+                    if (!empty($recRow['codigo_nbs']))
+                        $taxSettings['codigo_nbs'] = $recRow['codigo_nbs'];
+                    if (!empty($recRow['codigo_tributacao_municipio']))
+                        $taxSettings['codigo_tributacao_municipio'] = $recRow['codigo_tributacao_municipio'];
+                    if (!is_null($recRow['aliquota_iss']))
+                        $taxSettings['aliquota_iss'] = $recRow['aliquota_iss'];
+                    if (!is_null($recRow['iss_retido']))
+                        $taxSettings['iss_retido'] = $recRow['iss_retido'];
+                }
+            }
+        }
+
+        if (empty($items))
+            return ['success' => false, 'message' => 'Fatura sem itens'];
+
+        // Append Footer
+        $discriminacaoFinal .= "\nConforme documento auxiliar de cobranca numero " . $fatura['f_id'];
+
+        // Validation Checks
+        $validationErrors = [];
+        $tomadorData = [
+            'razao_social' => $fatura['nome_tomador'],
+            'cpf_cnpj' => $fatura['cpf_cnpj'],
+            'inscricao_municipal' => $fatura['inscricao_municipal'] ?? '',
+            'endereco' => $fatura['endereco'],
+            'numero' => $fatura['numero'] ?: 'S/N',
+            'complemento' => $fatura['complemento'],
+            'bairro' => $fatura['bairro'] ?: 'Centro',
+            'cep' => $fatura['cep'],
+            'uf' => $fatura['uf'],
+            'codigo_municipio' => $fatura['codigo_municipio'] ?: '5300108',
+            'email' => $fatura['email'],
+            'telefone' => $fatura['telefone']
+        ];
+
+        if (empty($tomadorData['endereco']))
+            $validationErrors[] = "Endereço";
+        if (empty($tomadorData['numero']))
+            $validationErrors[] = "Número";
+        if (empty($tomadorData['bairro']))
+            $validationErrors[] = "Bairro";
+        if (empty($tomadorData['cep']))
+            $validationErrors[] = "CEP";
+        if (empty($tomadorData['uf']))
+            $validationErrors[] = "UF";
+        if (empty($tomadorData['codigo_municipio']))
+            $validationErrors[] = "Município (IBGE)";
+
+        return [
+            'success' => true,
+            'fatura' => $fatura,
+            'config' => $config,
+            'total_servicos' => $totalServicos,
+            'tax_settings' => $taxSettings,
+            'discriminacao' => $discriminacaoFinal,
+            'tomador' => $tomadorData,
+            'validation_errors' => $validationErrors,
+            'ambiente' => ($config['ambiente_padrao'] === 'producao') ? 'producao' : 'homologacao'
+        ];
+    }
 }
