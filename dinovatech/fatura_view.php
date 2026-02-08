@@ -44,7 +44,11 @@ if ($id_fatura) {
             if ($p['status_pagamento'] == 'Confirmado')
                 $total_pago += $p['valor_pago'];
         }
-        $saldo_devedor = $fatura['valor_total_fatura'] - $total_pago;
+
+        // Calculate Totals with Retention
+        $calcTotals = AppHelper::calculateFaturaTotals($link, $id_fatura);
+        $valorLiquidoFatura = $calcTotals['valor_liquido'];
+        $saldo_devedor = $valorLiquidoFatura - $total_pago;
 
         // Fetch NFS-e
         $nfse_list = [];
@@ -264,10 +268,18 @@ if ($id_fatura) {
                                             <?= number_format($fatura['valor_total_fatura'], 2, ',', '.') ?>
                                         </span>
                                     </div>
+                                    <?php if ($calcTotals['iss_retido']): ?>
+                                        <div class="flex justify-between text-red-500 text-sm">
+                                            <span>(-) <?= $calcTotals['detalhes_retencao'] ?></span>
+                                            <span>R$
+                                                <?= number_format($calcTotals['valor_retencao'], 2, ',', '.') ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
                                     <div class="flex justify-between font-bold text-xl text-gray-800 pt-2 border-t">
-                                        <span>Total</span>
+                                        <span>Total a Receber</span>
                                         <span>R$
-                                            <?= number_format($fatura['valor_total_fatura'], 2, ',', '.') ?>
+                                            <?= number_format($valorLiquidoFatura, 2, ',', '.') ?>
                                         </span>
                                     </div>
                                 </div>
@@ -302,7 +314,7 @@ if ($id_fatura) {
                                     </span>
                                 </div>
                                 <div class="flex justify-between text-sm">
-                                    <span class="text-gray-500">Saldo Devedor</span>
+                                    <span class="text-gray-500">Saldo a Receber</span>
                                     <span class="font-bold text-red-600">R$
                                         <?= number_format($saldo_devedor, 2, ',', '.') ?>
                                     </span>

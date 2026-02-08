@@ -173,4 +173,61 @@ class AppHelper
             'ambiente' => ($config['ambiente_padrao'] === 'producao') ? 'producao' : 'homologacao'
         ];
     }
+
+    public static function calculateFaturaTotals($link, $id_fatura)
+    {
+        // 1. Fetch Items Sum
+        $queryItems = "SELECT SUM(quantidade * valor_unitario) as total_servicos FROM ItensFatura WHERE id_fatura='$id_fatura'";
+        $resItems = mysqli_query($link, $queryItems);
+        $rowItems = mysqli_fetch_assoc($resItems);
+        $totalServicos = $rowItems['total_servicos'] ?? 0.00;
+
+        // 2. Fetch Tax Settings relative to this Invoice
+        // We need to check if there is ANY item with retention, or if we follow the dominant service.
+        // Usually, Invoice = One Service. But if mixed, we should check each?
+        // Current logic in calculateNfseData takes the FIRST item's settings. We shall do the same for consistency.
+
+        $queryTax = "SELECT I.id_recorrencia, I.id_servico, S.aliquota_iss, S.iss_retido
+                     FROM ItensFatura I 
+                     JOIN Servicos S ON I.id_servico = S.id_servico 
+                     WHERE I.id_fatura='$id_fatura' LIMIT 1";
+
+        $resTax = mysqli_query($link, $queryTax);
+        $taxData = mysqli_fetch_assoc($resTax);
+
+        $aliquota = $taxData['aliquota_iss'] ?? 0;
+        $issRetido = $taxData['iss_retido'] ?? '2'; // 2=Não
+        $idRecorrencia = $taxData['id_recorrencia'] ?? null;
+
+        // Check Override from Recurrence
+        if ($idRecorrencia) {
+            $queryRec = "SELECT iss_retido, aliquota_iss FROM Recorrencias WHERE id_recorrencia='$idRecorrencia'";
+            $resRec = mysqli_query($link, $queryRec);
+            $rec = mysqli_fetch_assoc($resRec);
+            if ($rec) {
+                if (!is_null($rec['iss_retido']))
+                    $issRetido = $rec['iss_retido'];
+                if (!is_null($rec['aliquota_iss']))
+                    $aliquota = $rec['aliquota_iss'];
+            }
+        }
+
+        $valorRetencao = 0.00;
+        $detalhesRetencao = "";
+
+        if ($issRetido == '1' && $aliquota > 0) {
+            $valorRetencao = ($totalServicos * ($aliquota / 100));
+            $detalhesRetencao = "ISS (" . number_format($aliquota, 2, ',', '.') . "%)";
+        }
+
+        $valorLiquido = $totalServicos - $valorRetencao;
+
+        return [
+            'valor_servicos' => (float) $totalServicos,
+            'iss_retido' => ($issRetido == '1'),
+            'valor_retencao' => (float) $valorRetencao,
+            'detalhes_retencao' => $detalhesRetencao,
+            'valor_liquido' => (float) $valorLiquido
+        ];
+    }
 }

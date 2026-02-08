@@ -41,7 +41,10 @@ if ($id_fatura) {
             if ($p['status_pagamento'] == 'Confirmado')
                 $total_pago += $p['valor_pago'];
         }
-        $saldo_devedor = $fatura['valor_total_fatura'] - $total_pago;
+        // Calculate Totals with Retention
+        $calcTotals = AppHelper::calculateFaturaTotals($link, $id_fatura);
+        $valorLiquidoFatura = $calcTotals['valor_liquido'];
+        $saldo_devedor = $valorLiquidoFatura - $total_pago;
 
         // Fetch Company Config
         $config_emissor = [];
@@ -266,8 +269,16 @@ if ($id_fatura) {
                                 <span>Subtotal</span>
                                 <span>R$
                                     <?= number_format($fatura['valor_total_fatura'], 2, ',', '.') ?>
-                                </span>
-                            </div>
+                                    </span>
+                                </div>
+                                <?php if ($calcTotals['iss_retido']): ?>
+                                        <div class="flex justify-between mb-2 text-red-500 text-sm">
+                                            <span>(-) <?= $calcTotals['detalhes_retencao'] ?></span>
+                                            <span>R$
+                                                <?= number_format($calcTotals['valor_retencao'], 2, ',', '.') ?>
+                                    </span>
+                                </div>
+                                <?php endif; ?>
                             <?php if ($total_pago > 0): ?>
                                 <div class="flex justify-between mb-2 text-green-600">
                                     <span>Valor Pago</span>

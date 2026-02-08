@@ -3,6 +3,7 @@ header('Content-Type: application/json');
 
 require_once 'api.php';
 require_once '../database.php';
+require_once '../dinovatech/helpers/AppHelper.php';
 
 $action = $_GET['action'] ?? null;
 $requestBody = json_decode(file_get_contents('php://input'), true);
@@ -146,9 +147,12 @@ try {
                 ["nome" => "demonstrativo", "valor" => $demonstrativo]
             ];
 
+            $calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
+            $valorCobranca = $calcTotals['valor_liquido'];
+
             $dadosCobranca = [
                 'devedor' => $devedorPayload,
-                'valorOriginal' => number_format($fatura['valor_total_fatura'], 2, '.', ''),
+                'valorOriginal' => number_format($valorCobranca, 2, '.', ''),
                 'chavePix' => $ambienteConfig['chave_pix'],
                 'solicitacaoPagador' => "Pagamento Fatura " . $idFatura,
                 'infoAdicionais' => $infoAdicionais
