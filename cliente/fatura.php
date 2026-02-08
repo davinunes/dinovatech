@@ -8,6 +8,7 @@ if (!isset($_SESSION['cliente_id'])) {
 }
 
 include "../database.php"; // Using backend database connection
+require_once __DIR__ . '/../dinovatech/helpers/AppHelper.php';
 $cliente_id = $_SESSION['cliente_id'];
 $id_fatura = $_GET['id'] ?? null;
 $fatura = null;
@@ -269,16 +270,16 @@ if ($id_fatura) {
                                 <span>Subtotal</span>
                                 <span>R$
                                     <?= number_format($fatura['valor_total_fatura'], 2, ',', '.') ?>
+                                </span>
+                            </div>
+                            <?php if ($calcTotals['iss_retido']): ?>
+                                <div class="flex justify-between mb-2 text-red-500 text-sm">
+                                    <span>(-) <?= $calcTotals['detalhes_retencao'] ?></span>
+                                    <span>R$
+                                        <?= number_format($calcTotals['valor_retencao'], 2, ',', '.') ?>
                                     </span>
                                 </div>
-                                <?php if ($calcTotals['iss_retido']): ?>
-                                        <div class="flex justify-between mb-2 text-red-500 text-sm">
-                                            <span>(-) <?= $calcTotals['detalhes_retencao'] ?></span>
-                                            <span>R$
-                                                <?= number_format($calcTotals['valor_retencao'], 2, ',', '.') ?>
-                                    </span>
-                                </div>
-                                <?php endif; ?>
+                            <?php endif; ?>
                             <?php if ($total_pago > 0): ?>
                                 <div class="flex justify-between mb-2 text-green-600">
                                     <span>Valor Pago</span>
