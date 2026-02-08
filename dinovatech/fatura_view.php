@@ -491,7 +491,14 @@ if ($id_fatura) {
                                                     class="<?= $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600' : ($pag['status_pagamento'] == 'Expirado' ? 'text-gray-400' : 'text-yellow-600') ?>">
                                                     <?= $pag['status_pagamento'] ?>
                                                 </span>
-                                                <?php if ($pag['status_pagamento'] == 'Confirmado'): ?>
+                                                <?php if ($pag['status_pagamento'] == 'Pendente' && !empty($pag['txid'])): ?>
+                                                    <button onclick="verificarPix('<?= $pag['txid'] ?>')"
+                                                        class="ml-2 text-blue-500 hover:text-blue-700"
+                                                        title="Verificar Pagamento na API">
+                                                        <span class="material-icons text-sm">search</span>
+                                                    </button>
+                                                        <?php endif; ?>
+                                                        <?php if ($pag['status_pagamento'] == 'Confirmado'): ?>
                                                     <button onclick="estornarPagamento(<?= $pag['id_pagamento'] ?>)"
                                                         class="text-red-400 hover:underline">Estornar</button>
                                                 <?php endif; ?>
@@ -679,7 +686,40 @@ if ($id_fatura) {
     <?php include 'components/layout_scripts.php'; ?>
     <script>
         function openAddItemModal() { $('#modalAddItem').removeClass('hidden'); }
-        function openPagamentoModal() { $('#modalPagamento').removeClass('hidden'); }
+        function openPagamentoModal() {
+            $('#modalPagamento').removeClass('hidden');
+        }
+
+        function verificarPix(txid) {
+            if (!confirm('Deseja verificar o status deste PIX na API do Inter agora?')) return;
+
+            // Show loading or disable buttons could be good here
+            const btn = event.currentTarget;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="material-icons text-sm animate-spin">refresh</span>';
+            btn.disabled = true;
+
+            $.getJSON(`../inter/endpoint.php?action=verificar_pagamento_pix&txid=${txid}`, function (res) {
+                if (res.success) {
+                    if (res.data.status === 'CONCLUIDA') {
+                        alert('Pagamento confirmado com sucesso! A página será recarregada.');
+                        location.reload();
+                    } else {
+                        alert('Status atual na API: ' + res.data.status);
+                        btn.innerHTML = originalContent;
+                        btn.disabled = false;
+                    }
+                } else {
+                    alert('Erro ao verificar: ' + (res.message || 'Desconhecido'));
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                }
+            }).fail(function () {
+                alert('Falha na comunicação com o servidor.');
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+            });
+        }
         function openIncorporarModal() { $('#modalIncorporar').removeClass('hidden'); }
         function openUploadModal() { $('#modalUpload').removeClass('hidden'); }
 
