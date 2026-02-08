@@ -491,14 +491,14 @@ if ($id_fatura) {
                                                     class="<?= $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600' : ($pag['status_pagamento'] == 'Expirado' ? 'text-gray-400' : 'text-yellow-600') ?>">
                                                     <?= $pag['status_pagamento'] ?>
                                                 </span>
-                                                <?php if ($pag['status_pagamento'] == 'Pendente' && !empty($pag['txid'])): ?>
+                                                <?php if (($pag['status_pagamento'] == 'Pendente' || $pag['status_pagamento'] == 'Expirado') && !empty($pag['txid'])): ?>
                                                     <button onclick="verificarPix('<?= $pag['txid'] ?>')"
                                                         class="ml-2 text-blue-500 hover:text-blue-700"
                                                         title="Verificar Pagamento na API">
                                                         <span class="material-icons text-sm">search</span>
                                                     </button>
-                                                        <?php endif; ?>
-                                                        <?php if ($pag['status_pagamento'] == 'Confirmado'): ?>
+                                                <?php endif; ?>
+                                                <?php if ($pag['status_pagamento'] == 'Confirmado'): ?>
                                                     <button onclick="estornarPagamento(<?= $pag['id_pagamento'] ?>)"
                                                         class="text-red-400 hover:underline">Estornar</button>
                                                 <?php endif; ?>
