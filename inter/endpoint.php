@@ -220,7 +220,7 @@ try {
                 }
             }
 
-            echo json_encode(['success' => true, 'data' => ['status' => $pixStatus->status]]);
+            echo json_encode(['success' => true, 'data' => ['status' => $pixStatus->status], 'audit' => $pixStatus]);
             break;
 
         default:
