@@ -583,7 +583,7 @@ function calcularIdade($data_nasc)
         $('#formVacina').on('submit', function (e) {
             e.preventDefault();
             $.ajax({
-                url: 'app.php',
+                url: '../../app.php',
                 type: 'POST',
                 data: $(this).serialize(),
                 dataType: 'json',
