@@ -352,79 +352,95 @@ if ($id_fatura) {
 
                                 <?php
                                 $hasAuthorized = false;
+                                $activeNfse = [];
+                                $errorNfse = [];
+
                                 if (!empty($nfse_list)) {
                                     foreach ($nfse_list as $nfse) {
                                         if ($nfse['status'] == 'concluido' && isset($nfse['ambiente']) && $nfse['ambiente'] == 'producao')
                                             $hasAuthorized = true;
 
-                                        $statusClass = 'text-gray-500';
-                                        $icon = 'history';
-                                        if ($nfse['status'] == 'concluido') {
-                                            $statusClass = 'text-green-600';
-                                            $icon = 'check_circle';
-                                        } elseif ($nfse['status'] == 'Erro') {
-                                            $statusClass = 'text-red-500';
-                                            $icon = 'error';
-                                        } elseif ($nfse['status'] == 'Processando') {
-                                            $statusClass = 'text-blue-500';
-                                            $icon = 'hourglass_empty';
+                                        if ($nfse['status'] == 'Erro') {
+                                            $errorNfse[] = $nfse;
+                                        } else {
+                                            $activeNfse[] = $nfse;
                                         }
-
-                                        // Parsed Info
-                                        $numero_nota = 'Pending';
-                                        if ($nfse['xml_retorno']) {
-                                            preg_match('/<Numero>(.*?)<\/Numero>/', $nfse['xml_retorno'], $m);
-                                            if (!empty($m[1]))
-                                                $numero_nota = $m[1];
-                                        }
-
-                                        // Link (Url not reliable in homolog, use xml_retorno check)
-                                        ?>
-                                        <div class="bg-gray-50 p-2 rounded border border-gray-100 mb-2 text-sm">
-                                            <div class="flex items-center justify-between mb-1">
-                                                <span class="font-bold <?= $statusClass ?> flex items-center">
-                                                    <span class="material-icons text-sm mr-1"><?= $icon ?></span>
-                                                    <?= ucfirst($nfse['status']) ?>
-                                                </span>
-                                                <span
-                                                    class="text-xs text-gray-400"><?= date('d/m H:i', strtotime($nfse['data_emissao'])) ?></span>
-                                            </div>
-
-                                            <?php if ($nfse['status'] == 'concluido'): ?>
-                                                <div class="text-xs text-gray-600 mt-1">
-                                                    <strong>Número:</strong> <?= $numero_nota ?><br>
-                                                    <strong>RPS:</strong> <?= $nfse['numero_rps'] ?>/<?= $nfse['serie_rps'] ?><br>
-                                                    <span class="text-[10px] text-gray-400"><?= ucfirst($nfse['ambiente']) ?></span>
-                                                </div>
-
-                                                <div class="grid grid-cols-2 gap-2 mt-2">
-                                                    <a href="ver_nfse_xml.php?id=<?= $nfse['id_emissao'] ?>" target="_blank"
-                                                        class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">
-                                                        XML Assinado
-                                                    </a>
-                                                    <?php if ($nfse['url_pdf']): ?>
-                                                        <a href="<?= $nfse['url_pdf'] ?>" target="_blank"
-                                                            class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">
-                                                            PDF
-                                                        </a>
-                                                    <?php else: ?>
-                                                        <button onclick="consultarUrlNfse(<?= $nfse['id_emissao'] ?>)"
-                                                            class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300"
-                                                            title="Tentar obter link PDF na Prefeitura">
-                                                            Buscar PDF
-                                                        </button>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php elseif ($nfse['status'] == 'Erro'): ?>
-                                                <div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">
-                                                    <?= substr(strip_tags($nfse['xml_retorno']), 0, 100) ?>...
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
-                                        <?php
                                     }
-                                } else {
+                                }
+
+                                // Function to render NFSe Item
+                                function renderNfseItem($nfse)
+                                {
+                                    $statusClass = 'text-gray-500';
+                                    $icon = 'history';
+                                    if ($nfse['status'] == 'concluido') {
+                                        $statusClass = 'text-green-600';
+                                        $icon = 'check_circle';
+                                    } elseif ($nfse['status'] == 'Erro') {
+                                        $statusClass = 'text-red-500';
+                                        $icon = 'error';
+                                    } elseif ($nfse['status'] == 'Processando') {
+                                        $statusClass = 'text-blue-500';
+                                        $icon = 'hourglass_empty';
+                                    }
+
+                                    // Parsed Info
+                                    $numero_nota = 'Pending';
+                                    if ($nfse['xml_retorno']) {
+                                        preg_match('/<Numero>(.*?)<\/Numero>/', $nfse['xml_retorno'], $m);
+                                        if (!empty($m[1]))
+                                            $numero_nota = $m[1];
+                                    }
+
+                                    $html = '<div class="bg-gray-50 p-2 rounded border border-gray-100 mb-2 text-sm">';
+                                    $html .= '<div class="flex items-center justify-between mb-1">';
+                                    $html .= '<span class="font-bold ' . $statusClass . ' flex items-center"><span class="material-icons text-sm mr-1">' . $icon . '</span>' . ucfirst($nfse['status']) . '</span>';
+                                    $html .= '<span class="text-xs text-gray-400">' . date('d/m H:i', strtotime($nfse['data_emissao'])) . '</span>';
+                                    $html .= '</div>';
+
+                                    if ($nfse['status'] == 'concluido') {
+                                        $html .= '<div class="text-xs text-gray-600 mt-1">';
+                                        $html .= '<strong>Número:</strong> ' . $numero_nota . '<br>';
+                                        $html .= '<strong>RPS:</strong> ' . $nfse['numero_rps'] . '/' . $nfse['serie_rps'] . '<br>';
+                                        $html .= '<span class="text-[10px] text-gray-400">' . ucfirst($nfse['ambiente']) . '</span>';
+                                        $html .= '</div>';
+
+                                        $html .= '<div class="grid grid-cols-2 gap-2 mt-2">';
+                                        $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">XML Assinado</a>';
+                                        if ($nfse['url_pdf']) {
+                                            $html .= '<a href="' . $nfse['url_pdf'] . '" target="_blank" class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">PDF</a>';
+                                        } else {
+                                            $html .= '<button onclick="consultarUrlNfse(' . $nfse['id_emissao'] . ')" class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300" title="Tentar obter link PDF na Prefeitura">Buscar PDF</button>';
+                                        }
+                                        $html .= '</div>';
+                                    } elseif ($nfse['status'] == 'Erro') {
+                                        $html .= '<div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">';
+                                        $html .= substr(strip_tags($nfse['xml_retorno']), 0, 100) . '...';
+                                        $html .= '</div>';
+                                    }
+                                    $html .= '</div>';
+                                    return $html;
+                                }
+
+                                // Render Active
+                                if (empty($nfse_list)) {
                                     echo "<p class='text-xs text-gray-400 mb-2 italic'>Nenhuma nota emitida.</p>";
+                                } else {
+                                    foreach ($activeNfse as $nfse)
+                                        echo renderNfseItem($nfse);
+
+                                    if (!empty($errorNfse)) {
+                                        echo '<details class="group mt-2">';
+                                        echo '<summary class="flex items-center text-xs text-red-500 cursor-pointer hover:text-red-700 font-medium list-none">';
+                                        echo '<span class="material-icons text-sm mr-1 transition group-open:rotate-90">chevron_right</span>';
+                                        echo 'Ver ' . count($errorNfse) . ' falhas';
+                                        echo '</summary>';
+                                        echo '<div class="mt-2 pl-2 border-l-2 border-red-100">';
+                                        foreach ($errorNfse as $nfse)
+                                            echo renderNfseItem($nfse);
+                                        echo '</div>';
+                                        echo '</details>';
+                                    }
                                 }
                                 ?>
 
@@ -467,20 +483,31 @@ if ($id_fatura) {
 
                             <!-- Payment History -->
                             <div class="mt-6 pt-4 border-t">
-                                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Histórico</h4>
+                                <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Histórico de
+                                    Pagamentos</h4>
                                 <ul class="space-y-2">
-                                    <?php foreach ($pagamentos as $pag): ?>
-                                        <?php
-                                        // Calculate expiration info if available
+                                    <?php
+                                    $activePayments = [];
+                                    $archivedPayments = [];
+
+                                    foreach ($pagamentos as $pag) {
+                                        if ($pag['status_pagamento'] == 'Confirmado' || $pag['status_pagamento'] == 'Pendente') {
+                                            $activePayments[] = $pag;
+                                        } else {
+                                            $archivedPayments[] = $pag;
+                                        }
+                                    }
+
+                                    function renderPaymentItem($pag)
+                                    {
+                                        // Calculate expiration info
                                         $expInfo = "";
                                         if ($pag['status_pagamento'] != 'Confirmado' && !empty($pag['calendario'])) {
                                             $cal = json_decode($pag['calendario'], true);
                                             if (isset($cal['criacao']) && isset($cal['expiracao'])) {
-                                                // Fix Timezone to America/Sao_Paulo
                                                 $dtCriacao = new DateTime($cal['criacao']);
                                                 $dtCriacao->modify("+{$cal['expiracao']} seconds");
                                                 $dtCriacao->setTimezone(new DateTimeZone('America/Sao_Paulo'));
-
                                                 $expString = $dtCriacao->format('d/m/Y H:i');
                                                 $now = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
 
@@ -491,38 +518,52 @@ if ($id_fatura) {
                                                 }
                                             }
                                         }
-                                        ?>
-                                        <li class="text-sm bg-gray-50 p-2 rounded border border-gray-100">
-                                            <div class="flex justify-between mb-1">
-                                                <span class="font-medium text-gray-800">R$
-                                                    <?= number_format($pag['valor_pago'], 2, ',', '.') ?>
-                                                </span>
-                                                <div class="text-right">
-                                                    <span class="text-gray-500 text-xs block">
-                                                        <?= date('d/m', strtotime($pag['data_pagamento'])) ?>
-                                                    </span>
-                                                    <?= $expInfo ?>
-                                                </div>
-                                            </div>
-                                            <div class="flex justify-between items-center text-xs">
-                                                <span
-                                                    class="<?= $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600' : ($pag['status_pagamento'] == 'Expirado' ? 'text-gray-400' : 'text-yellow-600') ?>">
-                                                    <?= $pag['status_pagamento'] ?>
-                                                </span>
-                                                <?php if (($pag['status_pagamento'] == 'Pendente' || $pag['status_pagamento'] == 'Expirado') && !empty($pag['txid'])): ?>
-                                                    <button onclick="verificarPix('<?= $pag['txid'] ?>')"
-                                                        class="ml-2 text-blue-500 hover:text-blue-700"
-                                                        title="Verificar Pagamento na API">
-                                                        <span class="material-icons text-sm">search</span>
-                                                    </button>
-                                                <?php endif; ?>
-                                                <?php if ($pag['status_pagamento'] == 'Confirmado'): ?>
-                                                    <button onclick="estornarPagamento(<?= $pag['id_pagamento'] ?>)"
-                                                        class="text-red-400 hover:underline">Estornar</button>
-                                                <?php endif; ?>
-                                            </div>
-                                        </li>
-                                    <?php endforeach; ?>
+
+                                        $statusColor = $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600' :
+                                            ($pag['status_pagamento'] == 'Expirado' ? 'text-gray-400' :
+                                                ($pag['status_pagamento'] == 'Cancelado' ? 'text-red-400' : 'text-yellow-600'));
+
+                                        $html = '<li class="text-sm bg-gray-50 p-2 rounded border border-gray-100">';
+                                        $html .= '<div class="flex justify-between mb-1">';
+                                        $html .= '<span class="font-medium text-gray-800">R$ ' . number_format($pag['valor_pago'], 2, ',', '.') . '</span>';
+                                        $html .= '<div class="text-right">';
+                                        $html .= '<span class="text-gray-500 text-xs block">' . date('d/m', strtotime($pag['data_pagamento'])) . '</span>';
+                                        $html .= $expInfo;
+                                        $html .= '</div></div>';
+
+                                        $html .= '<div class="flex justify-between items-center text-xs">';
+                                        $html .= '<span class="' . $statusColor . '">' . $pag['status_pagamento'] . '</span>';
+
+                                        if (($pag['status_pagamento'] == 'Pendente' || $pag['status_pagamento'] == 'Expirado') && !empty($pag['txid'])) {
+                                            $html .= '<button onclick="verificarPix(\'' . $pag['txid'] . '\')" class="ml-2 text-blue-500 hover:text-blue-700" title="Verificar Pagamento na API"><span class="material-icons text-sm">search</span></button>';
+                                        }
+                                        if ($pag['status_pagamento'] == 'Confirmado') {
+                                            $html .= '<button onclick="estornarPagamento(' . $pag['id_pagamento'] . ')" class="text-red-400 hover:underline">Estornar</button>';
+                                        }
+                                        $html .= '</div></li>';
+                                        return $html;
+                                    }
+
+                                    foreach ($activePayments as $pag)
+                                        echo renderPaymentItem($pag);
+
+                                    if (!empty($archivedPayments)) {
+                                        echo '<details class="group mt-2">';
+                                        echo '<summary class="flex items-center text-xs text-gray-500 cursor-pointer hover:text-gray-700 font-medium list-none">';
+                                        echo '<span class="material-icons text-sm mr-1 transition group-open:rotate-90">chevron_right</span>';
+                                        echo 'Ver ' . count($archivedPayments) . ' cancelados/expirados';
+                                        echo '</summary>';
+                                        echo '<div class="mt-2 pl-2 border-l-2 border-gray-200 space-y-2 opacity-75">';
+                                        foreach ($archivedPayments as $pag)
+                                            echo renderPaymentItem($pag);
+                                        echo '</div>';
+                                        echo '</details>';
+                                    }
+
+                                    if (empty($activePayments) && empty($archivedPayments)) {
+                                        echo "<p class='text-xs text-gray-400 italic'>Nenhum pagamento registrado.</p>";
+                                    }
+                                    ?>
                                 </ul>
                             </div>
                         </div>
