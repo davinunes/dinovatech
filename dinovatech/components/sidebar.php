@@ -76,7 +76,8 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 
         <a href="<?= $basePath ?>modules/Vet/veterinarios.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3"><?= AppHelper::isVetMode() ? 'medical_services' : 'badge' ?></span>
+            <span
+                class="material-icons text-xl mr-3"><?= AppHelper::isVetMode() ? 'medical_services' : 'badge' ?></span>
             <span class="font-medium"><?= AppHelper::isVetMode() ? 'Veterinários' : 'Colaboradores' ?></span>
         </a>
 
@@ -96,7 +97,7 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gestão</p>
         </div>
 
-        <a href="<?= $basePath ?>config_fiscal.php"
+        <a href="<?= $basePath ?>config_fiscal.php" id="menuConfiguracoes"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'config_fiscal.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">settings</span>
             <span class="font-medium">Configurações</span>
@@ -156,7 +157,7 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
         iconSpan.classList.add('animate-spin');
         textSpan.innerText = 'Gerando...';
 
-        $.post('app.php', { action: 'fazer_backup' }, function (res) {
+        $.post('<?= $basePath ?>app.php', { action: 'fazer_backup' }, function (res) {
             if (res.success) {
                 alert(res.message);
             } else {
@@ -172,4 +173,22 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                 textSpan.innerText = 'Backup BD';
             });
     }
+
+    // Check Migrations on Load
+    $(document).ready(function () {
+        $.post('<?= $basePath ?>app.php', { action: 'check_migrations_status' }, function (res) {
+            if (res.success && res.pending_count > 0) {
+                const menuConfig = $('#menuConfiguracoes');
+                const icon = menuConfig.find('.material-icons');
+                icon.text('warning');
+                icon.addClass('text-yellow-400');
+                if (!menuConfig.hasClass('bg-cyan-600')) { // If not active
+                    menuConfig.removeClass('text-slate-300').addClass('text-yellow-400 font-bold');
+                }
+
+                // Optional: Add a badge
+                menuConfig.append(`<span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">${res.pending_count}</span>`);
+            }
+        }, 'json');
+    });
 </script>

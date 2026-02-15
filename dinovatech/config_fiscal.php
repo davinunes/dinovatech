@@ -50,6 +50,10 @@ if (!isset($_SESSION['usuario_id'])) {
                                 class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                                 Integrações (API)
                             </button>
+                            <button type="button" onclick="switchTab('atualizacoes')" id="tab-atualizacoes"
+                                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Atualizações
+                            </button>
                         </nav>
                     </div>
 
@@ -411,6 +415,42 @@ if (!isset($_SESSION['usuario_id'])) {
                         </div>
 
                     </div>
+
+                    <!-- TAB: ATUALIZAÇÕES -->
+                    <div id="content-atualizacoes" class="tab-content hidden">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                            <span class="material-icons mr-2 text-cyan-600">system_update</span> Atualizações de Banco
+                            de Dados
+                        </h3>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <span class="material-icons text-blue-500">info</span>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-blue-700">
+                                        Use esta área para aplicar atualizações de esquema do banco de dados (migrações)
+                                        que podem ser necessárias após uma atualização de código.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <button type="button" id="btnRunMigrations"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center">
+                                <span class="material-icons mr-2">play_arrow</span> Verificar e Executar Migrações
+                            </button>
+                        </div>
+
+                        <div id="migrationLogsContainer" class="hidden">
+                            <h4 class="text-sm font-bold text-gray-700 mb-2">Log de Execução:</h4>
+                            <div id="migrationLogs"
+                                class="bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-lg h-64 overflow-y-auto whitespace-pre-wrap shadow-inner border border-gray-700">
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
                         <button type="submit"
                             class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
@@ -566,6 +606,45 @@ if (!isset($_SESSION['usuario_id'])) {
                         Swal.fire('Erro!', 'Falha na comunicação com o servidor.', 'error');
                     }
                 });
+            });
+            // Executar Migrações
+            $('#btnRunMigrations').click(function () {
+                const btn = $(this);
+                const icon = btn.find('.material-icons');
+                const logs = $('#migrationLogs');
+                const container = $('#migrationLogsContainer');
+
+                // UI State
+                btn.prop('disabled', true).addClass('opacity-75 cursor-wait');
+                icon.text('settings_backup_restore').addClass('animate-spin');
+
+                container.removeClass('hidden');
+                logs.text('Iniciando verificação de migrações...\n');
+
+                $.post('app.php', { action: 'run_migrations' }, function (res) {
+                    if (res.logs && res.logs.length > 0) {
+                        res.logs.forEach(function (line) {
+                            logs.append(line + '\n');
+                        });
+                    }
+
+                    if (res.success) {
+                        logs.append('\n[SUCESSO] Processo finalizado corretamente.');
+                    } else {
+                        logs.append('\n[ERRO] Ocorreu um problema durante a migração.');
+                    }
+
+                    // Scroll to bottom
+                    logs.scrollTop(logs[0].scrollHeight);
+
+                }, 'json')
+                    .fail(function () {
+                        logs.append('\n[ERRO FATAL] Falha de comunicação com o servidor.');
+                    })
+                    .always(function () {
+                        btn.prop('disabled', false).removeClass('opacity-75 cursor-wait');
+                        icon.text('play_arrow').removeClass('animate-spin');
+                    });
             });
         });
     </script>

@@ -2433,6 +2433,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = "Erro ao excluir: " . mysqli_error($link);
             }
             break;
+
+        case 'check_migrations_status':
+            $migrationsDir = __DIR__ . '/../database/migrations/';
+            if (!is_dir($migrationsDir))
+                mkdir($migrationsDir, 0755, true);
+
+            // Ensure table exists
+            $link->query("CREATE TABLE IF NOT EXISTS migrations_history (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                migration_name VARCHAR(255) NOT NULL UNIQUE,
+                executed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $files = glob($migrationsDir . '*.sql');
+            $executed = [];
+            $res = $link->query("SELECT migration_name FROM migrations_history");
+            while ($row = $res->fetch_assoc())
+                $executed[] = $row['migration_name'];
+
+            $pending = 0;
+            foreach ($files as $file) {
+                if (!in_array(basename($file), $executed))
+                    $pending++;
+            }
+
+            $response['success'] = true;
+            $response['pending_count'] = $pending;
+            break;
+
+        case 'run_migrations':
+            $migrationsDir = __DIR__ . '/../database/migrations/';
+            if (!is_dir($migrationsDir))
+                mkdir($migrationsDir, 0755, true);
+
+            // Ensure table exists
+            $link->query("CREATE TABLE IF NOT EXISTS migrations_history (
+                 id INT AUTO_INCREMENT PRIMARY KEY,
+                 migration_name VARCHAR(255) NOT NULL UNIQUE,
+                 executed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+             )");
+
+            $files = glob($migrationsDir . '*.sql');
+            sort($files);
+
+            $executed = [];
+            $res = $link->query("SELECT migration_name FROM migrations_history");
+            while ($row = $res->fetch_assoc())
+                $executed[] = $row['migration_name'];
+
+            $logs = [];
+            $pendingCount = 0;
+            $errorOccurred = false;
+
+            foreach ($files as $file) {
+                $filename = basename($file);
+                if (in_array($filename, $executed))
+                    continue;
+
+                $pendingCount++;
+                $logs[] = "Migrating: $filename...";
+
+                $content = file_get_contents($file);
+                if (empty(trim($content))) {
+                    $logs[] = "SKIPPED (Empty file).";
+                    continue;
+                }
+
+                if (mysqli_multi_query($link, $content)) {
+                    do {
+                        if ($result = mysqli_store_result($link))
+                            mysqli_free_result($result);
+                    } while (mysqli_more_results($link) && mysqli_next_result($link));
+
+                    if (mysqli_errno($link)) {
+                        $logs[] = "ERROR: " . mysqli_error($link);
+                        $errorOccurred = true;
+                        break;
+                    }
+
+                    $filenameEscaped = mysqli_real_escape_string($link, $filename);
+                    $link->query("INSERT INTO migrations_history (migration_name) VALUES ('$filenameEscaped')");
+                    $logs[] = "DONE.";
+                } else {
+                    $logs[] = "ERROR executing query: " . mysqli_error($link);
+                    $errorOccurred = true;
+                    break;
+                }
+            }
+
+            if ($pendingCount == 0)
+                $logs[] = "Nenhuma migração pendente.";
+            else
+                $logs[] = "Migrações finalizadas.";
+
+            $response['success'] = !$errorOccurred;
+            $response['logs'] = $logs;
+            break;
     }
 } else {
     $response['message'] = "Requisição inválida (apenas POST permitido).";
