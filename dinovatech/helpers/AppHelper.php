@@ -254,9 +254,12 @@ class AppHelper
             'valor_desconto_original' => (float) ($rowFatura['desconto_valor'] ?? 0),
             'valor_liquido' => (float) $valorLiquido
         ];
+    }
+
     public static function getCidadePorCodigo($codigo)
     {
-        if (empty($codigo)) return null;
+        if (empty($codigo))
+            return null;
 
         // 1. Check Session Cache
         if (isset($_SESSION['ibge_cache'][$codigo])) {
@@ -265,7 +268,7 @@ class AppHelper
 
         // 2. Call API
         $url = "https://servicodados.ibge.gov.br/api/v1/localidades/municipios/{$codigo}";
-        
+
         // Use curl for better reliability
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -281,15 +284,15 @@ class AppHelper
             if (isset($data['nome'])) {
                 $cidade = $data['nome'];
                 $uf = $data['microrregiao']['mesorregiao']['UF']['sigla'] ?? '';
-                
+
                 $resultado = $cidade . ($uf ? ' - ' . $uf : '');
-                
+
                 // 3. Cache
                 if (!isset($_SESSION['ibge_cache'])) {
                     $_SESSION['ibge_cache'] = [];
                 }
                 $_SESSION['ibge_cache'][$codigo] = $resultado;
-                
+
                 return $resultado;
             }
         }
