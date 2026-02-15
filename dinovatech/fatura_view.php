@@ -357,10 +357,13 @@ if ($id_fatura) {
 
                                 if (!empty($nfse_list)) {
                                     foreach ($nfse_list as $nfse) {
-                                        if ($nfse['status'] == 'concluido' && isset($nfse['ambiente']) && $nfse['ambiente'] == 'producao')
+                                        $statusLower = strtolower($nfse['status'] ?? '');
+
+                                        if ($statusLower == 'concluido' && isset($nfse['ambiente']) && $nfse['ambiente'] == 'producao')
                                             $hasAuthorized = true;
 
-                                        if ($nfse['status'] == 'Erro') {
+                                        // Group: IF NOT 'concluido' AND NOT 'processando' -> Error/History
+                                        if ($statusLower !== 'concluido' && $statusLower !== 'processando') {
                                             $errorNfse[] = $nfse;
                                         } else {
                                             $activeNfse[] = $nfse;
@@ -373,15 +376,18 @@ if ($id_fatura) {
                                 {
                                     $statusClass = 'text-gray-500';
                                     $icon = 'history';
-                                    if ($nfse['status'] == 'concluido') {
+                                    $statusLower = strtolower($nfse['status'] ?? '');
+
+                                    if ($statusLower == 'concluido') {
                                         $statusClass = 'text-green-600';
                                         $icon = 'check_circle';
-                                    } elseif ($nfse['status'] == 'Erro') {
-                                        $statusClass = 'text-red-500';
-                                        $icon = 'error';
-                                    } elseif ($nfse['status'] == 'Processando') {
+                                    } elseif ($statusLower == 'processando') {
                                         $statusClass = 'text-blue-500';
                                         $icon = 'hourglass_empty';
+                                    } else {
+                                        // Assume error or failure if not success/processing
+                                        $statusClass = 'text-red-500';
+                                        $icon = 'error';
                                     }
 
                                     // Parsed Info
@@ -398,7 +404,7 @@ if ($id_fatura) {
                                     $html .= '<span class="text-xs text-gray-400">' . date('d/m H:i', strtotime($nfse['data_emissao'])) . '</span>';
                                     $html .= '</div>';
 
-                                    if ($nfse['status'] == 'concluido') {
+                                    if ($statusLower == 'concluido') {
                                         $html .= '<div class="text-xs text-gray-600 mt-1">';
                                         $html .= '<strong>Número:</strong> ' . $numero_nota . '<br>';
                                         $html .= '<strong>RPS:</strong> ' . $nfse['numero_rps'] . '/' . $nfse['serie_rps'] . '<br>';
@@ -413,7 +419,7 @@ if ($id_fatura) {
                                             $html .= '<button onclick="consultarUrlNfse(' . $nfse['id_emissao'] . ')" class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300" title="Tentar obter link PDF na Prefeitura">Buscar PDF</button>';
                                         }
                                         $html .= '</div>';
-                                    } elseif ($nfse['status'] == 'Erro') {
+                                    } elseif ($statusLower !== 'processando') {
                                         $html .= '<div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">';
                                         $html .= substr(strip_tags($nfse['xml_retorno']), 0, 100) . '...';
                                         $html .= '</div>';
@@ -433,7 +439,7 @@ if ($id_fatura) {
                                         echo '<details class="group mt-2">';
                                         echo '<summary class="flex items-center text-xs text-red-500 cursor-pointer hover:text-red-700 font-medium list-none">';
                                         echo '<span class="material-icons text-sm mr-1 transition group-open:rotate-90">chevron_right</span>';
-                                        echo 'Ver ' . count($errorNfse) . ' falhas';
+                                        echo 'Ver ' . count($errorNfse) . ' falhas/tentativas';
                                         echo '</summary>';
                                         echo '<div class="mt-2 pl-2 border-l-2 border-red-100">';
                                         foreach ($errorNfse as $nfse)
