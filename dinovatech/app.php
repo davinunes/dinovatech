@@ -2534,6 +2534,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $response['success'] = !$errorOccurred;
             $response['logs'] = $logs;
             break;
+
+        // --- MODELOS DE DOCUMENTOS ---
+
+        case 'get_modelos_documentos':
+            $query = "SELECT * FROM ModelosDocumentos WHERE ativo = 1 ORDER BY titulo ASC";
+            $result = DBExecute($link, $query);
+            $modelos = [];
+            while ($row = mysqli_fetch_assoc($result)) {
+                $modelos[] = $row;
+            }
+            $response['success'] = true;
+            $response['data'] = $modelos;
+            break;
+
+        case 'get_modelo_detalhes':
+            $id = $_POST['id'] ?? 0;
+            $id = mysqli_real_escape_string($link, $id);
+            $query = "SELECT * FROM ModelosDocumentos WHERE id_modelo = '$id'";
+            $result = DBExecute($link, $query);
+            if ($row = mysqli_fetch_assoc($result)) {
+                $response['success'] = true;
+                $response['data'] = $row;
+            } else {
+                $response['message'] = "Modelo não encontrado.";
+            }
+            break;
+
+        case 'salvar_modelo_documento':
+            $id = $_POST['id'] ?? '';
+            $titulo = mysqli_real_escape_string($link, $_POST['titulo'] ?? '');
+            $conteudo = mysqli_real_escape_string($link, $_POST['conteudo'] ?? '');
+            $tipo = mysqli_real_escape_string($link, $_POST['tipo'] ?? 'Geral');
+
+            if (empty($titulo)) {
+                $response['message'] = "Título é obrigatório.";
+                break;
+            }
+
+            if (!empty($id)) {
+                $id = mysqli_real_escape_string($link, $id);
+                $query = "UPDATE ModelosDocumentos SET titulo='$titulo', conteudo='$conteudo', tipo='$tipo' WHERE id_modelo='$id'";
+            } else {
+                $query = "INSERT INTO ModelosDocumentos (titulo, conteudo, tipo) VALUES ('$titulo', '$conteudo', '$tipo')";
+            }
+
+            if (DBExecute($link, $query)) {
+                $response['success'] = true;
+                $response['message'] = "Modelo salvo com sucesso!";
+            } else {
+                $response['message'] = "Erro ao salvar modelo: " . mysqli_error($link);
+            }
+            break;
+
+        case 'excluir_modelo_documento':
+            $id = $_POST['id'] ?? '';
+            if (empty($id)) {
+                $response['message'] = "ID obrigatório.";
+                break;
+            }
+            $id = mysqli_real_escape_string($link, $id);
+            // Soft delete
+            $query = "UPDATE ModelosDocumentos SET ativo = 0 WHERE id_modelo = '$id'";
+            if (DBExecute($link, $query)) {
+                $response['success'] = true;
+                $response['message'] = "Modelo excluído com sucesso!";
+            } else {
+                $response['message'] = "Erro ao excluir: " . mysqli_error($link);
+            }
+            break;
+
     }
 } else {
     $response['message'] = "Requisição inválida (apenas POST permitido).";
