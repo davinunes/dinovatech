@@ -14,8 +14,15 @@ if (!isset($_SESSION['usuario_id']) || !AppHelper::isVetMode()) {
 include "../../../database.php";
 $link = DBConnect();
 
+
 $id_atendimento = $_GET['id_atendimento'] ?? 0;
 $id_modelo = $_GET['id_modelo'] ?? 0;
+
+echo "Debug: params loaded ($id_atendimento, $id_modelo)<br>";
+
+if (!$id_atendimento || !$id_modelo) {
+    die("Debug: Missing parameters.");
+}
 
 $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
 $id_modelo = mysqli_real_escape_string($link, $id_modelo);
@@ -31,11 +38,16 @@ $q = "SELECT a.*,
       LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
       WHERE a.id_atendimento = '$id_atendimento'";
 
+echo "Debug: Query Attendance: $q<br>";
 $r = DBExecute($link, $q);
+if (!$r) {
+    echo "Debug: Query Failed: " . mysqli_error($link) . "<br>";
+}
 if (!$r || mysqli_num_rows($r) == 0) {
-    die("Atendimento não encontrado.");
+    die("Atendimento não encontrado (Rows: " . ($r ? mysqli_num_rows($r) : 'False') . ")");
 }
 $dados = mysqli_fetch_assoc($r);
+echo "Debug: Attendance found.<br>";
 
 // 2. Fetch Model
 $q_mod = "SELECT * FROM ModelosDocumentos WHERE id_modelo = '$id_modelo'";
@@ -44,6 +56,7 @@ if (!$r_mod || mysqli_num_rows($r_mod) == 0) {
     die("Modelo não encontrado.");
 }
 $modelo = mysqli_fetch_assoc($r_mod);
+echo "Debug: Model found.<br>";
 
 // 2b. Fetch Company Info for Logo
 $q_conf = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
