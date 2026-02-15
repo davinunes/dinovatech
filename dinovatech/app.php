@@ -2611,6 +2611,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $data_nascimento = date('d/m/Y', strtotime($dados['nascimento']));
             }
 
+            // Calculate City
+            $nomeCidade = 'São Paulo';
+            if (!empty($empresa['codigo_municipio'])) {
+                // Try helper
+                $ibgeCidade = AppHelper::getCidadePorCodigo($empresa['codigo_municipio']);
+                if ($ibgeCidade)
+                    $nomeCidade = $ibgeCidade;
+            }
+
             // Map ALL available variables
             // Note: In a real advanced system we might parse $texto for {{VAR}} regex.
             // But here we know the supported list, so let's just return the ones we support.
@@ -2628,7 +2637,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 '{{NOME_VET}}' => $dados['nome_vet'],
                 '{{CRMV_VET}}' => $dados['crmv_vet'],
                 '{{DATA_ATUAL}}' => date('d/m/Y'),
-                '{{CIDADE_DATA}}' => 'São Paulo, ' . date('d/m/Y'),
+                '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
             ];
 
             // Filter only used vars? Or return all?

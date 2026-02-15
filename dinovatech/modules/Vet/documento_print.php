@@ -92,6 +92,15 @@ if (!empty($dados['nascimento'])) {
     $data_nascimento = date('d/m/Y', strtotime($dados['nascimento']));
 }
 
+// Calculate City Name
+$nomeCidade = 'São Paulo'; // Fallback
+if (!empty($empresa['codigo_municipio'])) {
+    $ibgeCidade = AppHelper::getCidadePorCodigo($empresa['codigo_municipio']);
+    if ($ibgeCidade) {
+        $nomeCidade = $ibgeCidade;
+    }
+}
+
 // Map variables
 $vars = [
     '{{LOGO_URL}}' => '<img src="' . $logo_url . '" style="max-height: 80px;"/>',
@@ -110,7 +119,7 @@ $vars = [
     '{{CRMV_VET}}' => $dados['crmv_vet'],
     '{{DATA_ATUAL}}' => date('d/m/Y'),
     '{{HORA_ATUAL}}' => date('H:i'),
-    '{{CIDADE_DATA}}' => (isset($empresa['cidade']) && !empty($empresa['cidade']) ? $empresa['cidade'] : 'São Paulo') . ', ' . date('d/m/Y'),
+    '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
 ];
 
 // 4. Apply Overrides (if any)
