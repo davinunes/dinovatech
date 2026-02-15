@@ -259,6 +259,9 @@ DBClose($link);
                 <button type="button" class="tab-btn" onclick="openTab('anexos')">
                     <span class="material-icons text-sm align-middle mr-1">attach_file</span> Anexos / Docs
                 </button>
+                <button type="button" class="tab-btn" onclick="openTab('documentos')">
+                    <span class="material-icons text-sm align-middle mr-1">description</span> Emitir Documento
+                </button>
             </div>
 
             <!-- TABS CONTENT -->
@@ -462,7 +465,39 @@ DBClose($link);
                         </div>
                     </div>
                 <?php endif; ?>
-            </div>
+                <!-- TAB 4: DOCUMENTOS (MODELOS) -->
+                <div id="tab-documentos" class="tab-content hidden max-w-5xl mx-auto">
+                    <?php if (!$id_atendimento): ?>
+                        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+                            <p class="font-bold">Atenção</p>
+                            <p>Salve o atendimento pela primeira vez para emitir documentos.</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                            <h3 class="text-xl font-bold text-gray-800 mb-4">Emitir Documento (Baseado em Modelo)</h3>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Selecione o Modelo</label>
+                                    <select id="select-modelo-doc"
+                                        class="w-full border-gray-300 rounded p-2 border bg-white">
+                                        <option value="">Carregando modelos...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button onclick="gerarDocumentoModelo()"
+                                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded shadow flex items-center w-full justify-center md:w-auto">
+                                        <span class="material-icons mr-2">print</span> Gerar e Imprimir
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-4">
+                                O documento será gerado com os dados atuais do atendimento (Pet, Tutor, Veterinário)
+                                substituindo as variáveis do modelo.
+                            </p>
+                        </div>
+                    <?php endif; ?>
+                </div>
 
         </main>
     </div>
@@ -575,6 +610,30 @@ DBClose($link);
 
             if (tabName === 'receitas' && ID_ATENDIMENTO) carregarReceitas();
             if (tabName === 'anexos' && ID_ATENDIMENTO) carregarArquivos();
+            if (tabName === 'documentos' && ID_ATENDIMENTO) carregarModelosDoc();
+        }
+
+        // --- DOCUMENTOS MODELOS ---
+        function carregarModelosDoc() {
+            $.post(BASE_URL, { action: 'get_modelos_documentos' }, function(res) {
+                if (res.success) {
+                    let html = '<option value="">Selecione um modelo...</option>';
+                    res.data.forEach(m => {
+                        html += `<option value="${m.id_modelo}">${m.titulo} (${m.tipo})</option>`;
+                    });
+                    $('#select-modelo-doc').html(html);
+                }
+            }, 'json');
+        }
+
+        function gerarDocumentoModelo() {
+            let idModelo = $('#select-modelo-doc').val();
+            if(!idModelo) {
+                alert('Selecione um modelo.');
+                return;
+            }
+            // Open print window
+            window.open(`documento_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`, '_blank');
         }
 
         // --- ANEXOS ---
