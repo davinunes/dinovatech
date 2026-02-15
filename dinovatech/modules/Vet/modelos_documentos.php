@@ -136,8 +136,11 @@ if (!AppHelper::isVetMode()) {
                                 <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome Pet</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{PELAGEM_PET}}')">Pelagem</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{PELAGEM_PET}}')">Pelagem
+                                    (Indisp.)</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{NASCIMENTO_PET}}')">Data
+                                    Nasc.</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>

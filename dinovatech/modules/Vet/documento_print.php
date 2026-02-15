@@ -70,6 +70,7 @@ $r_conf = DBExecute($link, $q_conf);
 $empresa = mysqli_fetch_assoc($r_conf);
 
 // 3. Prepare Variables
+$basePath = '../../'; // Relative path to root from modules/Vet/
 $logo_url = '';
 if (!empty($empresa['logo_url'])) {
     $logo_url = $basePath . $empresa['logo_url'];
@@ -77,8 +78,9 @@ if (!empty($empresa['logo_url'])) {
     $logo_url = $basePath . 'assets/img/logo_dino.png'; // Fallback
 }
 
-// Calculate Age
+// Calculate Age and Date
 $idade = 'N/I';
+$data_nascimento = '';
 if (!empty($dados['nascimento'])) {
     $nasc = new DateTime($dados['nascimento']);
     $hoje = new DateTime();
@@ -86,6 +88,8 @@ if (!empty($dados['nascimento'])) {
     $idade = $diff->y . ' anos';
     if ($diff->y < 1)
         $idade = $diff->m . ' meses';
+
+    $data_nascimento = date('d/m/Y', strtotime($dados['nascimento']));
 }
 
 // Map variables
@@ -98,6 +102,7 @@ $vars = [
     '{{ESPECIE_PET}}' => $dados['especie'],
     '{{RACA_PET}}' => $dados['raca'],
     '{{PELAGEM_PET}}' => '', // Campo inexistente no banco atual
+    '{{NASCIMENTO_PET}}' => $data_nascimento,
     '{{IDADE_PET}}' => $idade,
     '{{PESO_PET}}' => $dados['peso'] ?? $dados['peso_pet'] ?? '',
     '{{SEXO_PET}}' => $dados['sexo'],
