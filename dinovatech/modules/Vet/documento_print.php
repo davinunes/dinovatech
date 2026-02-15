@@ -22,8 +22,8 @@ if (!isset($_SESSION['usuario_id']) || !AppHelper::isVetMode()) {
 include $pathDB;
 $link = DBConnect();
 
-$id_atendimento = $_GET['id_atendimento'] ?? 0;
-$id_modelo = $_GET['id_modelo'] ?? 0;
+$id_atendimento = $_REQUEST['id_atendimento'] ?? 0;
+$id_modelo = $_REQUEST['id_modelo'] ?? 0;
 
 if (!$id_atendimento || !$id_modelo) {
     die("Parametros invalidos.");
@@ -113,7 +113,18 @@ $vars = [
     '{{CIDADE_DATA}}' => 'São Paulo, ' . date('d/m/Y'),
 ];
 
-// 4. Replace Content
+// 4. Apply Overrides (if any)
+if (isset($_REQUEST['overrides']) && is_array($_REQUEST['overrides'])) {
+    foreach ($_REQUEST['overrides'] as $key => $val) {
+        // Security: only allow overriding known keys if necessary, or just blindly accept
+        // For flexibility, we update if key exists in defaults or is a new one (though template only has specific placeholders)
+        if (array_key_exists($key, $vars)) {
+            $vars[$key] = $val;
+        }
+    }
+}
+
+// 5. Replace Content
 $conteudo_final = $modelo['conteudo'];
 foreach ($vars as $key => $val) {
     $conteudo_final = str_replace($key, $val, $conteudo_final);
@@ -129,39 +140,29 @@ foreach ($vars as $key => $val) {
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             color: #333;
             line-height: 1.5;
         }
 
         .document-container {
+            width: 100%;
             max-width: 210mm;
             margin: 0 auto;
             background: white;
             min-height: 297mm;
+            padding: 20mm;
+            /* Default padding for screen view */
+            box-sizing: border-box;
+        }
+
+        @page {
+            size: A4;
+            margin: 10mm;
+            /* Force print margin */
         }
 
         @media print {
-            body {
-                margin: 0;
-                padding: 0;
-                background: white;
-            }
-
-            .document-container {
-                width: 100%;
-                margin: 0;
-                box-shadow: none;
-            }
-
-            .no-print {
-                display: none;
-            }
-        }
-
-        .btn-print {
-            position: fixed;
-            top: 20px;
             right: 20px;
             background: #0891b2;
             color: white;

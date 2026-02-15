@@ -486,8 +486,21 @@ DBClose($link);
                             </button>
                         </div>
                     </div>
+
+                    <!-- Variables Preview -->
+                    <div id="vars-preview-container" class="mt-6 hidden">
+                        <h4 class="text-sm font-bold text-gray-700 mb-2 border-b pb-1">Revisão de Campos (Substituição)
+                        </h4>
+                        <div id="vars-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            <!-- Inputs dynamic -->
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Tecle ENTER para atualizar a visualização se necessário.
+                        </p>
+                    </div>
+
                     <p class="text-sm text-gray-500 mt-4">
-                        O documento será gerado com os dados atuais do atendimento.
+                        O documento será gerado com os dados atuais do atendimento. Você pode alterar os valores acima
+                        antes de imprimir.
                     </p>
                 </div>
             </div>
@@ -617,15 +630,40 @@ DBClose($link);
                     $('#select-modelo-doc').html(html);
                 }
             }, 'json');
+
+            // Listen for change
+            $('#select-modelo-doc').change(function () {
+                let idModelo = $(this).val();
+                if (!idModelo) {
+                    $('#vars-preview-container').addClass('hidden');
+                    return;
+                }
+                // Fetch vars
+                $.post(BASE_URL, { action: 'get_modelo_vars_preview', id_modelo: idModelo, id_atendimento: ID_ATENDIMENTO }, function (res) {
+                    res = typeof res === 'string' ? JSON.parse(res) : res;
+                    if (res.success && res.data.length > 0) {
+                        let gridHtml = '';
+                        res.data.forEach(v => {
+                            gridHtml += `
+                                <div>
+                                    <label class="block text-xs text-gray-500 font-bold mb-1">${v.label}</label>
+                                    <input type="text" name="overrides[${v.key}]" value="${v.value}" 
+                                        class="w-full border-gray-300 rounded p-1 text-sm border focus:ring-cyan-500 override-input">
+                                </div>
+                            `;
+                        });
+                        $('#vars-grid').html(gridHtml);
+                        $('#vars-preview-container').removeClass('hidden');
+                    } else {
+                        $('#vars-grid').html('<p class="text-sm text-gray-400">Este modelo não possui campos variaveis.</p>');
+                        $('#vars-preview-container').removeClass('hidden');
+                    }
+                });
+            });
         }
 
         function gerarDocumentoModelo() {
-            console.log('Button clicked! Function gerarDocumentoModelo called.');
-            console.log('ID_ATENDIMENTO:', ID_ATENDIMENTO);
-
             let idModelo = $('#select-modelo-doc').val();
-            console.log('Selected Model ID:', idModelo);
-
             if (!idModelo) {
                 alert('Selecione um modelo.');
                 return;
@@ -635,10 +673,39 @@ DBClose($link);
                 return;
             }
 
-            // Open in new tab
-            let url = `documento_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`;
-            console.log('Opening URL:', url);
-            window.open(url, '_blank');
+            // Create a dynamic form to submit via POST (to handle overrides)
+            let form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'documento_print.php';
+            form.target = '_blank';
+
+            // Hidden fields
+            let inputIdAtend = document.createElement('input');
+            inputIdAtend.type = 'hidden';
+            inputIdAtend.name = 'id_atendimento';
+            inputIdAtend.value = ID_ATENDIMENTO;
+            form.appendChild(inputIdAtend);
+
+            let inputIdModelo = document.createElement('input');
+            inputIdModelo.type = 'hidden';
+            inputIdModelo.name = 'id_modelo';
+            inputIdModelo.value = idModelo;
+            form.appendChild(inputIdModelo);
+
+            // Overrides
+            $('.override-input').each(function () {
+                let name = $(this).attr('name');
+                let val = $(this).val();
+                let input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name; // overrides[{{KEY}}]
+                input.value = val;
+                form.appendChild(input);
+            });
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
         }
 
         // --- ANEXOS ---

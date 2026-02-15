@@ -2553,12 +2553,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = mysqli_real_escape_string($link, $id);
             $query = "SELECT * FROM ModelosDocumentos WHERE id_modelo = '$id'";
             $result = DBExecute($link, $query);
-            if ($row = mysqli_fetch_assoc($result)) {
+            if ($result && mysqli_num_rows($result) > 0) {
                 $response['success'] = true;
-                $response['data'] = $row;
+                $response['data'] = mysqli_fetch_assoc($result);
             } else {
                 $response['message'] = "Modelo não encontrado.";
             }
+            break;
+
+        case 'get_modelo_vars_preview':
+            $id_modelo = $_POST['id_modelo'] ?? 0;
+            $id_atendimento = $_POST['id_atendimento'] ?? 0;
+
+            if (!$id_modelo || !$id_atendimento) {
+                $response['message'] = "ID do modelo ou atendimento inválidos.";
+                break;
+            }
+
+            // Reuse logic? Or replicate for simplicity/speed since print script is separate.
+            // For now, let's replicate the basic resolution logic or define a helper method?
+            // Replicating logic here is cleaner than including a view script.
+
+            // 1. Fetch Model Content
+            $qm = "SELECT conteudo FROM ModelosDocumentos WHERE id_modelo = '$id_modelo'";
+            $rm = DBExecute($link, $qm);
+            $modelo = mysqli_fetch_assoc($rm);
+            $texto = $modelo['conteudo'];
+
+            // 2. Fetch Data
+            $qa = "SELECT a.*, 
+                    p.nome as nome_pet, p.especie, p.raca, p.sexo, p.peso as peso_pet, p.data_nascimento as nascimento,
+                    c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor,
+                    v.nome as nome_vet, v.crmv as crmv_vet
+                   FROM Atendimentos a
+                   LEFT JOIN Pets p ON a.id_pet = p.id_pet
+                   LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
+                   LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
+                   WHERE a.id_atendimento = '$id_atendimento'";
+            $ra = DBExecute($link, $qa);
+            $dados = mysqli_fetch_assoc($ra);
+
+            // 2b. Company
+            $qc = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
+            $rc = DBExecute($link, $qc);
+            $empresa = mysqli_fetch_assoc($rc);
+
+            // Calculate Age
+            $idade = 'N/I';
+            $data_nascimento = '';
+            if (!empty($dados['nascimento'])) {
+                $nasc = new DateTime($dados['nascimento']);
+                $hoje = new DateTime();
+                $diff = $hoje->diff($nasc);
+                $idade = $diff->y . ' anos';
+                if ($diff->y < 1)
+                    $idade = $diff->m . ' meses';
+                $data_nascimento = date('d/m/Y', strtotime($dados['nascimento']));
+            }
+
+            // Map ALL available variables
+            // Note: In a real advanced system we might parse $texto for {{VAR}} regex.
+            // But here we know the supported list, so let's just return the ones we support.
+            $vars = [
+                '{{NOME_TUTOR}}' => $dados['nome_tutor'],
+                '{{CPF_TUTOR}}' => $dados['cpf_tutor'] ?? '',
+                '{{ENDERECO_TUTOR}}' => $dados['endereco_tutor'] ?? '',
+                '{{NOME_PET}}' => $dados['nome_pet'],
+                '{{ESPECIE_PET}}' => $dados['especie'],
+                '{{RACA_PET}}' => $dados['raca'],
+                '{{NASCIMENTO_PET}}' => $data_nascimento,
+                '{{IDADE_PET}}' => $idade,
+                '{{PESO_PET}}' => $dados['peso'] ?? $dados['peso_pet'] ?? '',
+                '{{SEXO_PET}}' => $dados['sexo'],
+                '{{NOME_VET}}' => $dados['nome_vet'],
+                '{{CRMV_VET}}' => $dados['crmv_vet'],
+                '{{DATA_ATUAL}}' => date('d/m/Y'),
+                '{{CIDADE_DATA}}' => 'São Paulo, ' . date('d/m/Y'),
+            ];
+
+            // Filter only used vars? Or return all?
+            // Let's filter to only show relevant ones, by checking strpos
+            $used_vars = [];
+            foreach ($vars as $key => $val) {
+                if (strpos($texto, $key) !== false) {
+                    $used_vars[] = ['key' => $key, 'label' => str_replace(['{{', '}}', '_'], ['', '', ' '], $key), 'value' => $val];
+                }
+            }
+
+            $response['success'] = true;
+            $response['data'] = $used_vars;
             break;
 
         case 'salvar_modelo_documento':
