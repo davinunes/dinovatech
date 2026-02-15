@@ -915,7 +915,8 @@ DBClose($link);
             }
 
             // Open in new tab
-            let url = `documento_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`;
+            let url = `teste_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`;
+            alert('Debug URL: ' + url); // Show user what URL is being opened
             window.open(url, '_blank');
         }
     </script>
