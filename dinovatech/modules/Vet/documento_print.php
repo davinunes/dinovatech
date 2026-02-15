@@ -34,8 +34,8 @@ $id_modelo = mysqli_real_escape_string($link, $id_modelo);
 
 // 1. Fetch Attendance + Pet + Client + Vet
 $q = "SELECT a.*, 
-        p.nome as nome_pet, p.especie, p.raca, p.sexo, p.cor as pelagem, p.nascimento, p.peso as peso_pet,
-        c.nome as nome_tutor, c.cpf as cpf_tutor, c.endereco as endereco_tutor,
+        p.nome as nome_pet, p.especie, p.raca, p.sexo, p.peso as peso_pet, p.data_nascimento as nascimento,
+        c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor,
         v.nome as nome_vet, v.crmv as crmv_vet
         FROM Atendimentos a
         LEFT JOIN Pets p ON a.id_pet = p.id_pet
@@ -97,7 +97,7 @@ $vars = [
     '{{NOME_PET}}' => $dados['nome_pet'],
     '{{ESPECIE_PET}}' => $dados['especie'],
     '{{RACA_PET}}' => $dados['raca'],
-    '{{PELAGEM_PET}}' => $dados['pelagem'] ?? '',
+    '{{PELAGEM_PET}}' => '', // Campo inexistente no banco atual
     '{{IDADE_PET}}' => $idade,
     '{{PESO_PET}}' => $dados['peso'] ?? $dados['peso_pet'] ?? '',
     '{{SEXO_PET}}' => $dados['sexo'],
