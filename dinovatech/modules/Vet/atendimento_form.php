@@ -487,7 +487,7 @@ DBClose($link);
                         </div>
                     </div>
                     <p class="text-sm text-gray-500 mt-4">
-                        DEBUG: Se voce ver isso, o tab esta funcionando.
+                        O documento será gerado com os dados atuais do atendimento.
                     </p>
                 </div>
             </div>
