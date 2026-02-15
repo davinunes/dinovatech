@@ -1,1 +1,1 @@
-lembre-se que estamos usando url preautenticada para criar objetos no "s3" da oracle.
+sobre a integração com oracle, lembre-se que estamos usando url preautenticada para criar objetos no "s3" da oracle.
