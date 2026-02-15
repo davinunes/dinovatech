@@ -176,6 +176,8 @@ foreach ($vars as $key => $val) {
                 /* Let @page handle margins */
                 box-shadow: none;
                 border: none;
+                min-height: 0;
+                /* CRITICAL: Prevent forcing a 2nd page if content is short */
             }
 
             .no-print {
