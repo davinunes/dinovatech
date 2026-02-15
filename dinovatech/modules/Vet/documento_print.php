@@ -34,18 +34,25 @@ $id_modelo = mysqli_real_escape_string($link, $id_modelo);
 
 // 1. Fetch Attendance + Pet + Client + Vet
 $q = "SELECT a.*, 
-        p.nome as nome_pet, p.especie, p.raca, p.sexo, p.cor as pelagem, p.nascimento, p.peso,
+        p.nome as nome_pet, p.especie, p.raca, p.sexo, p.cor as pelagem, p.nascimento, p.peso as peso_pet,
         c.nome as nome_tutor, c.cpf as cpf_tutor, c.endereco as endereco_tutor,
         v.nome as nome_vet, v.crmv as crmv_vet
         FROM Atendimentos a
-        JOIN Pets p ON a.id_pet = p.id_pet
-        JOIN Clientes c ON p.id_cliente = c.id_cliente
+        LEFT JOIN Pets p ON a.id_pet = p.id_pet
+        LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
         LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
         WHERE a.id_atendimento = '$id_atendimento'";
 
 $r = DBExecute($link, $q);
 if (!$r || mysqli_num_rows($r) == 0) {
-    die("Atendimento nao encontrado.");
+    // Debug: Check if attendance exists at all
+    $check = DBExecute($link, "SELECT * FROM Atendimentos WHERE id_atendimento = '$id_atendimento'");
+    if (mysqli_num_rows($check) > 0) {
+        $row = mysqli_fetch_assoc($check);
+        die("Atendimento ID $id_atendimento encontrado, mas falha nos JOINS.<br>Pet ID: " . $row['id_pet'] . "<br>Vet ID: " . $row['id_vet']);
+    } else {
+        die("Atendimento ID $id_atendimento nao existe no banco de dados.");
+    }
 }
 $dados = mysqli_fetch_assoc($r);
 
@@ -92,7 +99,7 @@ $vars = [
     '{{RACA_PET}}' => $dados['raca'],
     '{{PELAGEM_PET}}' => $dados['pelagem'] ?? '',
     '{{IDADE_PET}}' => $idade,
-    '{{PESO_PET}}' => $dados['peso'] ?? $dados['peso_tmp'] ?? '',
+    '{{PESO_PET}}' => $dados['peso'] ?? $dados['peso_pet'] ?? '',
     '{{SEXO_PET}}' => $dados['sexo'],
     '{{NOME_VET}}' => $dados['nome_vet'],
     '{{CRMV_VET}}' => $dados['crmv_vet'],
