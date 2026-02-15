@@ -465,31 +465,32 @@ DBClose($link);
                         </div>
                     </div>
                 <?php endif; ?>
-                <!-- TAB 4: DOCUMENTOS (MODELOS) -->
-                <div id="tab-documentos" class="tab-content hidden max-w-5xl mx-auto">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h3 class="text-xl font-bold text-gray-800 mb-4">Emitir Documento (Baseado em Modelo)</h3>
+            </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Selecione o Modelo</label>
-                                <select id="select-modelo-doc"
-                                    class="w-full border-gray-300 rounded p-2 border bg-white">
-                                    <option value="">Carregando modelos...</option>
-                                </select>
-                            </div>
-                            <div>
-                                <button type="button" onclick="gerarDocumentoModelo()"
-                                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded shadow flex items-center w-full justify-center md:w-auto">
-                                    <span class="material-icons mr-2">print</span> Gerar e Imprimir
-                                </button>
-                            </div>
+            <!-- TAB 4: DOCUMENTOS (MODELOS) -->
+            <div id="tab-documentos" class="tab-content hidden max-w-5xl mx-auto">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Emitir Documento (Baseado em Modelo)</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Selecione o Modelo</label>
+                            <select id="select-modelo-doc" class="w-full border-gray-300 rounded p-2 border bg-white">
+                                <option value="">Carregando modelos...</option>
+                            </select>
                         </div>
-                        <p class="text-sm text-gray-500 mt-4">
-                            DEBUG: Se voce ver isso, o tab esta funcionando.
-                        </p>
+                        <div>
+                            <button type="button" onclick="gerarDocumentoModelo()"
+                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded shadow flex items-center w-full justify-center md:w-auto">
+                                <span class="material-icons mr-2">print</span> Gerar e Imprimir
+                            </button>
+                        </div>
                     </div>
+                    <p class="text-sm text-gray-500 mt-4">
+                        DEBUG: Se voce ver isso, o tab esta funcionando.
+                    </p>
                 </div>
+            </div>
 
         </main>
     </div>
