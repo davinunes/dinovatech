@@ -1730,17 +1730,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nomeArquivoBucket = time() . '_' . $id_fatura . '_' . substr(md5(uniqid()), 0, 8) . '.' . $extensao;
 
             // Carregar URL pré-autenticada
-            $pathConfig = __DIR__ . '/../oci-s3.php';
-            if (file_exists($pathConfig)) {
-                include $pathConfig;
-            } else {
-                $response['message'] = "Configuração de armazenamento não encontrada em: " . $pathConfig;
+            // Carregar URL pré-autenticada do Banco de Dados
+            $queryConfig = "SELECT api_oracle_url FROM ConfiguracoesEmissor LIMIT 1";
+            $resConfig = DBExecute($link, $queryConfig);
+            $rowConfig = mysqli_fetch_assoc($resConfig);
+
+            $urlBucketPreauth = $rowConfig['api_oracle_url'] ?? '';
+
+            if (empty($urlBucketPreauth)) {
+                $response['message'] = "URL do bucket Oracle não configurada nas Configurações (Fiscal).";
                 break;
             }
 
-            if (!isset($urlBucketPreauth)) {
-                $response['message'] = "URL do bucket não configurada.";
-                break;
+            // Garante barra no final
+            if (substr($urlBucketPreauth, -1) !== '/') {
+                $urlBucketPreauth .= '/';
             }
 
             // Nome único no bucket com pasta 'arquivos/': arquivos/timestamp_idFatura_hash.ext
