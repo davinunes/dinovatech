@@ -615,7 +615,7 @@ DBClose($link);
 
         // --- DOCUMENTOS MODELOS ---
         function carregarModelosDoc() {
-            $.post(BASE_URL, { action: 'get_modelos_documentos' }, function(res) {
+            $.post(BASE_URL, { action: 'get_modelos_documentos' }, function (res) {
                 if (res.success) {
                     let html = '<option value="">Selecione um modelo...</option>';
                     res.data.forEach(m => {
@@ -628,7 +628,7 @@ DBClose($link);
 
         function gerarDocumentoModelo() {
             let idModelo = $('#select-modelo-doc').val();
-            if(!idModelo) {
+            if (!idModelo) {
                 alert('Selecione um modelo.');
                 return;
             }
@@ -900,6 +900,23 @@ DBClose($link);
                 if (res.success) carregarReceitas();
                 else alert('Erro: ' + res.message);
             });
+        }
+
+        // --- DOCUMENTOS ---
+        function gerarDocumentoModelo() {
+            let idModelo = $('#select-modelo-doc').val();
+            if (!idModelo) {
+                alert('Selecione um modelo primeiro.');
+                return;
+            }
+            if (!ID_ATENDIMENTO) {
+                alert('Salve o atendimento antes de gerar documentos.');
+                return;
+            }
+
+            // Open in new tab
+            let url = `documento_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`;
+            window.open(url, '_blank');
         }
     </script>
 </body>
