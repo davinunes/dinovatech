@@ -627,13 +627,25 @@ DBClose($link);
         }
 
         function gerarDocumentoModelo() {
+            console.log('Button clicked! Function gerarDocumentoModelo called.');
+            console.log('ID_ATENDIMENTO:', ID_ATENDIMENTO);
+
             let idModelo = $('#select-modelo-doc').val();
+            console.log('Selected Model ID:', idModelo);
+
             if (!idModelo) {
                 alert('Selecione um modelo.');
                 return;
             }
-            // Open print window
-            window.open(`documento_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`, '_blank');
+            if (!ID_ATENDIMENTO) {
+                alert('Salve o atendimento antes de gerar documentos.');
+                return;
+            }
+
+            // Open in new tab
+            let url = `documento_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`;
+            console.log('Opening URL:', url);
+            window.open(url, '_blank');
         }
 
         // --- ANEXOS ---
@@ -902,23 +914,6 @@ DBClose($link);
             });
         }
 
-        // --- DOCUMENTOS ---
-        function gerarDocumentoModelo() {
-            let idModelo = $('#select-modelo-doc').val();
-            if (!idModelo) {
-                alert('Selecione um modelo primeiro.');
-                return;
-            }
-            if (!ID_ATENDIMENTO) {
-                alert('Salve o atendimento antes de gerar documentos.');
-                return;
-            }
-
-            // Open in new tab
-            let url = `teste_print.php?id_atendimento=${ID_ATENDIMENTO}&id_modelo=${idModelo}`;
-            alert('Debug URL: ' + url); // Show user what URL is being opened
-            window.open(url, '_blank');
-        }
     </script>
 </body>
 
