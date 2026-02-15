@@ -4,14 +4,25 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-require_once __DIR__ . '/../../config.php';
-require_once __DIR__ . '/../../helpers/AppHelper.php';
+echo "Debug: Script Started.<br>";
+
+$pathConfig = __DIR__ . '/../../config.php';
+$pathHelper = __DIR__ . '/../../helpers/AppHelper.php';
+$pathDB = __DIR__ . '/../../../database.php';
+
+echo "Debug: Checking files...<br>";
+echo "Config: $pathConfig - " . (file_exists($pathConfig) ? 'OK' : 'MISSING') . "<br>";
+echo "Helper: $pathHelper - " . (file_exists($pathHelper) ? 'OK' : 'MISSING') . "<br>";
+echo "DB: $pathDB - " . (file_exists($pathDB) ? 'OK' : 'MISSING') . "<br>";
+
+require_once $pathConfig;
+require_once $pathHelper;
 
 if (!isset($_SESSION['usuario_id']) || !AppHelper::isVetMode()) {
-    die("Acesso negado.");
+    die("Acesso negado. Debug: Session or VetMode check failed.");
 }
 
-include "../../../database.php";
+include $pathDB;
 $link = DBConnect();
 
 

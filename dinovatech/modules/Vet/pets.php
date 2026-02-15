@@ -231,6 +231,7 @@ if ($link) {
     </div>
 
     <!-- Mobile Overlay -->
+    <?php include '../../components/layout_scripts.php'; ?>
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
