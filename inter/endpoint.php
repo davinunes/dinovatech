@@ -20,12 +20,52 @@ try {
     switch ($action) {
         case 'obter_ou_criar_pix_pagamento':
             $idFatura = $requestBody['id_fatura'] ?? null;
+            $valorPagamento = $requestBody['valor_pagamento'] ?? null; // Novo: Valor opcional para pagamento parcial
+
             if (!$idFatura)
                 throw new Exception("ID da Fatura é obrigatório.");
             $idFatura_safe = mysqli_real_escape_string($link, $idFatura);
 
-            // 1. Verifica todos os pagamentos pendentes
-            $queryCheck = "SELECT id_pagamento, txid, cod_qrcode, calendario FROM Pagamentos 
+            // Obtém dados da Fatura
+            $queryFatura = "SELECT f.valor_total_fatura, f.data_vencimento, f.permitir_pagamento_parcial, c.nome as nome_cliente, c.cpf_cnpj 
+                            FROM Faturas f JOIN Clientes c ON f.id_cliente = c.id_cliente 
+                            WHERE f.id_fatura = '{$idFatura_safe}'";
+            $resultFatura = DBExecute($link, $queryFatura);
+            $fatura = mysqli_fetch_assoc($resultFatura);
+            if (!$fatura)
+                throw new Exception("Fatura não encontrada.");
+
+            // Calcula Valor a Ser Cobrado
+            $calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
+            // $valorOriginal = $calcTotals['valor_liquido']; // Valor total restante
+
+            // Determina o valor da cobrança
+            if ($valorPagamento && is_numeric($valorPagamento) && $valorPagamento > 0) {
+                // Se foi enviado um valor customizado, verifica se é permitido
+                if ($fatura['permitir_pagamento_parcial'] == '1') {
+                    $valorCobranca = (float) $valorPagamento;
+                } else {
+                    throw new Exception("Pagamento parcial não habilitado para esta fatura.");
+                }
+            } else {
+                // Caso contrário, usa o valor líquido TOTAL (considerando descontos já aplicados no helper)
+                // MAS devemos subtrair o que já foi pago se for um pagamento complementar de uma fatura parcial?
+                // O AppHelper calculateFaturaTotals retorna o valor TOTAL LIQUIDO da fatura, não o saldo devedor.
+                // Precisamos calcular o saldo devedor aqui se não for passado valor explicito.
+
+                $queryPago = "SELECT SUM(valor_pago) as total_pago FROM Pagamentos WHERE id_fatura = '{$idFatura_safe}' AND status_pagamento = 'Confirmado'";
+                $resPago = DBExecute($link, $queryPago);
+                $rowPago = mysqli_fetch_assoc($resPago);
+                $totalPago = $rowPago['total_pago'] ?? 0.00;
+
+                $valorCobranca = $calcTotals['valor_liquido'] - $totalPago;
+                if ($valorCobranca <= 0) {
+                    throw new Exception("Fatura já está liquidada.");
+                }
+            }
+
+            // 1. Verifica pagamentos pendentes
+            $queryCheck = "SELECT id_pagamento, txid, cod_qrcode, calendario, valor_pago FROM Pagamentos 
 					  WHERE id_fatura = '{$idFatura_safe}' AND status_pagamento = 'Pendente'";
             $resultCheck = DBExecute($link, $queryCheck);
 
@@ -36,6 +76,50 @@ try {
 
             while ($payment = mysqli_fetch_assoc($resultCheck)) {
                 if (!empty($payment['txid'])) {
+
+                    // VERIFICAÇÃO DE VALOR (User Request)
+                    $valorPendente = (float) $payment['valor_pago'];
+                    // Compara com tolerância de centavos
+                    if (abs($valorPendente - $valorCobranca) > 0.01) {
+                        // Valor diferente! Precisamos verificar esse PIX e expirar se não foi pago.
+                        try {
+                            $pixStatus = consultarPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $payment['txid']);
+
+                            if (isset($pixStatus->status) && $pixStatus->status === 'CONCLUIDA') {
+                                // Foi pago! (Mesmo com valor diferente, improvável mas possível)
+                                // Confirma e encerra (Lógica de confirmação duplicada abaixo, poderia refatorar)
+                                $e2eid = $pixStatus->pix[0]->endToEndId ?? 'N/A';
+                                $observacao = "Recuperado (Valor Divergente) - E2EID: {$e2eid}";
+                                $e2eid_safe = mysqli_real_escape_string($link, $e2eid);
+                                $observacao_safe = mysqli_real_escape_string($link, $observacao);
+                                $idPagamento = $payment['id_pagamento'];
+
+                                DBExecute($link, "UPDATE Pagamentos SET status_pagamento = 'Confirmado', e2eid = '{$e2eid_safe}', observacao = '{$observacao_safe}' WHERE id_pagamento = '{$idPagamento}'");
+
+                                // Atualiza status da fatura se quitada (Simplificado)
+                                // Idealmente recalcularia saldo
+
+                                echo json_encode([
+                                    'success' => true,
+                                    'ConstavaNoBanco' => true, // Tecnicamente sim
+                                    'data' => ["status" => "CONCLUIDA", "txid" => $payment['txid']]
+                                ]);
+                                exit;
+
+                            } else {
+                                // Não foi pago. Expira este PIX pois o valor desejado mudou.
+                                $expiredPayments[] = $payment['id_pagamento'];
+                                // Tenta baixar/cancelar na API do Inter também?
+                                // Por enquanto foca em marcar 'Expirado' no banco para não ser reutilizado.
+                            }
+                        } catch (Exception $e) {
+                            // Se der erro, expira por segurança
+                            $expiredPayments[] = $payment['id_pagamento'];
+                        }
+                        continue; // Vai para o próximo (ou gera novo)
+                    }
+
+                    // Se valor bate, verifica validade de tempo
                     $calendario = json_decode($payment['calendario'], true);
 
                     if (isset($calendario['criacao']) && isset($calendario['expiracao'])) {
@@ -43,54 +127,46 @@ try {
                         $expiracaoTimestamp = $criacao->getTimestamp() + $calendario['expiracao'];
 
                         if ($expiracaoTimestamp > $now) {
-                            // Pagamento válido e não expirado encontrado
+                            // PIX Válido e com mesmo valor! Reutiliza.
                             $pixResponse = [
                                 "txid" => $payment['txid'],
                                 "pixCopiaECola" => $payment['cod_qrcode'],
                                 "calendario" => $calendario
                             ];
                             $validPaymentFound = true;
-                            break; // Usa o primeiro pagamento válido encontrado
+                            break;
                         } else {
-                            // ** NOVA LÓGICA DE VERIFICAÇÃO FINAL **
-                            // Antes de marcar como expirado, verifica na API se não foi pago milissegundos atrás
+                            // Expirado por tempo. Verifica status final.
                             try {
                                 $pixStatus = consultarPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $payment['txid']);
 
                                 if (isset($pixStatus->status) && $pixStatus->status === 'CONCLUIDA') {
-                                    // Foi pago! Recuperar o pagamento
+                                    // Pago! Recupera.
                                     $e2eid = $pixStatus->pix[0]->endToEndId ?? 'N/A';
-                                    $observacao = "Recuperado pelo fluxo de expiração - E2EID: {$e2eid}";
-
+                                    $observacao = "Recuperado por expiração - E2EID: {$e2eid}";
                                     $e2eid_safe = mysqli_real_escape_string($link, $e2eid);
                                     $observacao_safe = mysqli_real_escape_string($link, $observacao);
                                     $idPagamento = $payment['id_pagamento'];
 
-                                    // Atualiza para Confirmado
-                                    $queryConfirm = "UPDATE Pagamentos SET status_pagamento = 'Confirmado', e2eid = '{$e2eid_safe}', observacao = '{$observacao_safe}' WHERE id_pagamento = '{$idPagamento}'";
-                                    DBExecute($link, $queryConfirm);
+                                    DBExecute($link, "UPDATE Pagamentos SET status_pagamento = 'Confirmado', e2eid = '{$e2eid_safe}', observacao = '{$observacao_safe}' WHERE id_pagamento = '{$idPagamento}'");
 
-                                    // Atualiza Fatura (Lógica simplificada, idealmente deveria ser funçao reutilizavel)
-                                    $queryUpdateFatura = "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '{$idFatura_safe}'";
-                                    DBExecute($link, $queryUpdateFatura);
+                                    // Verifica Liq
+                                    $totalPagoBD = $totalPago ?? 0; // Aproximação, idealmente refetch
+                                    if (($totalPagoBD + $valorPendente) >= $calcTotals['valor_liquido']) {
+                                        DBExecute($link, "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '{$idFatura_safe}'");
+                                    }
 
-                                    // Retorna sucesso de pagamento encontrado
                                     echo json_encode([
                                         'success' => true,
                                         'ConstavaNoBanco' => true,
-                                        'data' => [
-                                            "status" => "CONCLUIDA",
-                                            "txid" => $payment['txid']
-                                        ]
+                                        'data' => ["status" => "CONCLUIDA", "txid" => $payment['txid']]
                                     ]);
-                                    exit; // Encerra execução pois já achamos o pagamento
+                                    exit;
 
                                 } else {
-                                    // Realmente não foi pago ou está em outro status não final
                                     $expiredPayments[] = $payment['id_pagamento'];
                                 }
                             } catch (Exception $e) {
-                                // Se der erro na api, assume expirado para não travar o cliente
                                 $expiredPayments[] = $payment['id_pagamento'];
                             }
                         }
@@ -98,28 +174,20 @@ try {
                 }
             }
 
-            // Atualiza todos os pagamentos CONFIRMADOS como expirados
+            // Expira pagamentos inválidos/divergentes
             if (!empty($expiredPayments)) {
                 $ids = implode(",", array_map('intval', $expiredPayments));
-                $queryUpdate = "UPDATE Pagamentos SET status_pagamento = 'Expirado' 
-							WHERE id_pagamento IN ({$ids})";
+                $queryUpdate = "UPDATE Pagamentos SET status_pagamento = 'Expirado' WHERE id_pagamento IN ({$ids})";
                 DBExecute($link, $queryUpdate);
             }
 
-            // Se encontrou um pagamento válido, retorna
             if ($validPaymentFound) {
                 echo json_encode(['success' => true, 'ConstavaNoBanco' => true, 'data' => $pixResponse]);
                 break;
             }
 
-            // ** LÓGICA REORDENADA **
-
-            // 2. Busca os dados da fatura e itens para montar o payload
-            $queryFatura = "SELECT f.valor_total_fatura, f.data_vencimento, c.nome as nome_cliente, c.cpf_cnpj FROM Faturas f JOIN Clientes c ON f.id_cliente = c.id_cliente WHERE f.id_fatura = '{$idFatura_safe}'";
-            $resultFatura = DBExecute($link, $queryFatura);
-            $fatura = mysqli_fetch_assoc($resultFatura);
-            if (!$fatura)
-                throw new Exception("Fatura não encontrada.");
+            // GERA NOVO PIX
+            // Reutiliza queryItens e dados do payload...
 
             $queryItens = "SELECT s.nome_servico, i.tag FROM ItensFatura i JOIN Servicos s ON i.id_servico = s.id_servico WHERE i.id_fatura = '{$idFatura_safe}'";
             $resultItens = DBExecute($link, $queryItens);
@@ -128,6 +196,9 @@ try {
                 $itensDesc[] = $item['tag'] ?: $item['nome_servico'];
             }
             $itensString = implode('; ', $itensDesc);
+            if ($valorPagamento) {
+                $itensString .= " (Pagamento Parcial)";
+            }
 
             $docLimpo = preg_replace('/[^0-9]/', '', $fatura['cpf_cnpj']);
             $devedorPayload = ['nome' => $fatura['nome_cliente']];
@@ -147,8 +218,7 @@ try {
                 ["nome" => "demonstrativo", "valor" => $demonstrativo]
             ];
 
-            $calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
-            $valorCobranca = $calcTotals['valor_liquido'];
+            // $valorCobranca já foi calculado acima
 
             $dadosCobranca = [
                 'devedor' => $devedorPayload,
@@ -158,12 +228,10 @@ try {
                 'infoAdicionais' => $infoAdicionais
             ];
 
-            // 3. Chama a API do Inter PRIMEIRO
             $pixResponse = newInstantPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $dadosCobranca);
 
-            // 4. Se a API retornou sucesso, INSERE o registro no banco
             if ($pixResponse && isset($pixResponse->txid)) {
-                $valor_safe = mysqli_real_escape_string($link, $fatura['valor_total_fatura']);
+                $valor_safe = mysqli_real_escape_string($link, $valorCobranca); // Salva o valor exato cobrado
                 $txid_safe = mysqli_real_escape_string($link, $pixResponse->txid);
                 $qrcode_safe = mysqli_real_escape_string($link, $pixResponse->pixCopiaECola);
                 $calendario_safe = mysqli_real_escape_string($link, json_encode($pixResponse->calendario));
@@ -176,7 +244,6 @@ try {
                 throw new Exception("Falha ao obter resposta da API do Inter ou txid não encontrado.");
             }
 
-            // 5. Retorna os dados para o frontend
             echo json_encode(['success' => true, 'ConstavaNoBanco' => false, 'data' => $pixResponse]);
             break;
 

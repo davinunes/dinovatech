@@ -277,6 +277,19 @@ if ($id_fatura) {
                                             </span>
                                         </div>
                                     <?php endif; ?>
+                                    <?php if (!empty($calcTotals['desconto_aplicado']) && $calcTotals['desconto_aplicado'] > 0): ?>
+                                        <div class="flex justify-between text-emerald-600 text-sm">
+                                            <span>
+                                                (-) Desconto
+                                                <?php if ($calcTotals['tipo_desconto'] == 'percentual'): ?>
+                                                    (<?= number_format($calcTotals['valor_desconto_original'], 2, ',', '.') ?>%)
+                                                <?php endif; ?>
+                                            </span>
+                                            <span>R$
+                                                <?= number_format($calcTotals['desconto_aplicado'], 2, ',', '.') ?>
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
                                     <div class="flex justify-between font-bold text-xl text-gray-800 pt-2 border-t">
                                         <span>Total a Receber</span>
                                         <span>R$
@@ -293,9 +306,14 @@ if ($id_fatura) {
                                 class="bg-gray-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-900 transition flex items-center inline-flex">
                                 <span class="material-icons text-sm mr-2">add</span> Adicionar Item
                             </button>
+                            </button>
                             <button onclick="openIncorporarModal()"
                                 class="bg-cyan-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-cyan-700 transition flex items-center inline-flex ml-2">
                                 <span class="material-icons text-sm mr-2">auto_fix_high</span> Incorporar Recorrências
+                            </button>
+                            <button onclick="openEditarFaturaModal()"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center inline-flex ml-2">
+                                <span class="material-icons text-sm mr-2">edit</span> Editar Detalhes
                             </button>
                         </div>
 
@@ -680,11 +698,77 @@ if ($id_fatura) {
         </div>
     </div>
 
+    <!-- Edit Invoice Data Modal -->
+    <div id="modalEditarFatura"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden no-print">
+        <div class="bg-white rounded-xl shadow-lg w-full max-w-md p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Editar Detalhes da Fatura</h3>
+            <form id="formEditarFatura">
+                <input type="hidden" name="action" value="editar_fatura_dados">
+                <input type="hidden" name="id_fatura" value="<?= $id_fatura ?>">
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Data de Vencimento</label>
+                    <input type="date" name="data_vencimento" value="<?= $fatura['data_vencimento'] ?>"
+                        class="w-full p-2 border rounded-lg">
+                </div>
+
+                <div class="flex gap-4 mb-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Desconto</label>
+                        <input type="number" name="desconto_valor" value="<?= $fatura['desconto_valor'] ?? '0.00' ?>"
+                            step="0.01" class="w-full p-2 border rounded-lg">
+                    </div>
+                    <div class="w-1/3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                        <select name="desconto_tipo" class="w-full p-2 border rounded-lg">
+                            <option value="percentual" <?= ($fatura['desconto_tipo'] ?? '') == 'percentual' ? 'selected' : '' ?>>%</option>
+                            <option value="fixo" <?= ($fatura['desconto_tipo'] ?? '') == 'fixo' ? 'selected' : '' ?>>R$
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label
+                        class="flex items-center space-x-2 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <input type="checkbox" name="permitir_pagamento_parcial" value="1"
+                            <?= ($fatura['permitir_pagamento_parcial'] ?? 0) == 1 ? 'checked' : '' ?>
+                            class="form-checkbox h-5 w-5 text-blue-600 rounded">
+                        <span class="text-gray-700 font-medium">Permitir Pagamento Parcial</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-1 ml-1">Se habilitado, o cliente poderá pagar qualquer valor
+                        menor que o total.</p>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" onclick="$('#modalEditarFatura').addClass('hidden')"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Salvar
+                        Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 
     <?php include 'components/layout_scripts.php'; ?>
     <script>
+        $(document).ready(function () {
+            $('#formEditarFatura').on('submit', function (e) {
+                e.preventDefault();
+                $.post('app.php', $(this).serialize(), function (res) {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        alert(res.message);
+                    }
+                }, 'json');
+            });
+        });
+
         function openAddItemModal() { $('#modalAddItem').removeClass('hidden'); }
         function openPagamentoModal() {
             $('#modalPagamento').removeClass('hidden');
@@ -721,6 +805,7 @@ if ($id_fatura) {
             });
         }
         function openIncorporarModal() { $('#modalIncorporar').removeClass('hidden'); }
+        function openEditarFaturaModal() { $('#modalEditarFatura').removeClass('hidden'); }
         function openUploadModal() { $('#modalUpload').removeClass('hidden'); }
 
         // Generic Toast Function

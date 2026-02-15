@@ -811,8 +811,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $data_emissao = mysqli_real_escape_string($link, $data_emissao);
                 $data_vencimento = mysqli_real_escape_string($link, $data_vencimento);
 
-                $query = "INSERT INTO Faturas (id_cliente, data_emissao, data_vencimento, status) 
-                          VALUES ('$id_cliente', '$data_emissao', '$data_vencimento', 'Em Aberto')";
+                // Novos Campos
+                $desconto_valor = mysqli_real_escape_string($link, $_POST['desconto_valor'] ?? '0.00');
+                $desconto_tipo = mysqli_real_escape_string($link, $_POST['desconto_tipo'] ?? 'percentual');
+                $permitir_pagamento_parcial = isset($_POST['permitir_pagamento_parcial']) ? '1' : '0';
+
+                $query = "INSERT INTO Faturas (id_cliente, data_emissao, data_vencimento, status, desconto_valor, desconto_tipo, permitir_pagamento_parcial) 
+                          VALUES ('$id_cliente', '$data_emissao', '$data_vencimento', 'Em Aberto', '$desconto_valor', '$desconto_tipo', '$permitir_pagamento_parcial')";
 
                 $result = DBExecute($link, $query);
 
@@ -1046,8 +1051,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $id_fatura_escaped = mysqli_real_escape_string($link, $id_fatura);
 
-                // A query da fatura principal não muda
-                $query_fatura = "SELECT F.id_fatura, C.nome AS nome_cliente, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status
+                // A query da fatura principal ADICIONADA com os novos campos
+                $query_fatura = "SELECT F.id_fatura, C.nome AS nome_cliente, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status, F.desconto_valor, F.desconto_tipo, F.permitir_pagamento_parcial
 									 FROM Faturas F
 									 JOIN Clientes C ON F.id_cliente = C.id_cliente
 									 WHERE F.id_fatura = '$id_fatura_escaped'";
@@ -1439,6 +1444,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $response['message'] = "Pagamento estornado com sucesso!";
                 } else {
                     $response['message'] = "Erro ao estornar pagamento: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'editar_fatura_dados':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            $data_vencimento = $_POST['data_vencimento'] ?? '';
+            $desconto_valor = $_POST['desconto_valor'] ?? '0.00';
+            $desconto_tipo = $_POST['desconto_tipo'] ?? 'percentual';
+            $permitir_pagamento_parcial = isset($_POST['permitir_pagamento_parcial']) ? '1' : '0';
+
+            if (empty($id_fatura)) {
+                $response['message'] = "ID da fatura obrigatório.";
+            } else {
+                $id_fatura = mysqli_real_escape_string($link, $id_fatura);
+                $desconto_valor = mysqli_real_escape_string($link, $desconto_valor);
+                $desconto_tipo = mysqli_real_escape_string($link, $desconto_tipo);
+
+                $set_clause = "desconto_valor = '$desconto_valor',
+                               desconto_tipo = '$desconto_tipo',
+                               permitir_pagamento_parcial = '$permitir_pagamento_parcial'";
+
+                if (!empty($data_vencimento)) {
+                    $data_vencimento = mysqli_real_escape_string($link, $data_vencimento);
+                    $set_clause .= ", data_vencimento = '$data_vencimento'";
+                }
+
+                $query = "UPDATE Faturas SET $set_clause WHERE id_fatura = '$id_fatura'";
+
+                if (DBExecute($link, $query)) {
+                    $response['success'] = true;
+                    $response['message'] = "Dados da fatura atualizados!";
+                } else {
+                    $response['message'] = "Erro ao atualizar fatura: " . mysqli_error($link);
                 }
             }
             break;

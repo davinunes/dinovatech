@@ -182,7 +182,26 @@ class AppHelper
         $rowItems = mysqli_fetch_assoc($resItems);
         $totalServicos = $rowItems['total_servicos'] ?? 0.00;
 
-        // 2. Fetch Tax Settings relative to this Invoice
+        // 2. Fetch Invoice Discount Settings
+        $queryFatura = "SELECT desconto_valor, desconto_tipo FROM Faturas WHERE id_fatura='$id_fatura'";
+        $resFatura = mysqli_query($link, $queryFatura);
+        $rowFatura = mysqli_fetch_assoc($resFatura);
+
+        $descontoValor = 0.00;
+        if ($rowFatura) {
+            $descVal = (float) $rowFatura['desconto_valor'];
+            $descTipo = $rowFatura['desconto_tipo']; // 'percentual' or 'fixo'
+
+            if ($descVal > 0) {
+                if ($descTipo === 'percentual') {
+                    $descontoValor = ($totalServicos * ($descVal / 100));
+                } else {
+                    $descontoValor = $descVal;
+                }
+            }
+        }
+
+        // 3. Fetch Tax Settings relative to this Invoice
         // We need to check if there is ANY item with retention, or if we follow the dominant service.
         // Usually, Invoice = One Service. But if mixed, we should check each?
         // Current logic in calculateNfseData takes the FIRST item's settings. We shall do the same for consistency.
@@ -220,13 +239,19 @@ class AppHelper
             $detalhesRetencao = "ISS (" . number_format($aliquota, 2, ',', '.') . "%)";
         }
 
-        $valorLiquido = $totalServicos - $valorRetencao;
+        // Final Calculation: Total Services - Retention - Discount
+        $valorLiquido = $totalServicos - $valorRetencao - $descontoValor;
+        if ($valorLiquido < 0)
+            $valorLiquido = 0;
 
         return [
             'valor_servicos' => (float) $totalServicos,
             'iss_retido' => ($issRetido == '1'),
             'valor_retencao' => (float) $valorRetencao,
             'detalhes_retencao' => $detalhesRetencao,
+            'desconto_aplicado' => (float) $descontoValor,
+            'tipo_desconto' => $rowFatura['desconto_tipo'] ?? 'percentual',
+            'valor_desconto_original' => (float) ($rowFatura['desconto_valor'] ?? 0),
             'valor_liquido' => (float) $valorLiquido
         ];
     }

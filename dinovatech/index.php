@@ -490,6 +490,28 @@ require_once __DIR__ . '/helpers/AppHelper.php';
             <label for="faturaDataVencimento">Data de Vencimento:</label>
             <input type="date" id="faturaDataVencimento" name="data_vencimento" required>
 
+            <div style="display: flex; gap: 10px; margin-bottom: 0px;">
+                <div style="flex: 1;">
+                    <label for="faturaDescontoValor">Desconto:</label>
+                    <input type="number" id="faturaDescontoValor" name="desconto_valor" step="0.01" value="0.00"
+                        min="0">
+                </div>
+                <div style="width: 80px;">
+                    <label for="faturaDescontoTipo">Tipo:</label>
+                    <select id="faturaDescontoTipo" name="desconto_tipo">
+                        <option value="percentual">%</option>
+                        <option value="fixo">R$</option>
+                    </select>
+                </div>
+            </div>
+
+            <label for="faturaPermitirParcial"
+                style="font-weight: normal; margin-top: 5px; display: flex; align-items: center;">
+                <input type="checkbox" id="faturaPermitirParcial" name="permitir_pagamento_parcial" value="1"
+                    style="width: auto; margin-right: 5px; margin-bottom: 0;">
+                Permitir Pagamento Parcial
+            </label>
+
             <button type="submit" class="submit">Criar Fatura</button>
         </form>
         <div id="faturaMessage" class="mensagem"></div>

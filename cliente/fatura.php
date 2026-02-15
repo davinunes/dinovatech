@@ -280,6 +280,12 @@ if ($id_fatura) {
                                     </span>
                                 </div>
                             <?php endif; ?>
+                            <?php if (!empty($calcTotals['desconto_aplicado']) && $calcTotals['desconto_aplicado'] > 0): ?>
+                                <div class="flex justify-between mb-2 text-green-600 font-medium">
+                                    <span>(-) Desconto</span>
+                                    <span>R$ <?= number_format($calcTotals['desconto_aplicado'], 2, ',', '.') ?></span>
+                                </div>
+                            <?php endif; ?>
                             <?php if ($total_pago > 0): ?>
                                 <div class="flex justify-between mb-2 text-green-600">
                                     <span>Valor Pago</span>
@@ -318,11 +324,19 @@ if ($id_fatura) {
                         <span class="material-icons text-base align-middle mr-1">security</span>
                         Pagamento seguro via PIX
                     </p>
-                    <button id="btnPagarPix"
-                        class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:scale-105 flex items-center justify-center">
-                        <span class="material-icons mr-2">qr_code_2</span>
-                        Pagar com PIX
-                    </button>
+                    <div class="flex gap-4 w-full md:w-auto">
+                        <?php if (($fatura['permitir_pagamento_parcial'] ?? 0) == 1): ?>
+                            <button type="button" onclick="$('#modalPagamentoParcial').removeClass('hidden')"
+                                class="flex-1 md:flex-none bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-6 rounded-lg shadow-sm transition">
+                                Pagar Outro Valor
+                            </button>
+                        <?php endif; ?>
+                        <button id="btnPagarPix"
+                            class="flex-1 md:flex-none w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:scale-105 flex items-center justify-center">
+                            <span class="material-icons mr-2">qr_code_2</span>
+                            Pagar Total
+                        </button>
+                    </div>
                 </div>
             <?php endif; ?>
         </div>
@@ -380,6 +394,31 @@ if ($id_fatura) {
             </div>
         </div>
 
+        <!-- Modal Pagamento Parcial -->
+        <div id="modalPagamentoParcial"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 hidden">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 relative">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Pagamento Parcial</h3>
+                <p class="text-gray-600 text-sm mb-4">Informe o valor que deseja pagar agora:</p>
+
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                    <input type="number" id="valorParcialInput" step="0.01" max="<?= $saldo_devedor ?>"
+                        class="w-full p-3 border border-gray-300 rounded-lg text-lg font-bold text-gray-800"
+                        placeholder="0,00">
+                    <p class="text-xs text-gray-500 mt-1">Saldo restante: R$
+                        <?= number_format($saldo_devedor, 2, ',', '.') ?></p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="$('#modalPagamentoParcial').addClass('hidden')"
+                        class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-lg font-medium">Cancelar</button>
+                    <button onclick="iniciarPagamentoParcial()"
+                        class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold shadow-md">Pagar</button>
+                </div>
+            </div>
+        </div>
+
         <script>
             $(document).ready(function () {
                 // Load Attachments
@@ -392,13 +431,29 @@ if ($id_fatura) {
                     generatePix();
                 });
 
-                function generatePix() {
+                window.iniciarPagamentoParcial = function () {
+                    let valor = parseFloat($('#valorParcialInput').val());
+                    if (!valor || valor <= 0) {
+                        alert("Digite um valor válido.");
+                        return;
+                    }
+                    $('#modalPagamentoParcial').addClass('hidden');
+                    $('#modalPix').removeClass('hidden');
+                    generatePix(valor);
+                }
+
+                function generatePix(valor = null) {
                     // Use existing logic from original index.php but adapted
                     // We need to call the INTER endpoint logic
+                    let payload = { id_fatura: <?= $id_fatura ?> };
+                    if (valor) {
+                        payload.valor_pagamento = valor;
+                    }
+
                     $.ajax({
                         url: '../inter/endpoint.php?action=obter_ou_criar_pix_pagamento',
                         type: 'POST',
-                        data: JSON.stringify({ id_fatura: <?= $id_fatura ?> }),
+                        data: JSON.stringify(payload),
                         contentType: 'application/json',
                         dataType: 'json',
                         success: function (response) {
