@@ -110,7 +110,7 @@ $vars = [
     '{{CRMV_VET}}' => $dados['crmv_vet'],
     '{{DATA_ATUAL}}' => date('d/m/Y'),
     '{{HORA_ATUAL}}' => date('H:i'),
-    '{{CIDADE_DATA}}' => 'São Paulo, ' . date('d/m/Y'),
+    '{{CIDADE_DATA}}' => (isset($empresa['cidade']) && !empty($empresa['cidade']) ? $empresa['cidade'] : 'São Paulo') . ', ' . date('d/m/Y'),
 ];
 
 // 4. Apply Overrides (if any)
@@ -163,6 +163,36 @@ foreach ($vars as $key => $val) {
         }
 
         @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                background: white;
+            }
+
+            .document-container {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                /* Let @page handle margins */
+                box-shadow: none;
+                border: none;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            /* Avoid blank pages */
+            html,
+            body {
+                height: auto;
+                overflow: visible;
+            }
+        }
+
+        .btn-print {
+            position: fixed;
+            top: 20px;
             right: 20px;
             background: #0891b2;
             color: white;
@@ -172,6 +202,7 @@ foreach ($vars as $key => $val) {
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
         }
 
         .btn-print:hover {
