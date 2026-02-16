@@ -205,9 +205,16 @@ foreach ($vars as $key => $val) {
     $conteudo_final = str_replace($key, $val, $conteudo_final);
 }
 
+// Custom Title
+$titulo_final = $modelo['titulo'];
+if (isset($_REQUEST['titulo_custom']) && !empty($_REQUEST['titulo_custom'])) {
+    $titulo_final = mysqli_real_escape_string($link, $_REQUEST['titulo_custom']);
+}
+$titulo_final_safe = mysqli_real_escape_string($link, $titulo_final);
+
+
 // 6. Save to DocumentosEmitidos
 if (isset($_REQUEST['salvar']) && $_REQUEST['salvar'] == '1') {
-    $titulo = mysqli_real_escape_string($link, $modelo['titulo']);
     $tipo = mysqli_real_escape_string($link, $modelo['tipo']);
     $conteudo_html_safe = mysqli_real_escape_string($link, $conteudo_final);
     $texto_personalizado_safe = mysqli_real_escape_string($link, $vars['{{TEXTO_PERSONALIZADO}}'] ?? '');
@@ -261,7 +268,23 @@ if (isset($_REQUEST['salvar']) && $_REQUEST['salvar'] == '1') {
     $qSave = "INSERT INTO DocumentosEmitidos (id_cliente, id_pet, id_atendimento, id_recorrencia, titulo, tipo, conteudo_html, texto_personalizado, data_emissao, usuario_emissor)
               VALUES ('$id_cliente_val', $id_pet_val, $id_atend_val, $id_rec_val, '$titulo', '$tipo', '$conteudo_html_safe', '$texto_personalizado_safe', NOW(), $usuario_id)";
 
-    DBExecute($link, $qSave);
+    if (DBExecute($link, $qSave)) {
+        if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
+            echo json_encode(['success' => true]);
+            exit;
+        }
+    } else {
+        if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
+            echo json_encode(['success' => false, 'message' => mysqli_error($link)]);
+            exit;
+        }
+    }
+}
+
+// If Ajax and NOT saving (shouldn't happen with current logic but for safety)
+if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
+    echo json_encode(['success' => false, 'message' => 'Nenhuma ação realizada.']);
+    exit;
 }
 
 ?>

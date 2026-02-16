@@ -482,11 +482,23 @@ DBClose($link);
                             </select>
                         </div>
                         <div>
-                            <button type="button" onclick="gerarDocumentoModelo()"
-                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded shadow flex items-center w-full justify-center md:w-auto">
-                                <span class="material-icons mr-2">print</span> Gerar e Imprimir
-                            </button>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Título do Documento
+                                (Opcional)</label>
+                            <input type="text" id="titulo-doc-custom" class="w-full border-gray-300 rounded p-2 border"
+                                placeholder="Ex: Contrato Personalizado - Cliente X">
+                            <p class="text-xs text-gray-400 mt-1">Se vazio, usa o título do modelo.</p>
                         </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-4">
+                        <button type="button" onclick="salvarDocumento()"
+                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow flex items-center justify-center flex-1">
+                            <span class="material-icons mr-2">save</span> Salvar no Histórico
+                        </button>
+                        <button type="button" onclick="gerarDocumentoModelo('print')"
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded shadow flex items-center justify-center flex-1">
+                            <span class="material-icons mr-2">print</span> Visualizar / Imprimir
+                        </button>
                     </div>
 
                     <!-- Custom Text Editor (Hidden by default) -->
@@ -748,7 +760,63 @@ DBClose($link);
             });
         }
 
-        function gerarDocumentoModelo() {
+            });
+        }
+
+        function salvarDocumento() {
+             let idModelo = $('#select-modelo-doc').val();
+            if (!idModelo) {
+                alert('Selecione um modelo.');
+                return;
+            }
+            
+            // Collect Data manually for AJAX
+            let data = {
+                id_atendimento: ID_ATENDIMENTO,
+                id_modelo: idModelo,
+                salvar: '1',
+                ajax: '1', // Tell script to return JSON
+                titulo_custom: $('#titulo-doc-custom').val(),
+                overrides: {}
+            };
+
+            // Overrides
+            $('.override-input').each(function () {
+                let name = $(this).attr('name').replace('overrides[', '').replace(']', '');
+                data.overrides[name] = $(this).val();
+            });
+
+             if (!$('#custom-text-container').hasClass('hidden')) {
+                data.overrides['{{TEXTO_PERSONALIZADO}}'] = tinymce.get('editor-texto-custom').getContent();
+            }
+
+            $.post('documento_print.php', data, function(res) {
+                try {
+                    // Try to parse if string
+                    if(typeof res === 'string') res = JSON.parse(res);
+                } catch(e) {}
+
+                if(res.success) {
+                    // alert('Documento salvo com sucesso!'); // Optional alert
+                    carregarHistoricoDocs(); // Reload history
+                    
+                    // Show success feedback
+                    let btn = $('button[onclick="salvarDocumento()"]');
+                    let originalText = btn.html();
+                    btn.html('<span class="material-icons mr-2">check</span> Salvo!');
+                    btn.removeClass('bg-green-600 hover:bg-green-700').addClass('bg-green-800');
+                    setTimeout(() => {
+                        btn.html(originalText);
+                        btn.removeClass('bg-green-800').addClass('bg-green-600 hover:bg-green-700');
+                    }, 2000);
+                } else {
+                    alert('Erro ao salvar: ' + (res.message || 'Desconhecido'));
+                    console.log(res);
+                }
+            });
+        }
+
+        function gerarDocumentoModelo(mode) {
             let idModelo = $('#select-modelo-doc').val();
             if (!idModelo) {
                 alert('Selecione um modelo.');
@@ -778,12 +846,15 @@ DBClose($link);
             inputIdModelo.value = idModelo;
             form.appendChild(inputIdModelo);
 
-            // Save Flag
-            let inputSalvar = document.createElement('input');
-            inputSalvar.type = 'hidden';
-            inputSalvar.name = 'salvar';
-            inputSalvar.value = '1';
-            form.appendChild(inputSalvar);
+            // Title Custom (for print view title)
+            let tituloCustom = $('#titulo-doc-custom').val();
+             if(tituloCustom) {
+                 let inputT = document.createElement('input');
+                 inputT.type = 'hidden';
+                 inputT.name = 'titulo_custom';
+                 inputT.value = tituloCustom;
+                 form.appendChild(inputT);
+             }
 
             // Overrides (Standard inputs)
             $('.override-input').each(function () {
