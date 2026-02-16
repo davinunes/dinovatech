@@ -12,8 +12,6 @@ if (!AppHelper::isVetMode()) {
 }
 include "../../../database.php";
 
-// Add TinyMCE
-echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>';
 
 if (file_exists(__DIR__ . '/../../helpers/GoogleCalendarHelper.php')) {
     require_once __DIR__ . '/../../helpers/GoogleCalendarHelper.php';
@@ -229,6 +227,7 @@ DBClose($link);
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
 </head>
 
 <body class="bg-gray-50 flex">
