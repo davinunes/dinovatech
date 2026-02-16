@@ -1394,14 +1394,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $query_total_pago = "SELECT SUM(valor_pago) as total_pago FROM Pagamentos WHERE id_fatura = '{$id_fatura_safe}' AND status_pagamento = 'Confirmado'";
                     $result_total_pago = DBExecute($link, $query_total_pago);
                     $total_pago_data = mysqli_fetch_assoc($result_total_pago);
-                    $total_pago = $total_pago_data['total_pago'];
+                    $total_pago = (float) $total_pago_data['total_pago'];
 
-                    $query_fatura = "SELECT valor_total_fatura FROM Faturas WHERE id_fatura = '{$id_fatura_safe}'";
-                    $result_fatura = DBExecute($link, $query_fatura);
-                    $fatura_data = mysqli_fetch_assoc($result_fatura);
-                    $valor_total_fatura = $fatura_data['valor_total_fatura'];
+                    // Use Helper to get Net Total (Less Retentions/Discounts)
+                    $totals = AppHelper::calculateFaturaTotals($link, $id_fatura_safe);
+                    $valor_para_liquidar = (float) $totals['valor_liquido'];
 
-                    if ($total_pago >= $valor_total_fatura) {
+                    if ($total_pago >= $valor_para_liquidar - 0.01) { // 1 cent tolerance
                         $query_update_fatura = "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '{$id_fatura_safe}'";
                         DBExecute($link, $query_update_fatura);
                     }
@@ -1431,13 +1430,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($result_estornar) {
                     // 2. Recalcular o total pago da fatura e atualizar o status
-                    $query_update_fatura_status = "
-                        UPDATE Faturas F
-                        SET status = CASE
-                            WHEN (SELECT COALESCE(SUM(P.valor_pago), 0) FROM Pagamentos P WHERE P.id_fatura = F.id_fatura AND P.status_pagamento = 'Confirmado') >= F.valor_total_fatura THEN 'Liquidada'
-                            ELSE 'Em Aberto' 
-                        END
-                        WHERE F.id_fatura = '$id_fatura'";
+                    $query_total_pago = "SELECT COALESCE(SUM(valor_pago), 0) as total_pago FROM Pagamentos WHERE id_fatura = '$id_fatura' AND status_pagamento = 'Confirmado'";
+                    $res_total = DBExecute($link, $query_total_pago);
+                    $total_pago = (float) mysqli_fetch_assoc($res_total)['total_pago'];
+
+                    $totals = AppHelper::calculateFaturaTotals($link, $id_fatura);
+                    $valor_liquido = (float) $totals['valor_liquido'];
+
+                    $novo_status = ($total_pago >= $valor_liquido - 0.01) ? 'Liquidada' : 'Em Aberto';
+
+                    $query_update_fatura_status = "UPDATE Faturas SET status = '$novo_status' WHERE id_fatura = '$id_fatura'";
                     DBExecute($link, $query_update_fatura_status);
 
                     $response['success'] = true;
