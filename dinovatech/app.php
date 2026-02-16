@@ -2660,6 +2660,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 '{{CRMV_VET}}' => $dados['crmv_vet'],
                 '{{DATA_ATUAL}}' => date('d/m/Y'),
                 '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
+                '{{TEXTO_PERSONALIZADO}}' => '', // Placeholder for custom editor
             ];
 
             // Filter only used vars? Or return all?

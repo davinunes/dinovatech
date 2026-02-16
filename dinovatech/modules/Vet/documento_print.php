@@ -38,7 +38,7 @@ $dados = [];
 
 if ($id_atendimento) {
     // 1. Fetch Attendance + Pet + Client + Vet
-    $q = "SELECT a.*, 
+    $q = "SELECT a.*, p.id_cliente, 
             p.nome as nome_pet, p.especie, p.raca, p.sexo, p.peso as peso_pet, p.data_nascimento as nascimento,
             c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
             v.nome as nome_vet, v.crmv as crmv_vet
@@ -197,8 +197,72 @@ if (isset($_REQUEST['overrides']) && is_array($_REQUEST['overrides'])) {
 // 5. Replace Content
 $conteudo_final = $modelo['conteudo'];
 foreach ($vars as $key => $val) {
+    if ($key === '{{TEXTO_PERSONALIZADO}}') {
+        // Ensure we don't break HTML if user pasted weird stuff, but str_replace is safe enough for basic injection
+        // The editor content is HTML, so we just put it in.
+    }
     $conteudo_final = str_replace($key, $val, $conteudo_final);
 }
+
+// 6. Save to DocumentosEmitidos
+if (isset($_REQUEST['salvar']) && $_REQUEST['salvar'] == '1') {
+    $titulo = mysqli_real_escape_string($link, $modelo['titulo']);
+    $tipo = mysqli_real_escape_string($link, $modelo['tipo']);
+    $conteudo_html_safe = mysqli_real_escape_string($link, $conteudo_final);
+    $texto_personalizado_safe = mysqli_real_escape_string($link, $vars['{{TEXTO_PERSONALIZADO}}'] ?? '');
+
+    // Determine IDs
+    $idCliente = $dados['id_cliente'] ?? $dados['id_cliente'] ?? 'NULL'; // Recorrencia has it, Atendimento via Pet via Client
+    // Wait, $dados in atendimento mode has id_cliente inside $pet info? 
+    // In Atendimento query: p.id_cliente. $dados joined fields.
+    // Let's check query in documento_print.php top.
+
+    // Atendimento query: LEFT JOIN Tabs.
+    // $dados['id_cliente'] exists? 
+    // In lines 47: LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
+    // The query selects a.*, p...., c.nome... but does it select c.id_cliente or p.id_cliente?
+    // It selects a.*. `a` has no id_cliente. `p` has id_cliente. `c` has id_cliente.
+    // If we didn't alias it, collisions happen.
+    // But `p.id_cliente` is what we want.
+    // Let's fetch it specifically or rely on `c.id_cliente` if `SELECT *` from c is not done (it isn't, specific fields).
+    // The query (line 41): `SELECT a.*, p.nome..., c.nome...`
+    // It does NOT select `id_cliente` explicitly!
+    // I need to update query `documento_print.php` to select `p.id_cliente` or `c.id_cliente`.
+
+    // I will update the query part first in a separate edit, or assume it's there?
+    // Current query: `SELECT a.*, p.nome..., p.data_nascimento...`
+    // Use `p.id_cliente` if available? 
+    // It's not in the SELECT list I saw earlier (lines 41-45).
+    // I should add `p.id_cliente` to the SELECT.
+
+    // For now, let's write the saving logic assuming I fix the SELECT.
+    // Helper to get client ID properly:
+    $id_cliente_val = 'NULL';
+    if ($id_atendimento) {
+        // Fetch client ID if missing
+        if (!isset($dados['id_cliente'])) {
+            // Quick fetch or update main query. updating main query is better.
+            // I'll update main query in previous block.
+        }
+        $id_cliente_val = $dados['id_cliente'];
+    } elseif ($id_recorrencia) {
+        $id_cliente_val = $dados['id_cliente']; // Recorrencia table has id_cliente usually?
+        // Query line 59: `SELECT r.*, c.nome...`
+        // Recorrencias `r.*` implies `id_cliente` is there if it's in the table. 
+        // Yes, Recorrencias usually has `id_cliente`.
+    }
+
+    $id_pet_val = isset($dados['id_pet']) ? $dados['id_pet'] : 'NULL';
+    $id_atend_val = $id_atendimento ? $id_atendimento : 'NULL';
+    $id_rec_val = $id_recorrencia ? $id_recorrencia : 'NULL';
+    $usuario_id = $_SESSION['usuario_id'] ?? 'NULL';
+
+    $qSave = "INSERT INTO DocumentosEmitidos (id_cliente, id_pet, id_atendimento, id_recorrencia, titulo, tipo, conteudo_html, texto_personalizado, data_emissao, usuario_emissor)
+              VALUES ('$id_cliente_val', $id_pet_val, $id_atend_val, $id_rec_val, '$titulo', '$tipo', '$conteudo_html_safe', '$texto_personalizado_safe', NOW(), $usuario_id)";
+
+    DBExecute($link, $qSave);
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

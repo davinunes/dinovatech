@@ -143,6 +143,12 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                         <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm">
                             <span class="block mb-2 font-bold text-gray-700">Variáveis Disponíveis</span>
 
+                            <div class="flex flex-wrap gap-1 mb-2">
+                                <span class="variable-tag bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200"
+                                    onclick="inserirVariavel('{{TEXTO_PERSONALIZADO}}')">Texto Personalizado (Editor no
+                                    Uso)</span>
+                            </div>
+
                             <div class="flex flex-wrap gap-1">
                                 <!-- Common -->
                                 <span class="variable-tag" onclick="inserirVariavel('{{LOGO_URL}}')">Logo (URL)</span>

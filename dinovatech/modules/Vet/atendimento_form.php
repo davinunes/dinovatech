@@ -487,6 +487,13 @@ DBClose($link);
                         </div>
                     </div>
 
+                    <!-- Custom Text Editor (Hidden by default) -->
+                    <div id="custom-text-container" class="mt-6 hidden">
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Texto Personalizado do
+                            Documento</label>
+                        <textarea id="editor-texto-custom" name="texto_custom"></textarea>
+                    </div>
+
                     <!-- Variables Preview -->
                     <div id="vars-preview-container" class="mt-6 hidden">
                         <h4 class="text-sm font-bold text-gray-700 mb-2 border-b pb-1">Revisão de Campos (Substituição)
@@ -502,6 +509,39 @@ DBClose($link);
                         O documento será gerado com os dados atuais do atendimento. Você pode alterar os valores acima
                         antes de imprimir.
                     </p>
+                </div>
+
+                <!-- HISTORY SECTION -->
+                <div class="mt-8 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Histórico de Documentos Emitidos</h3>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Título</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Tipo</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Emissor</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Data</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-docs-emitidos" class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-500">Carregando...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
@@ -616,8 +656,22 @@ DBClose($link);
 
             if (tabName === 'receitas' && ID_ATENDIMENTO) carregarReceitas();
             if (tabName === 'anexos' && ID_ATENDIMENTO) carregarArquivos();
-            if (tabName === 'documentos' && ID_ATENDIMENTO) carregarModelosDoc();
+            if (tabName === 'documentos' && ID_ATENDIMENTO) {
+                carregarModelosDoc();
+                carregarHistoricoDocs();
+            }
         }
+
+
+        // Init TinyMCE for custom text
+        tinymce.init({
+            selector: '#editor-texto-custom',
+            height: 300,
+            menubar: false,
+            plugins: ['lists', 'link', 'paste', 'help', 'wordcount'],
+            toolbar: 'undo redo | bold italic | bullist numlist | removeformat',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+        });
 
         // --- DOCUMENTOS MODELOS ---
         function carregarModelosDoc() {
@@ -634,28 +688,50 @@ DBClose($link);
             // Listen for change
             $('#select-modelo-doc').change(function () {
                 let idModelo = $(this).val();
-                if (!idModelo) {
-                    $('#vars-preview-container').addClass('hidden');
-                    return;
-                }
+                $('#vars-preview-container').addClass('hidden');
+                $('#custom-text-container').addClass('hidden');
+
+                if (!idModelo) return;
+
                 // Fetch vars
                 $.post(BASE_URL, { action: 'get_modelo_vars_preview', id_modelo: idModelo, id_atendimento: ID_ATENDIMENTO }, function (res) {
                     res = typeof res === 'string' ? JSON.parse(res) : res;
                     if (res.success && res.data.length > 0) {
                         let gridHtml = '';
+                        let hasCustomText = false;
+
                         res.data.forEach(v => {
-                            gridHtml += `
-                                <div>
-                                    <label class="block text-xs text-gray-500 font-bold mb-1">${v.label}</label>
-                                    <input type="text" name="overrides[${v.key}]" value="${v.value}" 
-                                        class="w-full border-gray-300 rounded p-1 text-sm border focus:ring-cyan-500 override-input">
-                                </div>
-                            `;
+                            if (v.key === '{{TEXTO_PERSONALIZADO}}') {
+                                hasCustomText = true;
+                            } else {
+                                gridHtml += `
+                                    <div>
+                                        <label class="block text-xs text-gray-500 font-bold mb-1">${v.label}</label>
+                                        <input type="text" name="overrides[${v.key}]" value="${v.value}" 
+                                            class="w-full border-gray-300 rounded p-1 text-sm border focus:ring-cyan-500 override-input">
+                                    </div>
+                                `;
+                            }
                         });
-                        $('#vars-grid').html(gridHtml);
-                        $('#vars-preview-container').removeClass('hidden');
+
+                        if (gridHtml) {
+                            $('#vars-grid').html(gridHtml);
+                            $('#vars-preview-container').removeClass('hidden');
+                        } else {
+                            $('#vars-grid').html(''); // Clear if no other vars
+                            if (!hasCustomText) {
+                                // If no vars at all and no custom text
+                                $('#vars-grid').html('<p class="text-sm text-gray-400">Este modelo não possui campos variáveis.</p>');
+                                $('#vars-preview-container').removeClass('hidden');
+                            }
+                        }
+
+                        if (hasCustomText) {
+                            $('#custom-text-container').removeClass('hidden');
+                            tinymce.get('editor-texto-custom').setContent(''); // Clear previous
+                        }
                     } else {
-                        $('#vars-grid').html('<p class="text-sm text-gray-400">Este modelo não possui campos variaveis.</p>');
+                        $('#vars-grid').html('<p class="text-sm text-gray-400">Este modelo não possui campos variáveis.</p>');
                         $('#vars-preview-container').removeClass('hidden');
                     }
                 });
@@ -692,7 +768,14 @@ DBClose($link);
             inputIdModelo.value = idModelo;
             form.appendChild(inputIdModelo);
 
-            // Overrides
+            // Save Flag
+            let inputSalvar = document.createElement('input');
+            inputSalvar.type = 'hidden';
+            inputSalvar.name = 'salvar';
+            inputSalvar.value = '1';
+            form.appendChild(inputSalvar);
+
+            // Overrides (Standard inputs)
             $('.override-input').each(function () {
                 let name = $(this).attr('name');
                 let val = $(this).val();
@@ -703,9 +786,64 @@ DBClose($link);
                 form.appendChild(input);
             });
 
+            // Custom Text Override (from TinyMCE)
+            if (!$('#custom-text-container').hasClass('hidden')) {
+                let customContent = tinymce.get('editor-texto-custom').getContent();
+                let inputCustom = document.createElement('input');
+                inputCustom.type = 'hidden';
+                inputCustom.name = 'overrides[{{TEXTO_PERSONALIZADO}}]';
+                inputCustom.value = customContent;
+                form.appendChild(inputCustom);
+            }
+
             document.body.appendChild(form);
             form.submit();
             document.body.removeChild(form);
+
+            // Reload history after a brief delay
+            setTimeout(carregarHistoricoDocs, 2000);
+        }
+
+        function carregarHistoricoDocs() {
+            if (!ID_ATENDIMENTO) return;
+            $.post(BASE_URL, { action: 'get_documentos_emitidos', id_atendimento: ID_ATENDIMENTO }, function (res) {
+                if (res.success) {
+                    let html = '';
+                    if (res.data.length === 0) {
+                        html = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum documento emitido neste atendimento.</td></tr>';
+                    } else {
+                        res.data.forEach(d => {
+                            let dataF = new Date(d.data_emissao).toLocaleString('pt-BR');
+                            html += `
+                                 <tr>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${d.titulo}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${d.tipo}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${d.nome_emissor || '-'}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dataF}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                         <a href="#" class="text-indigo-600 hover:text-indigo-900" 
+                                            onclick="verDocumentoSalvo(${d.id_documento_emitido}); return false;">Ver / Imprimir</a>
+                                     </td>
+                                 </tr>
+                             `;
+                        });
+                    }
+                    $('#lista-docs-emitidos').html(html);
+                } else {
+                    $('#lista-docs-emitidos').html('<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Erro ao carregar.</td></tr>');
+                }
+            }, 'json');
+        }
+
+        function verDocumentoSalvo(id) {
+            // Helper to open saved html. 
+            // Since we stored HTML, we can create a simple viewer or re-use documento_print.php? 
+            // But documento_print.php regenerates. We need a viewer.
+            // Let's create a simple viewer action or just open a new window and document.write?
+            // Better: 'documento_view.php?id=' + id
+            // I'll create documento_view.php briefly or add action 'ver_documento' to app.php that echoes HTML.
+            // Let's us window.open with a special url.
+            window.open('documento_view.php?id=' + id, '_blank');
         }
 
         // --- ANEXOS ---
