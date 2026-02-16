@@ -760,16 +760,13 @@ DBClose($link);
             });
         }
 
-            });
-        }
-
         function salvarDocumento() {
-             let idModelo = $('#select-modelo-doc').val();
+            let idModelo = $('#select-modelo-doc').val();
             if (!idModelo) {
                 alert('Selecione um modelo.');
                 return;
             }
-            
+
             // Collect Data manually for AJAX
             let data = {
                 id_atendimento: ID_ATENDIMENTO,
@@ -786,20 +783,20 @@ DBClose($link);
                 data.overrides[name] = $(this).val();
             });
 
-             if (!$('#custom-text-container').hasClass('hidden')) {
+            if (!$('#custom-text-container').hasClass('hidden')) {
                 data.overrides['{{TEXTO_PERSONALIZADO}}'] = tinymce.get('editor-texto-custom').getContent();
             }
 
-            $.post('documento_print.php', data, function(res) {
+            $.post('documento_print.php', data, function (res) {
                 try {
                     // Try to parse if string
-                    if(typeof res === 'string') res = JSON.parse(res);
-                } catch(e) {}
+                    if (typeof res === 'string') res = JSON.parse(res);
+                } catch (e) { }
 
-                if(res.success) {
+                if (res.success) {
                     // alert('Documento salvo com sucesso!'); // Optional alert
                     carregarHistoricoDocs(); // Reload history
-                    
+
                     // Show success feedback
                     let btn = $('button[onclick="salvarDocumento()"]');
                     let originalText = btn.html();
@@ -848,13 +845,13 @@ DBClose($link);
 
             // Title Custom (for print view title)
             let tituloCustom = $('#titulo-doc-custom').val();
-             if(tituloCustom) {
-                 let inputT = document.createElement('input');
-                 inputT.type = 'hidden';
-                 inputT.name = 'titulo_custom';
-                 inputT.value = tituloCustom;
-                 form.appendChild(inputT);
-             }
+            if (tituloCustom) {
+                let inputT = document.createElement('input');
+                inputT.type = 'hidden';
+                inputT.name = 'titulo_custom';
+                inputT.value = tituloCustom;
+                form.appendChild(inputT);
+            }
 
             // Overrides (Standard inputs)
             $('.override-input').each(function () {
