@@ -93,8 +93,8 @@ if ($id_cliente) {
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="email"
-                                        class="block text-sm font-medium text-gray-700 mb-1">E-mail (Opcional)</label>
+                                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">E-mail
+                                        (Opcional)</label>
                                     <input type="email" id="email" name="email" value="<?= $cliente['email'] ?? '' ?>"
                                         class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
                                 </div>
@@ -186,6 +186,14 @@ if ($id_cliente) {
     <?php include 'components/layout_scripts.php'; ?>
     <script>
         $(document).ready(function () {
+            // Check config for optional CPF
+            $.post('app.php', { action: 'get_config_fiscal' }, function (res) {
+                if (res.success && res.data && res.data.permitir_cadastro_sem_cpf == 1) {
+                    $('#cpf_cnpj').removeAttr('required');
+                    $('label[for="cpf_cnpj"]').html('CPF / CNPJ <span class="text-gray-400 font-normal text-xs ml-1">(Opcional)</span>');
+                }
+            }, 'json');
+
             // Mask for CPF/CNPJ (Simple version)
             $('#cpf_cnpj').on('input', function () {
                 this.value = this.value.replace(/[^0-9]/g, '');

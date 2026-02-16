@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $codigo_municipio = $_POST['codigo_municipio'] ?? '';
             $regime_tributario = $_POST['regime_tributario'] ?? 'simples';
             $optante_simples = isset($_POST['optante_simples']) ? 1 : 0;
+            $permitir_cadastro_sem_cpf = isset($_POST['permitir_cadastro_sem_cpf']) ? 1 : 0;
             $ambiente_padrao = $_POST['ambiente_padrao'] ?? 'homologacao';
             $serie_rps = $_POST['serie_rps'] ?? '8';
             $ultimo_rps_homologacao = $_POST['ultimo_rps_homologacao'] ?? 0;
@@ -362,6 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 razao_social='$razao_social', nome_fantasia='$nome_fantasia', cnpj='$cnpj', 
                                 inscricao_municipal='$inscricao_municipal', inscricao_estadual='$inscricao_estadual', codigo_municipio='$codigo_municipio',
                                 regime_tributario='$regime_tributario', optante_simples='$optante_simples',
+                                permitir_cadastro_sem_cpf='$permitir_cadastro_sem_cpf',
                                 ambiente_padrao='$ambiente_padrao', serie_rps='$serie_rps', 
                                 ultimo_rps_homologacao='$ultimo_rps_homologacao', ultimo_rps_producao='$ultimo_rps_producao',
                                 caminho_certificado='$caminho_certificado',
@@ -409,7 +411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $query = "INSERT INTO ConfiguracoesEmissor 
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, inscricao_estadual, codigo_municipio, 
-                               regime_tributario, optante_simples, ambiente_padrao, serie_rps, 
+                               regime_tributario, optante_simples, permitir_cadastro_sem_cpf, ambiente_padrao, serie_rps, 
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
                                endereco, numero, complemento, bairro, cep, uf, telefone, logo_url,
@@ -419,7 +421,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                api_oracle_user, api_oracle_password, api_oracle_url, google_service_account_json)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
-                               '$regime_tributario', '$optante_simples', '$ambiente_padrao', '$serie_rps', 
+                               '$regime_tributario', '$optante_simples', '$permitir_cadastro_sem_cpf', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val,
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$telefone', $logo_val,
@@ -581,13 +583,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nome = $_POST['nome'] ?? '';
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
             $telefone = $_POST['telefone'] ?? '';
+
+            // Verificação de Configuração
+            $configQuery = "SELECT permitir_cadastro_sem_cpf FROM ConfiguracoesEmissor LIMIT 1";
+            $configResult = DBExecute($link, $configQuery);
+            $permitirSemCpf = 0;
+            if ($configResult && $rowConfig = mysqli_fetch_assoc($configResult)) {
+                $permitirSemCpf = $rowConfig['permitir_cadastro_sem_cpf'];
+            }
             $email = $_POST['email'] ?? '';
 
-            if (empty($nome) || empty($cpf_cnpj)) {
+            if (empty($nome) || ($permitirSemCpf == 0 && empty($cpf_cnpj))) {
                 $response['message'] = "Nome e CPF/CNPJ são obrigatórios.";
             } else {
                 $nome = mysqli_real_escape_string($link, $nome);
                 $cpf_cnpj = mysqli_real_escape_string($link, $cpf_cnpj);
+                $cpf_cnpj_val = empty($cpf_cnpj) ? "NULL" : "'$cpf_cnpj'";
                 $telefone = mysqli_real_escape_string($link, $telefone);
                 $email_val = empty($email) ? "NULL" : "'" . mysqli_real_escape_string($link, $email) . "'";
 
@@ -603,7 +614,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $inscricao_estadual = mysqli_real_escape_string($link, $_POST['inscricao_estadual'] ?? '');
 
                 $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email, endereco, numero, complemento, bairro, cep, uf, codigo_municipio, inscricao_municipal, inscricao_estadual) 
-                          VALUES ('$nome', '$cpf_cnpj', '$telefone', $email_val, '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$codigo_municipio', '$inscricao_municipal', '$inscricao_estadual')";
+                          VALUES ('$nome', $cpf_cnpj_val, '$telefone', $email_val, '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$codigo_municipio', '$inscricao_municipal', '$inscricao_estadual')";
 
                 $result = mysqli_query($link, $query);
 
@@ -651,15 +662,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_cliente = $_POST['id_cliente'] ?? '';
             $nome = $_POST['nome'] ?? '';
             $cpf_cnpj = $_POST['cpf_cnpj'] ?? '';
+
+            // Verificação de Configuração
+            $configQuery = "SELECT permitir_cadastro_sem_cpf FROM ConfiguracoesEmissor LIMIT 1";
+            $configResult = DBExecute($link, $configQuery);
+            $permitirSemCpf = 0;
+            if ($configResult && $rowConfig = mysqli_fetch_assoc($configResult)) {
+                $permitirSemCpf = $rowConfig['permitir_cadastro_sem_cpf'];
+            }
             $telefone = $_POST['telefone'] ?? '';
             $email = $_POST['email'] ?? '';
 
-            if (empty($id_cliente) || empty($nome) || empty($cpf_cnpj)) {
+            if (empty($id_cliente) || empty($nome) || ($permitirSemCpf == 0 && empty($cpf_cnpj))) {
                 $response['message'] = "ID do cliente, Nome e CPF/CNPJ são obrigatórios para edição.";
             } else {
                 $id_cliente = mysqli_real_escape_string($link, $id_cliente);
                 $nome = mysqli_real_escape_string($link, $nome);
                 $cpf_cnpj = mysqli_real_escape_string($link, $cpf_cnpj);
+                $cpf_cnpj_val = empty($cpf_cnpj) ? "NULL" : "'$cpf_cnpj'";
                 $telefone = mysqli_real_escape_string($link, $telefone);
                 $email_val = empty($email) ? "NULL" : "'" . mysqli_real_escape_string($link, $email) . "'";
 
@@ -674,7 +694,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $inscricao_municipal = mysqli_real_escape_string($link, $_POST['inscricao_municipal'] ?? '');
                 $inscricao_estadual = mysqli_real_escape_string($link, $_POST['inscricao_estadual'] ?? '');
 
-                $query = "UPDATE Clientes SET nome='$nome', cpf_cnpj='$cpf_cnpj', telefone='$telefone', email=$email_val,
+                $query = "UPDATE Clientes SET nome='$nome', cpf_cnpj=$cpf_cnpj_val, telefone='$telefone', email=$email_val,
                           endereco='$endereco', numero='$numero', complemento='$complemento', bairro='$bairro', cep='$cep', uf='$uf', codigo_municipio='$codigo_municipio',
                           inscricao_municipal='$inscricao_municipal', inscricao_estadual='$inscricao_estadual'
                           WHERE id_cliente='$id_cliente'";
