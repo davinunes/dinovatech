@@ -153,6 +153,8 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                                     Nome</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_CNPJ}}')">Empresa
                                     CNPJ</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{NOME_FANTASIA}}')">Nome
+                                    Fantasia</span>
                             </div>
 
                             <span class="var-group-title">Cliente / Tutor</span>
@@ -183,34 +185,19 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                             </div>
 
                             <?php if (AppHelper::isVetMode()): ?>
-                                <span class="var-group-title">Cliente / Tutor</span>
+                                <span class="var-group-title">Vet / Pet</span>
                                 <div class="flex flex-wrap gap-1">
-                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome
-                                        Cliente</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome Pet</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV Vet</span>
                                 </div>
-
-                                <span class="var-group-title">Empresa / Global</span>
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_NOME}}')">Razão
-                                        Social</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_FANTASIA}}')">Nome
-                                        Fantasia</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_CNPJ}}')">CNPJ</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{DATA_ATUAL}}')">Data Atual</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{CIDADE_DATA}}')">Cidade +
-                                        Data</span>
-                                </div> <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV Vet</span>
-                            </div>
-                        <?php endif; ?>
-                </div>
+                            <?php endif; ?>
+                        </div>
 
                 <!-- Editor -->
                 <div class="mb-4">
