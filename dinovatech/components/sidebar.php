@@ -32,8 +32,18 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
     class="fixed inset-y-0 left-0 z-30 w-64 bg-slate-900 text-white transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-xl flex flex-col">
     <!-- Logo area -->
     <div class="h-16 flex items-center justify-center border-b border-slate-800">
-        <h2 class="text-xl font-bold tracking-wider text-cyan-400"><a
-                href="<?= $basePath ?>../index.php"><?= strtoupper(AppHelper::getCompanyName()) ?></a></h2>
+        <h2 class="text-xl font-bold tracking-wider text-cyan-400">
+            <a href="<?= $basePath ?>../index.php">
+                <?php 
+                $logo = AppHelper::getCompanyLogo();
+                if ($logo): 
+                ?>
+                    <img src="<?= $basePath . $logo ?>" alt="<?= AppHelper::getCompanyName() ?>" class="max-h-12 max-w-[180px] object-contain">
+                <?php else: ?>
+                    <?= strtoupper(AppHelper::getCompanyName()) ?>
+                <?php endif; ?>
+            </a>
+        </h2>
     </div>
 
     <!-- Navigation -->

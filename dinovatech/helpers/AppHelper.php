@@ -40,6 +40,33 @@ class AppHelper
         DBClose($link);
         return $name;
     }
+
+    public static function getCompanyLogo()
+    {
+        $dbPath = dirname(__DIR__) . '/database.php';
+        if (!file_exists($dbPath)) {
+            $dbPath = dirname(__DIR__, 2) . '/database.php';
+        }
+
+        if (file_exists($dbPath)) {
+            require_once $dbPath;
+        }
+
+        $link = DBConnect();
+        if (!$link)
+            return null;
+
+        $query = "SELECT logo_url FROM ConfiguracoesEmissor LIMIT 1";
+        $res = mysqli_query($link, $query);
+        $logo = null;
+        if ($res && $row = mysqli_fetch_assoc($res)) {
+            if (!empty($row['logo_url'])) {
+                $logo = $row['logo_url'];
+            }
+        }
+        DBClose($link);
+        return $logo;
+    }
     public static function calculateNfseData($link, $id_fatura)
     {
         $id_fatura = mysqli_real_escape_string($link, $id_fatura);
