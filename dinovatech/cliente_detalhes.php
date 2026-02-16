@@ -460,7 +460,8 @@ if ($id_cliente) {
                 </div>
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Data de Vencimento</label>
-                    <input type="date" name="data_vencimento" required class="w-full p-2 border rounded-lg">
+                    <input type="date" name="data_vencimento" value="<?= date('Y-m-d') ?>" required
+                        class="w-full p-2 border rounded-lg">
                 </div>
 
                 <div class="flex justify-end gap-2">
