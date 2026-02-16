@@ -183,6 +183,7 @@ $vars = [
     // Fiscal / Service Details
     '{{DESCRICAO_FISCAL}}' => $dados['descricao_fiscal'] ?? $dados['descricao_personalizada'] ?? '',
     '{{ISS_RETIDO}}' => (isset($dados['iss_retido']) && $dados['iss_retido'] == '1') ? 'Sim' : 'Não',
+    '{{TEXTO_PERSONALIZADO}}' => '', // Default empty, override via REQUEST
 ];
 
 // 4. Apply Overrides (if any)

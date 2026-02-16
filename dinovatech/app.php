@@ -2720,6 +2720,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+        case 'get_documentos_emitidos':
+            $id_atendimento = $_POST['id_atendimento'] ?? 0;
+            if (!$id_atendimento) {
+                $response['message'] = "ID Atendimento obrigatório.";
+            } else {
+                $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
+                $query = "SELECT d.*, u.nome as nome_emissor 
+                          FROM DocumentosEmitidos d
+                          LEFT JOIN Usuarios u ON d.usuario_emissor = u.id_usuario
+                          WHERE d.id_atendimento = '$id_atendimento'
+                          ORDER BY d.data_emissao DESC";
+                $result = DBExecute($link, $query);
+                $docs = [];
+                if ($result) {
+                    while ($row = mysqli_fetch_assoc($result)) {
+                        $docs[] = $row;
+                    }
+                    $response['success'] = true;
+                    $response['data'] = $docs;
+                } else {
+                    $response['message'] = "Erro ao buscar documentos: " . mysqli_error($link);
+                }
+            }
+            break;
+
         // --- GESTÃO DE USUÁRIOS ---
         case 'get_usuarios':
             $query = "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios ORDER BY nome ASC";
