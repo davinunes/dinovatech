@@ -143,7 +143,9 @@ function formatCpfCnpj($pCpfCnpj)
 $vars = [
     // Global / Company
     '{{LOGO_URL}}' => '<img src="' . $logo_url . '" style="max-height: 80px;"/>',
-    '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? 'Minha Empresa', 
+    '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? 'Minha Empresa',
+    '{{EMPRESA_NOME_FANTASIA}}' => $empresa['nome_fantasia'] ?? '',
+    '{{NOME_FANTASIA}}' => $empresa['nome_fantasia'] ?? '', // Default to Company Fantasia
     '{{EMPRESA_CNPJ}}' => formatCpfCnpj($empresa['cnpj'] ?? ''),
     '{{DATA_ATUAL}}' => date('d/m/Y'),
     '{{HORA_ATUAL}}' => date('H:i'),
@@ -152,7 +154,7 @@ $vars = [
     // Client / Tutor
     '{{NOME_TUTOR}}' => $dados['nome_tutor'],
     '{{NOME_CLIENTE}}' => $dados['nome_tutor'], // Alias
-    '{{NOME_FANTASIA}}' => $dados['nome_tutor'], // Fallback since field doesn't exist, usually same for individuals
+    '{{CLIENTE_NOME_FANTASIA}}' => '', // Field not in DB yet
     '{{CPF_TUTOR}}' => formatCpfCnpj($dados['cpf_tutor'] ?? ''),
     '{{CPF_CNPJ_CLIENTE}}' => formatCpfCnpj($dados['cpf_tutor'] ?? ''), // Alias
     '{{ENDERECO_TUTOR}}' => $dados['endereco_tutor'] ?? '',
@@ -177,7 +179,7 @@ $vars = [
     '{{VALOR_CONTRATO}}' => isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '',
     '{{DATA_INICIO}}' => isset($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
     '{{DIA_VENCIMENTO}}' => isset($dados['data_inicio_cobranca']) ? date('d', strtotime($dados['data_inicio_cobranca'])) : '',
-    
+
     // Fiscal / Service Details
     '{{DESCRICAO_FISCAL}}' => $dados['descricao_fiscal'] ?? $dados['descricao_personalizada'] ?? '',
     '{{ISS_RETIDO}}' => (isset($dados['iss_retido']) && $dados['iss_retido'] == '1') ? 'Sim' : 'Não',
