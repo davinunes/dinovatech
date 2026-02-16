@@ -176,6 +176,10 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                                     Início</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia
                                     Venc.</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{DESCRICAO_FISCAL}}')">Desc.
+                                    Fiscal</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{ISS_RETIDO}}')">ISS
+                                    Retido?</span>
                             </div>
 
                             <?php if (AppHelper::isVetMode()): ?>

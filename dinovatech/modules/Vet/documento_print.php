@@ -126,13 +126,25 @@ if (!empty($empresa['codigo_municipio'])) {
     }
 }
 
-// Map variables
+// Helper to format CPF/CNPJ
+function formatCpfCnpj($pCpfCnpj)
+{
+    $cnpj_cpf = preg_replace("/\D/", '', $pCpfCnpj);
+    if (strlen($cnpj_cpf) === 11) {
+        return preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cnpj_cpf);
+    }
+    if (strlen($cnpj_cpf) === 14) {
+        return preg_replace("/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/", "\$1.\$2.\$3/\$4-\$5", $cnpj_cpf);
+    }
+    return $pCpfCnpj;
+}
+
 // Map variables
 $vars = [
     // Global / Company
     '{{LOGO_URL}}' => '<img src="' . $logo_url . '" style="max-height: 80px;"/>',
-    '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? 'Minha Empresa', // Assuming field name
-    '{{EMPRESA_CNPJ}}' => $empresa['cnpj'] ?? '',
+    '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? 'Minha Empresa', 
+    '{{EMPRESA_CNPJ}}' => formatCpfCnpj($empresa['cnpj'] ?? ''),
     '{{DATA_ATUAL}}' => date('d/m/Y'),
     '{{HORA_ATUAL}}' => date('H:i'),
     '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
@@ -140,8 +152,9 @@ $vars = [
     // Client / Tutor
     '{{NOME_TUTOR}}' => $dados['nome_tutor'],
     '{{NOME_CLIENTE}}' => $dados['nome_tutor'], // Alias
-    '{{CPF_TUTOR}}' => $dados['cpf_tutor'] ?? '',
-    '{{CPF_CNPJ_CLIENTE}}' => $dados['cpf_tutor'] ?? '', // Alias
+    '{{NOME_FANTASIA}}' => $dados['nome_tutor'], // Fallback since field doesn't exist, usually same for individuals
+    '{{CPF_TUTOR}}' => formatCpfCnpj($dados['cpf_tutor'] ?? ''),
+    '{{CPF_CNPJ_CLIENTE}}' => formatCpfCnpj($dados['cpf_tutor'] ?? ''), // Alias
     '{{ENDERECO_TUTOR}}' => $dados['endereco_tutor'] ?? '',
     '{{ENDERECO_CLIENTE}}' => $dados['endereco_tutor'] ?? '', // Alias
     '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? '',
@@ -164,13 +177,15 @@ $vars = [
     '{{VALOR_CONTRATO}}' => isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '',
     '{{DATA_INICIO}}' => isset($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
     '{{DIA_VENCIMENTO}}' => isset($dados['data_inicio_cobranca']) ? date('d', strtotime($dados['data_inicio_cobranca'])) : '',
+    
+    // Fiscal / Service Details
+    '{{DESCRICAO_FISCAL}}' => $dados['descricao_fiscal'] ?? $dados['descricao_personalizada'] ?? '',
+    '{{ISS_RETIDO}}' => (isset($dados['iss_retido']) && $dados['iss_retido'] == '1') ? 'Sim' : 'Não',
 ];
 
 // 4. Apply Overrides (if any)
 if (isset($_REQUEST['overrides']) && is_array($_REQUEST['overrides'])) {
     foreach ($_REQUEST['overrides'] as $key => $val) {
-        // Security: only allow overriding known keys if necessary, or just blindly accept
-        // For flexibility, we update if key exists in defaults or is a new one (though template only has specific placeholders)
         if (array_key_exists($key, $vars)) {
             $vars[$key] = $val;
         }
