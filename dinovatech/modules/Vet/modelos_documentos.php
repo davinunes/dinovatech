@@ -239,7 +239,7 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
             toolbar: 'undo redo | blocks fontfamily fontsize | ' +
                 'bold italic backcolor forecolor | lineheight | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
-                'removeformat | help',
+                'table hr | removeformat | help',
             content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
             font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
         });
