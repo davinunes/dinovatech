@@ -12,6 +12,9 @@ if (!AppHelper::isVetMode()) {
 }
 include "../../../database.php";
 
+// Add TinyMCE
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>';
+
 if (file_exists(__DIR__ . '/../../helpers/GoogleCalendarHelper.php')) {
     require_once __DIR__ . '/../../helpers/GoogleCalendarHelper.php';
 }
@@ -668,9 +671,17 @@ DBClose($link);
             selector: '#editor-texto-custom',
             height: 300,
             menubar: false,
-            plugins: ['lists', 'link', 'paste', 'help', 'wordcount'],
-            toolbar: 'undo redo | bold italic | bullist numlist | removeformat',
-            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }'
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'media', 'table', 'help', 'wordcount'
+            ],
+            toolbar: 'undo redo | blocks fontfamily fontsize | ' +
+                'bold italic backcolor forecolor | lineheight | alignleft aligncenter ' +
+                'alignright alignjustify | bullist numlist outdent indent | ' +
+                'removeformat | help',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+            font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
         });
 
         // --- DOCUMENTOS MODELOS ---
