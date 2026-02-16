@@ -266,7 +266,7 @@ if (isset($_REQUEST['salvar']) && $_REQUEST['salvar'] == '1') {
     $usuario_id = $_SESSION['usuario_id'] ?? 'NULL';
 
     $qSave = "INSERT INTO DocumentosEmitidos (id_cliente, id_pet, id_atendimento, id_recorrencia, titulo, tipo, conteudo_html, texto_personalizado, data_emissao, usuario_emissor)
-              VALUES ('$id_cliente_val', $id_pet_val, $id_atend_val, $id_rec_val, '$titulo', '$tipo', '$conteudo_html_safe', '$texto_personalizado_safe', NOW(), $usuario_id)";
+              VALUES ('$id_cliente_val', $id_pet_val, $id_atend_val, $id_rec_val, '$titulo_final_safe', '$tipo', '$conteudo_html_safe', '$texto_personalizado_safe', NOW(), $usuario_id)";
 
     if (DBExecute($link, $qSave)) {
         if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
