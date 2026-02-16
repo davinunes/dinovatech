@@ -54,6 +54,10 @@ if (!isset($_SESSION['usuario_id'])) {
                                 class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
                                 Atualizações
                             </button>
+                            <button type="button" onclick="switchTab('usuarios')" id="tab-usuarios"
+                                class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors">
+                                Usuários
+                            </button>
                         </nav>
                     </div>
 
@@ -451,6 +455,47 @@ if (!isset($_SESSION['usuario_id'])) {
                             </div>
                         </div>
                     </div>
+
+                    <!-- TAB: USUÁRIOS -->
+                    <div id="content-usuarios" class="tab-content hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-700 flex items-center">
+                                <span class="material-icons mr-2 text-cyan-600">people</span> Gestão de Usuários
+                            </h3>
+                            <button type="button" onclick="openUsuarioModal()"
+                                class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+                                <span class="material-icons text-sm mr-1">add</span> Novo Usuário
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200" id="tabela-usuarios">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Nome</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Email</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Nível</th>
+                                        <th
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="lista-usuarios">
+                                    <!-- Populated by JS -->
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">Carregando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
                     <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
                         <button type="submit"
                             class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
@@ -461,6 +506,61 @@ if (!isset($_SESSION['usuario_id'])) {
             </div>
 
         </main>
+    </div>
+
+    <!-- MODAL USUÁRIO -->
+    <div id="modalUsuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modalUsuarioTitle">Novo Usuário</h3>
+                <div class="mt-2 text-left">
+                    <form id="formUsuario">
+                        <input type="hidden" name="action" value="save_usuario">
+                        <input type="hidden" name="id_usuario" id="form_id_usuario">
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Nome</label>
+                            <input type="text" name="nome" id="form_nome_usuario" required
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Email</label>
+                            <input type="email" name="email" id="form_email_usuario" required
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Senha</label>
+                            <input type="password" name="senha" id="form_senha_usuario"
+                                class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <p class="text-xs text-gray-500 mt-1" id="senha_hint">Deixe em branco para manter a atual
+                                (ao editar).</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Nível de Acesso</label>
+                            <select name="nivel_acesso" id="form_nivel_acesso"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="admin">Administrador</option>
+                                <option value="padrao">Padrão</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center justify-end mt-4">
+                            <button type="button" onclick="closeUsuarioModal()"
+                                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2 focus:outline-none focus:shadow-outline">
+                                Cancelar
+                            </button>
+                            <button type="submit"
+                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                                Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <?php include 'components/layout_scripts.php'; ?>
@@ -595,18 +695,109 @@ if (!isset($_SESSION['usuario_id'])) {
                     contentType: false, // Set content type to false as jQuery will tell the server its a query string request
                     success: function (response) {
                         if (response.success) {
-                            Swal.fire('Sucesso!', response.message, 'success').then(() => {
-                                location.reload(); // Reload to update file display
-                            });
+                            alert(response.message);
+                            location.reload();
                         } else {
-                            Swal.fire('Erro!', response.message, 'error');
+                            alert(response.message);
                         }
                     },
                     error: function () {
-                        Swal.fire('Erro!', 'Falha na comunicação com o servidor.', 'error');
+                        alert('Erro ao salvar configurações.');
                     }
                 });
             });
+
+            // --- USER MANAGEMENT JS ---
+
+            window.loadUsuarios = function () {
+                $.post('app.php', { action: 'get_usuarios' }, function (res) {
+                    const tbody = $('#lista-usuarios');
+                    tbody.empty();
+
+                    if (res.success && res.data.length > 0) {
+                        res.data.forEach(u => {
+                            tbody.append(`
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${u.nome}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${u.email}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${u.nivel_acesso}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <button type="button" onclick='editUsuario(${JSON.stringify(u)})' class="text-cyan-600 hover:text-cyan-900 mr-3">Editar</button>
+                                        <button type="button" onclick="deleteUsuario('${u.id_usuario}')" class="text-red-600 hover:text-red-900">Excluir</button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        tbody.append('<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhum usuário encontrado.</td></tr>');
+                    }
+                }, 'json');
+            };
+
+            // Load users when tab is switched
+            const originalSwitchTab = window.switchTab;
+            window.switchTab = function (tabName) {
+                originalSwitchTab(tabName);
+                if (tabName === 'usuarios') {
+                    // Hide main save button in Users tab to avoid confusion
+                    $('#btnSalvarGeral').hide();
+                    loadUsuarios();
+                } else {
+                    $('#btnSalvarGeral').show();
+                }
+            };
+
+            window.openUsuarioModal = function () {
+                $('#formUsuario')[0].reset();
+                $('#form_id_usuario').val('');
+                $('#modalUsuarioTitle').text('Novo Usuário');
+                $('#senha_hint').text('Senha é obrigatória para novos usuários.');
+                $('#form_senha_usuario').attr('placeholder', 'Digite a senha');
+                $('#modalUsuario').removeClass('hidden');
+            };
+
+            window.closeUsuarioModal = function () {
+                $('#modalUsuario').addClass('hidden');
+            };
+
+            window.editUsuario = function (user) {
+                $('#form_id_usuario').val(user.id_usuario);
+                $('#form_nome_usuario').val(user.nome);
+                $('#form_email_usuario').val(user.email);
+                $('#form_nivel_acesso').val(user.nivel_acesso);
+                
+                $('#modalUsuarioTitle').text('Editar Usuário');
+                $('#senha_hint').text('Deixe em branco para manter a atual.');
+                $('#form_senha_usuario').attr('placeholder', '(Não alterada)');
+                
+                $('#modalUsuario').removeClass('hidden');
+            };
+
+            window.deleteUsuario = function (id) {
+                if(confirm('Tem certeza que deseja excluir este usuário?')) {
+                    $.post('app.php', { action: 'excluir_usuario', id_usuario: id }, function(res){
+                        if(res.success) {
+                            loadUsuarios(); // Reload list
+                        } else {
+                            alert(res.message);
+                        }
+                    }, 'json');
+                }
+            };
+
+            $('#formUsuario').on('submit', function(e){
+                e.preventDefault();
+                $.post('app.php', $(this).serialize(), function(res){
+                    if(res.success) {
+                        alert(res.message);
+                        closeUsuarioModal();
+                        loadUsuarios();
+                    } else {
+                        alert(res.message);
+                    }
+                }, 'json');
+            });
+
             // Executar Migrações
             $('#btnRunMigrations').click(function () {
                 const btn = $(this);

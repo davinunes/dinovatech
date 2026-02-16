@@ -2681,6 +2681,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+
         case 'excluir_modelo_documento':
             $id = $_POST['id'] ?? '';
             if (empty($id)) {
@@ -2695,6 +2696,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = "Modelo excluído com sucesso!";
             } else {
                 $response['message'] = "Erro ao excluir: " . mysqli_error($link);
+            }
+            break;
+
+        // --- GESTÃO DE USUÁRIOS ---
+        case 'get_usuarios':
+            $query = "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios ORDER BY nome ASC";
+            $result = DBExecute($link, $query);
+            $usuarios = [];
+            if ($result) {
+                while ($row = mysqli_fetch_assoc($result)) {
+                    $usuarios[] = $row;
+                }
+                $response['success'] = true;
+                $response['data'] = $usuarios;
+            } else {
+                $response['message'] = "Erro ao buscar usuários: " . mysqli_error($link);
+            }
+            break;
+
+        case 'save_usuario':
+            $id_usuario = $_POST['id_usuario'] ?? '';
+            $nome = mysqli_real_escape_string($link, $_POST['nome'] ?? '');
+            $email = mysqli_real_escape_string($link, $_POST['email'] ?? '');
+            $senha = $_POST['senha'] ?? '';
+            $nivel_acesso = mysqli_real_escape_string($link, $_POST['nivel_acesso'] ?? 'admin');
+
+            if (empty($nome) || empty($email)) {
+                $response['message'] = "Nome e Email são obrigatórios.";
+                break;
+            }
+
+            if (!empty($id_usuario)) {
+                // Update
+                $id_usuario = mysqli_real_escape_string($link, $id_usuario);
+                $query = "UPDATE Usuarios SET nome='$nome', email='$email', nivel_acesso='$nivel_acesso'";
+
+                if (!empty($senha)) {
+                    $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+                    $query .= ", senha='$senhaHash'";
+                }
+
+                $query .= " WHERE id_usuario='$id_usuario'";
+            } else {
+                // Insert
+                if (empty($senha)) {
+                    $response['message'] = "Senha é obrigatória para novos usuários.";
+                    break;
+                }
+                $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
+                $query = "INSERT INTO Usuarios (nome, email, senha, nivel_acesso) VALUES ('$nome', '$email', '$senhaHash', '$nivel_acesso')";
+            }
+
+            if (DBExecute($link, $query)) {
+                $response['success'] = true;
+                $response['message'] = "Usuário salvo com sucesso!";
+            } else {
+                // Check for duplicate email error
+                if (mysqli_errno($link) == 1062) {
+                    $response['message'] = "Erro: Este email já está em uso.";
+                } else {
+                    $response['message'] = "Erro ao salvar usuário: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'excluir_usuario':
+            $id_usuario = $_POST['id_usuario'] ?? '';
+            if (empty($id_usuario)) {
+                $response['message'] = "ID do usuário é obrigatório.";
+                break;
+            }
+            $id_usuario = mysqli_real_escape_string($link, $id_usuario);
+
+            // Prevent deleting self? (Optional but good practice)
+            // But session handling is simpler here. 
+            // Just delete.
+            $query = "DELETE FROM Usuarios WHERE id_usuario='$id_usuario'";
+
+            if (DBExecute($link, $query)) {
+                $response['success'] = true;
+                $response['message'] = "Usuário excluído com sucesso!";
+            } else {
+                $response['message'] = "Erro ao excluir usuário: " . mysqli_error($link);
             }
             break;
 
