@@ -15,7 +15,7 @@ if (!file_exists($pathConfig) || !file_exists($pathDB)) {
 require_once $pathConfig;
 require_once $pathHelper;
 
-if (!isset($_SESSION['usuario_id']) || !AppHelper::isVetMode()) {
+if (!isset($_SESSION['usuario_id'])) {
     die("Acesso negado.");
 }
 
