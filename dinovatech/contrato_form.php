@@ -72,33 +72,25 @@ DBClose($link);
         <main class="flex-1 p-6 mt-16 lg:mt-0">
 
             <div class="max-w-2xl mx-auto">
-                <div class="flex items-center mb-6">
-                    <a href="contratos.php" class="mr-4 text-gray-500 hover:text-gray-700">
-                        <span class="material-icons">arrow_back</span>
-                    </a>
-                    <h2 class="text-3xl font-bold text-gray-800">
-                        <?= $is_edit ? 'Editar Contrato' : 'Novo Contrato' ?>
-                    </h2>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <a href="contratos.php" class="mr-4 text-gray-500 hover:text-gray-700">
+                            <span class="material-icons">arrow_back</span>
+                        </a>
+                        <h2 class="text-3xl font-bold text-gray-800">
+                            <?= $is_edit ? 'Editar Contrato' : 'Novo Contrato' ?>
+                        </h2>
+                    </div>
+                     <?php if ($is_edit): ?>
+                        <button type="button" onclick="abrirModalDocumento()"
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center shadow-sm">
+                            <span class="material-icons text-sm mr-2">description</span> Gerar Documento
+                        </button>
+                    <?php endif; ?>
                 </div>
 
                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
                     <form id="contratoForm">
-                        <input type="hidden" name="action" value="vincular_recorrencia"> <!-- Reuse logic -->
-                        <!-- If edit logic existed in app.php for recorrencia, we'd use it. But looking at app.php, there might not be 'editar_recorrencia'.
-                              Wait, app.php does NOT have 'editar_recorrencia'. It has 'vincular_recorrencia'.
-                              I should probably implement 'editar_recorrencia' later or just delete and re-create.
-                              For now let's assume I can duplicate OR I should add 'editar_recorrencia' to app.php.
-                              Given usage, I will stick to 'vincular_recorrencia' (Create) mostly, but for 'Edit' I might need to handle it.
-                              Actually, standard practice: Add 'editar_recorrencia' to app.php.
-                              For this moment, if it's edit, I'll allow editing. I will update app.php later if needed.
-                              Let's check app.php again... no 'editar_recorrencia'.
-                              So, 'Edit' functionality effectively creates a new one or fails?
-                              If I use 'vincular_recorrencia' it inserts.
-                              For this MVP step, I will only support CREATION via this form properly.
-                              If $is_edit, I should warn or Implement Update. 
-                              Let's Implement 'editar_recorrencia' in app.php in next step.
-                              For now, lets set action to 'editar_recorrencia' if is_edit, and 'vincular_recorrencia' if not.
-                          -->
                         <input type="hidden" name="action"
                             value="<?= $is_edit ? 'editar_recorrencia' : 'vincular_recorrencia' ?>">
                         <?php if ($is_edit): ?>
@@ -299,6 +291,35 @@ DBClose($link);
         </main>
     </div>
 
+    <!-- MODAL SELECAO MODELO -->
+    <div id="modalDocumento" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Gerar Documento</h3>
+                <div class="mt-2 text-left">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Selecione o Modelo:</label>
+                    <select id="modeloSelect" class="w-full border p-2 rounded mb-4">
+                        <option value="">Carregando...</option>
+                    </select>
+
+                    <p class="text-xs text-gray-500 mb-4">
+                        O documento será gerado com os dados deste contrato e do cliente.
+                    </p>
+                </div>
+                <div class="flex items-center justify-end mt-4">
+                    <button id="btnFecharModal" onclick="fecharModalDocumento()"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2">
+                        Cancelar
+                    </button>
+                    <button onclick="gerarDocumento()"
+                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-4 rounded">
+                        Gerar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php include 'components/layout_scripts.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
@@ -309,6 +330,52 @@ DBClose($link);
             });
             $('#id_servico').on('select2:select', function(e) { updateValorSugerido(); });
         });
+
+        // Documentos
+        let modelosCarregados = false;
+        
+        function abrirModalDocumento() {
+            document.getElementById('modalDocumento').classList.remove('hidden');
+            if (!modelosCarregados) {
+                carregarModelos();
+            }
+        }
+
+        function fecharModalDocumento() {
+            document.getElementById('modalDocumento').classList.add('hidden');
+        }
+
+        function carregarModelos() {
+            $.post('app.php', { action: 'get_modelos_documentos' }, function(response) {
+                const select = $('#modeloSelect');
+                select.empty();
+                select.append('<option value="">Selecione um modelo...</option>');
+                
+                if (response.success && response.data) {
+                    response.data.forEach(function(modelo) {
+                        select.append(`<option value="${modelo.id_modelo}">${modelo.titulo} (${modelo.tipo})</option>`);
+                    });
+                    modelosCarregados = true;
+                } else {
+                    select.append('<option value="">Erro ao carregar</option>');
+                }
+            }, 'json');
+        }
+
+        function gerarDocumento() {
+            const idModelo = $('#modeloSelect').val();
+            const idRecorrencia = $('input[name="id_recorrencia"]').val();
+            
+            if (!idModelo) {
+                alert('Selecione um modelo.');
+                return;
+            }
+            
+            // Open in new tab
+            const url = `modules/Vet/documento_print.php?id_recorrencia=${idRecorrencia}&id_modelo=${idModelo}`;
+            window.open(url, '_blank');
+            fecharModalDocumento();
+        }
 
         function updateValorSugerido() {
             const select = document.getElementById('id_servico');
@@ -338,14 +405,6 @@ DBClose($link);
                         const msgDiv = $('#formMessage');
                         msgDiv.removeClass('hidden text-green-600 text-red-600');
                         msgDiv.text(response.message);
-
-                        // Handle "Action Invalid" for edits since we didn't add it yet
-                        if (response.message === "Ação inválida.") {
-                            msgDiv.text("Erro: Funcionalidade de edição ainda não implementada no backend. (Ação inválida)");
-                            msgDiv.addClass('text-red-600');
-                            btn.prop('disabled', false).text(originalText);
-                            return;
-                        }
 
                         if (response.success) {
                             msgDiv.addClass('text-green-600');

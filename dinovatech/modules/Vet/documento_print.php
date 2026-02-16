@@ -23,38 +23,63 @@ include $pathDB;
 $link = DBConnect();
 
 $id_atendimento = $_REQUEST['id_atendimento'] ?? 0;
+$id_recorrencia = $_REQUEST['id_recorrencia'] ?? 0;
 $id_modelo = $_REQUEST['id_modelo'] ?? 0;
 
-if (!$id_atendimento || !$id_modelo) {
+if ((!$id_atendimento && !$id_recorrencia) || !$id_modelo) {
     die("Parametros invalidos.");
 }
 
 $id_atendimento = mysqli_real_escape_string($link, $id_atendimento);
+$id_recorrencia = mysqli_real_escape_string($link, $id_recorrencia);
 $id_modelo = mysqli_real_escape_string($link, $id_modelo);
 
-// 1. Fetch Attendance + Pet + Client + Vet
-$q = "SELECT a.*, 
-        p.nome as nome_pet, p.especie, p.raca, p.sexo, p.peso as peso_pet, p.data_nascimento as nascimento,
-        c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor,
-        v.nome as nome_vet, v.crmv as crmv_vet
-        FROM Atendimentos a
-        LEFT JOIN Pets p ON a.id_pet = p.id_pet
-        LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
-        LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
-        WHERE a.id_atendimento = '$id_atendimento'";
+$dados = [];
 
-$r = DBExecute($link, $q);
-if (!$r || mysqli_num_rows($r) == 0) {
-    // Debug: Check if attendance exists at all
-    $check = DBExecute($link, "SELECT * FROM Atendimentos WHERE id_atendimento = '$id_atendimento'");
-    if (mysqli_num_rows($check) > 0) {
-        $row = mysqli_fetch_assoc($check);
-        die("Atendimento ID $id_atendimento encontrado, mas falha nos JOINS.<br>Pet ID: " . $row['id_pet'] . "<br>Vet ID: " . $row['id_vet']);
-    } else {
-        die("Atendimento ID $id_atendimento nao existe no banco de dados.");
+if ($id_atendimento) {
+    // 1. Fetch Attendance + Pet + Client + Vet
+    $q = "SELECT a.*, 
+            p.nome as nome_pet, p.especie, p.raca, p.sexo, p.peso as peso_pet, p.data_nascimento as nascimento,
+            c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
+            v.nome as nome_vet, v.crmv as crmv_vet
+            FROM Atendimentos a
+            LEFT JOIN Pets p ON a.id_pet = p.id_pet
+            LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
+            LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
+            WHERE a.id_atendimento = '$id_atendimento'";
+
+    $r = DBExecute($link, $q);
+    if (!$r || mysqli_num_rows($r) == 0) {
+        die("Atendimento ID $id_atendimento nao encontrado.");
     }
+    $dados = mysqli_fetch_assoc($r);
+    $dados['tipo_origem'] = 'atendimento';
+} elseif ($id_recorrencia) {
+    // 1. Fetch Recurrence + Client + Service
+    $q = "SELECT r.*, 
+            c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
+            s.nome_servico
+            FROM Recorrencias r
+            LEFT JOIN Clientes c ON r.id_cliente = c.id_cliente
+            LEFT JOIN Servicos s ON r.id_servico = s.id_servico
+            WHERE r.id_recorrencia = '$id_recorrencia'";
+
+    $r = DBExecute($link, $q);
+    if (!$r || mysqli_num_rows($r) == 0) {
+        die("Contrato/Recorrencia ID $id_recorrencia nao encontrado.");
+    }
+    $dados = mysqli_fetch_assoc($r);
+    $dados['tipo_origem'] = 'contrato';
+
+    // Normalize data for shared variables
+    $dados['nome_pet'] = 'N/A';
+    $dados['especie'] = 'N/A';
+    $dados['raca'] = 'N/A';
+    $dados['sexo'] = 'N/A';
+    $dados['nome_vet'] = 'N/A';
+    $dados['crmv_vet'] = 'N/A';
+    $dados['nascimento'] = null;
 }
-$dados = mysqli_fetch_assoc($r);
 
 // 2. Fetch Model
 $q_mod = "SELECT * FROM ModelosDocumentos WHERE id_modelo = '$id_modelo'";
@@ -102,24 +127,43 @@ if (!empty($empresa['codigo_municipio'])) {
 }
 
 // Map variables
+// Map variables
 $vars = [
+    // Global / Company
     '{{LOGO_URL}}' => '<img src="' . $logo_url . '" style="max-height: 80px;"/>',
+    '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? 'Minha Empresa', // Assuming field name
+    '{{EMPRESA_CNPJ}}' => $empresa['cnpj'] ?? '',
+    '{{DATA_ATUAL}}' => date('d/m/Y'),
+    '{{HORA_ATUAL}}' => date('H:i'),
+    '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
+
+    // Client / Tutor
     '{{NOME_TUTOR}}' => $dados['nome_tutor'],
+    '{{NOME_CLIENTE}}' => $dados['nome_tutor'], // Alias
     '{{CPF_TUTOR}}' => $dados['cpf_tutor'] ?? '',
+    '{{CPF_CNPJ_CLIENTE}}' => $dados['cpf_tutor'] ?? '', // Alias
     '{{ENDERECO_TUTOR}}' => $dados['endereco_tutor'] ?? '',
+    '{{ENDERECO_CLIENTE}}' => $dados['endereco_tutor'] ?? '', // Alias
+    '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? '',
+    '{{TELEFONE_CLIENTE}}' => $dados['telefone_tutor'] ?? '',
+
+    // Pet / Vet (Only relevant if Atendimento)
     '{{NOME_PET}}' => $dados['nome_pet'],
     '{{ESPECIE_PET}}' => $dados['especie'],
     '{{RACA_PET}}' => $dados['raca'],
-    '{{PELAGEM_PET}}' => '', // Campo inexistente no banco atual
+    '{{PELAGEM_PET}}' => '',
     '{{NASCIMENTO_PET}}' => $data_nascimento,
     '{{IDADE_PET}}' => $idade,
     '{{PESO_PET}}' => $dados['peso'] ?? $dados['peso_pet'] ?? '',
     '{{SEXO_PET}}' => $dados['sexo'],
     '{{NOME_VET}}' => $dados['nome_vet'],
     '{{CRMV_VET}}' => $dados['crmv_vet'],
-    '{{DATA_ATUAL}}' => date('d/m/Y'),
-    '{{HORA_ATUAL}}' => date('H:i'),
-    '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
+
+    // Contract / Recurrence (Only relevant if Contrato)
+    '{{SERVICO_NOME}}' => $dados['nome_servico'] ?? '',
+    '{{VALOR_CONTRATO}}' => isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '',
+    '{{DATA_INICIO}}' => isset($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
+    '{{DIA_VENCIMENTO}}' => isset($dados['data_inicio_cobranca']) ? date('d', strtotime($dados['data_inicio_cobranca'])) : '',
 ];
 
 // 4. Apply Overrides (if any)

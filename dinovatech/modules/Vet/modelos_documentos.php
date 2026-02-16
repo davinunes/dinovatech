@@ -7,16 +7,20 @@ if (!isset($_SESSION['usuario_id'])) {
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers/AppHelper.php';
 
-if (!AppHelper::isVetMode()) {
-    header("Location: ../../dashboard.php");
+if (!isset($_SESSION['usuario_id'])) {
+    header("Location: ../../login.php");
     exit();
 }
+require_once __DIR__ . '/../../config.php';
+require_once __DIR__ . '/../../helpers/AppHelper.php';
+
+// Removed Vet Mode Check to make it global
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
-    <title>Modelos de Documentos - DinoVet</title>
+    <title>Modelos de Documentos - Dinovatech</title>
     <?php include '../../components/layout_head.php'; ?>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -40,6 +44,16 @@ if (!AppHelper::isVetMode()) {
             color: white;
             border-color: #0284c7;
         }
+
+        .var-group-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #64748b;
+            font-weight: 700;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            display: block;
+        }
     </style>
 </head>
 
@@ -52,7 +66,7 @@ if (!AppHelper::isVetMode()) {
             <div class="flex flex-col md:flex-row items-center justify-between mb-6">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-800">Modelos de Documentos</h2>
-                    <p class="text-gray-500">Crie modelos para atestados, fichas e termos.</p>
+                    <p class="text-gray-500">Crie modelos para contratos, atestados e termos.</p>
                 </div>
                 <button onclick="novoModelo()"
                     class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-6 rounded-lg shadow flex items-center mt-4 md:mt-0">
@@ -105,51 +119,78 @@ if (!AppHelper::isVetMode()) {
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Título do Documento</label>
                                 <input type="text" name="titulo" id="modelo-titulo" required
                                     class="w-full border-gray-300 rounded-md shadow-sm p-2 border"
-                                    placeholder="Ex: Atestado de Saúde">
+                                    placeholder="Ex: Contrato de Prestação de Serviços">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Tipo / Categoria</label>
                                 <select name="tipo" id="modelo-tipo"
                                     class="w-full border-gray-300 rounded-md shadow-sm p-2 border bg-white">
                                     <option value="Geral">Geral</option>
-                                    <option value="Cirurgia">Cirurgia</option>
-                                    <option value="Internacao">Internação</option>
-                                    <option value="Atestado">Atestado</option>
-                                    <option value="Encaminhamento">Encaminhamento</option>
-                                    <option value="Exames">Solicitação de Exames</option>
-                                    <option value="Eutanasia">Eutanásia</option>
+                                    <option value="Contrato">Contrato</option>
+                                    <?php if (AppHelper::isVetMode()): ?>
+                                        <option value="Cirurgia">Cirurgia</option>
+                                        <option value="Internacao">Internação</option>
+                                        <option value="Atestado">Atestado</option>
+                                        <option value="Encaminhamento">Encaminhamento</option>
+                                        <option value="Exames">Solicitação de Exames</option>
+                                        <option value="Eutanasia">Eutanásia</option>
+                                    <?php endif; ?>
                                 </select>
                             </div>
                         </div>
 
                         <!-- Variables Helper -->
-                        <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                            <span class="text-xs font-bold text-gray-500 uppercase block mb-2">Variáveis Disponíveis
-                                (Clique para inserir)</span>
+                        <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm">
+                            <span class="block mb-2 font-bold text-gray-700">Variáveis Disponíveis</span>
+
                             <div class="flex flex-wrap gap-1">
-                                <span class="variable-tag" onclick="inserirVariavel('{{LOGO_URL}}')">Logo da
-                                    Clínica</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{NOME_TUTOR}}')">Nome Tutor</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{CPF_TUTOR}}')">CPF Tutor</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{ENDERECO_TUTOR}}')">Endereço
-                                    Tutor</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome Pet</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{PELAGEM_PET}}')">Pelagem
-                                    (Indisp.)</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{NASCIMENTO_PET}}')">Data
-                                    Nasc.</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV Vet</span>
+                                <!-- Common -->
+                                <span class="variable-tag" onclick="inserirVariavel('{{LOGO_URL}}')">Logo (URL)</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{DATA_ATUAL}}')">Data Atual</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{HORA_ATUAL}}')">Hora Atual</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{CIDADE_DATA}}')">Cidade,
                                     Data</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_NOME}}')">Empresa
+                                    Nome</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_CNPJ}}')">Empresa
+                                    CNPJ</span>
                             </div>
+
+                            <span class="var-group-title">Cliente / Tutor</span>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome
+                                    Cliente</span>
+                                <span class="variable-tag"
+                                    onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
+                                <span class="variable-tag"
+                                    onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
+                                <span class="variable-tag"
+                                    onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
+                            </div>
+
+                            <span class="var-group-title">Contrato / Recorrência</span>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="variable-tag" onclick="inserirVariavel('{{SERVICO_NOME}}')">Serviço</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{VALOR_CONTRATO}}')">Valor</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{DATA_INICIO}}')">Data
+                                    Início</span>
+                                <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia
+                                    Venc.</span>
+                            </div>
+
+                            <?php if (AppHelper::isVetMode()): ?>
+                                <span class="var-group-title">Vet / Pet</span>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome Pet</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV Vet</span>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Editor -->
