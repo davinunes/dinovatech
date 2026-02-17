@@ -149,10 +149,8 @@ $vars = [
     '{{EMPRESA_CNPJ}}' => formatCpfCnpj($empresa['cnpj'] ?? ''),
     '{{DATA_ATUAL}}' => date('d/m/Y'),
     '{{HORA_ATUAL}}' => date('H:i'),
-    '{{DATA_ATUAL}}' => date('d/m/Y'),
-    '{{HORA_ATUAL}}' => date('H:i'),
     '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
-    '{{LOGO_URL}}' => $config['logo_url'] ?? '',
+    '{{LOGO_URL}}' => $empresa['logo_url'] ?? '',
 
     // Client / Tutor
     '{{NOME_TUTOR}}' => $dados['nome_tutor'],

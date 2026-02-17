@@ -267,7 +267,7 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
             // This allows resizing via width/height attributes in Code view or Image Properties.
             // Note: It won't render in the editor (broken image) unless we replaced it with a real URL for preview, 
             // but the user asked about "tag img" and "altering size".
-            let html = '<img src="{{LOGO_URL}}" width="150" style="height: auto;" alt="Logo" />';
+            let html = '<img src="{{LOGO_URL}}" width="150" alt="Logo" />';
             tinymce.get('editor-conteudo').insertContent(html);
         }
 
