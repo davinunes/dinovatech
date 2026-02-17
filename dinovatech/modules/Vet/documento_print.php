@@ -142,15 +142,10 @@ function formatCpfCnpj($pCpfCnpj)
 // Map variables
 $vars = [
     // Global / Company
-    '{{LOGO_URL}}' => '<img src="' . $logo_url . '" style="max-height: 80px;"/>',
-    '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? 'Minha Empresa',
-    '{{EMPRESA_NOME_FANTASIA}}' => $empresa['nome_fantasia'] ?? '',
-    '{{NOME_FANTASIA}}' => $empresa['nome_fantasia'] ?? '', // Default to Company Fantasia
-    '{{EMPRESA_CNPJ}}' => formatCpfCnpj($empresa['cnpj'] ?? ''),
     '{{DATA_ATUAL}}' => date('d/m/Y'),
     '{{HORA_ATUAL}}' => date('H:i'),
     '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
-    '{{LOGO_URL}}' => $empresa['logo_url'] ?? '',
+    '{{LOGO_URL}}' => $logo_url,
 
     // Client / Tutor
     '{{NOME_TUTOR}}' => $dados['nome_tutor'],
