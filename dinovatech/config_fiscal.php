@@ -190,329 +190,334 @@ if (!isset($_SESSION['usuario_id'])) {
                                 Optante pelo Simples Nacional
                             </label>
                         </div>
-                    </div>
 
-                    <div class="border-t pt-4 mt-6">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                            <span class="material-icons mr-2 text-cyan-600">settings_remote</span> Parâmetros NFS-e
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Ambiente Padrão</label>
-                                <select name="ambiente_padrao" id="ambiente_padrao"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50">
-                                    <option value="homologacao">Homologação (Teste)</option>
-                                    <option value="producao">Produção (Valendo)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Série RPS</label>
-                                <input type="text" name="serie_rps" id="serie_rps" value="8"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
-                                    (Homologação)</label>
-                                <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao" value="0"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
-                                    (Produção)</label>
-                                <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 border-orange-200">
+
+                        <div class="border-t pt-4 mt-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                <span class="material-icons mr-2 text-cyan-600">settings_remote</span> Parâmetros NFS-e
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ambiente Padrão</label>
+                                    <select name="ambiente_padrao" id="ambiente_padrao"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50">
+                                        <option value="homologacao">Homologação (Teste)</option>
+                                        <option value="producao">Produção (Valendo)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Série RPS</label>
+                                    <input type="text" name="serie_rps" id="serie_rps" value="8"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
+                                        (Homologação)</label>
+                                    <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao"
+                                        value="0"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
+                                        (Produção)</label>
+                                    <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 border-orange-200">
+                                </div>
                             </div>
                         </div>
                     </div>
-            </div>
 
-            <!-- TAB: CERTIFICADO -->
-            <div id="content-certificado" class="tab-content hidden">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                    <span class="material-icons mr-2 text-cyan-600">vpn_key</span> Certificado Digital
-                </h3>
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800">
-                    O certificado digital (A1 / PFX) é essencial para a emissão de notas fiscais.
-                    <br>A senha será armazenada de forma segura (criptografada).
-                </div>
+                    <!-- TAB: CERTIFICADO -->
+                    <div id="content-certificado" class="tab-content hidden">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                            <span class="material-icons mr-2 text-cyan-600">vpn_key</span> Certificado Digital
+                        </h3>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-sm text-blue-800">
+                            O certificado digital (A1 / PFX) é essencial para a emissão de notas fiscais.
+                            <br>A senha será armazenada de forma segura (criptografada).
+                        </div>
 
-                <div class="space-y-4">
-                    <!-- Upload Area -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo do Certificado
-                            (.pfx)</label>
-                        <div class="flex items-center gap-4">
-                            <div class="flex-1">
-                                <input type="file" name="arquivo_pfx" id="arquivo_pfx" accept=".pfx" class="block w-full text-sm text-slate-500
+                        <div class="space-y-4">
+                            <!-- Upload Area -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo do Certificado
+                                    (.pfx)</label>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex-1">
+                                        <input type="file" name="arquivo_pfx" id="arquivo_pfx" accept=".pfx" class="block w-full text-sm text-slate-500
                                             file:mr-4 file:py-2 file:px-4
                                             file:rounded-full file:border-0
                                             file:text-sm file:font-semibold
                                             file:bg-cyan-50 file:text-cyan-700
                                             hover:file:bg-cyan-100
                                             cursor-pointer border border-gray-300 rounded-lg">
-                            </div>
-                            <div class="text-xs text-gray-500" id="current_cert_info">
-                                <!-- Will be populated via JS if exists -->
-                                <div class="flex flex-col gap-1">
-                                    <div class="flex items-center">
-                                        <span class="material-icons text-gray-400 text-sm mr-1">insert_drive_file</span>
-                                        <span id="caminho_certificado_display" class="font-mono">Nenhum
-                                            salvo</span>
                                     </div>
-                                    <div id="cert_status_badge" class="hidden">
-                                        <!-- Populated via JS -->
+                                    <div class="text-xs text-gray-500" id="current_cert_info">
+                                        <!-- Will be populated via JS if exists -->
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex items-center">
+                                                <span
+                                                    class="material-icons text-gray-400 text-sm mr-1">insert_drive_file</span>
+                                                <span id="caminho_certificado_display" class="font-mono">Nenhum
+                                                    salvo</span>
+                                            </div>
+                                            <div id="cert_status_badge" class="hidden">
+                                                <!-- Populated via JS -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="caminho_certificado" id="caminho_certificado">
+                            </div>
+
+                            <div class="pt-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Certificado</label>
+                                <div class="relative">
+                                    <input type="password" name="senha_certificado" id="senha_certificado"
+                                        placeholder="Preencha apenas se fez novo upload ou deseja alterar"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
+                                    <button type="button" onclick="togglePass('senha_certificado')"
+                                        class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                        <span class="material-icons text-sm">visibility</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB: INTEGRAÇÕES -->
+                    <div id="content-integracoes" class="tab-content hidden">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                            <span class="material-icons mr-2 text-cyan-600">api</span> Integrações Externas
+                        </h3>
+
+                        <!-- Banco Inter -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                <img src="https://api-financeiro.agilize.com.br/api/image/inter-ce9e01981d.png"
+                                    alt="Inter" class="h-6 mr-3">
+                                <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança / PIX)</h4>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
+                                    <input type="text" name="api_inter_client_id" id="api_inter_client_id"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
+                                    <div class="relative">
+                                        <input type="password" name="api_inter_client_secret"
+                                            id="api_inter_client_secret" placeholder="••••••••••••••••"
+                                            autocomplete="new-password"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
+                                        <button type="button" onclick="togglePass('api_inter_client_secret')"
+                                            class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                            <span class="material-icons text-sm">visibility</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Chave PIX</label>
+                                    <input type="text" name="api_inter_chave_pix" id="api_inter_chave_pix"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Conta Corrente</label>
+                                    <input type="text" name="api_inter_conta_corrente" id="api_inter_conta_corrente"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+
+                                <!-- Inter Certificates -->
+                                <div
+                                    class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 pt-4 mt-2">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Certificado
+                                            (.crt)</label>
+                                        <input type="file" name="arquivo_inter_crt" id="arquivo_inter_crt" accept=".crt"
+                                            class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer border border-gray-300 rounded-lg">
+                                        <div class="text-xs text-gray-500 mt-1" id="current_inter_crt_info">
+                                            <span
+                                                class="material-icons text-gray-400 text-[10px] mr-1">description</span>
+                                            <span id="caminho_inter_crt_display" class="font-mono">Nenhum salvo</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Chave
+                                            (.key)</label>
+                                        <input type="file" name="arquivo_inter_key" id="arquivo_inter_key" accept=".key"
+                                            class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer border border-gray-300 rounded-lg">
+                                        <div class="text-xs text-gray-500 mt-1" id="current_inter_key_info">
+                                            <span class="material-icons text-gray-400 text-[10px] mr-1">vpn_key</span>
+                                            <span id="caminho_inter_key_display" class="font-mono">Nenhum salvo</span>
+                                        </div>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Cadeia CA
+                                            (.crt) - Opcional</label>
+                                        <input type="file" name="arquivo_inter_ca" id="arquivo_inter_ca" accept=".crt"
+                                            class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer border border-gray-300 rounded-lg">
+                                        <div class="text-xs text-gray-500 mt-1" id="current_inter_ca_info">
+                                            <span class="material-icons text-gray-400 text-[10px] mr-1">security</span>
+                                            <span id="caminho_inter_ca_display" class="font-mono">Nenhum salvo</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <input type="hidden" name="caminho_certificado" id="caminho_certificado">
+
+                        <!-- Oracle -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                <span class="material-icons text-red-600 mr-2">cloud</span>
+                                <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
+                                        (Pre-Authenticated)</label>
+                                    <input type="text" name="api_oracle_url" id="api_oracle_url"
+                                        placeholder="https://objectstorage..."
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                    <p class="text-xs text-gray-500 mt-1">URL pública para upload direto sem necessidade
+                                        de auth adicional.</p>
+                                </div>
+
+                                <!-- Opcional: Manter User/Pass mas deixar claro que pode não ser usado -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">User / Key ID
+                                            (Opcional)</label>
+                                        <input type="text" name="api_oracle_user" id="api_oracle_user"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Secret
+                                            (Opcional)</label>
+                                        <input type="password" name="api_oracle_password" id="api_oracle_password"
+                                            autocomplete="new-password"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Google Service Account -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                <span class="material-icons text-blue-600 mr-2">event</span>
+                                <h4 class="font-bold text-gray-800">Google Calendar (Service Account)</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Upload do arquivo JSON da conta de serviço para
+                                sincronização com Google Agenda.</p>
+
+                            <div class="grid grid-cols-1 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo JSON (Service
+                                        Account)</label>
+                                    <input type="file" name="arquivo_google_json" id="arquivo_google_json"
+                                        accept=".json"
+                                        class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg">
+
+                                    <div class="text-xs text-gray-500 mt-2" id="current_google_json_info">
+                                        <div class="flex items-center">
+                                            <span class="material-icons text-gray-400 text-sm mr-1">check_circle</span>
+                                            <span id="google_json_status" class="font-medium text-gray-600">Não
+                                                configurado</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div class="pt-2">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Certificado</label>
-                        <div class="relative">
-                            <input type="password" name="senha_certificado" id="senha_certificado"
-                                placeholder="Preencha apenas se fez novo upload ou deseja alterar"
-                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
-                            <button type="button" onclick="togglePass('senha_certificado')"
-                                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                                <span class="material-icons text-sm">visibility</span>
+                    <!-- TAB: ATUALIZAÇÕES -->
+                    <div id="content-atualizacoes" class="tab-content hidden">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                            <span class="material-icons mr-2 text-cyan-600">system_update</span> Atualizações de Banco
+                            de Dados
+                        </h3>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
+                            <div class="flex">
+                                <div class="flex-shrink-0">
+                                    <span class="material-icons text-blue-500">info</span>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-blue-700">
+                                        Use esta área para aplicar atualizações de esquema do banco de dados (migrações)
+                                        que podem ser necessárias após uma atualização de código.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <button type="button" id="btnRunMigrations"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center">
+                                <span class="material-icons mr-2">play_arrow</span> Verificar e Executar Migrações
                             </button>
                         </div>
+
+                        <div id="migrationLogsContainer" class="hidden">
+                            <h4 class="text-sm font-bold text-gray-700 mb-2">Log de Execução:</h4>
+                            <div id="migrationLogs"
+                                class="bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-lg h-64 overflow-y-auto whitespace-pre-wrap shadow-inner border border-gray-700">
+                            </div>
+                        </div>
                     </div>
-                </div>
+
+                    <!-- TAB: USUÁRIOS -->
+                    <div id="content-usuarios" class="tab-content hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-700 flex items-center">
+                                <span class="material-icons mr-2 text-cyan-600">people</span> Gestão de Usuários
+                            </h3>
+                            <button type="button" onclick="openUsuarioModal()"
+                                class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
+                                <span class="material-icons text-sm mr-1">add</span> Novo Usuário
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200" id="tabela-usuarios">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Nome</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Email</th>
+                                        <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Nível</th>
+                                        <th
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="lista-usuarios">
+                                    <!-- Populated by JS -->
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">Carregando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
+                        <button type="submit"
+                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
+                            <span class="material-icons mr-2">save</span> Salvar Configurações
+                        </button>
+                    </div>
+                </form>
             </div>
 
-            <!-- TAB: INTEGRAÇÕES -->
-            <div id="content-integracoes" class="tab-content hidden">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                    <span class="material-icons mr-2 text-cyan-600">api</span> Integrações Externas
-                </h3>
-
-                <!-- Banco Inter -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-                    <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                        <img src="https://api-financeiro.agilize.com.br/api/image/inter-ce9e01981d.png" alt="Inter"
-                            class="h-6 mr-3">
-                        <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança / PIX)</h4>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
-                            <input type="text" name="api_inter_client_id" id="api_inter_client_id"
-                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Client Secret</label>
-                            <div class="relative">
-                                <input type="password" name="api_inter_client_secret" id="api_inter_client_secret"
-                                    placeholder="••••••••••••••••" autocomplete="new-password"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
-                                <button type="button" onclick="togglePass('api_inter_client_secret')"
-                                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                                    <span class="material-icons text-sm">visibility</span>
-                                </button>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Chave PIX</label>
-                            <input type="text" name="api_inter_chave_pix" id="api_inter_chave_pix"
-                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Conta Corrente</label>
-                            <input type="text" name="api_inter_conta_corrente" id="api_inter_conta_corrente"
-                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                        </div>
-
-                        <!-- Inter Certificates -->
-                        <div
-                            class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 pt-4 mt-2">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Certificado
-                                    (.crt)</label>
-                                <input type="file" name="arquivo_inter_crt" id="arquivo_inter_crt" accept=".crt"
-                                    class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer border border-gray-300 rounded-lg">
-                                <div class="text-xs text-gray-500 mt-1" id="current_inter_crt_info">
-                                    <span class="material-icons text-gray-400 text-[10px] mr-1">description</span>
-                                    <span id="caminho_inter_crt_display" class="font-mono">Nenhum salvo</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Chave
-                                    (.key)</label>
-                                <input type="file" name="arquivo_inter_key" id="arquivo_inter_key" accept=".key"
-                                    class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer border border-gray-300 rounded-lg">
-                                <div class="text-xs text-gray-500 mt-1" id="current_inter_key_info">
-                                    <span class="material-icons text-gray-400 text-[10px] mr-1">vpn_key</span>
-                                    <span id="caminho_inter_key_display" class="font-mono">Nenhum salvo</span>
-                                </div>
-                            </div>
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo Cadeia CA
-                                    (.crt) - Opcional</label>
-                                <input type="file" name="arquivo_inter_ca" id="arquivo_inter_ca" accept=".crt"
-                                    class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100 cursor-pointer border border-gray-300 rounded-lg">
-                                <div class="text-xs text-gray-500 mt-1" id="current_inter_ca_info">
-                                    <span class="material-icons text-gray-400 text-[10px] mr-1">security</span>
-                                    <span id="caminho_inter_ca_display" class="font-mono">Nenhum salvo</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Oracle -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                        <span class="material-icons text-red-600 mr-2">cloud</span>
-                        <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
-                                (Pre-Authenticated)</label>
-                            <input type="text" name="api_oracle_url" id="api_oracle_url"
-                                placeholder="https://objectstorage..."
-                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                            <p class="text-xs text-gray-500 mt-1">URL pública para upload direto sem necessidade
-                                de auth adicional.</p>
-                        </div>
-
-                        <!-- Opcional: Manter User/Pass mas deixar claro que pode não ser usado -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-50">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">User / Key ID
-                                    (Opcional)</label>
-                                <input type="text" name="api_oracle_user" id="api_oracle_user"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Secret
-                                    (Opcional)</label>
-                                <input type="password" name="api_oracle_password" id="api_oracle_password"
-                                    autocomplete="new-password"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Google Service Account -->
-                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
-                    <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                        <span class="material-icons text-blue-600 mr-2">event</span>
-                        <h4 class="font-bold text-gray-800">Google Calendar (Service Account)</h4>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-4">Upload do arquivo JSON da conta de serviço para
-                        sincronização com Google Agenda.</p>
-
-                    <div class="grid grid-cols-1 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo JSON (Service
-                                Account)</label>
-                            <input type="file" name="arquivo_google_json" id="arquivo_google_json" accept=".json"
-                                class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg">
-
-                            <div class="text-xs text-gray-500 mt-2" id="current_google_json_info">
-                                <div class="flex items-center">
-                                    <span class="material-icons text-gray-400 text-sm mr-1">check_circle</span>
-                                    <span id="google_json_status" class="font-medium text-gray-600">Não
-                                        configurado</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- TAB: ATUALIZAÇÕES -->
-            <div id="content-atualizacoes" class="tab-content hidden">
-                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                    <span class="material-icons mr-2 text-cyan-600">system_update</span> Atualizações de Banco
-                    de Dados
-                </h3>
-
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <span class="material-icons text-blue-500">info</span>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-blue-700">
-                                Use esta área para aplicar atualizações de esquema do banco de dados (migrações)
-                                que podem ser necessárias após uma atualização de código.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-6">
-                    <button type="button" id="btnRunMigrations"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center">
-                        <span class="material-icons mr-2">play_arrow</span> Verificar e Executar Migrações
-                    </button>
-                </div>
-
-                <div id="migrationLogsContainer" class="hidden">
-                    <h4 class="text-sm font-bold text-gray-700 mb-2">Log de Execução:</h4>
-                    <div id="migrationLogs"
-                        class="bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-lg h-64 overflow-y-auto whitespace-pre-wrap shadow-inner border border-gray-700">
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB: USUÁRIOS -->
-            <div id="content-usuarios" class="tab-content hidden">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold text-gray-700 flex items-center">
-                        <span class="material-icons mr-2 text-cyan-600">people</span> Gestão de Usuários
-                    </h3>
-                    <button type="button" onclick="openUsuarioModal()"
-                        class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center">
-                        <span class="material-icons text-sm mr-1">add</span> Novo Usuário
-                    </button>
-                </div>
-
-                <div class="overflow-x-auto rounded-lg border border-gray-200">
-                    <table class="min-w-full divide-y divide-gray-200" id="tabela-usuarios">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Nome</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Email</th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Nível</th>
-                                <th
-                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200" id="lista-usuarios">
-                            <!-- Populated by JS -->
-                            <tr>
-                                <td colspan="4" class="px-6 py-4 text-center text-gray-500">Carregando...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="flex justify-end pt-6 mt-4 border-t border-gray-100">
-                <button type="submit"
-                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center shadow-lg">
-                    <span class="material-icons mr-2">save</span> Salvar Configurações
-                </button>
-            </div>
-            </form>
-    </div>
-
-    </main>
+        </main>
     </div>
 
     <!-- MODAL USUÁRIO -->
