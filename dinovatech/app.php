@@ -2702,6 +2702,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 '{{DATA_ATUAL}}' => date('d/m/Y'),
                 '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
                 '{{TEXTO_PERSONALIZADO}}' => '',
+
+                // Company / Emissor
+                '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? '',
+                '{{RAZAO_SOCIAL}}' => $empresa['razao_social'] ?? '', // Alias
+                '{{NOME_FANTASIA}}' => $empresa['nome_fantasia'] ?? '',
+                '{{EMPRESA_CNPJ}}' => formatCpfCnpj_Preview($empresa['cnpj'] ?? ''),
+                '{{CNPJ_EMISSOR}}' => formatCpfCnpj_Preview($empresa['cnpj'] ?? ''), // Alias
+                '{{EMPRESA_ENDERECO}}' => ($empresa['endereco'] ?? '') . ', ' . ($empresa['numero'] ?? '') . ' - ' . ($empresa['bairro'] ?? ''),
+                '{{EMPRESA_CIDADE}}' => $nomeCidade,
+                '{{EMPRESA_UF}}' => $empresa['uf'] ?? '',
+                '{{EMPRESA_TELEFONE}}' => $empresa['telefone'] ?? '',
+                '{{EMPRESA_EMAIL}}' => '',
             ];
 
             // Filter only used vars? Or return all?
@@ -2925,6 +2937,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 '{{HORA_ATUAL}}' => date('H:i'),
                 '{{CIDADE_DATA}}' => $nomeCidade . ', ' . date('d/m/Y'),
                 '{{LOGO_URL}}' => $logo_url,
+
+                // Company / Emissor
+                '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? '',
+                '{{RAZAO_SOCIAL}}' => $empresa['razao_social'] ?? '', // Alias
+                '{{NOME_FANTASIA}}' => $empresa['nome_fantasia'] ?? '',
+                '{{EMPRESA_CNPJ}}' => formatCpfCnpj_App($empresa['cnpj'] ?? ''),
+                '{{CNPJ_EMISSOR}}' => formatCpfCnpj_App($empresa['cnpj'] ?? ''), // Alias
+                '{{EMPRESA_ENDERECO}}' => ($empresa['endereco'] ?? '') . ', ' . ($empresa['numero'] ?? '') . ' - ' . ($empresa['bairro'] ?? ''),
+                '{{EMPRESA_CIDADE}}' => $nomeCidade,
+                '{{EMPRESA_UF}}' => $empresa['uf'] ?? '',
+                '{{EMPRESA_TELEFONE}}' => $empresa['telefone'] ?? '',
+                '{{EMPRESA_EMAIL}}' => '',
+
                 '{{NOME_TUTOR}}' => $dados['nome_tutor'],
                 '{{NOME_CLIENTE}}' => $dados['nome_tutor'],
                 '{{CPF_TUTOR}}' => formatCpfCnpj_App($dados['cpf_tutor'] ?? ''),

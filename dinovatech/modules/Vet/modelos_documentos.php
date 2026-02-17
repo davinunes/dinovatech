@@ -169,67 +169,78 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                                         CNPJ</span>
                                     <span class="variable-tag" onclick="inserirVariavel('{{NOME_FANTASIA}}')">Nome
                                         Fantasia</span>
-                                </div>
+                                    <span class="variable-tag"
+                                        onclick="inserirVariavel('{{EMPRESA_ENDERECO}}')">Endereço
+                                        Empresa</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_CIDADE}}')">Cidade
+                                        Empresa</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_TELEFONE}}')">Tel.
+                                        Empresa</span>
 
-                                <span class="var-group-title">Cliente / Tutor</span>
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome
-                                        Cliente</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
-                                </div>
-
-                                <span class="var-group-title">Contrato / Recorrência</span>
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{SERVICO_NOME}}')">Serviço</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{VALOR_CONTRATO}}')">Valor</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{DATA_INICIO}}')">Data
-                                        Início</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia
-                                        Venc.</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{DESCRICAO_FISCAL}}')">Desc.
-                                        Fiscal</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{ISS_RETIDO}}')">ISS
-                                        Retido?</span>
-                                </div>
-
-                                <?php if (AppHelper::isVetMode()): ?>
-                                    <span class="var-group-title">Vet / Pet</span>
+                                    <span class="var-group-title">Cliente / Tutor</span>
                                     <div class="flex flex-wrap gap-1">
-                                        <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome Pet</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome
+                                            Cliente</span>
                                         <span class="variable-tag"
-                                            onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
-                                        <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
-                                        <span class="variable-tag" onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
-                                        <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
-                                        <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
-                                        <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>
-                                        <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV Vet</span>
+                                            onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
                                     </div>
-                                <?php endif; ?>
+
+                                    <span class="var-group-title">Contrato / Recorrência</span>
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{SERVICO_NOME}}')">Serviço</span>
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{VALOR_CONTRATO}}')">Valor</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{DATA_INICIO}}')">Data
+                                            Início</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia
+                                            Venc.</span>
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{DESCRICAO_FISCAL}}')">Desc.
+                                            Fiscal</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{ISS_RETIDO}}')">ISS
+                                            Retido?</span>
+                                    </div>
+
+                                    <?php if (AppHelper::isVetMode()): ?>
+                                        <span class="var-group-title">Vet / Pet</span>
+                                        <div class="flex flex-wrap gap-1">
+                                            <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome
+                                                Pet</span>
+                                            <span class="variable-tag"
+                                                onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
+                                            <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
+                                            <span class="variable-tag"
+                                                onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
+                                            <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
+                                            <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
+                                            <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome
+                                                Vet</span>
+                                            <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV
+                                                Vet</span>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- Editor -->
-                        <div class="mb-4">
-                            <textarea id="editor-conteudo" name="conteudo"></textarea>
-                        </div>
+                            <!-- Editor -->
+                            <div class="mb-4">
+                                <textarea id="editor-conteudo" name="conteudo"></textarea>
+                            </div>
 
-                        <div class="flex justify-end pt-4 border-t">
-                            <button type="button" onclick="fecharModal()"
-                                class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">Cancelar</button>
-                            <button type="submit"
-                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">Salvar
-                                Modelo</button>
-                        </div>
+                            <div class="flex justify-end pt-4 border-t">
+                                <button type="button" onclick="fecharModal()"
+                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">Cancelar</button>
+                                <button type="submit"
+                                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">Salvar
+                                    Modelo</button>
+                            </div>
                     </form>
                 </div>
             </div>
