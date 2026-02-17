@@ -38,9 +38,9 @@ $dados = [];
 
 if ($id_atendimento) {
     // 1. Fetch Attendance + Pet + Client + Vet
-    $q = "SELECT a.*, p.id_cliente, 
+    $q = "SELECT a.*, p.id_cliente as pet_id_cliente, 
             p.nome as nome_pet, p.especie, p.raca, p.sexo, p.peso as peso_pet, p.data_nascimento as nascimento,
-            c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
+            c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
             v.nome as nome_vet, v.crmv as crmv_vet
             FROM Atendimentos a
             LEFT JOIN Pets p ON a.id_pet = p.id_pet
@@ -54,10 +54,11 @@ if ($id_atendimento) {
     }
     $dados = mysqli_fetch_assoc($r);
     $dados['tipo_origem'] = 'atendimento';
+    $dados['id_cliente'] = $dados['pet_id_cliente'] ?? $dados['client_id_final']; // Ensure id_cliente is set
 } elseif ($id_recorrencia) {
     // 1. Fetch Recurrence + Client + Service
-    $q = "SELECT r.*, 
-            c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
+    $q = "SELECT r.*, r.id_cliente as rec_id_cliente,
+            c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
             s.nome_servico
             FROM Recorrencias r
             LEFT JOIN Clientes c ON r.id_cliente = c.id_cliente
@@ -70,6 +71,7 @@ if ($id_atendimento) {
     }
     $dados = mysqli_fetch_assoc($r);
     $dados['tipo_origem'] = 'contrato';
+    $dados['id_cliente'] = $dados['rec_id_cliente'] ?? $dados['client_id_final']; // Ensure id_cliente is set
 
     // Normalize data for shared variables
     $dados['nome_pet'] = 'N/A';
@@ -216,45 +218,11 @@ if (isset($_REQUEST['salvar']) && $_REQUEST['salvar'] == '1') {
     $texto_personalizado_safe = mysqli_real_escape_string($link, $vars['{{TEXTO_PERSONALIZADO}}'] ?? '');
 
     // Determine IDs
-    $idCliente = $dados['id_cliente'] ?? $dados['id_cliente'] ?? 'NULL'; // Recorrencia has it, Atendimento via Pet via Client
-    // Wait, $dados in atendimento mode has id_cliente inside $pet info? 
-    // In Atendimento query: p.id_cliente. $dados joined fields.
-    // Let's check query in documento_print.php top.
-
-    // Atendimento query: LEFT JOIN Tabs.
-    // $dados['id_cliente'] exists? 
-    // In lines 47: LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
-    // The query selects a.*, p...., c.nome... but does it select c.id_cliente or p.id_cliente?
-    // It selects a.*. `a` has no id_cliente. `p` has id_cliente. `c` has id_cliente.
-    // If we didn't alias it, collisions happen.
-    // But `p.id_cliente` is what we want.
-    // Let's fetch it specifically or rely on `c.id_cliente` if `SELECT *` from c is not done (it isn't, specific fields).
-    // The query (line 41): `SELECT a.*, p.nome..., c.nome...`
-    // It does NOT select `id_cliente` explicitly!
-    // I need to update query `documento_print.php` to select `p.id_cliente` or `c.id_cliente`.
-
-    // I will update the query part first in a separate edit, or assume it's there?
-    // Current query: `SELECT a.*, p.nome..., p.data_nascimento...`
-    // Use `p.id_cliente` if available? 
-    // It's not in the SELECT list I saw earlier (lines 41-45).
-    // I should add `p.id_cliente` to the SELECT.
-
-    // For now, let's write the saving logic assuming I fix the SELECT.
-    // Helper to get client ID properly:
-    $id_cliente_val = 'NULL';
-    if ($id_atendimento) {
-        // Fetch client ID if missing
-        if (!isset($dados['id_cliente'])) {
-            // Quick fetch or update main query. updating main query is better.
-            // I'll update main query in previous block.
-        }
-        $id_cliente_val = $dados['id_cliente'];
-    } elseif ($id_recorrencia) {
-        $id_cliente_val = $dados['id_cliente']; // Recorrencia table has id_cliente usually?
-        // Query line 59: `SELECT r.*, c.nome...`
-        // Recorrencias `r.*` implies `id_cliente` is there if it's in the table. 
-        // Yes, Recorrencias usually has `id_cliente`.
-    }
+    $id_cliente_val = $dados['id_cliente'] ?? 'NULL';
+    $id_pet_val = isset($dados['id_pet']) ? $dados['id_pet'] : 'NULL';
+    $id_atend_val = $id_atendimento ? $id_atendimento : 'NULL';
+    $id_rec_val = $id_recorrencia ? $id_recorrencia : 'NULL';
+    $usuario_id = $_SESSION['usuario_id'] ?? 'NULL';
 
     $id_pet_val = isset($dados['id_pet']) ? $dados['id_pet'] : 'NULL';
     $id_atend_val = $id_atendimento ? $id_atendimento : 'NULL';
