@@ -254,7 +254,8 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                 'bold italic backcolor forecolor | lineheight | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
                 'table hr | code removeformat | help',
-            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px } ' +
+                'img[src="{{LOGO_URL}}"] { background-color: #f3f4f6; border: 2px dashed #ccc; padding: 20px; min-width: 100px; min-height: 50px; }',
             font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
         });
 
@@ -264,10 +265,8 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
 
         function inserirImagemLogo() {
             // Inserts an IMG tag with the variable as src. 
-            // This allows resizing via width/height attributes in Code view or Image Properties.
-            // Note: It won't render in the editor (broken image) unless we replaced it with a real URL for preview, 
-            // but the user asked about "tag img" and "altering size".
-            let html = '<img src="{{LOGO_URL}}" width="150" alt="Logo" />';
+            // Removed default width so it uses original size by default. User can resize in editor.
+            let html = '<img src="{{LOGO_URL}}" alt="Logo (Variável)" />';
             tinymce.get('editor-conteudo').insertContent(html);
         }
 
