@@ -23,7 +23,7 @@ if ($r_conf && mysqli_num_rows($r_conf) > 0) {
     $row = mysqli_fetch_assoc($r_conf);
     $logo_url_val = $row['logo_url'];
     // Make it absolute if needed, or relative to root
-    if ($logo_url_val && !str_starts_with($logo_url_val, 'http')) {
+    if ($logo_url_val && strpos($logo_url_val, 'http') !== 0) {
         $logo_url_val = '../../' . $logo_url_val;
     }
 }
@@ -356,7 +356,7 @@ DBClose($link);
                     $('#modelo-id').val(res.data.id_modelo);
                     $('#modelo-titulo').val(res.data.titulo);
                     $('#modelo-tipo').val(res.data.tipo);
-                    
+
                     let content = res.data.conteudo || '';
                     if (LOGO_URL_VAL) {
                         // Replace variable with real URL for editing
@@ -373,7 +373,7 @@ DBClose($link);
         function salvarModelo(e) {
             e.preventDefault();
             let content = tinymce.get('editor-conteudo').getContent();
-            
+
             if (LOGO_URL_VAL) {
                 // Replace real URL back to variable
                 // Use a regex to catch cases where user might have resized or modified attributes, but the src is the key
