@@ -13,8 +13,22 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers/AppHelper.php';
+include __DIR__ . '/../../../database.php';
 
-// Removed Vet Mode Check to make it global
+$link = DBConnect();
+$q_conf = "SELECT logo_url FROM ConfiguracoesEmissor LIMIT 1";
+$r_conf = DBExecute($link, $q_conf);
+$logo_url_val = '';
+if ($r_conf && mysqli_num_rows($r_conf) > 0) {
+    $row = mysqli_fetch_assoc($r_conf);
+    $logo_url_val = $row['logo_url'];
+    // Make it absolute if needed, or relative to root
+    if ($logo_url_val && !str_starts_with($logo_url_val, 'http')) {
+        $logo_url_val = '../../' . $logo_url_val;
+    }
+}
+DBClose($link);
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -249,6 +263,7 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
 
     <script>
         const BASE_URL = "../../app.php";
+        const LOGO_URL_VAL = "<?= $logo_url_val ?>";
 
         // Init TinyMCE
         // Init TinyMCE
@@ -265,8 +280,7 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                 'bold italic backcolor forecolor | lineheight | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
                 'table hr | code removeformat | help',
-            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px } ' +
-                'img[src="{{LOGO_URL}}"] { background-color: #f3f4f6; border: 1px dashed #ccc; padding: 5px; max-width: 100%; height: auto; }',
+            content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px } ',
             font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
         });
 
@@ -275,9 +289,12 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
         }
 
         function inserirImagemLogo() {
-            // Inserts an IMG tag with the variable as src. 
-            // Removed default width so it uses original size by default. User can resize in editor.
-            let html = '<img src="{{LOGO_URL}}" alt="Logo (Variável)" />';
+            if (!LOGO_URL_VAL) {
+                alert('Configure o logotipo da empresa nas Configurações Fiscais primeiro.');
+                return;
+            }
+            // Insert real image
+            let html = `<img src="${LOGO_URL_VAL}" alt="Logo" style="max-width:200px; height:auto;" />`;
             tinymce.get('editor-conteudo').insertContent(html);
         }
 
@@ -339,7 +356,13 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
                     $('#modelo-id').val(res.data.id_modelo);
                     $('#modelo-titulo').val(res.data.titulo);
                     $('#modelo-tipo').val(res.data.tipo);
-                    tinymce.get('editor-conteudo').setContent(res.data.conteudo || '');
+                    
+                    let content = res.data.conteudo || '';
+                    if (LOGO_URL_VAL) {
+                        // Replace variable with real URL for editing
+                        content = content.replace(/{{LOGO_URL}}/g, LOGO_URL_VAL);
+                    }
+                    tinymce.get('editor-conteudo').setContent(content);
                     $('#modal-modelo').removeClass('hidden');
                 } else {
                     alert(res.message);
@@ -349,7 +372,15 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
 
         function salvarModelo(e) {
             e.preventDefault();
-            const content = tinymce.get('editor-conteudo').getContent();
+            let content = tinymce.get('editor-conteudo').getContent();
+            
+            if (LOGO_URL_VAL) {
+                // Replace real URL back to variable
+                // Use a regex to catch cases where user might have resized or modified attributes, but the src is the key
+                // It is safer to replace the strict src string
+                content = content.split(LOGO_URL_VAL).join('{{LOGO_URL}}');
+            }
+
             const data = {
                 action: 'salvar_modelo_documento',
                 id: $('#modelo-id').val(),
