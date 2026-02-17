@@ -141,68 +141,81 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
 
                         <!-- Variables Helper -->
                         <div class="mb-4 bg-gray-50 p-3 rounded-lg border border-gray-200 text-sm">
-                            <span class="block mb-2 font-bold text-gray-700">Variáveis Disponíveis</span>
-
-                            <div class="flex flex-wrap gap-1 mb-2">
-                                <span class="variable-tag bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200"
-                                    onclick="inserirVariavel('{{TEXTO_PERSONALIZADO}}')">Texto Personalizado (Editor no
-                                    Uso)</span>
+                            <div class="flex justify-between items-center cursor-pointer select-none"
+                                onclick="toggleVariaveis()">
+                                <span class="font-bold text-gray-700">Variáveis Disponíveis</span>
+                                <span id="icon-toggle-vars" class="material-icons text-gray-500">expand_less</span>
                             </div>
 
-                            <div class="flex flex-wrap gap-1">
-                                <!-- Common -->
-                                <span class="variable-tag" onclick="inserirImagemLogo()">Logo (Imagem)</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{DATA_ATUAL}}')">Data Atual</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{CIDADE_DATA}}')">Cidade,
-                                    Data</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_NOME}}')">Empresa
-                                    Nome</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_CNPJ}}')">Empresa
-                                    CNPJ</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{NOME_FANTASIA}}')">Nome
-                                    Fantasia</span>
-                            </div>
-
-                            <span class="var-group-title">Cliente / Tutor</span>
-                            <div class="flex flex-wrap gap-1">
-                                <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome
-                                    Cliente</span>
-                                <span class="variable-tag"
-                                    onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
-                                <span class="variable-tag"
-                                    onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
-                                <span class="variable-tag"
-                                    onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
-                            </div>
-
-                            <span class="var-group-title">Contrato / Recorrência</span>
-                            <div class="flex flex-wrap gap-1">
-                                <span class="variable-tag" onclick="inserirVariavel('{{SERVICO_NOME}}')">Serviço</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{VALOR_CONTRATO}}')">Valor</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{DATA_INICIO}}')">Data
-                                    Início</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia
-                                    Venc.</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{DESCRICAO_FISCAL}}')">Desc.
-                                    Fiscal</span>
-                                <span class="variable-tag" onclick="inserirVariavel('{{ISS_RETIDO}}')">ISS
-                                    Retido?</span>
-                            </div>
-
-                            <?php if (AppHelper::isVetMode()): ?>
-                                <span class="var-group-title">Vet / Pet</span>
-                                <div class="flex flex-wrap gap-1">
-                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome Pet</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV Vet</span>
+                            <div id="lista-variaveis-container" class="mt-2 transition-all duration-300">
+                                <div class="flex flex-wrap gap-1 mb-2">
+                                    <span
+                                        class="variable-tag bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200"
+                                        onclick="inserirVariavel('{{TEXTO_PERSONALIZADO}}')">Texto Personalizado (Editor
+                                        no
+                                        Uso)</span>
                                 </div>
-                            <?php endif; ?>
+
+                                <div class="flex flex-wrap gap-1">
+                                    <!-- Common -->
+                                    <span class="variable-tag" onclick="inserirImagemLogo()">Logo (Imagem)</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DATA_ATUAL}}')">Data
+                                        Atual</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{CIDADE_DATA}}')">Cidade,
+                                        Data</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_NOME}}')">Empresa
+                                        Nome</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_CNPJ}}')">Empresa
+                                        CNPJ</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_FANTASIA}}')">Nome
+                                        Fantasia</span>
+                                </div>
+
+                                <span class="var-group-title">Cliente / Tutor</span>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome
+                                        Cliente</span>
+                                    <span class="variable-tag"
+                                        onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
+                                    <span class="variable-tag"
+                                        onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
+                                    <span class="variable-tag"
+                                        onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
+                                    <span class="variable-tag"
+                                        onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
+                                </div>
+
+                                <span class="var-group-title">Contrato / Recorrência</span>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="variable-tag"
+                                        onclick="inserirVariavel('{{SERVICO_NOME}}')">Serviço</span>
+                                    <span class="variable-tag"
+                                        onclick="inserirVariavel('{{VALOR_CONTRATO}}')">Valor</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DATA_INICIO}}')">Data
+                                        Início</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia
+                                        Venc.</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DESCRICAO_FISCAL}}')">Desc.
+                                        Fiscal</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{ISS_RETIDO}}')">ISS
+                                        Retido?</span>
+                                </div>
+
+                                <?php if (AppHelper::isVetMode()): ?>
+                                    <span class="var-group-title">Vet / Pet</span>
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="variable-tag" onclick="inserirVariavel('{{NOME_PET}}')">Nome Pet</span>
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{ESPECIE_PET}}')">Espécie</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{RACA_PET}}')">Raça</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{IDADE_PET}}')">Idade</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{SEXO_PET}}')">Sexo</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{PESO_PET}}')">Peso</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{NOME_VET}}')">Nome Vet</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV Vet</span>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
 
                         <!-- Editor -->
@@ -256,6 +269,17 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
             // but the user asked about "tag img" and "altering size".
             let html = '<img src="{{LOGO_URL}}" width="150" style="height: auto;" alt="Logo" />';
             tinymce.get('editor-conteudo').insertContent(html);
+        }
+
+        function toggleVariaveis() {
+            let container = $('#lista-variaveis-container');
+            let icon = $('#icon-toggle-vars');
+            container.toggleClass('hidden');
+            if (container.hasClass('hidden')) {
+                icon.text('expand_more');
+            } else {
+                icon.text('expand_less');
+            }
         }
 
         $(document).ready(function () {
