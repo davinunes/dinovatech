@@ -2745,6 +2745,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+        case 'excluir_documento_emitido':
+            $id = $_POST['id_documento'] ?? 0;
+            if (!$id) {
+                $response['message'] = "ID obrigatório.";
+            } else {
+                $id = mysqli_real_escape_string($link, $id);
+                $query = "DELETE FROM DocumentosEmitidos WHERE id_documento_emitido = '$id'";
+                if (DBExecute($link, $query)) {
+                    $response['success'] = true;
+                    $response['message'] = "Documento excluído com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao excluir: " . mysqli_error($link);
+                }
+            }
+            break;
+
         // --- GESTÃO DE USUÁRIOS ---
         case 'get_usuarios':
             $query = "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios ORDER BY nome ASC";

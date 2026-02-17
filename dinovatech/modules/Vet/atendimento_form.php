@@ -894,13 +894,15 @@ DBClose($link);
                             let dataF = new Date(d.data_emissao).toLocaleString('pt-BR');
                             html += `
                                  <tr>
-                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${d.titulo}</td>
+                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${d.titulo || d.tipo}</td>
                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${d.tipo}</td>
                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${d.nome_emissor || '-'}</td>
                                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${dataF}</td>
                                      <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                         <a href="#" class="text-indigo-600 hover:text-indigo-900" 
-                                            onclick="verDocumentoSalvo(${d.id_documento_emitido}); return false;">Ver / Imprimir</a>
+                                         <a href="#" class="text-indigo-600 hover:text-indigo-900 mr-3" 
+                                            onclick="verDocumentoSalvo(${d.id_documento_emitido}); return false;"><span class="material-icons text-sm" style="vertical-align: middle;">visibility</span> Ver</a>
+                                         <a href="#" class="text-red-600 hover:text-red-900" 
+                                            onclick="excluirDocumento(${d.id_documento_emitido}); return false;"><span class="material-icons text-sm" style="vertical-align: middle;">delete</span> Excluir</a>
                                      </td>
                                  </tr>
                              `;
@@ -914,14 +916,24 @@ DBClose($link);
         }
 
         function verDocumentoSalvo(id) {
-            // Helper to open saved html. 
-            // Since we stored HTML, we can create a simple viewer or re-use documento_print.php? 
-            // But documento_print.php regenerates. We need a viewer.
-            // Let's create a simple viewer action or just open a new window and document.write?
-            // Better: 'documento_view.php?id=' + id
-            // I'll create documento_view.php briefly or add action 'ver_documento' to app.php that echoes HTML.
-            // Let's us window.open with a special url.
             window.open('documento_view.php?id=' + id, '_blank');
+        }
+
+        function excluirDocumento(id) {
+            if (!confirm('Tem certeza que deseja excluir este documento do histórico?')) return;
+
+            $.post(BASE_URL, { action: 'excluir_documento_emitido', id_documento: id }, function (res) {
+                try {
+                    if (typeof res === 'string') res = JSON.parse(res);
+                    if (res.success) {
+                        carregarHistoricoDocs();
+                    } else {
+                        alert('Erro: ' + (res.message || 'Desconhecido'));
+                    }
+                } catch (e) {
+                    alert('Erro na requisição.');
+                }
+            });
         }
 
         // --- ANEXOS ---
