@@ -678,10 +678,11 @@ DBClose($link);
 
 
         // Init TinyMCE for custom text
+        // Init TinyMCE for custom text
         tinymce.init({
             selector: '#editor-texto-custom',
             height: 300,
-            menubar: false,
+            menubar: true, // Enable menubar for full table options
             plugins: [
                 'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
                 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -690,7 +691,7 @@ DBClose($link);
             toolbar: 'undo redo | blocks fontfamily fontsize | ' +
                 'bold italic backcolor forecolor | lineheight | alignleft aligncenter ' +
                 'alignright alignjustify | bullist numlist outdent indent | ' +
-                'table hr | removeformat | help',
+                'table hr | code removeformat | help',
             content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
             font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
         });
