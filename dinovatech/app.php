@@ -2714,6 +2714,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 '{{EMPRESA_UF}}' => $empresa['uf'] ?? '',
                 '{{EMPRESA_TELEFONE}}' => $empresa['telefone'] ?? '',
                 '{{EMPRESA_EMAIL}}' => '',
+                '{{EMPRESA_IE}}' => $empresa['inscricao_estadual'] ?? '',
+                '{{EMPRESA_IM}}' => $empresa['inscricao_municipal'] ?? '',
             ];
 
             // Filter only used vars? Or return all?
@@ -2949,6 +2951,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 '{{EMPRESA_UF}}' => $empresa['uf'] ?? '',
                 '{{EMPRESA_TELEFONE}}' => $empresa['telefone'] ?? '',
                 '{{EMPRESA_EMAIL}}' => '',
+                '{{EMPRESA_IE}}' => $empresa['inscricao_estadual'] ?? '',
+                '{{EMPRESA_IM}}' => $empresa['inscricao_municipal'] ?? '',
 
                 '{{NOME_TUTOR}}' => $dados['nome_tutor'],
                 '{{NOME_CLIENTE}}' => $dados['nome_tutor'],

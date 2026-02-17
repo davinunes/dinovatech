@@ -160,6 +160,8 @@ $vars = [
     '{{EMPRESA_UF}}' => $empresa['uf'] ?? '',
     '{{EMPRESA_TELEFONE}}' => $empresa['telefone'] ?? '',
     '{{EMPRESA_EMAIL}}' => '', // Not in DB yet
+    '{{EMPRESA_IE}}' => $empresa['inscricao_estadual'] ?? '',
+    '{{EMPRESA_IM}}' => $empresa['inscricao_municipal'] ?? '',
 
     // Client / Tutor
     '{{NOME_TUTOR}}' => $dados['nome_tutor'],

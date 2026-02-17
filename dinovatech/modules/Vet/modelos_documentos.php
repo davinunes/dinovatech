@@ -190,6 +190,10 @@ DBClose($link);
                                         Empresa</span>
                                     <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_TELEFONE}}')">Tel.
                                         Empresa</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_IE}}')">Insc.
+                                        Estadual</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{EMPRESA_IM}}')">Insc.
+                                        Municipal</span>
 
                                     <span class="var-group-title">Cliente / Tutor</span>
                                     <div class="flex flex-wrap gap-1">
@@ -242,19 +246,20 @@ DBClose($link);
                                     <?php endif; ?>
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Editor -->
-                            <div class="mb-4">
-                                <textarea id="editor-conteudo" name="conteudo"></textarea>
-                            </div>
+                        <!-- Editor -->
+                        <div class="mb-4">
+                            <textarea id="editor-conteudo" name="conteudo"></textarea>
+                        </div>
 
-                            <div class="flex justify-end pt-4 border-t">
-                                <button type="button" onclick="fecharModal()"
-                                    class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">Cancelar</button>
-                                <button type="submit"
-                                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">Salvar
-                                    Modelo</button>
-                            </div>
+                        <div class="flex justify-end pt-4 border-t">
+                            <button type="button" onclick="fecharModal()"
+                                class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 mr-3">Cancelar</button>
+                            <button type="submit"
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">Salvar
+                                Modelo</button>
+                        </div>
                     </form>
                 </div>
             </div>
