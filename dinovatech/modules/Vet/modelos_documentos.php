@@ -297,8 +297,8 @@ DBClose($link);
                 alert('Configure o logotipo da empresa nas Configurações Fiscais primeiro.');
                 return;
             }
-            // Insert real image
-            let html = `<img src="${LOGO_URL_VAL}" alt="Logo" style="max-width:200px; height:auto;" />`;
+            // Insert real image with initial width, but no restrictive styles
+            let html = `<img src="${LOGO_URL_VAL}" alt="Logo" width="200" />`;
             tinymce.get('editor-conteudo').insertContent(html);
         }
 
