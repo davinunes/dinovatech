@@ -151,7 +151,7 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
 
                             <div class="flex flex-wrap gap-1">
                                 <!-- Common -->
-                                <span class="variable-tag" onclick="inserirVariavel('{{LOGO_URL}}')">Logo (URL)</span>
+                                <span class="variable-tag" onclick="inserirImagemLogo()">Logo (Imagem)</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{DATA_ATUAL}}')">Data Atual</span>
                                 <span class="variable-tag" onclick="inserirVariavel('{{CIDADE_DATA}}')">Cidade,
                                     Data</span>
@@ -247,6 +247,15 @@ require_once __DIR__ . '/../../helpers/AppHelper.php';
 
         function inserirVariavel(tag) {
             tinymce.get('editor-conteudo').insertContent(tag);
+        }
+
+        function inserirImagemLogo() {
+            // Inserts an IMG tag with the variable as src. 
+            // This allows resizing via width/height attributes in Code view or Image Properties.
+            // Note: It won't render in the editor (broken image) unless we replaced it with a real URL for preview, 
+            // but the user asked about "tag img" and "altering size".
+            let html = '<img src="{{LOGO_URL}}" width="150" style="height: auto;" alt="Logo" />';
+            tinymce.get('editor-conteudo').insertContent(html);
         }
 
         $(document).ready(function () {
