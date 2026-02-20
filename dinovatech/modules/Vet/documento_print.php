@@ -41,7 +41,7 @@ if ($id_atendimento) {
     $q = "SELECT a.*, p.id_cliente as pet_id_cliente, 
             p.nome as nome_pet, p.especie, p.raca, p.sexo, p.peso as peso_pet, p.data_nascimento as nascimento,
             c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
-            v.nome as nome_vet, v.crmv as crmv_vet
+            v.nome as nome_vet, v.crmv as crmv_vet, v.url_assinatura
             FROM Atendimentos a
             LEFT JOIN Pets p ON a.id_pet = p.id_pet
             LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
@@ -185,6 +185,10 @@ $vars = [
     '{{SEXO_PET}}' => $dados['sexo'],
     '{{NOME_VET}}' => $dados['nome_vet'],
     '{{CRMV_VET}}' => $dados['crmv_vet'],
+    '{{ASSINATURA_VET}}' => !empty($dados['url_assinatura']) ? '<img src="' . $dados['url_assinatura'] . '" style="max-height: 80px; display: block;" />' : '',
+    '{{ASSINATURA_COLABORADOR}}' => !empty($dados['url_assinatura']) ? '<img src="' . $dados['url_assinatura'] . '" style="max-height: 80px; display: block;" />' : '',
+    '{{ASSINATURADOVER}}' => !empty($dados['url_assinatura']) ? '<img src="' . $dados['url_assinatura'] . '" style="max-height: 80px; display: block;" />' : '',
+    '{{ASSINATURACOLABORADOR}}' => !empty($dados['url_assinatura']) ? '<img src="' . $dados['url_assinatura'] . '" style="max-height: 80px; display: block;" />' : '',
 
     // Contract / Recurrence (Only relevant if Contrato)
     '{{SERVICO_NOME}}' => $dados['nome_servico'] ?? '',

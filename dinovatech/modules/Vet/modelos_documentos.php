@@ -241,6 +241,8 @@ DBClose($link);
                                             Vet</span>
                                         <span class="variable-tag" onclick="inserirVariavel('{{CRMV_VET}}')">CRMV
                                             Vet</span>
+                                        <span class="variable-tag"
+                                            onclick="inserirVariavel('{{ASSINATURA_VET}}')">Assinatura (Imagem)</span>
                                     </div>
                                 <?php endif; ?>
                             </div>

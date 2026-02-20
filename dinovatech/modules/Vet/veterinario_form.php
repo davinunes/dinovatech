@@ -74,17 +74,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email = mysqli_real_escape_string($link, $email);
         $google_calendar_id = mysqli_real_escape_string($link, $google_calendar_id);
 
-        if ($is_edit) {
-            $query = "UPDATE Veterinarios SET nome='$nome', crmv='$crmv', uf_crmv='$uf_crmv', telefone='$telefone', email='$email', google_calendar_id='$google_calendar_id' WHERE id_vet = " . (int) $id_vet;
-        } else {
-            $query = "INSERT INTO Veterinarios (nome, crmv, uf_crmv, telefone, email, google_calendar_id) VALUES ('$nome', '$crmv', '$uf_crmv', '$telefone', '$email', '$google_calendar_id')";
+        $url_assinatura = $vet['url_assinatura'] ?? '';
+
+        // --- SIGNATURE UPLOAD ---
+        if (isset($_FILES['assinatura']) && $_FILES['assinatura']['error'] === UPLOAD_ERR_OK) {
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+            $fileTmp = $_FILES['assinatura']['tmp_name'];
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($fileTmp);
+
+            if (in_array($mimeType, $allowedTypes)) {
+                $ext = pathinfo($_FILES['assinatura']['name'], PATHINFO_EXTENSION);
+                $nomeBucket = 'assinaturas/' . time() . '_' . substr(md5(uniqid()), 0, 8) . '.' . $ext;
+
+                // Load Oracle Config
+                $qConf = "SELECT api_oracle_url FROM ConfiguracoesEmissor LIMIT 1";
+                $resConf = DBExecute($link, $qConf);
+                $rowConf = mysqli_fetch_assoc($resConf);
+                $urlBucketPreauth = $rowConf['api_oracle_url'] ?? '';
+
+                if (!empty($urlBucketPreauth)) {
+                    if (substr($urlBucketPreauth, -1) !== '/') {
+                        $urlBucketPreauth .= '/';
+                    }
+                    $urlUpload = $urlBucketPreauth . $nomeBucket;
+                    $conteudoArquivo = file_get_contents($fileTmp);
+
+                    $ch = curl_init($urlUpload);
+                    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $conteudoArquivo);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'Content-Type: ' . $mimeType,
+                        'Content-Length: ' . strlen($conteudoArquivo)
+                    ]);
+
+                    $resultCurl = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    curl_close($ch);
+
+                    if ($httpCode >= 200 && $httpCode < 300) {
+                        $url_assinatura = $urlUpload;
+                    } else {
+                        $erro = "Erro ao enviar assinatura para a nuvem. Código HTTP: $httpCode";
+                    }
+                } else {
+                    $erro = "URL do bucket Oracle não configurada.";
+                }
+            } else {
+                $erro = "Tipo de arquivo não permitido para assinatura. Use PNG, JPG ou WebP.";
+            }
         }
 
-        if (DBExecute($link, $query)) {
-            header("Location: veterinarios.php");
-            exit();
-        } else {
-            $erro = "Erro ao salvar: " . mysqli_error($link);
+        if (empty($erro)) {
+            $url_assinatura_safe = mysqli_real_escape_string($link, $url_assinatura);
+            if ($is_edit) {
+                $query = "UPDATE Veterinarios SET nome='$nome', crmv='$crmv', uf_crmv='$uf_crmv', telefone='$telefone', email='$email', google_calendar_id='$google_calendar_id', url_assinatura='$url_assinatura_safe' WHERE id_vet = " . (int) $id_vet;
+            } else {
+                $query = "INSERT INTO Veterinarios (nome, crmv, uf_crmv, telefone, email, google_calendar_id, url_assinatura) VALUES ('$nome', '$crmv', '$uf_crmv', '$telefone', '$email', '$google_calendar_id', '$url_assinatura_safe')";
+            }
+
+            if (DBExecute($link, $query)) {
+                header("Location: veterinarios.php");
+                exit();
+            } else {
+                $erro = "Erro ao salvar: " . mysqli_error($link);
+            }
         }
     }
 }
@@ -125,11 +180,23 @@ DBClose($link);
                         </div>
                     <?php endif; ?>
 
-                    <form method="POST" class="p-6 space-y-6">
+                    <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
                         <div>
                             <label class="block text-gray-700 font-medium mb-1">Nome Completo *</label>
                             <input type="text" name="nome" value="<?= htmlspecialchars($vet['nome'] ?? '') ?>" required
                                 class="w-full border-gray-300 rounded-lg p-3 border">
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-1">Assinatura Digital (Foto/PNG)</label>
+                            <?php if (!empty($vet['url_assinatura'])): ?>
+                                <div class="mb-2 p-2 border rounded-lg bg-gray-50 flex items-center justify-center">
+                                    <img src="<?= $vet['url_assinatura'] ?>" alt="Assinatura Atual" class="max-h-24 object-contain">
+                                </div>
+                            <?php endif; ?>
+                            <input type="file" name="assinatura" accept="image/*"
+                                class="w-full border-gray-300 rounded-lg p-2 border text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100">
+                            <p class="text-xs text-gray-500 mt-1">Envie uma imagem (PNG, JPG) com fundo transparente ou branco para melhor resultado.</p>
                         </div>
 
                         <?php if (AppHelper::isVetMode()): ?>

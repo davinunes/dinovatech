@@ -17,7 +17,7 @@ $link = DBConnect();
 $q = "SELECT r.*, a.data_atendimento, 
              p.nome as pet_nome, p.especie, p.raca, p.peso,
              c.nome as tutor_nome, 
-             v.nome as vet_nome, v.crmv
+             v.nome as vet_nome, v.crmv, v.url_assinatura
       FROM Receitas r
       JOIN Atendimentos a ON r.id_atendimento = a.id_atendimento
       JOIN Pets p ON a.id_pet = p.id_pet
@@ -216,7 +216,13 @@ DBClose($link);
         <!-- Footer -->
         <footer class="mt-12 pt-8 border-t-2 border-gray-200 text-center">
             <div class="mb-8">
-                <div class="w-64 border-b border-black mx-auto mb-2"></div>
+                <?php if (!empty($receita['url_assinatura'])): ?>
+                    <div class="flex justify-center mb-1">
+                        <img src="<?= $receita['url_assinatura'] ?>" alt="Assinatura" class="h-20 object-contain">
+                    </div>
+                <?php else: ?>
+                    <div class="w-64 border-b border-black mx-auto mb-2"></div>
+                <?php endif; ?>
                 <p class="font-bold text-gray-800">Dr(a).
                     <?= htmlspecialchars($receita['vet_nome']) ?>
                 </p>
