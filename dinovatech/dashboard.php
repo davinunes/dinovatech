@@ -117,11 +117,12 @@ if (!isset($_SESSION['usuario_id'])) {
                                     <th class="p-4 font-medium">Valor</th>
                                     <th class="p-4 font-medium">Vencimento</th>
                                     <th class="p-4 font-medium">Status</th>
+                                    <th class="p-4 font-medium w-8"></th>
                                 </tr>
                             </thead>
                             <tbody id="listaFaturasRecentes" class="text-gray-700 text-sm">
                                 <tr>
-                                    <td colspan="5" class="p-4 text-center">Carregando...</td>
+                                    <td colspan="6" class="p-4 text-center">Carregando...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -262,18 +263,19 @@ if (!isset($_SESSION['usuario_id'])) {
 
                                     // Table Row
                                     html += `
-                                        <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
+                                        <tr class="border-b border-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.location.href='fatura_view.php?id=${fatura.id_fatura}'" title="Clique para ver a fatura">
                                             <td class="p-4">#${fatura.id_fatura}</td>
                                             <td class="p-4 font-medium">${fatura.nome}</td>
                                             <td class="p-4">${formatCurrency(fatura.valor_total_fatura)}</td>
                                             <td class="p-4">${formatDate(fatura.data_vencimento)}</td>
                                             <td class="p-4"><span class="px-3 py-1 rounded-full text-xs font-semibold ${statusClass}">${fatura.status}</span></td>
+                                            <td class="p-4 text-right"><span class="material-icons text-gray-400 text-sm">open_in_new</span></td>
                                         </tr>
                                     `;
 
                                     // Card
                                     htmlCards += `
-                                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
+                                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3 cursor-pointer hover:shadow-md transition hover:border-blue-200" onclick="window.location.href='fatura_view.php?id=${fatura.id_fatura}'">
                                             <div class="flex justify-between items-start mb-2">
                                                <div>
                                                    <span class="text-xs text-gray-400">#${fatura.id_fatura}</span>
@@ -285,15 +287,18 @@ if (!isset($_SESSION['usuario_id'])) {
                                                <div class="text-sm text-gray-500">
                                                    Venc: ${formatDate(fatura.data_vencimento)}
                                                </div>
-                                               <div class="text-lg font-bold text-gray-800">
-                                                   ${formatCurrency(fatura.valor_total_fatura)}
+                                               <div class="flex items-center">
+                                                   <div class="text-lg font-bold text-gray-800 mr-2">
+                                                       ${formatCurrency(fatura.valor_total_fatura)}
+                                                   </div>
+                                                   <span class="material-icons text-gray-400 text-sm">chevron_right</span>
                                                </div>
                                             </div>
                                         </div>
                                     `;
                                 });
                             } else {
-                                html = '<tr><td colspan="5" class="p-4 text-center">Nenhuma fatura recente encontrada.</td></tr>';
+                                html = '<tr><td colspan="6" class="p-4 text-center">Nenhuma fatura recente encontrada.</td></tr>';
                                 htmlCards = '<div class="text-center text-gray-500 py-4">Nenhuma fatura recente encontrada.</div>';
                             }
                             $('#listaFaturasRecentes').html(html);
