@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (DBExecute($link, $query)) {
             // Redirect
             $new_id = $is_edit ? $id_pet : mysqli_insert_id($link);
-            header("Location: pets.php?msg=saved"); // Or redirect to details: pet_detalhes.php?id=$new_id
+            header("Location: pet_detalhes.php?id=" . $new_id . "&msg=saved");
             exit();
         } else {
             $erro = "Erro ao salvar: " . mysqli_error($link);

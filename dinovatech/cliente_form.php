@@ -218,7 +218,16 @@ if ($id_cliente) {
                         if (response.success) {
                             msgDiv.addClass('text-green-600');
                             setTimeout(() => {
-                                window.location.href = 'clientes.php';
+                                if (response.id_cliente) {
+                                    window.location.href = 'cliente_detalhes.php?id=' + response.id_cliente;
+                                } else {
+                                    const idEdit = $('input[name="id_cliente"]').val();
+                                    if (idEdit) {
+                                        window.location.href = 'cliente_detalhes.php?id=' + idEdit;
+                                    } else {
+                                        window.location.href = 'clientes.php';
+                                    }
+                                }
                             }, 1500);
                         } else {
                             msgDiv.addClass('text-red-600');
