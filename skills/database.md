@@ -31,7 +31,7 @@ Database changes **MUST** be versioned using the migration script system.
 - When creating a migration, always include a `ROLLBACK` section (commented out) or ensure changes are safe.
 - `scripts/dump_schema.php` can be used to export the current schema structure.
 - Nunca tente executar os migrates gerados, sempre peça para o usuário executar.
-- Se precisar revisar o esquema do banco, solicite que o usuario te envie o arquivo estrutura.sql
+- Se precisar revisar o esquema do banco, **você pode fazer um curl em `https://dinovet.digitalinovation.com.br/dinovatech/esquema.php`** para pegar a estrutura atual. (Ex: use a tool read_url_content ou curl no run_command).
 
 ## Common Tables
 - `Clientes`: Customer data.

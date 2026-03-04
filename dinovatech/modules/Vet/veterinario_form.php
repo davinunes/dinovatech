@@ -57,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $telefone = $_POST['telefone'] ?? '';
     $email = $_POST['email'] ?? '';
     $google_calendar_id = $_POST['google_calendar_id'] ?? '';
+    $data_nascimento = $_POST['data_nascimento'] ?? '';
 
     // Auto-fill CRMV/UF if not Vet Mode (Modularity)
     if (!AppHelper::isVetMode()) {
@@ -159,10 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($erro)) {
             $url_assinatura_safe = mysqli_real_escape_string($link, $url_assinatura);
+            $data_nascimento_val = empty($data_nascimento) ? 'NULL' : "'" . mysqli_real_escape_string($link, $data_nascimento) . "'";
+
             if ($is_edit) {
-                $query = "UPDATE Veterinarios SET nome='$nome', crmv='$crmv', uf_crmv='$uf_crmv', telefone='$telefone', email='$email', google_calendar_id='$google_calendar_id', url_assinatura='$url_assinatura_safe' WHERE id_vet = " . (int) $id_vet;
+                $query = "UPDATE Veterinarios SET nome='$nome', crmv='$crmv', uf_crmv='$uf_crmv', telefone='$telefone', email='$email', google_calendar_id='$google_calendar_id', url_assinatura='$url_assinatura_safe', data_nascimento=$data_nascimento_val WHERE id_vet = " . (int) $id_vet;
             } else {
-                $query = "INSERT INTO Veterinarios (nome, crmv, uf_crmv, telefone, email, google_calendar_id, url_assinatura) VALUES ('$nome', '$crmv', '$uf_crmv', '$telefone', '$email', '$google_calendar_id', '$url_assinatura_safe')";
+                $query = "INSERT INTO Veterinarios (nome, crmv, uf_crmv, telefone, email, google_calendar_id, url_assinatura, data_nascimento) VALUES ('$nome', '$crmv', '$uf_crmv', '$telefone', '$email', '$google_calendar_id', '$url_assinatura_safe', $data_nascimento_val)";
             }
 
             if (DBExecute($link, $query)) {
@@ -325,6 +328,13 @@ DBClose($link);
                                 <input type="email" name="email" value="<?= htmlspecialchars($vet['email'] ?? '') ?>"
                                     class="w-full border-gray-300 rounded-lg p-3 border">
                             </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-gray-700 font-medium mb-1">Data de Nascimento (Opcional)</label>
+                            <input type="date" name="data_nascimento"
+                                value="<?= htmlspecialchars($vet['data_nascimento'] ?? '') ?>"
+                                class="w-full border-gray-300 rounded-lg p-3 border">
                         </div>
 
                         <div>

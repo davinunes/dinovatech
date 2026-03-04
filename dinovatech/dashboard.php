@@ -4,6 +4,49 @@ if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.php");
     exit();
 }
+
+require_once 'database.php';
+$linkDB = DBConnect();
+
+// --- Lembretes de Aniversário (Próximos 30 dias) ---
+$hojeAniversario = date('m-d');
+$daqui30Aniversario = date('m-d', strtotime('+30 days'));
+if ($daqui30Aniversario < $hojeAniversario) {
+    $whereNascimento = "(DATE_FORMAT(data_nascimento, '%m-%d') >= '$hojeAniversario' OR DATE_FORMAT(data_nascimento, '%m-%d') <= '$daqui30Aniversario')";
+} else {
+    $whereNascimento = "DATE_FORMAT(data_nascimento, '%m-%d') BETWEEN '$hojeAniversario' AND '$daqui30Aniversario'";
+}
+$queryBirthdays = "SELECT nome, data_nascimento FROM Veterinarios WHERE data_nascimento IS NOT NULL AND $whereNascimento ORDER BY DATE_FORMAT(data_nascimento, '%m-%d') ASC LIMIT 5";
+$resBirthdays = DBExecute($linkDB, $queryBirthdays);
+$aniversariantes = [];
+if ($resBirthdays) {
+    while ($row = mysqli_fetch_assoc($resBirthdays)) {
+        $aniversariantes[] = $row;
+    }
+}
+
+// --- Lembretes de Vacinas (Próximos 30 dias) ---
+$hojeVacina = date('Y-m-d');
+$daqui30Vacina = date('Y-m-d', strtotime('+30 days'));
+$queryVaccines = "
+    SELECT cv.data_vencimento, v.nome as vacina_nome, p.nome as pet_nome, c.nome as cliente_nome, c.telefone
+    FROM CarteiraVacinas cv
+    JOIN Vacinas v ON cv.id_vacina = v.id_vacina
+    JOIN Pets p ON cv.id_pet = p.id_pet
+    JOIN Clientes c ON p.id_cliente = c.id_cliente
+    WHERE cv.data_vencimento BETWEEN '$hojeVacina' AND '$daqui30Vacina'
+    ORDER BY cv.data_vencimento ASC
+    LIMIT 5
+";
+$resVaccines = DBExecute($linkDB, $queryVaccines);
+$vacinasProximas = [];
+if ($resVaccines) {
+    while ($row = mysqli_fetch_assoc($resVaccines)) {
+        $vacinasProximas[] = $row;
+    }
+}
+
+DBClose($linkDB);
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -88,6 +131,64 @@ if (!isset($_SESSION['usuario_id'])) {
                     <div>
                         <p class="text-gray-500 text-sm font-medium">Em Atraso (Geral)</p>
                         <h3 class="text-2xl font-bold text-red-600" id="statTotalAtrasado">R$ 0,00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lembretes (Aniversários e Vacinas) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Aniversariantes -->
+                <div class="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden flex flex-col">
+                    <div class="p-4 border-b border-blue-100 bg-blue-50 flex items-center">
+                        <span class="material-icons text-blue-500 mr-2">cake</span>
+                        <h3 class="font-semibold text-blue-900">Aniversariantes (Próximos 30 dias)</h3>
+                    </div>
+                    <div class="p-4 flex-1">
+                        <?php if (empty($aniversariantes)): ?>
+                            <p class="text-gray-500 text-sm italic">Nenhum aniversariante próximo.</p>
+                        <?php else: ?>
+                            <ul class="space-y-3">
+                                <?php foreach ($aniversariantes as $aniv): 
+                                    $dataParts = explode('-', $aniv['data_nascimento']);
+                                    $diaMes = $dataParts[2] . '/' . $dataParts[1];
+                                ?>
+                                    <li class="flex justify-between items-center text-sm border-b pb-2 border-gray-50 last:border-0 last:pb-0">
+                                        <span class="font-medium text-gray-800"><?= htmlspecialchars($aniv['nome']) ?></span>
+                                        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold"><?= $diaMes ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- Vacinas Próximas -->
+                <div class="bg-white rounded-xl shadow-sm border border-green-100 overflow-hidden flex flex-col">
+                    <div class="p-4 border-b border-green-100 bg-green-50 flex items-center">
+                        <span class="material-icons text-green-500 mr-2">vaccines</span>
+                        <h3 class="font-semibold text-green-900">Vacinas Próximas Vencendo (30 dias)</h3>
+                    </div>
+                    <div class="p-4 flex-1">
+                        <?php if (empty($vacinasProximas)): ?>
+                            <p class="text-gray-500 text-sm italic">Nenhuma vacina prevista para os próximos 30 dias.</p>
+                        <?php else: ?>
+                            <ul class="space-y-3">
+                                <?php foreach ($vacinasProximas as $vac): 
+                                    $dataBR = date('d/m/Y', strtotime($vac['data_vencimento']));
+                                ?>
+                                    <li class="flex flex-col text-sm border-b pb-2 border-gray-50 last:border-0 last:pb-0">
+                                        <div class="flex justify-between items-center mb-1">
+                                            <span class="font-medium text-gray-800">Pet: <?= htmlspecialchars($vac['pet_nome']) ?> (<?= htmlspecialchars($vac['cliente_nome']) ?>)</span>
+                                            <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-bold"><?= $dataBR ?></span>
+                                        </div>
+                                        <div class="flex justify-between items-center text-gray-500 text-xs text-left w-full gap-2 mt-1">
+                                           <span>Vacina: <strong class="text-gray-600"><?= htmlspecialchars($vac['vacina_nome']) ?></strong></span>
+                                           <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $vac['telefone']) ?>" target="_blank" class="text-green-600 hover:underline flex items-center gap-1"><span class="material-icons" style="font-size: 14px;">chat</span> Avisar</a>
+                                        </div>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
