@@ -107,6 +107,17 @@ if ($id_cliente) {
                                 </div>
                             </div>
 
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="data_nascimento"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento
+                                        (Opcional)</label>
+                                    <input type="date" id="data_nascimento" name="data_nascimento"
+                                        value="<?= $cliente['data_nascimento'] ?? '' ?>"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+                                </div>
+                            </div>
+
                             <!-- Endereço Cliente -->
                             <div class="border-t pt-4 mt-2">
                                 <h4 class="text-sm font-semibold text-gray-600 mb-3">Endereço (Obrigatório para NFSe)

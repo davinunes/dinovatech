@@ -601,6 +601,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cpf_cnpj_val = empty($cpf_cnpj) ? "NULL" : "'$cpf_cnpj'";
                 $telefone = mysqli_real_escape_string($link, $telefone);
                 $email_val = empty($email) ? "NULL" : "'" . mysqli_real_escape_string($link, $email) . "'";
+                $data_nascimento = $_POST['data_nascimento'] ?? '';
+                $data_nascimento_val = empty($data_nascimento) ? "NULL" : "'" . mysqli_real_escape_string($link, $data_nascimento) . "'";
 
                 // Address - Cliente
                 $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
@@ -613,8 +615,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $inscricao_municipal = mysqli_real_escape_string($link, $_POST['inscricao_municipal'] ?? '');
                 $inscricao_estadual = mysqli_real_escape_string($link, $_POST['inscricao_estadual'] ?? '');
 
-                $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email, endereco, numero, complemento, bairro, cep, uf, codigo_municipio, inscricao_municipal, inscricao_estadual) 
-                          VALUES ('$nome', $cpf_cnpj_val, '$telefone', $email_val, '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$codigo_municipio', '$inscricao_municipal', '$inscricao_estadual')";
+                $query = "INSERT INTO Clientes (nome, cpf_cnpj, telefone, email, endereco, numero, complemento, bairro, cep, uf, codigo_municipio, inscricao_municipal, inscricao_estadual, data_nascimento) 
+                          VALUES ('$nome', $cpf_cnpj_val, '$telefone', $email_val, '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$codigo_municipio', '$inscricao_municipal', '$inscricao_estadual', $data_nascimento_val)";
 
                 $result = mysqli_query($link, $query);
 
@@ -682,6 +684,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $cpf_cnpj_val = empty($cpf_cnpj) ? "NULL" : "'$cpf_cnpj'";
                 $telefone = mysqli_real_escape_string($link, $telefone);
                 $email_val = empty($email) ? "NULL" : "'" . mysqli_real_escape_string($link, $email) . "'";
+                $data_nascimento = $_POST['data_nascimento'] ?? '';
+                $data_nascimento_val = empty($data_nascimento) ? "NULL" : "'" . mysqli_real_escape_string($link, $data_nascimento) . "'";
 
                 // Address - Cliente Edit
                 $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
@@ -696,7 +700,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $query = "UPDATE Clientes SET nome='$nome', cpf_cnpj=$cpf_cnpj_val, telefone='$telefone', email=$email_val,
                           endereco='$endereco', numero='$numero', complemento='$complemento', bairro='$bairro', cep='$cep', uf='$uf', codigo_municipio='$codigo_municipio',
-                          inscricao_municipal='$inscricao_municipal', inscricao_estadual='$inscricao_estadual'
+                          inscricao_municipal='$inscricao_municipal', inscricao_estadual='$inscricao_estadual', data_nascimento=$data_nascimento_val
                           WHERE id_cliente='$id_cliente'";
                 $result = DBExecute($link, $query);
 

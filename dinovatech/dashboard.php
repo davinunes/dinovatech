@@ -5,7 +5,7 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 
-require_once 'database.php';
+require_once '../database.php';
 $linkDB = DBConnect();
 
 // --- Lembretes de Aniversário (Próximos 30 dias) ---
@@ -16,7 +16,12 @@ if ($daqui30Aniversario < $hojeAniversario) {
 } else {
     $whereNascimento = "DATE_FORMAT(data_nascimento, '%m-%d') BETWEEN '$hojeAniversario' AND '$daqui30Aniversario'";
 }
-$queryBirthdays = "SELECT nome, data_nascimento FROM Veterinarios WHERE data_nascimento IS NOT NULL AND $whereNascimento ORDER BY DATE_FORMAT(data_nascimento, '%m-%d') ASC LIMIT 5";
+$queryBirthdays = "
+    SELECT nome, data_nascimento, 'Colaborador' AS tipo FROM Veterinarios WHERE data_nascimento IS NOT NULL AND $whereNascimento
+    UNION ALL
+    SELECT nome, data_nascimento, 'Cliente' AS tipo FROM Clientes WHERE data_nascimento IS NOT NULL AND $whereNascimento
+    ORDER BY DATE_FORMAT(data_nascimento, '%m-%d') ASC LIMIT 10
+";
 $resBirthdays = DBExecute($linkDB, $queryBirthdays);
 $aniversariantes = [];
 if ($resBirthdays) {
@@ -151,9 +156,13 @@ DBClose($linkDB);
                                 <?php foreach ($aniversariantes as $aniv): 
                                     $dataParts = explode('-', $aniv['data_nascimento']);
                                     $diaMes = $dataParts[2] . '/' . $dataParts[1];
+                                    $tipoItem = $aniv['tipo'];
                                 ?>
                                     <li class="flex justify-between items-center text-sm border-b pb-2 border-gray-50 last:border-0 last:pb-0">
-                                        <span class="font-medium text-gray-800"><?= htmlspecialchars($aniv['nome']) ?></span>
+                                        <span class="font-medium text-gray-800">
+                                            <?= htmlspecialchars($aniv['nome']) ?>
+                                            <span class="text-xs text-gray-400 font-normal ml-1">(<?= $tipoItem ?>)</span>
+                                        </span>
                                         <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold"><?= $diaMes ?></span>
                                     </li>
                                 <?php endforeach; ?>
