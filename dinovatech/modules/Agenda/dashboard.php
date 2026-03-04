@@ -43,6 +43,20 @@ DBClose($link);
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 40px;
         }
+
+        /* Responsive FullCalendar Header */
+        @media (max-width: 768px) {
+            .fc .fc-header-toolbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .fc .fc-toolbar-chunk {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 5px;
+            }
+        }
     </style>
 </head>
 
@@ -168,7 +182,8 @@ DBClose($link);
             calendar.render();
 
             // Filter Change
-            $('#filterVet').select2({ placeholder: "Filtrar por Veterinário", allowClear: true });
+            const filterPlaceholder = "<?= AppHelper::isVetMode() ? 'Filtrar por Veterinário' : 'Filtrar por Colaborador' ?>";
+            $('#filterVet').select2({ placeholder: filterPlaceholder, allowClear: true });
             $('#filterVet').on('change', function () {
                 calendar.refetchEvents();
             });
