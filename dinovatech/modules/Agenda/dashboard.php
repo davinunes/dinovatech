@@ -91,11 +91,22 @@ DBClose($link);
             var calendarEl = document.getElementById('calendar');
 
             calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek',
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'timeGridWeek',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                },
+                windowResize: function (arg) {
+                    if (window.innerWidth < 768) {
+                        if (calendar.view.type !== 'listWeek' && calendar.view.type !== 'listMonth' && calendar.view.type !== 'listDay') {
+                            calendar.changeView('listWeek');
+                        }
+                    } else {
+                        if (calendar.view.type === 'listWeek') {
+                            calendar.changeView('timeGridWeek');
+                        }
+                    }
                 },
                 timeZone: 'UTC', // Force absolute time rendering (WYSIWYG)
                 locale: 'pt-br',
