@@ -42,6 +42,32 @@ switch ($action) {
         echo json_encode(['success' => true, 'data' => $asns]);
         break;
 
+    case 'get_all_contacts':
+        $contacts = [];
+        $files = glob($dataDir . 'AS*.json');
+        foreach ($files as $file) {
+            $data = json_decode(file_get_contents($file), true);
+            if (isset($data['objects'])) {
+                foreach ($data['objects'] as $obj) {
+                    if ($obj['type'] === 'person' || $obj['type'] === 'role') {
+                        $nic = '';
+                        foreach ($obj['attributes'] as $attr) {
+                            if ($attr['name'] === 'nic-hdl') $nic = $attr['attributes'] ?? $attr['value'];
+                        }
+                        if ($nic) {
+                            $contacts[$nic] = [
+                                'nic' => $nic,
+                                'name' => $obj['name'],
+                                'type' => $obj['type']
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+        echo json_encode(['success' => true, 'data' => array_values($contacts)]);
+        break;
+
     case 'get_asn':
         $asn = $_GET['asn'] ?? '';
         $file = $dataDir . $asn . '.json';
@@ -156,9 +182,10 @@ switch ($action) {
         // Call TC API
         $response = callTcApi($irrdPayload);
 
-        // Log response
-        $timestamp = date('Ymd_His');
-        $objName = $obj['name'] ?? 'object';
+        // Log response: YYYY-MM-DD_HHiiss_ASN_OBJETO.json
+        $timestamp = date('Y-m-d_His');
+        $objName = str_replace(['/', '\\', '*', '"', '<', '>', '|'], '_', $obj['name'] ?? 'object');
+        
         file_put_contents($logDir . "{$timestamp}_{$asn}_{$objName}.json", json_encode([
             'request' => $irrdPayload,
             'response' => $response

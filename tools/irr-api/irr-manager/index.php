@@ -10,10 +10,10 @@
     <style>
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
         body { background: #f0f4f8; font-family: 'Inter', sans-serif; }
-        .tab-active { border-b-2 border-indigo-600 text-indigo-600; }
         .tooltip { position: relative; display: inline-block; cursor: help; }
         .tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+        .field-error { border-color: #ef4444 !important; background-color: #fef2f2; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -23,10 +23,10 @@
     <header class="bg-indigo-700 text-white p-6 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold flex items-center">
-                <span class="material-icons mr-2">dns</span> IRR Manager <span class="ml-2 font-normal text-sm opacity-75">v1.0 (TC Registry)</span>
+                <span class="material-icons mr-2">dns</span> IRR Manager <span class="ml-2 font-normal text-sm opacity-75">v1.1 (TC Registry)</span>
             </h1>
             <div class="text-sm">
-                Provedor TC: <span class="font-mono">irr.tc.br</span>
+                Provedor TC: <span class="font-mono">bgp.net.br</span>
             </div>
         </div>
     </header>
@@ -65,12 +65,12 @@
                     </button>
                     <div class="tooltip ml-auto">
                         <span class="material-icons text-gray-400">help_outline</span>
-                        <span class="tooltiptext">Sincroniza objetos RPSL (aut-num, route, etc) diretamente do servidor WHOIS rr.tc.br</span>
+                        <span class="tooltiptext">Sincroniza objetos RPSL (aut-num, route, etc) diretamente do servidor bgp.net.br</span>
                     </div>
                 </div>
                 
                 <div class="mt-6">
-                    <h3 class="font-bold text-lg mb-4">Objetos JSON no Arquivo</h3>
+                    <h3 class="font-bold text-lg mb-4">Objetos Gerenciados</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left bg-gray-50 rounded-lg">
                             <thead class="bg-gray-200">
@@ -119,29 +119,47 @@
                 <input type="password" id="input-mntner-pwd" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm" placeholder="Sua senha secreta">
             </div>
             <div class="flex justify-end space-x-2 pt-4">
-                <button onclick="closeModal('modal-asn')" class="px-4 py-2 border border-gray-300 rounded-lg">Cancelar</button>
-                <button id="btn-save-asn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Salvar</button>
+                <button onclick="closeModal('modal-asn')" class="px-4 py-2 border border-gray-300 rounded-lg transition hover:bg-gray-100">Cancelar</button>
+                <button id="btn-save-asn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Salvar</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal: Edit Object -->
+<!-- Modal: Edit Object (DYNAMIC) -->
 <div id="modal-object" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="bg-white p-8 rounded-xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        <h3 id="modal-object-title" class="text-xl font-bold mb-4">Editar Objeto</h3>
-        <div class="space-y-4">
-            <div id="object-attributes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Attributes will be rendered here -->
+    <div class="bg-white p-8 rounded-xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modal-object-title" class="text-xl font-bold">Editar Objeto</h3>
+            <button onclick="closeModal('modal-object')" class="text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+        </div>
+        
+        <div id="object-form-container" class="space-y-6 overflow-y-auto flex-grow pr-2">
+            <!-- Dynamic Form Fields -->
+            <div id="form-fields-required" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Required fields here -->
             </div>
-            <div class="pt-4 border-t">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Parâmetros Opcionais (RPSL Extra)</label>
-                <textarea id="object-raw" class="w-full h-32 border border-gray-300 rounded-md p-2 font-mono text-xs" placeholder="Atributo: Valor"></textarea>
+            
+            <div class="border-t pt-4">
+                <h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Atributos Opcionais</h4>
+                <div id="form-fields-optional" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <!-- Optional fields injected here -->
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <select id="select-add-optional" class="border border-gray-300 rounded-md p-2 text-sm">
+                        <option value="">+ Adicionar Atributo Opcional</option>
+                    </select>
+                    <button id="btn-add-optional" class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-indigo-200 transition">Adicionar</button>
+                </div>
             </div>
-            <div class="flex justify-end space-x-2 pt-4">
-                <button onclick="closeModal('modal-object')" class="px-4 py-2 border border-gray-300 rounded-lg">Cancelar</button>
-                <button id="btn-save-object" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Salvar Localmente</button>
-            </div>
+        </div>
+
+        <div class="flex justify-end space-x-2 pt-6 border-t mt-4">
+            <button onclick="closeModal('modal-object')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Cancelar</button>
+            <button id="btn-save-object" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Salvar Localmente</button>
         </div>
     </div>
 </div>
@@ -149,67 +167,107 @@
 <script>
     let currentAsn = null;
     let currentAsnData = null;
+    let globalContacts = [];
+
+    const SCHEMAS = {
+        'mntner': {
+            required: ['mntner', 'descr', 'admin-c', 'upd-to', 'auth', 'mnt-by', 'referral-by', 'source'],
+            optional: ['remarks', 'address', 'phone', 'e-mail']
+        },
+        'aut-num': {
+            required: ['aut-num', 'as-name', 'descr', 'admin-c', 'tech-c', 'mnt-by', 'source'],
+            optional: ['import', 'export', 'remarks', 'mnt-routes']
+        },
+        'route': {
+            required: ['route', 'descr', 'origin', 'mnt-by', 'source'],
+            optional: ['holes', 'member-of', 'remarks']
+        },
+        'route6': {
+            required: ['route6', 'descr', 'origin', 'mnt-by', 'source'],
+            optional: ['holes', 'member-of', 'remarks']
+        },
+        'person': {
+            required: ['person', 'address', 'phone', 'e-mail', 'nic-hdl', 'mnt-by', 'source'],
+            optional: ['fax-no', 'remarks']
+        },
+        'role': {
+            required: ['role', 'address', 'phone', 'e-mail', 'nic-hdl', 'mnt-by', 'source'],
+            optional: ['fax-no', 'remarks']
+        }
+    };
+
+    const TOOLTIPS = {
+        'admin-c': 'Contato administrativo do objeto (NIC-HDL).',
+        'tech-c': 'Contato técnico do objeto (NIC-HDL).',
+        'upd-to': 'E-mail para notificações de alteração.',
+        'auth': 'Método de autenticação (ex: MD5-PW).',
+        'referral-by': 'Quem indicou este mantenedor.',
+        'import': 'Política de importação de rotas.',
+        'export': 'Política de exportação de rotas.',
+        'nic-hdl': 'Identificador único da pessoa/cargo.',
+        'mnt-by': 'Mantenedor que protege este registro.',
+        'descr': 'Descrição curta do objeto.',
+        'origin': 'O ASN de origem para a rota. Ex: AS265138',
+        'source': 'Fonte do registro (TC, RIPE, etc).',
+        'mnt-routes': 'Mantenedor permitido criar rotas para este ASN.'
+    };
 
     $(document).ready(function() {
         loadAsns();
+        loadAllContacts();
         
-        $('#btn-save-asn').click(function() {
-            const data = {
-                asn: $('#input-asn').val().toUpperCase().trim(),
-                asn_name: $('#input-asn-name').val(),
-                mnt_by: $('#input-mnt-by').val().toUpperCase().trim(),
-                mntner_password: $('#input-mntner-pwd').val()
-            };
-            
-            if (!data.asn.startsWith('AS')) {
-                alert('O ASN deve começar com AS (ex: AS265138)');
-                return;
-            }
-
-            $.post('api.php?action=save_asn', JSON.stringify(data), function(res) {
-                if (res.success) {
-                    closeModal('modal-asn');
-                    loadAsns();
-                } else alert('Erro: ' + res.message);
-            });
-        });
-
-        $('#btn-sync-whois').click(function() {
-            if (!currentAsn) return;
-            const btn = $(this);
-            btn.prop('disabled', true).text('Sincronizando...');
-            
-            $.getJSON('api.php?action=sync_whois&asn=' + currentAsn, function(res) {
-                btn.prop('disabled', false).html('<span class="material-icons mr-1">sync</span> Sincronizar via WHOIS');
-                if (res.success) {
-                    alert('Sincronização concluída! ' + (res.count || 0) + ' objetos encontrados.');
-                    loadAsnDetail(currentAsn);
-                } else {
-                    alert('Erro na sincronização: ' + res.message);
-                }
-            });
-        });
+        $('#btn-save-asn').click(handleSaveAsn);
+        $('#btn-sync-whois').click(handleSyncWhois);
+        $('#btn-add-optional').click(handleAddOptional);
     });
+
+    function loadAllContacts() {
+        $.getJSON('api.php?action=get_all_contacts', function(res) {
+            if (res.success) globalContacts = res.data;
+        });
+    }
+
+    function handleSaveAsn() {
+        const data = {
+            asn: $('#input-asn').val().toUpperCase().trim(),
+            asn_name: $('#input-asn-name').val(),
+            mnt_by: $('#input-mnt-by').val().toUpperCase().trim(),
+            mntner_password: $('#input-mntner-pwd').val()
+        };
+        if (!data.asn.startsWith('AS')) return alert('O ASN deve começar com AS.');
+        
+        $.post('api.php?action=save_asn', JSON.stringify(data), function(res) {
+            if (res.success) { closeModal('modal-asn'); loadAsns(); } 
+            else alert('Erro: ' + res.message);
+        });
+    }
+
+    function handleSyncWhois() {
+        if (!currentAsn) return;
+        const btn = $(this);
+        btn.prop('disabled', true).text('Sincronizando...');
+        $.getJSON('api.php?action=sync_whois&asn=' + currentAsn, function(res) {
+            btn.prop('disabled', false).html('<span class="material-icons mr-1">sync</span> Sincronizar via WHOIS');
+            if (res.success) {
+                alert('Sincronização concluída! ' + (res.count || 0) + ' objetos encontrados.');
+                loadAsnDetail(currentAsn);
+                loadAllContacts();
+            } else alert('Erro na sincronização: ' + res.message);
+        });
+    }
 
     function loadAsns() {
         $.getJSON('api.php?action=list_asns', function(res) {
-            const list = $('#asn-list');
-            list.empty();
-            if (res.data.length === 0) {
-                list.html('<div class="col-span-full text-center py-10 bg-white rounded-xl">Nenhum ASN configurado.</div>');
-                return;
-            }
+            const list = $('#asn-list').empty();
+            if (res.data.length === 0) return list.html('<div class="col-span-full py-10 bg-white rounded-xl text-center">Nenhum ASN.</div>');
             res.data.forEach(asn => {
                 list.append(`
                     <div class="bg-white p-6 rounded-xl shadow-md border hover:border-indigo-500 transition cursor-pointer" onclick="loadAsnDetail('${asn.asn}')">
                         <div class="flex justify-between items-start">
                             <h4 class="text-xl font-bold text-indigo-700">${asn.asn}</h4>
-                            <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">${asn.object_count} objetos</span>
+                            <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">${asn.object_count}</span>
                         </div>
-                        <p class="text-gray-600 text-sm mt-2">${asn.name || 'Sem nome'}</p>
-                        <div class="mt-4 flex justify-end">
-                            <span class="text-indigo-600 text-sm flex items-center">Gerenciar <span class="material-icons text-sm ml-1 text-sm">arrow_forward</span></span>
-                        </div>
+                        <p class="text-gray-600 text-sm mt-2">${asn.name || 'Provedor'}</p>
                     </div>
                 `);
             });
@@ -221,138 +279,112 @@
         $.getJSON('api.php?action=get_asn&asn=' + asn, function(data) {
             currentAsnData = data;
             $('#current-asn-title').text(asn + ' - ' + (data.asn_name || 'Detalhes'));
-            const tbody = $('#object-list');
-            tbody.empty();
-            
-            if (!data.objects || data.objects.length === 0) {
-                tbody.append('<tr><td colspan="4" class="p-6 text-center text-gray-500">Nenhum objeto encontrado. Use "Sincronizar via WHOIS".</td></tr>');
-            } else {
+            const tbody = $('#object-list').empty();
+            if (!data.objects || data.objects.length === 0) tbody.append('<tr><td colspan="4" class="p-6 text-center text-gray-500">Nenhum objeto.</td></tr>');
+            else {
                 data.objects.forEach((obj, index) => {
                     const statusClass = obj.status === 'sincronizado' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
                     tbody.append(`
                         <tr class="border-t hover:bg-white transition">
                             <td class="p-3 font-mono text-sm">${obj.name}</td>
                             <td class="p-3 text-sm">${obj.type}</td>
-                            <td class="p-3">
-                                <span class="text-xs px-2 py-1 rounded-full ${statusClass}">${obj.status}</span>
-                            </td>
+                            <td class="p-3"><span class="text-xs px-2 py-1 rounded-full ${statusClass}">${obj.status}</span></td>
                             <td class="p-3 space-x-2">
-                                <button onclick="editObject(${index})" class="text-indigo-600 hover:text-indigo-900 flex items-center inline-flex">
-                                    <span class="material-icons text-sm mr-1">edit</span> Editar
-                                </button>
-                                <button onclick="sendToTc(${index})" class="text-green-600 hover:text-green-900 flex items-center inline-flex">
-                                    <span class="material-icons text-sm mr-1">send</span> Enviar TC
-                                </button>
+                                <button onclick="editObject(${index})" class="text-indigo-600 hover:text-indigo-900 border px-2 py-1 rounded">Editar</button>
+                                <button onclick="sendToTc(${index})" class="text-green-600 hover:text-green-900 border px-2 py-1 rounded">Enviar TC</button>
                             </td>
                         </tr>
                     `);
                 });
             }
-            
             $('#view-dashboard').hide();
             $('#view-asn-detail').removeClass('hidden').show();
         });
     }
 
-    function showDashboard() {
-        $('#view-asn-detail').hide();
-        $('#view-dashboard').show();
-        loadAsns();
-    }
-
-    function showAddAsnModal() {
-        $('#input-asn').val('').prop('disabled', false);
-        $('#input-asn-name').val('');
-        $('#input-mnt-by').val('');
-        $('#input-mntner-pwd').val('');
-        $('#modal-asn').removeClass('hidden').addClass('flex');
-    }
-
-    function editAsnConfig() {
-        if (!currentAsnData) return;
-        $('#input-asn').val(currentAsnData.asn).prop('disabled', true);
-        $('#input-asn-name').val(currentAsnData.asn_name || '');
-        $('#input-mnt-by').val(currentAsnData.mnt_by || '');
-        $('#input-mntner-pwd').val(currentAsnData.mntner_password || '');
-        $('#modal-asn').removeClass('hidden').addClass('flex');
-    }
-
-    function closeModal(id) {
-        $('#' + id).addClass('hidden').removeClass('flex');
-    }
-
     function editObject(index) {
         const obj = currentAsnData.objects[index];
-        $('#modal-object-title').text(`Editar ${obj.type}: ${obj.name}`);
-        const container = $('#object-attributes');
-        container.empty();
+        const schema = SCHEMAS[obj.type] || { required: [], optional: [] };
         
-        const mainAttrs = ['descr', 'origin', 'mnt-by', 'changed', 'person', 'email', 'phone'];
-        const commonTooltips = {
-            'origin': 'O ASN de origem para a rota. Ex: AS265138',
-            'mnt-by': 'O objeto Maintainer que protege este registro.',
-            'descr': 'Descrição curta do objeto.',
-            'changed': 'E-mail e data da última alteração. Ex: davi@exa.com 20240101'
-        };
+        $('#modal-object-title').text(`Editar ${obj.type}: ${obj.name}`);
+        $('#form-fields-required').empty();
+        $('#form-fields-optional').empty();
+        
+        const dropdown = $('#select-add-optional').empty();
+        dropdown.append('<option value="">+ Adicionar Atributo Opcional</option>');
+        schema.optional.forEach(opt => dropdown.append(`<option value="${opt}">${opt}</option>`));
 
-        // Separate main and others
-        const attrsMap = {};
-        obj.attributes.forEach(a => attrsMap[a.name] = a.value);
-
-        mainAttrs.forEach(name => {
-            const val = attrsMap[name] || '';
-            const tooltip = commonTooltips[name] ? `<div class="tooltip ml-1"><span class="material-icons" style="font-size:14px">help_outline</span><span class="tooltiptext">${commonTooltips[name]}</span></div>` : '';
-            container.append(`
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase flex items-center">${name} ${tooltip}</label>
-                    <input type="text" data-attr="${name}" value="${val}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm">
-                </div>
-            `);
+        const objAttrs = {};
+        obj.attributes.forEach(a => {
+            if (!objAttrs[a.name]) objAttrs[a.name] = [];
+            objAttrs[a.name].push(a.value);
         });
 
-        // Other attributes in the textarea
-        let otherText = '';
-        obj.attributes.forEach(a => {
-            if (!mainAttrs.includes(a.name) && a.name !== obj.type) {
-                otherText += `${a.name}: ${a.value}\n`;
+        // Add required fields
+        schema.required.forEach(name => {
+            renderField(name, objAttrs[name] ? objAttrs[name][0] : '', '#form-fields-required', true);
+        });
+
+        // Add present optional fields
+        Object.keys(objAttrs).forEach(name => {
+            if (schema.optional.includes(name)) {
+                objAttrs[name].forEach(val => renderField(name, val, '#form-fields-optional', false));
             }
         });
-        $('#object-raw').val(otherText);
-        
-        $('#btn-save-object').off('click').on('click', function() {
-            saveObjectChanges(index);
-        });
 
+        $('#btn-save-object').off('click').on('click', () => saveObjectChanges(index));
         $('#modal-object').removeClass('hidden').addClass('flex');
+    }
+
+    function renderField(name, val, container, isRequired) {
+        const tooltip = TOOLTIPS[name] ? `<div class="tooltip ml-1"><span class="material-icons" style="font-size:14px">help_outline</span><span class="tooltiptext">${TOOLTIPS[name]}</span></div>` : '';
+        const inputId = `field-${Math.random().toString(36).substr(2, 9)}`;
+        let fieldHtml = `
+            <div class="field-wrapper" data-name="${name}">
+                <label class="block text-xs font-bold text-gray-500 uppercase flex items-center">${name} ${isRequired ? '<span class="text-red-500 ml-1">*</span>' : ''} ${tooltip}</label>
+        `;
+
+        if (name === 'admin-c' || name === 'tech-c' || name === 'upd-to') {
+            fieldHtml += `<div class="flex space-x-2 mt-1">
+                <select id="${inputId}" class="flex-grow border border-gray-300 rounded-md p-2 text-sm">
+                    <option value="">-- Selecione ou digite --</option>
+                    ${globalContacts.map(c => `<option value="${c.nic}" ${c.nic === val ? 'selected' : ''}>${c.nic} (${c.name})</option>`).join('')}
+                </select>
+                <input type="text" placeholder="Novo NIC" onchange="$(this).prev().val(this.value)" class="w-1/3 border border-gray-300 rounded-md p-2 text-sm">
+            </div>`;
+        } else {
+            fieldHtml += `<input type="text" id="${inputId}" value="${val}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm shadow-sm">`;
+        }
+
+        if (!isRequired) {
+            fieldHtml += `<button onclick="$(this).parent().remove()" class="text-red-500 text-xs mt-1 hover:underline">Remover atributo</button>`;
+        }
+        fieldHtml += `</div>`;
+        $(container).append(fieldHtml);
+    }
+
+    function handleAddOptional() {
+        const name = $('#select-add-optional').val();
+        if (!name) return;
+        renderField(name, '', '#form-fields-optional', false);
     }
 
     function saveObjectChanges(index) {
         const obj = currentAsnData.objects[index];
         const newAttributes = [];
         
-        // Always include the type/name first
-        newAttributes.push({name: obj.type, value: obj.name});
+        // Always include the object type: name
+        // Not handled in schema traversal for simplicity, let's keep it
+        newAttributes.push({ name: obj.type, value: obj.name });
 
-        // Read main inputs
-        $('#object-attributes input').each(function() {
-            const name = $(this).data('attr');
-            const val = $(this).val().trim();
-            if (val) newAttributes.push({name: name, value: val});
-        });
-
-        // Read additional text
-        const extraLines = $('#object-raw').val().split('\n');
-        extraLines.forEach(line => {
-            if (line.includes(':')) {
-                const parts = line.split(':');
-                const name = parts[0].trim().toLowerCase();
-                const val = parts.slice(1).join(':').trim();
-                if (name && val) newAttributes.push({name: name, value: val});
-            }
+        $('#modal-object .field-wrapper').each(function() {
+            const name = $(this).data('name');
+            const val = $(this).find('input, select').first().val().trim();
+            if (val && name !== obj.type) newAttributes.push({ name: name, value: val });
         });
 
         currentAsnData.objects[index].attributes = newAttributes;
-        currentAsnData.objects[index].status = 'local'; // Mark as edited locally
+        currentAsnData.objects[index].status = 'local';
 
         $.post('api.php?action=save_asn', JSON.stringify({
             asn: currentAsn,
@@ -361,37 +393,36 @@
             mntner_password: currentAsnData.mntner_password,
             objects: currentAsnData.objects
         }), function(res) {
-            if (res.success) {
-                closeModal('modal-object');
-                loadAsnDetail(currentAsn);
-            } else alert('Erro ao salvar');
+            if (res.success) { closeModal('modal-object'); loadAsnDetail(currentAsn); loadAllContacts(); } 
+            else alert('Erro ao salvar');
         });
     }
 
     function sendToTc(index) {
-        if (!confirm('Deseja realmente enviar este objeto para o Registro TC?')) return;
-        
-        $.ajax({
-            url: 'api.php?action=submit_to_tc',
-            type: 'POST',
-            data: JSON.stringify({
-                asn: currentAsn,
-                index: index
-            }),
-            contentType: 'application/json',
-            success: function(res) {
-                if (res.success) {
-                    alert('Enviado com sucesso! Verifique a resposta da API nos logs.');
-                } else {
-                    alert('Erro no envio:\n' + JSON.stringify(res.data || res.message));
-                }
-            },
-            error: function() {
-                alert('Erro de conexão com o proxy api.php');
+        if (!confirm('Enviar para o Registro TC?')) return;
+        const btn = event.target;
+        btn.innerText = 'Enviando...';
+        $.post('api.php?action=submit_to_tc', JSON.stringify({ asn: currentAsn, index: index }), function(res) {
+            btn.innerText = 'Enviar TC';
+            if (res.success) alert('Enviado com sucesso! Log gerado.');
+            else {
+                alert('Erro na submissão: Verifique os campos destacados.');
+                if (res.data && res.data.errors) highlightErrors(res.data.errors);
             }
         });
     }
-</script>
 
+    function highlightErrors(errors) {
+        // Simple highlight by field name
+        errors.forEach(err => {
+            $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error');
+        });
+    }
+
+    function showDashboard() { $('#view-asn-detail').hide(); $('#view-dashboard').show(); loadAsns(); }
+    function showAddAsnModal() { $('#input-asn').val('').prop('disabled', false); $('#input-asn-name').val(''); $('#input-mnt-by').val(''); $('#input-mntner-pwd').val(''); $('#modal-asn').removeClass('hidden').addClass('flex'); }
+    function closeModal(id) { $('#' + id).addClass('hidden').removeClass('flex'); }
+    function editAsnConfig() { if (!currentAsnData) return; $('#input-asn').val(currentAsnData.asn).prop('disabled', true); $('#input-asn-name').val(currentAsnData.asn_name || ''); $('#input-mnt-by').val(currentAsnData.mnt_by || ''); $('#input-mntner-pwd').val(currentAsnData.mntner_password || ''); $('#modal-asn').removeClass('hidden').addClass('flex'); }
+</script>
 </body>
 </html>
