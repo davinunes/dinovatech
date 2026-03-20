@@ -302,11 +302,18 @@
             if (!data.objects || data.objects.length === 0) tbody.append('<tr><td colspan="4" class="p-6 text-center text-gray-500">Nenhum objeto.</td></tr>');
             else {
                 data.objects.forEach((obj, index) => {
-                    const statusClass = obj.status === 'sincronizado' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
+                    let statusClass = 'bg-gray-100 text-gray-700';
+                    let statusLabel = obj.status || 'novo';
+                    
+                    if (obj.status === 'importado') statusClass = 'bg-blue-100 text-blue-700';
+                    else if (obj.status === 'editado') statusClass = 'bg-yellow-100 text-yellow-700';
+                    else if (obj.status === 'enviado') statusClass = 'bg-green-100 text-green-700';
+                    else if (obj.status === 'erro') statusClass = 'bg-red-100 text-red-700';
+                    
                     tbody.append(`<tr class="border-t hover:bg-white transition">
                         <td class="p-3 font-mono text-sm">${obj.name}</td>
                         <td class="p-3 text-sm">${obj.type}</td>
-                        <td class="p-3"><span class="text-xs px-2 py-1 rounded-full ${statusClass}">${obj.status}</span></td>
+                        <td class="p-3"><span class="text-xs px-2 py-1 rounded-full uppercase font-bold ${statusClass}">${statusLabel}</span></td>
                         <td class="p-3 space-x-2">
                             <button onclick="editObject(${index})" class="text-indigo-600 hover:text-indigo-900 border px-2 py-1 rounded text-sm">Editar</button>
                             <button onclick="sendToTc(${index})" class="text-green-600 hover:text-green-900 border px-2 py-1 rounded text-sm">Enviar TC</button>
@@ -378,7 +385,7 @@
             const name = $(this).data('name'); const val = $(this).find('input, select, textarea').first().val().trim();
             if (val && name !== obj.type) newAttributes.push({ name: name, value: val });
         });
-        currentAsnData.objects[index].attributes = newAttributes; currentAsnData.objects[index].status = 'local';
+        currentAsnData.objects[index].attributes = newAttributes; currentAsnData.objects[index].status = 'editado';
         $.post('api.php?action=save_asn', JSON.stringify({ asn: currentAsn, asn_name: currentAsnData.asn_name, mnt_by: currentAsnData.mnt_by, mntner_password: currentAsnData.mntner_password, objects: currentAsnData.objects }), res => {
             if (res.success) { closeModal('modal-object'); loadAsnDetail(currentAsn); loadAllContacts(); } else alert('Erro ao salvar');
         });
@@ -395,9 +402,12 @@
     function sendToTc(index) {
         if (!confirm('Enviar para o Registro TC?')) return;
         const btn = event.target; btn.innerText = 'Enviando...';
-        $.post('api.php?action=submit_to_tc', JSON.stringify({ asn: currentAsn, index: index }), res => {
+        $.post('api.php?action=submit_to_tc', JSON.stringify({ asn: currentAsn, index: index }), function(res) {
             btn.innerText = 'Enviar TC';
-            if (res.success) alert('Enviado com sucesso! Log gerado.');
+            loadAsnDetail(currentAsn); // Reload to update status labels
+            if (res.success) {
+                alert('Enviado com sucesso! Log gerado.');
+            }
             else { alert('Erro na submissão: Verifique os logs.'); if (res.data && res.data.errors) res.data.errors.forEach(err => $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error')); }
         });
     }

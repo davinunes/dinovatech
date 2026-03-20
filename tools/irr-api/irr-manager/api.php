@@ -139,7 +139,7 @@ switch ($action) {
         }
 
         foreach ($objects as &$obj) {
-            $obj['status'] = 'sincronizado';
+            $obj['status'] = 'importado';
         }
 
         $currentData['objects'] = $objects;
@@ -182,13 +182,23 @@ switch ($action) {
         // Call TC API
         $response = callTcApi($irrdPayload);
 
-        // Log response: YYYY-MM-DD_HHiiss_ASN_OBJETO.json
+        // Analyze IRRd response to update local status
+        $status = 'erro';
+        if (isset($response['data']['objects'][0]['successful']) && $response['data']['objects'][0]['successful']) {
+            $status = 'enviado';
+        }
+        
+        // Update local JSON with new status
+        $asnData['objects'][$objectIndex]['status'] = $status;
+        file_put_contents($file, json_encode($asnData, JSON_PRETTY_PRINT));
+
+        // Log response
         $timestamp = date('Y-m-d_His');
         $objName = str_replace(['/', '\\', '*', '"', '<', '>', '|'], '_', $obj['name'] ?? 'object');
-        
         file_put_contents($logDir . "{$timestamp}_{$asn}_{$objName}.json", json_encode([
             'request' => $irrdPayload,
-            'response' => $response
+            'response' => $response,
+            'local_status_update' => $status
         ], JSON_PRETTY_PRINT));
 
         echo json_encode($response);
