@@ -6,14 +6,22 @@
 
 header('Content-Type: application/json');
 
-$dataDir = __DIR__ . '/data/';
-$logDir = __DIR__ . '/logs/';
+// Use paths relative to this script
+$dataDir = 'data/';
+$logDir = 'logs/';
 
 // Ensure directories exist and are writable
 foreach ([$dataDir, $logDir] as $dir) {
-    if (!is_dir($dir)) mkdir($dir, 0755, true);
-    if (!is_writable($dir)) {
-        die(json_encode(['success' => false, 'message' => "Directory $dir is not writable"]));
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    if (!is_dir($dir) || !is_writable($dir)) {
+        $fullPath = realpath($dir) ?: $dir;
+        die(json_encode([
+            'success' => false, 
+            'message' => "O diretório '$dir' não existe ou não tem permissão de escrita. Por favor, execute: chmod 777 $dir",
+            'path' => $fullPath
+        ]));
     }
 }
 
@@ -185,19 +193,23 @@ function parseRpsl($text) {
         $currentValue = '';
         
         foreach ($lines as $line) {
-            if (strpos($line, '#') === 0 || trim($line) == "") continue;
+            if (strpos(trim($line), '#') === 0 || trim($line) == "") continue;
+            
+            // Strip inline comments for parsing, but usually values might contain # in some cases
+            // Standard RPSL says # is a comment.
+            $cleanLine = preg_replace('/\s+#.*$/', '', $line);
             
             // Handle line continuation (starts with space)
-            if (isset($line[0]) && $line[0] === ' ') {
+            if (isset($cleanLine[0]) && $cleanLine[0] === ' ') {
                 if ($currentName) {
-                    $currentValue .= "\n" . trim($line);
+                    $currentValue .= "\n" . trim($cleanLine);
                     // Update last added attribute
                     $attributes[count($attributes)-1]['value'] = $currentValue;
                 }
                 continue;
             }
             
-            if (preg_match('/^([a-z0-9-]+):\s*(.*)$/i', $line, $matches)) {
+            if (preg_match('/^([a-z0-9-]+):\s*(.*)$/i', $cleanLine, $matches)) {
                 $currentName = strtolower($matches[1]);
                 $currentValue = trim($matches[2]);
                 
