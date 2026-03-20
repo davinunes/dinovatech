@@ -204,6 +204,47 @@ switch ($action) {
         echo json_encode($response);
         break;
 
+    case 'delete_from_tc':
+        $input = json_decode(file_get_contents('php://input'), true);
+        $asn = $input['asn'] ?? '';
+        $objectIndex = $input['index'] ?? -1;
+        
+        $file = $dataDir . $asn . '.json';
+        if (!file_exists($file)) die(json_encode(['success' => false, 'message' => 'ASN not found']));
+        
+        $asnData = json_decode(file_get_contents($file), true);
+        $obj = $asnData['objects'][$objectIndex];
+        
+        // IRRd DELETE payload is same, but using DELETE method
+        $irrdPayload = [
+            'objects' => [['attributes' => $obj['attributes'], 'delete' => true]],
+            'passwords' => [$asnData['mntner_password'] ?? '']
+        ];
+        
+        $response = callTcApi($irrdPayload, 'DELETE');
+        
+        $status = 'erro';
+        $objectsSummary = $response['data']['summary'] ?? [];
+        if (($objectsSummary['successful_delete'] ?? 0) > 0 || ($response['data']['objects'][0]['successful'] ?? false)) {
+            $status = 'removido';
+            unset($asnData['objects'][$objectIndex]);
+            $asnData['objects'] = array_values($asnData['objects']);
+        }
+        
+        if ($status !== 'removido') {
+            $asnData['objects'][$objectIndex]['status'] = 'erro';
+        }
+        
+        file_put_contents($file, json_encode($asnData, JSON_PRETTY_PRINT));
+        
+        // Log delete
+        $timestamp = date('Y-m-d_His');
+        $objName = str_replace(['/', '\\'], '_', $obj['name'] ?? 'object');
+        file_put_contents($logDir . "DELETE_{$timestamp}_{$asn}_{$objName}.json", json_encode(['request' => $irrdPayload, 'response' => $response]));
+        
+        echo json_encode($response);
+        break;
+
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
         break;
@@ -280,21 +321,17 @@ function parseRpsl($text)
 /**
  * Calls the TC IRRd API
  */
-function callTcApi($payload)
+function callTcApi($payload, $method = 'POST')
 {
     $url = 'https://bgp.net.br/v1/submit/'; // Added trailing slash to avoid 307
-    // The previous URL /api/v1/objects was causing 404.
-    // Documentation at bgp.net.br confirms v1/submit.
-    // Usually IRRd API is at /v1/objects/ or similar. I'll use a placeholder if not sure, 
-    // but the payload format was given.
-
+    
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Automatically follow redirects like 307
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); 
     
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

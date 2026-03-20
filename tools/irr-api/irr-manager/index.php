@@ -315,14 +315,36 @@
                         <td class="p-3 text-sm">${obj.type}</td>
                         <td class="p-3"><span class="text-xs px-2 py-1 rounded-full uppercase font-bold ${statusClass}">${statusLabel}</span></td>
                         <td class="p-3 space-x-2">
-                            <button onclick="editObject(${index})" class="text-indigo-600 hover:text-indigo-900 border px-2 py-1 rounded text-sm">Editar</button>
-                            <button onclick="sendToTc(${index})" class="text-green-600 hover:text-green-900 border px-2 py-1 rounded text-sm">Enviar TC</button>
-                            <button onclick="deleteObject(${index})" class="text-red-600 hover:text-red-900 border px-2 py-1 rounded text-sm">Excluir</button>
-                        </td>
-                    </tr>`);
+                                <button onclick="editObject(${index})" class="text-indigo-600 hover:text-indigo-900 border px-2 py-1 rounded text-sm bg-white">Editar</button>
+                                <button onclick="sendToTc(${index})" class="text-green-600 hover:text-green-900 border px-2 py-1 rounded text-sm bg-white">Enviar TC</button>
+                                <button onclick="deleteFromTc(${index})" class="text-red-500 hover:text-red-700 font-bold border px-1 py-1 rounded text-sm bg-white flex items-center justify-center float-right ml-2" title="Excluir do TC">
+                                    <span class="material-icons text-sm">delete_forever</span>
+                                </button>
+                                <button onclick="deleteObject(${index})" class="text-gray-400 hover:text-red-600 border px-2 py-1 rounded text-sm bg-white" title="Excluir Localmente">Local</button>
+                            </td>
+                        </tr>`);
                 });
             }
             $('#view-dashboard').hide(); $('#view-asn-detail').removeClass('hidden').show();
+        });
+    }
+
+    function deleteFromTc(index) {
+        if (!confirm('Tem certeza que deseja remover este objeto do TC? Esta ação não pode ser desfeita no servidor remoto.')) return;
+        const obj = currentAsnData.objects[index];
+        const btn = event.currentTarget;
+        const oldHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="material-icons text-sm animate-spin">sync</span>';
+        
+        $.post('api.php?action=delete_from_tc', JSON.stringify({ asn: currentAsn, index: index }), function(res) {
+            btn.innerHTML = oldHtml;
+            if (res.success && (res.data.summary.successful_delete > 0 || res.data.objects[0].successful)) {
+                alert('Objeto removido com sucesso do TC!');
+                loadAsnDetail(currentAsn);
+            } else {
+                alert('Erro na remoção do TC: Verifique os logs.');
+                loadAsnDetail(currentAsn);
+            }
         });
     }
 
