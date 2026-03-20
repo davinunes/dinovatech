@@ -10,6 +10,7 @@
     <style>
         .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
         body { background: #f0f4f8; font-family: 'Inter', sans-serif; }
+        .tab-active { border-b-2 border-indigo-600 text-indigo-600; }
         .tooltip { position: relative; display: inline-block; cursor: help; }
         .tooltip .tooltiptext { visibility: hidden; width: 220px; background-color: #333; color: #fff; text-align: center; border-radius: 6px; padding: 8px; position: absolute; z-index: 10; bottom: 125%; left: 50%; margin-left: -110px; opacity: 0; transition: opacity 0.3s; font-size: 0.75rem; }
         .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
@@ -23,7 +24,7 @@
     <header class="bg-indigo-700 text-white p-6 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-2xl font-bold flex items-center">
-                <span class="material-icons mr-2">dns</span> IRR Manager <span class="ml-2 font-normal text-sm opacity-75">v1.1 (TC Registry)</span>
+                <span class="material-icons mr-2">dns</span> IRR Manager <span class="ml-2 font-normal text-sm opacity-75">v1.2 (TC Registry)</span>
             </h1>
             <div class="text-sm">
                 Provedor TC: <span class="font-mono">bgp.net.br</span>
@@ -57,9 +58,14 @@
 
             <div class="bg-white p-6 rounded-xl shadow-md space-y-4">
                 <div class="flex flex-wrap gap-4 items-center">
-                    <button id="btn-sync-whois" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center">
-                        <span class="material-icons mr-1">sync</span> Sincronizar via WHOIS
-                    </button>
+                    <div class="flex space-x-2">
+                        <button id="btn-sync-whois" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm">
+                            <span class="material-icons mr-1">sync</span> Sincronizar via WHOIS
+                        </button>
+                        <button onclick="showCreateObjectModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center shadow-sm">
+                            <span class="material-icons mr-1">add_circle</span> Novo Objeto
+                        </button>
+                    </div>
                     <button onclick="editAsnConfig()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg flex items-center border">
                         <span class="material-icons mr-1">settings</span> Editar Configurações
                     </button>
@@ -82,7 +88,7 @@
                                 </tr>
                             </thead>
                             <tbody id="object-list">
-                                <!-- Objects will be listed here -->
+                                <!-- Objects listed here -->
                             </tbody>
                         </table>
                     </div>
@@ -91,7 +97,6 @@
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="p-6 text-center text-gray-500 text-sm">
         &copy; 2024 Dinovatech - IRR Manager (PHP 7.4)
     </footer>
@@ -119,8 +124,39 @@
                 <input type="password" id="input-mntner-pwd" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm" placeholder="Sua senha secreta">
             </div>
             <div class="flex justify-end space-x-2 pt-4">
-                <button onclick="closeModal('modal-asn')" class="px-4 py-2 border border-gray-300 rounded-lg transition hover:bg-gray-100">Cancelar</button>
+                <button onclick="closeModal('modal-asn')" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">Cancelar</button>
                 <button id="btn-save-asn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Create New Object -->
+<div id="modal-create-object" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white p-8 rounded-xl w-full max-w-md shadow-2xl">
+        <h3 class="text-xl font-bold mb-4">Novo Objeto IRR</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Tipo de Objeto</label>
+                <select id="create-obj-type" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500">
+                    <option value="aut-num">aut-num</option>
+                    <option value="route">route (IPv4)</option>
+                    <option value="route6">route6 (IPv6)</option>
+                    <option value="as-set">as-set (AS-XXXX)</option>
+                    <option value="route-set">route-set (RS-XXXX)</option>
+                    <option value="mntner">mntner</option>
+                    <option value="person">person</option>
+                    <option value="role">role</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Nome/Chave (ex: AS-MEU-SET ou 192.168.0.0/24)</label>
+                <input type="text" id="create-obj-name" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm" placeholder="Identificador do objeto">
+                <p id="create-obj-warning" class="text-red-500 text-xs mt-1 hidden">O nome para este tipo deve seguir as regras de prefixo.</p>
+            </div>
+            <div class="flex justify-end space-x-2 pt-4">
+                <button onclick="closeModal('modal-create-object')" class="px-4 py-2 border border-gray-300 rounded-lg">Cancelar</button>
+                <button onclick="handleCreateObject()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Confirmar</button>
             </div>
         </div>
     </div>
@@ -137,21 +173,12 @@
         </div>
         
         <div id="object-form-container" class="space-y-6 overflow-y-auto flex-grow pr-2">
-            <!-- Dynamic Form Fields -->
-            <div id="form-fields-required" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Required fields here -->
-            </div>
-            
+            <div id="form-fields-required" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             <div class="border-t pt-4">
                 <h4 class="text-sm font-bold text-gray-400 uppercase mb-3">Atributos Opcionais</h4>
-                <div id="form-fields-optional" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <!-- Optional fields injected here -->
-                </div>
-                
+                <div id="form-fields-optional" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4"></div>
                 <div class="flex items-center space-x-3">
-                    <select id="select-add-optional" class="border border-gray-300 rounded-md p-2 text-sm">
-                        <option value="">+ Adicionar Atributo Opcional</option>
-                    </select>
+                    <select id="select-add-optional" class="border border-gray-300 rounded-md p-2 text-sm"></select>
                     <button id="btn-add-optional" class="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg text-sm font-bold hover:bg-indigo-200 transition">Adicionar</button>
                 </div>
             </div>
@@ -177,6 +204,14 @@
         'aut-num': {
             required: ['aut-num', 'as-name', 'descr', 'admin-c', 'tech-c', 'mnt-by', 'source'],
             optional: ['import', 'export', 'remarks', 'mnt-routes']
+        },
+        'as-set': {
+            required: ['as-set', 'descr', 'admin-c', 'tech-c', 'mnt-by', 'source'],
+            optional: ['members', 'remarks']
+        },
+        'route-set': {
+            required: ['route-set', 'descr', 'admin-c', 'tech-c', 'mnt-by', 'source'],
+            optional: ['members', 'mp-members', 'remarks']
         },
         'route': {
             required: ['route', 'descr', 'origin', 'mnt-by', 'source'],
@@ -209,23 +244,20 @@
         'descr': 'Descrição curta do objeto.',
         'origin': 'O ASN de origem para a rota. Ex: AS265138',
         'source': 'Fonte do registro (TC, RIPE, etc).',
-        'mnt-routes': 'Mantenedor permitido criar rotas para este ASN.'
+        'mnt-routes': 'Mantenedor permitido criar rotas para este ASN.',
+        'members': 'ASNs ou Sets que compõem este grupo (um por campo ou separados por vírgula).',
+        'mp-members': 'Membros IPv6 para route-set.'
     };
 
     $(document).ready(function() {
         loadAsns();
         loadAllContacts();
-        
         $('#btn-save-asn').click(handleSaveAsn);
         $('#btn-sync-whois').click(handleSyncWhois);
         $('#btn-add-optional').click(handleAddOptional);
     });
 
-    function loadAllContacts() {
-        $.getJSON('api.php?action=get_all_contacts', function(res) {
-            if (res.success) globalContacts = res.data;
-        });
-    }
+    function loadAllContacts() { $.getJSON('api.php?action=get_all_contacts', res => { if (res.success) globalContacts = res.data; }); }
 
     function handleSaveAsn() {
         const data = {
@@ -235,48 +267,35 @@
             mntner_password: $('#input-mntner-pwd').val()
         };
         if (!data.asn.startsWith('AS')) return alert('O ASN deve começar com AS.');
-        
-        $.post('api.php?action=save_asn', JSON.stringify(data), function(res) {
-            if (res.success) { closeModal('modal-asn'); loadAsns(); } 
-            else alert('Erro: ' + res.message);
-        });
+        $.post('api.php?action=save_asn', JSON.stringify(data), res => { if (res.success) { closeModal('modal-asn'); loadAsns(); } else alert('Erro: ' + res.message); });
     }
 
     function handleSyncWhois() {
         if (!currentAsn) return;
-        const btn = $(this);
-        btn.prop('disabled', true).text('Sincronizando...');
-        $.getJSON('api.php?action=sync_whois&asn=' + currentAsn, function(res) {
+        const btn = $(this); btn.prop('disabled', true).text('Sincronizando...');
+        $.getJSON('api.php?action=sync_whois&asn=' + currentAsn, res => {
             btn.prop('disabled', false).html('<span class="material-icons mr-1">sync</span> Sincronizar via WHOIS');
-            if (res.success) {
-                alert('Sincronização concluída! ' + (res.count || 0) + ' objetos encontrados.');
-                loadAsnDetail(currentAsn);
-                loadAllContacts();
-            } else alert('Erro na sincronização: ' + res.message);
+            if (res.success) { alert('Sucesso! ' + (res.count || 0) + ' objetos sincronizados.'); loadAsnDetail(currentAsn); loadAllContacts(); } 
+            else alert('Erro: ' + res.message);
         });
     }
 
     function loadAsns() {
-        $.getJSON('api.php?action=list_asns', function(res) {
+        $.getJSON('api.php?action=list_asns', res => {
             const list = $('#asn-list').empty();
             if (res.data.length === 0) return list.html('<div class="col-span-full py-10 bg-white rounded-xl text-center">Nenhum ASN.</div>');
             res.data.forEach(asn => {
-                list.append(`
-                    <div class="bg-white p-6 rounded-xl shadow-md border hover:border-indigo-500 transition cursor-pointer" onclick="loadAsnDetail('${asn.asn}')">
-                        <div class="flex justify-between items-start">
-                            <h4 class="text-xl font-bold text-indigo-700">${asn.asn}</h4>
-                            <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">${asn.object_count}</span>
-                        </div>
-                        <p class="text-gray-600 text-sm mt-2">${asn.name || 'Provedor'}</p>
-                    </div>
-                `);
+                list.append(`<div class="bg-white p-6 rounded-xl shadow-md border hover:border-indigo-500 transition cursor-pointer" onclick="loadAsnDetail('${asn.asn}')">
+                    <div class="flex justify-between items-start"><h4 class="text-xl font-bold text-indigo-700">${asn.asn}</h4><span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">${asn.object_count}</span></div>
+                    <p class="text-gray-600 text-sm mt-2">${asn.name || 'Provedor'}</p>
+                </div>`);
             });
         });
     }
 
     function loadAsnDetail(asn) {
         currentAsn = asn;
-        $.getJSON('api.php?action=get_asn&asn=' + asn, function(data) {
+        $.getJSON('api.php?action=get_asn&asn=' + asn, data => {
             currentAsnData = data;
             $('#current-asn-title').text(asn + ' - ' + (data.asn_name || 'Detalhes'));
             const tbody = $('#object-list').empty();
@@ -284,54 +303,53 @@
             else {
                 data.objects.forEach((obj, index) => {
                     const statusClass = obj.status === 'sincronizado' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
-                    tbody.append(`
-                        <tr class="border-t hover:bg-white transition">
-                            <td class="p-3 font-mono text-sm">${obj.name}</td>
-                            <td class="p-3 text-sm">${obj.type}</td>
-                            <td class="p-3"><span class="text-xs px-2 py-1 rounded-full ${statusClass}">${obj.status}</span></td>
-                            <td class="p-3 space-x-2">
-                                <button onclick="editObject(${index})" class="text-indigo-600 hover:text-indigo-900 border px-2 py-1 rounded">Editar</button>
-                                <button onclick="sendToTc(${index})" class="text-green-600 hover:text-green-900 border px-2 py-1 rounded">Enviar TC</button>
-                            </td>
-                        </tr>
-                    `);
+                    tbody.append(`<tr class="border-t hover:bg-white transition">
+                        <td class="p-3 font-mono text-sm">${obj.name}</td>
+                        <td class="p-3 text-sm">${obj.type}</td>
+                        <td class="p-3"><span class="text-xs px-2 py-1 rounded-full ${statusClass}">${obj.status}</span></td>
+                        <td class="p-3 space-x-2">
+                            <button onclick="editObject(${index})" class="text-indigo-600 hover:text-indigo-900 border px-2 py-1 rounded text-sm">Editar</button>
+                            <button onclick="sendToTc(${index})" class="text-green-600 hover:text-green-900 border px-2 py-1 rounded text-sm">Enviar TC</button>
+                            <button onclick="deleteObject(${index})" class="text-red-600 hover:text-red-900 border px-2 py-1 rounded text-sm">Excluir</button>
+                        </td>
+                    </tr>`);
                 });
             }
-            $('#view-dashboard').hide();
-            $('#view-asn-detail').removeClass('hidden').show();
+            $('#view-dashboard').hide(); $('#view-asn-detail').removeClass('hidden').show();
         });
+    }
+
+    function showCreateObjectModal() { $('#create-obj-name').val(''); $('#create-obj-warning').hide(); $('#modal-create-object').removeClass('hidden').addClass('flex'); }
+
+    function handleCreateObject() {
+        const type = $('#create-obj-type').val();
+        const name = $('#create-obj-name').val().trim();
+        if (!name) return alert('Informe o nome/chave do objeto.');
+        
+        // Validation for Sets
+        if (type === 'as-set' && !name.toUpperCase().startsWith('AS-')) return $('#create-obj-warning').text('Objeto as-set deve iniciar com AS-').show();
+        if (type === 'route-set' && !name.toUpperCase().startsWith('RS-')) return $('#create-obj-warning').text('Objeto route-set deve iniciar com RS-').show();
+        
+        const newObj = { type: type, name: name.toUpperCase(), attributes: [{name: type, value: name.toUpperCase()}], status: 'local' };
+        if (!currentAsnData.objects) currentAsnData.objects = [];
+        currentAsnData.objects.push(newObj);
+        closeModal('modal-create-object');
+        editObject(currentAsnData.objects.length - 1);
     }
 
     function editObject(index) {
         const obj = currentAsnData.objects[index];
         const schema = SCHEMAS[obj.type] || { required: [], optional: [] };
-        
         $('#modal-object-title').text(`Editar ${obj.type}: ${obj.name}`);
-        $('#form-fields-required').empty();
-        $('#form-fields-optional').empty();
-        
-        const dropdown = $('#select-add-optional').empty();
-        dropdown.append('<option value="">+ Adicionar Atributo Opcional</option>');
+        $('#form-fields-required').empty(); $('#form-fields-optional').empty();
+        const dropdown = $('#select-add-optional').empty().append('<option value="">+ Adicionar Atributo Opcional</option>');
         schema.optional.forEach(opt => dropdown.append(`<option value="${opt}">${opt}</option>`));
-
         const objAttrs = {};
-        obj.attributes.forEach(a => {
-            if (!objAttrs[a.name]) objAttrs[a.name] = [];
-            objAttrs[a.name].push(a.value);
-        });
-
-        // Add required fields
-        schema.required.forEach(name => {
-            renderField(name, objAttrs[name] ? objAttrs[name][0] : '', '#form-fields-required', true);
-        });
-
-        // Add present optional fields
+        obj.attributes.forEach(a => { if (!objAttrs[a.name]) objAttrs[a.name] = []; objAttrs[a.name].push(a.value); });
+        schema.required.forEach(name => renderField(name, objAttrs[name] ? objAttrs[name][0] : '', '#form-fields-required', true));
         Object.keys(objAttrs).forEach(name => {
-            if (schema.optional.includes(name)) {
-                objAttrs[name].forEach(val => renderField(name, val, '#form-fields-optional', false));
-            }
+            if (schema.optional.includes(name)) objAttrs[name].forEach(val => renderField(name, val, '#form-fields-optional', false));
         });
-
         $('#btn-save-object').off('click').on('click', () => saveObjectChanges(index));
         $('#modal-object').removeClass('hidden').addClass('flex');
     }
@@ -339,83 +357,48 @@
     function renderField(name, val, container, isRequired) {
         const tooltip = TOOLTIPS[name] ? `<div class="tooltip ml-1"><span class="material-icons" style="font-size:14px">help_outline</span><span class="tooltiptext">${TOOLTIPS[name]}</span></div>` : '';
         const inputId = `field-${Math.random().toString(36).substr(2, 9)}`;
-        let fieldHtml = `
-            <div class="field-wrapper" data-name="${name}">
-                <label class="block text-xs font-bold text-gray-500 uppercase flex items-center">${name} ${isRequired ? '<span class="text-red-500 ml-1">*</span>' : ''} ${tooltip}</label>
-        `;
-
-        if (name === 'admin-c' || name === 'tech-c' || name === 'upd-to') {
-            fieldHtml += `<div class="flex space-x-2 mt-1">
-                <select id="${inputId}" class="flex-grow border border-gray-300 rounded-md p-2 text-sm">
-                    <option value="">-- Selecione ou digite --</option>
-                    ${globalContacts.map(c => `<option value="${c.nic}" ${c.nic === val ? 'selected' : ''}>${c.nic} (${c.name})</option>`).join('')}
-                </select>
-                <input type="text" placeholder="Novo NIC" onchange="$(this).prev().val(this.value)" class="w-1/3 border border-gray-300 rounded-md p-2 text-sm">
-            </div>`;
+        let fieldHtml = `<div class="field-wrapper" data-name="${name}"><label class="block text-xs font-bold text-gray-500 uppercase flex items-center">${name} ${isRequired ? '<span class="text-red-500 ml-1">*</span>' : ''} ${tooltip}</label>`;
+        if (['admin-c', 'tech-c', 'upd-to', 'mnt-by', 'referral-by'].includes(name)) {
+            fieldHtml += `<div class="flex space-x-2 mt-1"><select id="${inputId}" class="flex-grow border border-gray-300 rounded-md p-2 text-sm"><option value="">-- Selecione ou digite --</option>${globalContacts.map(c => `<option value="${c.nic}" ${c.nic === val ? 'selected' : ''}>${c.nic} (${c.name})</option>`).join('')}</select><input type="text" placeholder="Novo" onchange="$(this).prev().val(this.value)" class="w-1/3 border border-gray-300 rounded-md p-2 text-sm"></div>`;
+        } else if (['members', 'mp-members', 'remarks', 'address', 'import', 'export'].includes(name)) {
+            fieldHtml += `<textarea id="${inputId}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm h-20">${val}</textarea>`;
         } else {
             fieldHtml += `<input type="text" id="${inputId}" value="${val}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm shadow-sm">`;
         }
-
-        if (!isRequired) {
-            fieldHtml += `<button onclick="$(this).parent().remove()" class="text-red-500 text-xs mt-1 hover:underline">Remover atributo</button>`;
-        }
-        fieldHtml += `</div>`;
-        $(container).append(fieldHtml);
+        if (!isRequired) fieldHtml += `<button onclick="$(this).parent().remove()" class="text-red-500 text-xs mt-1 hover:underline">Remover atributo</button>`;
+        fieldHtml += `</div>`; $(container).append(fieldHtml);
     }
 
-    function handleAddOptional() {
-        const name = $('#select-add-optional').val();
-        if (!name) return;
-        renderField(name, '', '#form-fields-optional', false);
-    }
+    function handleAddOptional() { const name = $('#select-add-optional').val(); if (name) renderField(name, '', '#form-fields-optional', false); }
 
     function saveObjectChanges(index) {
-        const obj = currentAsnData.objects[index];
-        const newAttributes = [];
-        
-        // Always include the object type: name
-        // Not handled in schema traversal for simplicity, let's keep it
+        const obj = currentAsnData.objects[index]; const newAttributes = [];
         newAttributes.push({ name: obj.type, value: obj.name });
-
         $('#modal-object .field-wrapper').each(function() {
-            const name = $(this).data('name');
-            const val = $(this).find('input, select').first().val().trim();
+            const name = $(this).data('name'); const val = $(this).find('input, select, textarea').first().val().trim();
             if (val && name !== obj.type) newAttributes.push({ name: name, value: val });
         });
+        currentAsnData.objects[index].attributes = newAttributes; currentAsnData.objects[index].status = 'local';
+        $.post('api.php?action=save_asn', JSON.stringify({ asn: currentAsn, asn_name: currentAsnData.asn_name, mnt_by: currentAsnData.mnt_by, mntner_password: currentAsnData.mntner_password, objects: currentAsnData.objects }), res => {
+            if (res.success) { closeModal('modal-object'); loadAsnDetail(currentAsn); loadAllContacts(); } else alert('Erro ao salvar');
+        });
+    }
 
-        currentAsnData.objects[index].attributes = newAttributes;
-        currentAsnData.objects[index].status = 'local';
-
-        $.post('api.php?action=save_asn', JSON.stringify({
-            asn: currentAsn,
-            asn_name: currentAsnData.asn_name,
-            mnt_by: currentAsnData.mnt_by,
-            mntner_password: currentAsnData.mntner_password,
-            objects: currentAsnData.objects
-        }), function(res) {
-            if (res.success) { closeModal('modal-object'); loadAsnDetail(currentAsn); loadAllContacts(); } 
-            else alert('Erro ao salvar');
+    function deleteObject(index) {
+        if (!confirm('Excluir este objeto localmente? Esta ação não pode ser desfeita.')) return;
+        currentAsnData.objects.splice(index, 1);
+        $.post('api.php?action=save_asn', JSON.stringify({ asn: currentAsn, asn_name: currentAsnData.asn_name, mnt_by: currentAsnData.mnt_by, mntner_password: currentAsnData.mntner_password, objects: currentAsnData.objects }), res => {
+            if (res.success) loadAsnDetail(currentAsn); else alert('Erro ao excluir');
         });
     }
 
     function sendToTc(index) {
         if (!confirm('Enviar para o Registro TC?')) return;
-        const btn = event.target;
-        btn.innerText = 'Enviando...';
-        $.post('api.php?action=submit_to_tc', JSON.stringify({ asn: currentAsn, index: index }), function(res) {
+        const btn = event.target; btn.innerText = 'Enviando...';
+        $.post('api.php?action=submit_to_tc', JSON.stringify({ asn: currentAsn, index: index }), res => {
             btn.innerText = 'Enviar TC';
             if (res.success) alert('Enviado com sucesso! Log gerado.');
-            else {
-                alert('Erro na submissão: Verifique os campos destacados.');
-                if (res.data && res.data.errors) highlightErrors(res.data.errors);
-            }
-        });
-    }
-
-    function highlightErrors(errors) {
-        // Simple highlight by field name
-        errors.forEach(err => {
-            $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error');
+            else { alert('Erro na submissão: Verifique os logs.'); if (res.data && res.data.errors) res.data.errors.forEach(err => $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error')); }
         });
     }
 
