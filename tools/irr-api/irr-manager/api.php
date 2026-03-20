@@ -272,7 +272,7 @@ function parseRpsl($text)
  */
 function callTcApi($payload)
 {
-    $url = 'https://bgp.net.br/v1/submit'; // Correct IRRd v4 submission endpoint
+    $url = 'https://bgp.net.br/v1/submit/'; // Added trailing slash to avoid 307
     // The previous URL /api/v1/objects was causing 404.
     // Documentation at bgp.net.br confirms v1/submit.
     // Usually IRRd API is at /v1/objects/ or similar. I'll use a placeholder if not sure, 
@@ -284,7 +284,8 @@ function callTcApi($payload)
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Automatically follow redirects like 307
+    
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
