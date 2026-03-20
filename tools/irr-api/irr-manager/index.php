@@ -411,7 +411,7 @@
                                         <button onclick="deleteObject(${index})" 
                                                 class="text-gray-500 hover:text-red-600 hover:bg-gray-100 border border-gray-200 px-2 py-1 rounded text-sm bg-white transition" 
                                                 title="Remover apenas do JSON local">
-                                            Local
+                                            <span class="material-icons text-xs mr-1">delete_forever</span> Local
                                         </button>
                                     </div>
                                 </td>
