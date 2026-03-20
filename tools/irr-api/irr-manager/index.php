@@ -156,29 +156,24 @@
             <h3 class="text-xl font-bold mb-4">Configurar ASN</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Número do ASN (ex: AS265138)</label>
-                    <input type="text" id="input-asn"
-                        class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="ASXXXXX">
+                    <label class="block text-sm font-medium text-gray-700">Número do ASN</label>
+                    <div class="mt-1 flex rounded-md shadow-sm">
+                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">AS</span>
+                        <input type="number" id="input-asn-num" class="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300 p-2" placeholder="265138" autocomplete="off">
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Nome da Organização</label>
-                    <input type="text" id="input-asn-name"
-                        class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm"
-                        placeholder="Nome do Provedor">
+                    <input type="text" id="input-asn-name" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm" placeholder="Ex: Meu Provedor LTDA" autocomplete="off">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Mantenedor (mnt-by) (ex:
-                        MAINT-AS265138)</label>
-                    <input type="text" id="input-mnt-by"
-                        class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm"
-                        placeholder="MAINT-ASXXXXX">
+                    <label class="block text-sm font-medium text-gray-700">Mantenedor (mnt-by)</label>
+                    <input type="text" id="input-mnt-by" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm" placeholder="Ex: MAINT-AS265138" autocomplete="off">
+                    <p class="text-xs text-gray-400 mt-1">Sugerido: MAINT-AS + número do ASN</p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Senha do Mantner (mnt-by)</label>
-                    <input type="password" id="input-mntner-pwd"
-                        class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm"
-                        placeholder="Sua senha secreta">
+                    <label class="block text-sm font-medium text-gray-700">Senha do Mantner</label>
+                    <input type="password" id="input-mntner-pwd" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm" placeholder="Sua senha secreta" autocomplete="new-password">
                 </div>
                 <div class="flex justify-end space-x-2 pt-4">
                     <button onclick="closeModal('modal-asn')"
@@ -326,19 +321,35 @@
             $('#btn-save-asn').click(handleSaveAsn);
             $('#btn-sync-whois').click(handleSyncWhois);
             $('#btn-add-optional').click(handleAddOptional);
+            
+            $('#input-asn-num').on('input', function() {
+                const val = $(this).val();
+                if (val && !$('#input-mnt-by').val().startsWith('MAINT-AS')) {
+                    $('#input-mnt-by').val('MAINT-AS' + val);
+                } else if (val && $('#input-mnt-by').val().startsWith('MAINT-AS')) {
+                     // Update existing if it still follows the pattern
+                     $('#input-mnt-by').val('MAINT-AS' + val);
+                }
+            });
         });
 
         function loadAllContacts() { $.getJSON('api.php?action=get_all_contacts', res => { if (res.success) globalContacts = res.data; }); }
 
         function handleSaveAsn() {
+            const num = $('#input-asn-num').val().trim();
+            if (!num) return alert('Informe o número do ASN.');
+            
             const data = {
-                asn: $('#input-asn').val().toUpperCase().trim(),
-                asn_name: $('#input-asn-name').val(),
+                asn: 'AS' + num,
+                asn_name: $('#input-asn-name').val().trim(),
                 mnt_by: $('#input-mnt-by').val().toUpperCase().trim(),
                 mntner_password: $('#input-mntner-pwd').val()
             };
-            if (!data.asn.startsWith('AS')) return alert('O ASN deve começar com AS.');
-            $.post('api.php?action=save_asn', JSON.stringify(data), res => { if (res.success) { closeModal('modal-asn'); loadAsns(); } else alert('Erro: ' + res.message); });
+            
+            $.post('api.php?action=save_asn', JSON.stringify(data), res => { 
+                if (res.success) { closeModal('modal-asn'); loadAsns(); } 
+                else alert('Erro: ' + res.message); 
+            });
         }
 
         function handleSyncWhois() {
@@ -529,9 +540,23 @@
         }
 
         function showDashboard() { $('#view-asn-detail').hide(); $('#view-dashboard').show(); loadAsns(); }
-        function showAddAsnModal() { $('#input-asn').val('').prop('disabled', false); $('#input-asn-name').val(''); $('#input-mnt-by').val(''); $('#input-mntner-pwd').val(''); $('#modal-asn').removeClass('hidden').addClass('flex'); }
+        function showAddAsnModal() { 
+            $('#input-asn-num').val('').prop('disabled', false); 
+            $('#input-asn-name').val(''); 
+            $('#input-mnt-by').val(''); 
+            $('#input-mntner-pwd').val(''); 
+            $('#modal-asn').removeClass('hidden').addClass('flex'); 
+        }
         function closeModal(id) { $('#' + id).addClass('hidden').removeClass('flex'); }
-        function editAsnConfig() { if (!currentAsnData) return; $('#input-asn').val(currentAsnData.asn).prop('disabled', true); $('#input-asn-name').val(currentAsnData.asn_name || ''); $('#input-mnt-by').val(currentAsnData.mnt_by || ''); $('#input-mntner-pwd').val(currentAsnData.mntner_password || ''); $('#modal-asn').removeClass('hidden').addClass('flex'); }
+        function editAsnConfig() { 
+            if (!currentAsnData) return; 
+            const asnNum = currentAsnData.asn.replace('AS', '');
+            $('#input-asn-num').val(asnNum).prop('disabled', true); 
+            $('#input-asn-name').val(currentAsnData.asn_name || ''); 
+            $('#input-mnt-by').val(currentAsnData.mnt_by || ''); 
+            $('#input-mntner-pwd').val(currentAsnData.mntner_password || ''); 
+            $('#modal-asn').removeClass('hidden').addClass('flex'); 
+        }
     </script>
 </body>
 
