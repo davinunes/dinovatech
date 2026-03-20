@@ -272,8 +272,9 @@ function parseRpsl($text)
  */
 function callTcApi($payload)
 {
-    $url = 'https://bgp.net.br/api/v1/objects'; // Assuming IRRd API endpoint, checking requirement "https://bgp.net.br/ (onde tá descrio ibgp.net.br)"
-    // The user said: https://bgp.net.br/ (where ibgp.net.br is described).
+    $url = 'https://bgp.net.br/v1/submit'; // Correct IRRd v4 submission endpoint
+    // The previous URL /api/v1/objects was causing 404.
+    // Documentation at bgp.net.br confirms v1/submit.
     // Usually IRRd API is at /v1/objects/ or similar. I'll use a placeholder if not sure, 
     // but the payload format was given.
 
