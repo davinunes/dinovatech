@@ -91,23 +91,20 @@ switch ($action) {
         }
         $currentData = json_decode(file_get_contents($file), true);
 
-        // Execute WHOIS by ASN
-        $cmdAsn = "whois -h bgp.net.br \"$asn\"";
-        exec($cmdAsn, $outputAsn, $returnCodeAsn);
-        $rawAsn = implode("\n", $outputAsn);
+        // Execute WHOIS by ASN via HTTPS
+        $rawAsn = queryWhoisHttps($asn);
         $objects = parseRpsl($rawAsn);
 
         // Optionally search by Maintainer if provided
         $mnt = $currentData['mnt_by'] ?? '';
         if ($mnt) {
-            $cmdMnt = "whois -h bgp.net.br -i mnt-by \"$mnt\"";
-            exec($cmdMnt, $outputMnt, $returnCodeMnt);
-            $rawMnt = implode("\n", $outputMnt);
+            $rawMnt = queryWhoisHttps("-i mnt-by $mnt");
             $objectsMnt = parseRpsl($rawMnt);
 
             // Merge unique objects (simple name/type comparison)
             $existingNames = array_map(function ($o) {
-                return $o['type'] . '|' . $o['name']; }, $objects);
+                return $o['type'] . '|' . $o['name'];
+            }, $objects);
             foreach ($objectsMnt as $obj) {
                 if (!in_array($obj['type'] . '|' . $obj['name'], $existingNames)) {
                     $objects[] = $obj;
@@ -274,4 +271,25 @@ function callTcApi($payload)
         'http_code' => $httpCode,
         'data' => json_decode($response, true)
     ];
+}
+
+/**
+ * Fetches WHOIS data via HTTPS (IRRd REST API)
+ */
+function queryWhoisHttps($query)
+{
+    $baseUrl = 'https://bgp.net.br/v1/whois/';
+    $url = $baseUrl . '?q=' . urlencode($query);
+    
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    // User mentioned some queries might need encoding, curl handles urlencode
+    
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($error) return "";
+    return $response;
 }
