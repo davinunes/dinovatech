@@ -493,7 +493,21 @@
             const inputId = `field-${Math.random().toString(36).substr(2, 9)}`;
             let fieldHtml = `<div class="field-wrapper" data-name="${name}"><label class="block text-xs font-bold text-gray-500 uppercase flex items-center">${name} ${isRequired ? '<span class="text-red-500 ml-1">*</span>' : ''} ${tooltip}</label>`;
             if (['admin-c', 'tech-c', 'upd-to', 'mnt-by', 'referral-by'].includes(name)) {
-                fieldHtml += `<div class="flex space-x-2 mt-1"><select id="${inputId}" class="flex-grow border border-gray-300 rounded-md p-2 text-sm"><option value="">-- Selecione ou digite --</option>${globalContacts.map(c => `<option value="${c.nic}" ${c.nic === val ? 'selected' : ''}>${c.nic} (${c.name})</option>`).join('')}</select><input type="text" placeholder="Novo" onchange="$(this).prev().val(this.value)" class="w-1/3 border border-gray-300 rounded-md p-2 text-sm"></div>`;
+                const contacts = globalContacts.filter(c => c.type !== 'mntner');
+                const mntners = globalContacts.filter(c => c.type === 'mntner');
+                
+                fieldHtml += `<div class="flex space-x-2 mt-1">
+                    <select id="${inputId}" class="flex-grow border border-gray-300 rounded-md p-2 text-sm">
+                        <option value="">-- Selecione ou digite --</option>
+                        <optgroup label="Mantenedores (MAINT-...)">
+                            ${mntners.map(c => `<option value="${c.nic}" ${c.nic === val ? 'selected' : ''}>${c.nic}</option>`).join('')}
+                        </optgroup>
+                        <optgroup label="Contatos (NIC-HDL)">
+                            ${contacts.map(c => `<option value="${c.nic}" ${c.nic === val ? 'selected' : ''}>${c.nic} (${c.name})</option>`).join('')}
+                        </optgroup>
+                    </select>
+                    <input type="text" placeholder="Novo" onchange="$(this).prev().val(this.value)" class="w-1/3 border border-gray-300 rounded-md p-2 text-sm">
+                </div>`;
             } else if (['members', 'mp-members', 'remarks', 'address', 'import', 'export'].includes(name)) {
                 fieldHtml += `<textarea id="${inputId}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm h-20">${val}</textarea>`;
             } else {

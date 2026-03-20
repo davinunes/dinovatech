@@ -49,10 +49,14 @@ switch ($action) {
             $data = json_decode(file_get_contents($file), true);
             if (isset($data['objects'])) {
                 foreach ($data['objects'] as $obj) {
-                    if ($obj['type'] === 'person' || $obj['type'] === 'role') {
+                    if ($obj['type'] === 'person' || $obj['type'] === 'role' || $obj['type'] === 'mntner') {
                         $nic = '';
-                        foreach ($obj['attributes'] as $attr) {
-                            if ($attr['name'] === 'nic-hdl') $nic = $attr['attributes'] ?? $attr['value'];
+                        if ($obj['type'] === 'mntner') {
+                            $nic = $obj['name'];
+                        } else {
+                            foreach ($obj['attributes'] as $attr) {
+                                if ($attr['name'] === 'nic-hdl') $nic = $attr['value'];
+                            }
                         }
                         if ($nic) {
                             $contacts[$nic] = [
