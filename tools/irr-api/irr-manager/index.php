@@ -585,29 +585,42 @@
             });
         }
 
-        function sendToTc(index) {
+        function sendToTc(index, event) {
             if (!confirm('Enviar para o Registro TC?')) return;
-            const btn = event.target; btn.innerText = 'Enviando...';
+
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            btn.innerText = 'Enviando...';
+            btn.disabled = true;
+
             $.post('api.php?action=submit_to_tc', JSON.stringify({ asn: currentAsn, index: index }), function (res) {
-                btn.innerText = 'Enviar TC';
-                loadAsnDetail(currentAsn); // Reload to update status labels
+                btn.innerText = originalText;
+                btn.disabled = false;
+
+                loadAsnDetail(currentAsn);
+
                 if (res.success) {
                     toastr.success('Enviado com sucesso! Log gerado.');
-                }
-                else {
+                } else {
                     toastr.error('Erro na submissão: Verifique os logs.');
-                    if (res.data && res.data.errors) res.data.errors.forEach(err => $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error'));
-                    if (res.data.objects) res.data.objects.forEach(obj => {
-                        if (obj.successful === false) {
-                            obj.error_messages.forEach(err => {
-                                toastr.error(err);
-                            });
-                            loadAsnDetail(currentAsn);
-                        }
-                    });
+
+                    if (res.data && res.data.errors) {
+                        res.data.errors.forEach(err => {
+                            $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error');
+                        });
+                    }
+
+                    if (res.data && res.data.objects) {
+                        res.data.objects.forEach(obj => {
+                            if (obj.successful === false && obj.error_messages) {
+                                obj.error_messages.forEach(err => {
+                                    toastr.error(err);
+                                });
+                            }
+                        });
+                    }
                 }
-            }
-            });
+            }, 'json');
         }
 
         function showDashboard() { $('#view-asn-detail').hide(); $('#view-dashboard').show(); loadAsns(); }
