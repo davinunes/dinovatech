@@ -224,9 +224,8 @@
         </div>
     </div>
 
-    <!-- Modal: Edit Object (DYNAMIC) -->
     <div id="modal-object" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col">
+        <div class="bg-white p-8 rounded-xl w-full max-w-5xl shadow-2xl max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h3 id="modal-object-title" class="text-xl font-bold">Editar Objeto</h3>
                 <button onclick="closeModal('modal-object')" class="text-gray-400 hover:text-gray-600">
@@ -261,39 +260,40 @@
         let currentAsn = null;
         let currentAsnData = null;
         let globalContacts = [];
+        let globalSets = [];
 
         const SCHEMAS = {
             'mntner': {
                 required: ['mntner', 'descr', 'admin-c', 'upd-to', 'auth', 'mnt-by', 'referral-by', 'source'],
-                optional: ['remarks', 'address', 'phone', 'e-mail']
+                optional: ['remarks', 'address', 'phone', 'e-mail', 'notify']
             },
             'aut-num': {
                 required: ['aut-num', 'as-name', 'descr', 'admin-c', 'tech-c', 'mnt-by', 'source'],
-                optional: ['import', 'export', 'remarks', 'mnt-routes']
+                optional: ['import', 'export', 'remarks', 'mnt-routes', 'upd-to', 'notify']
             },
             'as-set': {
                 required: ['as-set', 'descr', 'admin-c', 'tech-c', 'mnt-by', 'source'],
-                optional: ['members', 'remarks']
+                optional: ['members', 'remarks', 'upd-to', 'notify']
             },
             'route-set': {
                 required: ['route-set', 'descr', 'admin-c', 'tech-c', 'mnt-by', 'source'],
-                optional: ['members', 'mp-members', 'remarks']
+                optional: ['members', 'mp-members', 'remarks', 'upd-to', 'notify']
             },
             'route': {
                 required: ['route', 'descr', 'origin', 'mnt-by', 'source'],
-                optional: ['holes', 'member-of', 'remarks']
+                optional: ['holes', 'member-of', 'remarks', 'upd-to', 'notify']
             },
             'route6': {
                 required: ['route6', 'descr', 'origin', 'mnt-by', 'source'],
-                optional: ['holes', 'member-of', 'remarks']
+                optional: ['holes', 'member-of', 'remarks', 'upd-to', 'notify']
             },
             'person': {
                 required: ['person', 'address', 'phone', 'e-mail', 'nic-hdl', 'mnt-by', 'source'],
-                optional: ['fax-no', 'remarks']
+                optional: ['fax-no', 'remarks', 'upd-to', 'notify']
             },
             'role': {
                 required: ['role', 'address', 'phone', 'e-mail', 'nic-hdl', 'mnt-by', 'source'],
-                optional: ['fax-no', 'remarks']
+                optional: ['fax-no', 'remarks', 'upd-to', 'notify']
             }
         };
 
@@ -311,13 +311,16 @@
             'origin': 'O ASN de origem para a rota. Ex: AS265138',
             'source': 'Fonte do registro (TC, RIPE, etc).',
             'mnt-routes': 'Mantenedor permitido criar rotas para este ASN.',
-            'members': 'ASNs ou Sets que compõem este grupo (um por campo ou separados por vírgula).',
-            'mp-members': 'Membros IPv6 para route-set.'
+            'members': 'Membros do grupo (um por linha para múltiplos).',
+            'mp-members': 'Membros IPv6 para route-set (um por linha).',
+            'member-of': 'O as-set ou route-set que este objeto pertence.',
+            'notify': 'E-mail para ser notificado sobre mudanças.'
         };
 
         $(document).ready(function () {
             loadAsns();
             loadAllContacts();
+            loadAllSets();
             $('#btn-save-asn').click(handleSaveAsn);
             $('#btn-sync-whois').click(handleSyncWhois);
             $('#btn-add-optional').click(handleAddOptional);
@@ -334,6 +337,7 @@
         });
 
         function loadAllContacts() { $.getJSON('api.php?action=get_all_contacts', res => { if (res.success) globalContacts = res.data; }); }
+        function loadAllSets() { $.getJSON('api.php?action=get_all_sets', res => { if (res.success) globalSets = res.data; }); }
 
         function handleSaveAsn() {
             const num = $('#input-asn-num').val().trim();
@@ -479,10 +483,21 @@
             const dropdown = $('#select-add-optional').empty().append('<option value="">+ Adicionar Atributo Opcional</option>');
             schema.optional.forEach(opt => dropdown.append(`<option value="${opt}">${opt}</option>`));
             const objAttrs = {};
-            obj.attributes.forEach(a => { if (!objAttrs[a.name]) objAttrs[a.name] = []; objAttrs[a.name].push(a.value); });
-            schema.required.forEach(name => renderField(name, objAttrs[name] ? objAttrs[name][0] : '', '#form-fields-required', true));
+            obj.attributes.forEach(a => { 
+                if (!objAttrs[a.name]) objAttrs[a.name] = []; 
+                objAttrs[a.name].push(a.value); 
+            });
+            
+            schema.required.forEach(name => {
+                const val = (objAttrs[name] || []).join('\n');
+                renderField(name, val, '#form-fields-required', true);
+            });
+            
             Object.keys(objAttrs).forEach(name => {
-                if (schema.optional.includes(name)) objAttrs[name].forEach(val => renderField(name, val, '#form-fields-optional', false));
+                if (schema.optional.includes(name)) {
+                    const val = objAttrs[name].join('\n');
+                    renderField(name, val, '#form-fields-optional', false);
+                }
             });
             $('#btn-save-object').off('click').on('click', () => saveObjectChanges(index));
             $('#modal-object').removeClass('hidden').addClass('flex');
@@ -508,8 +523,16 @@
                     </select>
                     <input type="text" placeholder="Novo" onchange="$(this).prev().val(this.value)" class="w-1/3 border border-gray-300 rounded-md p-2 text-sm">
                 </div>`;
-            } else if (['members', 'mp-members', 'remarks', 'address', 'import', 'export'].includes(name)) {
-                fieldHtml += `<textarea id="${inputId}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm h-20">${val}</textarea>`;
+            } else if (name === 'member-of') {
+                fieldHtml += `<div class="mt-1 flex space-x-2">
+                    <select class="flex-grow border border-gray-300 rounded-md p-2 text-sm" onchange="$(this).next().val(this.value)">
+                        <option value="">-- Selecione ou digite --</option>
+                        ${globalSets.map(s => `<option value="${s.name}" ${s.name === val ? 'selected' : ''}>${s.name} (${s.type})</option>`).join('')}
+                    </select>
+                    <input type="text" id="${inputId}" value="${val}" class="w-1/3 border border-gray-300 rounded-md p-2 text-sm shadow-sm" placeholder="ID do Set">
+                </div>`;
+            } else if (['members', 'mp-members', 'remarks', 'address', 'import', 'export', 'notify', 'upd-to'].includes(name)) {
+                fieldHtml += `<textarea id="${inputId}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm h-32 font-mono whitespace-pre overflow-y-auto">${val}</textarea>`;
             } else {
                 fieldHtml += `<input type="text" id="${inputId}" value="${val}" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm shadow-sm">`;
             }
@@ -523,8 +546,21 @@
             const obj = currentAsnData.objects[index]; const newAttributes = [];
             newAttributes.push({ name: obj.type, value: obj.name });
             $('#modal-object .field-wrapper').each(function () {
-                const name = $(this).data('name'); const val = $(this).find('input, select, textarea').first().val().trim();
-                if (val && name !== obj.type) newAttributes.push({ name: name, value: val });
+                const name = $(this).data('name'); 
+                const textarea = $(this).find('textarea');
+                let values = [];
+                
+                if (textarea.length > 0) {
+                    // Split lines for multiple entries
+                    values = textarea.val().split('\n').map(v => v.trim()).filter(v => v !== '');
+                } else {
+                    const val = $(this).find('input, select').first().val().trim();
+                    if (val) values = [val];
+                }
+                
+                values.forEach(v => {
+                    if (v && name !== obj.type) newAttributes.push({ name: name, value: v });
+                });
             });
             currentAsnData.objects[index].attributes = newAttributes; currentAsnData.objects[index].status = 'editado';
             $.post('api.php?action=save_asn', JSON.stringify({ asn: currentAsn, asn_name: currentAsnData.asn_name, mnt_by: currentAsnData.mnt_by, mntner_password: currentAsnData.mntner_password, objects: currentAsnData.objects }), res => {

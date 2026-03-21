@@ -72,6 +72,22 @@ switch ($action) {
         echo json_encode(['success' => true, 'data' => array_values($contacts)]);
         break;
 
+    case 'get_all_sets':
+        $sets = [];
+        $files = glob($dataDir . '*.json');
+        foreach ($files as $file) {
+            $data = json_decode(file_get_contents($file), true);
+            if (isset($data['objects'])) {
+                foreach ($data['objects'] as $obj) {
+                    if ($obj['type'] === 'as-set' || $obj['type'] === 'route-set') {
+                        $sets[] = ['name' => $obj['name'], 'type' => $obj['type']];
+                    }
+                }
+            }
+        }
+        echo json_encode(['success' => true, 'data' => $sets]);
+        break;
+
     case 'get_asn':
         $asn = $_GET['asn'] ?? '';
         $file = $dataDir . $asn . '.json';
@@ -314,7 +330,7 @@ function parseRpsl($text)
                 'type' => $type,
                 'name' => $name,
                 'attributes' => $attributes,
-                'status' => 'sincronizado'
+                'status' => 'importado'
             ];
         }
     }
