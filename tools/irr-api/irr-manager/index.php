@@ -56,10 +56,42 @@
             border-color: #ef4444 !important;
             background-color: #fef2f2;
         }
+
+        #toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            min-width: 300px;
+            padding: 16px;
+            border-radius: 8px;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.3s ease-out forwards;
+        }
+        .toast-success { background-color: #10b981; }
+        .toast-error { background-color: #ef4444; }
+        .toast-info { background-color: #3b82f6; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
     </style>
 </head>
 
 <body class="text-gray-800">
+    <div id="toast-container"></div>
 
     <div class="min-h-screen flex flex-col">
         <!-- Header -->
@@ -348,9 +380,25 @@
         function loadAllContacts() { $.getJSON('api.php?action=get_all_contacts', res => { if (res.success) globalContacts = res.data; }); }
         function loadAllSets() { $.getJSON('api.php?action=get_all_sets', res => { if (res.success) globalSets = res.data; }); }
 
+        function showToast(message, type = 'info') {
+            const id = 'toast-' + Math.random().toString(36).substr(2, 9);
+            const icons = { success: 'check_circle', error: 'error', info: 'info' };
+            const html = `
+                <div id="${id}" class="toast toast-${type}">
+                    <span class="material-icons mr-2">${icons[type]}</span>
+                    <span class="flex-grow">${message}</span>
+                </div>
+            `;
+            $('#toast-container').append(html);
+            setTimeout(() => {
+                $(`#${id}`).css('animation', 'fadeOut 0.5s forwards');
+                setTimeout(() => $(`#${id}`).remove(), 500);
+            }, 6000);
+        }
+
         function handleSaveAsn() {
             const num = $('#input-asn-num').val().trim();
-            if (!num) return alert('Informe o número do ASN.');
+            if (!num) return showToast('Informe o número do ASN.', 'error');
 
             const data = {
                 asn: 'AS' + num,
@@ -360,8 +408,8 @@
             };
 
             $.post('api.php?action=save_asn', JSON.stringify(data), res => {
-                if (res.success) { closeModal('modal-asn'); loadAsns(); }
-                else alert('Erro: ' + res.message);
+                if (res.success) { closeModal('modal-asn'); loadAsns(); showToast('ASN salvo com sucesso!', 'success'); }
+                else showToast('Erro: ' + res.message, 'error');
             });
         }
 
@@ -370,8 +418,8 @@
             const btn = $(this); btn.prop('disabled', true).text('Sincronizando...');
             $.getJSON('api.php?action=sync_whois&asn=' + currentAsn, res => {
                 btn.prop('disabled', false).html('<span class="material-icons mr-1">sync</span> Sincronizar via WHOIS');
-                if (res.success) { alert('Sucesso! ' + (res.count || 0) + ' objetos sincronizados.'); loadAsnDetail(currentAsn); loadAllContacts(); }
-                else alert('Erro: ' + res.message);
+                if (res.success) { showToast('Sucesso! ' + (res.count || 0) + ' objetos sincronizados.', 'success'); loadAsnDetail(currentAsn); loadAllContacts(); loadAllSets(); }
+                else showToast('Erro: ' + res.message, 'error');
             });
         }
 
@@ -456,12 +504,20 @@
 
             $.post('api.php?action=delete_from_tc', JSON.stringify({ asn: currentAsn, index: index }), function (res) {
                 btn.innerHTML = oldHtml;
-                if (res.success && (res.data.summary.successful_delete > 0 || res.data.objects[0].successful)) {
-                    alert('Objeto removido com sucesso do TC!');
-                    loadAsnDetail(currentAsn);
+                loadAsnDetail(currentAsn);
+                
+                if (res.data && res.data.objects && res.data.objects[0]) {
+                    const objRes = res.data.objects[0];
+                    if (objRes.successful) {
+                        showToast('Objeto removido com sucesso do TC!', 'success');
+                    } else {
+                        showToast('Falha na remoção do TC.', 'error');
+                        if (objRes.error_messages) {
+                            objRes.error_messages.forEach(msg => showToast(msg, 'error'));
+                        }
+                    }
                 } else {
-                    alert('Erro na remoção do TC: Verifique os logs.');
-                    loadAsnDetail(currentAsn);
+                    showToast('Erro na remoção do TC: Verifique os logs.', 'error');
                 }
             });
         }
@@ -471,7 +527,7 @@
         function handleCreateObject() {
             const type = $('#create-obj-type').val();
             const name = $('#create-obj-name').val().trim();
-            if (!name) return alert('Informe o nome/chave do objeto.');
+            if (!name) return showToast('Informe o nome/chave do objeto.', 'error');
 
             // Validation for Sets
             if (type === 'as-set' && !name.toUpperCase().startsWith('AS-')) return $('#create-obj-warning').text('Objeto as-set deve iniciar com AS-').show();
@@ -573,7 +629,7 @@
             });
             currentAsnData.objects[index].attributes = newAttributes; currentAsnData.objects[index].status = 'editado';
             $.post('api.php?action=save_asn', JSON.stringify({ asn: currentAsn, asn_name: currentAsnData.asn_name, mnt_by: currentAsnData.mnt_by, mntner_password: currentAsnData.mntner_password, objects: currentAsnData.objects }), res => {
-                if (res.success) { closeModal('modal-object'); loadAsnDetail(currentAsn); loadAllContacts(); } else alert('Erro ao salvar');
+                if (res.success) { closeModal('modal-object'); loadAsnDetail(currentAsn); loadAllContacts(); loadAllSets(); showToast('Alterações salvas localmente!', 'success'); } else showToast('Erro ao salvar', 'error');
             });
         }
 
@@ -581,46 +637,31 @@
             if (!confirm('Excluir este objeto localmente? Esta ação não pode ser desfeita.')) return;
             currentAsnData.objects.splice(index, 1);
             $.post('api.php?action=save_asn', JSON.stringify({ asn: currentAsn, asn_name: currentAsnData.asn_name, mnt_by: currentAsnData.mnt_by, mntner_password: currentAsnData.mntner_password, objects: currentAsnData.objects }), res => {
-                if (res.success) loadAsnDetail(currentAsn); else alert('Erro ao excluir');
+                if (res.success) { loadAsnDetail(currentAsn); showToast('Objeto removido localmente.', 'info'); } else showToast('Erro ao excluir', 'error');
             });
         }
 
-        function sendToTc(index, event) {
+        function sendToTc(index) {
             if (!confirm('Enviar para o Registro TC?')) return;
-
-            const btn = event.currentTarget;
-            const originalText = btn.innerText;
-            btn.innerText = 'Enviando...';
-            btn.disabled = true;
-
+            const btn = event.target; btn.innerText = 'Enviando...';
             $.post('api.php?action=submit_to_tc', JSON.stringify({ asn: currentAsn, index: index }), function (res) {
-                btn.innerText = originalText;
-                btn.disabled = false;
-
-                loadAsnDetail(currentAsn);
-
-                if (res.success) {
-                    toastr.success('Enviado com sucesso! Log gerado.');
-                } else {
-                    toastr.error('Erro na submissão: Verifique os logs.');
-
-                    if (res.data && res.data.errors) {
-                        res.data.errors.forEach(err => {
-                            $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error');
-                        });
+                btn.innerText = 'Enviar TC';
+                loadAsnDetail(currentAsn); 
+                
+                if (res.data && res.data.objects && res.data.objects[0]) {
+                    const objRes = res.data.objects[0];
+                    if (objRes.successful) {
+                        showToast('Enviado com sucesso ao TC! Log gerado.', 'success');
+                    } else {
+                        showToast('Falha na submissão ao TC.', 'error');
+                        if (objRes.error_messages) {
+                            objRes.error_messages.forEach(msg => showToast(msg, 'error'));
+                        }
                     }
-
-                    if (res.data && res.data.objects) {
-                        res.data.objects.forEach(obj => {
-                            if (obj.successful === false && obj.error_messages) {
-                                obj.error_messages.forEach(err => {
-                                    toastr.error(err);
-                                });
-                            }
-                        });
-                    }
+                } else if (!res.success) {
+                    showToast('Erro na requisição: ' + (res.message || 'Verifique os logs.'), 'error');
                 }
-            }, 'json');
+            });
         }
 
         function showDashboard() { $('#view-asn-detail').hide(); $('#view-dashboard').show(); loadAsns(); }
