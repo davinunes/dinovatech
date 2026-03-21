@@ -158,22 +158,31 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Número do ASN</label>
                     <div class="mt-1 flex rounded-md shadow-sm">
-                        <span class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">AS</span>
-                        <input type="number" id="input-asn-num" class="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300 p-2" placeholder="265138" autocomplete="off">
+                        <span
+                            class="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">AS</span>
+                        <input type="number" id="input-asn-num"
+                            class="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300 p-2"
+                            placeholder="265138" autocomplete="off">
                     </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Nome da Organização</label>
-                    <input type="text" id="input-asn-name" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm" placeholder="Ex: Meu Provedor LTDA" autocomplete="off">
+                    <input type="text" id="input-asn-name"
+                        class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Ex: Meu Provedor LTDA" autocomplete="off">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Mantenedor (mnt-by)</label>
-                    <input type="text" id="input-mnt-by" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm" placeholder="Ex: MAINT-AS265138" autocomplete="off">
+                    <input type="text" id="input-mnt-by"
+                        class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Ex: MAINT-AS265138" autocomplete="off">
                     <p class="text-xs text-gray-400 mt-1">Sugerido: MAINT-AS + número do ASN</p>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Senha do Mantner</label>
-                    <input type="password" id="input-mntner-pwd" class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm" placeholder="Sua senha secreta" autocomplete="new-password">
+                    <input type="password" id="input-mntner-pwd"
+                        class="mt-1 block w-full border border-gray-300 rounded-md p-2 shadow-sm focus:ring-indigo-500 sm:text-sm"
+                        placeholder="Sua senha secreta" autocomplete="new-password">
                 </div>
                 <div class="flex justify-end space-x-2 pt-4">
                     <button onclick="closeModal('modal-asn')"
@@ -324,14 +333,14 @@
             $('#btn-save-asn').click(handleSaveAsn);
             $('#btn-sync-whois').click(handleSyncWhois);
             $('#btn-add-optional').click(handleAddOptional);
-            
-            $('#input-asn-num').on('input', function() {
+
+            $('#input-asn-num').on('input', function () {
                 const val = $(this).val();
                 if (val && !$('#input-mnt-by').val().startsWith('MAINT-AS')) {
                     $('#input-mnt-by').val('MAINT-AS' + val);
                 } else if (val && $('#input-mnt-by').val().startsWith('MAINT-AS')) {
-                     // Update existing if it still follows the pattern
-                     $('#input-mnt-by').val('MAINT-AS' + val);
+                    // Update existing if it still follows the pattern
+                    $('#input-mnt-by').val('MAINT-AS' + val);
                 }
             });
         });
@@ -342,17 +351,17 @@
         function handleSaveAsn() {
             const num = $('#input-asn-num').val().trim();
             if (!num) return alert('Informe o número do ASN.');
-            
+
             const data = {
                 asn: 'AS' + num,
                 asn_name: $('#input-asn-name').val().trim(),
                 mnt_by: $('#input-mnt-by').val().toUpperCase().trim(),
                 mntner_password: $('#input-mntner-pwd').val()
             };
-            
-            $.post('api.php?action=save_asn', JSON.stringify(data), res => { 
-                if (res.success) { closeModal('modal-asn'); loadAsns(); } 
-                else alert('Erro: ' + res.message); 
+
+            $.post('api.php?action=save_asn', JSON.stringify(data), res => {
+                if (res.success) { closeModal('modal-asn'); loadAsns(); }
+                else alert('Erro: ' + res.message);
             });
         }
 
@@ -483,16 +492,16 @@
             const dropdown = $('#select-add-optional').empty().append('<option value="">+ Adicionar Atributo Opcional</option>');
             schema.optional.forEach(opt => dropdown.append(`<option value="${opt}">${opt}</option>`));
             const objAttrs = {};
-            obj.attributes.forEach(a => { 
-                if (!objAttrs[a.name]) objAttrs[a.name] = []; 
-                objAttrs[a.name].push(a.value); 
+            obj.attributes.forEach(a => {
+                if (!objAttrs[a.name]) objAttrs[a.name] = [];
+                objAttrs[a.name].push(a.value);
             });
-            
+
             schema.required.forEach(name => {
                 const val = (objAttrs[name] || []).join('\n');
                 renderField(name, val, '#form-fields-required', true);
             });
-            
+
             Object.keys(objAttrs).forEach(name => {
                 if (schema.optional.includes(name)) {
                     const val = objAttrs[name].join('\n');
@@ -510,7 +519,7 @@
             if (['admin-c', 'tech-c', 'upd-to', 'mnt-by', 'referral-by'].includes(name)) {
                 const contacts = globalContacts.filter(c => c.type !== 'mntner');
                 const mntners = globalContacts.filter(c => c.type === 'mntner');
-                
+
                 fieldHtml += `<div class="flex space-x-2 mt-1">
                     <select id="${inputId}" class="flex-grow border border-gray-300 rounded-md p-2 text-sm">
                         <option value="">-- Selecione ou digite --</option>
@@ -546,10 +555,10 @@
             const obj = currentAsnData.objects[index]; const newAttributes = [];
             newAttributes.push({ name: obj.type, value: obj.name });
             $('#modal-object .field-wrapper').each(function () {
-                const name = $(this).data('name'); 
+                const name = $(this).data('name');
                 const textarea = $(this).find('textarea');
                 let values = [];
-                
+
                 if (textarea.length > 0) {
                     // Split lines for multiple entries
                     values = textarea.val().split('\n').map(v => v.trim()).filter(v => v !== '');
@@ -557,7 +566,7 @@
                     const val = $(this).find('input, select').first().val().trim();
                     if (val) values = [val];
                 }
-                
+
                 values.forEach(v => {
                     if (v && name !== obj.type) newAttributes.push({ name: name, value: v });
                 });
@@ -583,29 +592,41 @@
                 btn.innerText = 'Enviar TC';
                 loadAsnDetail(currentAsn); // Reload to update status labels
                 if (res.success) {
-                    alert('Enviado com sucesso! Log gerado.');
+                    toastr.success('Enviado com sucesso! Log gerado.');
                 }
-                else { alert('Erro na submissão: Verifique os logs.'); if (res.data && res.data.errors) res.data.errors.forEach(err => $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error')); }
+                else {
+                    toastr.error('Erro na submissão: Verifique os logs.');
+                    if (res.data && res.data.errors) res.data.errors.forEach(err => $(`.field-wrapper[data-name="${err.attribute}"] input`).addClass('field-error'));
+                    if (res.data.objects) res.data.objects.forEach(obj => {
+                        if (obj.successful === false) {
+                            obj.error_messages.forEach(err => {
+                                toastr.error(err);
+                            });
+                            loadAsnDetail(currentAsn);
+                        }
+                    });
+                }
+            }
             });
         }
 
         function showDashboard() { $('#view-asn-detail').hide(); $('#view-dashboard').show(); loadAsns(); }
-        function showAddAsnModal() { 
-            $('#input-asn-num').val('').prop('disabled', false); 
-            $('#input-asn-name').val(''); 
-            $('#input-mnt-by').val(''); 
-            $('#input-mntner-pwd').val(''); 
-            $('#modal-asn').removeClass('hidden').addClass('flex'); 
+        function showAddAsnModal() {
+            $('#input-asn-num').val('').prop('disabled', false);
+            $('#input-asn-name').val('');
+            $('#input-mnt-by').val('');
+            $('#input-mntner-pwd').val('');
+            $('#modal-asn').removeClass('hidden').addClass('flex');
         }
         function closeModal(id) { $('#' + id).addClass('hidden').removeClass('flex'); }
-        function editAsnConfig() { 
-            if (!currentAsnData) return; 
+        function editAsnConfig() {
+            if (!currentAsnData) return;
             const asnNum = currentAsnData.asn.replace('AS', '');
-            $('#input-asn-num').val(asnNum).prop('disabled', true); 
-            $('#input-asn-name').val(currentAsnData.asn_name || ''); 
-            $('#input-mnt-by').val(currentAsnData.mnt_by || ''); 
-            $('#input-mntner-pwd').val(currentAsnData.mntner_password || ''); 
-            $('#modal-asn').removeClass('hidden').addClass('flex'); 
+            $('#input-asn-num').val(asnNum).prop('disabled', true);
+            $('#input-asn-name').val(currentAsnData.asn_name || '');
+            $('#input-mnt-by').val(currentAsnData.mnt_by || '');
+            $('#input-mntner-pwd').val(currentAsnData.mntner_password || '');
+            $('#modal-asn').removeClass('hidden').addClass('flex');
         }
     </script>
 </body>
