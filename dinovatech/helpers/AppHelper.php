@@ -187,6 +187,18 @@ class AppHelper
             $validationErrors[] = "UF";
         if (empty($tomadorData['codigo_municipio']))
             $validationErrors[] = "Município (IBGE)";
+        
+        // --- NOVO: VALIDAÇÃO LC116 ---
+        if (empty($taxSettings['item_lista_servico'])) {
+            $validationErrors[] = "Item da Lista de Serviço (LC116) - Verifique o Cadastro do Serviço";
+        } elseif (preg_match('/^\d\./', $taxSettings['item_lista_servico'])) {
+            $validationErrors[] = "Formato LC116 Inválido (use zero à esquerda: '0' + '{$taxSettings['item_lista_servico']}')";
+        }
+        
+        // --- NOVO: VALIDAÇÃO CNAE ---
+        if (empty($taxSettings['codigo_cnae'])) {
+            $validationErrors[] = "Código CNAE - Verifique o Cadastro do Serviço";
+        }
 
         return [
             'success' => true,
