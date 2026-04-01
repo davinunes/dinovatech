@@ -380,6 +380,11 @@ function buildGerarNfseXml($input)
 
     // Dynamic Service Data
     $itemLista = $input['item_lista'] ?? '01.07';
+    // Ensure item_lista has leading zero if it's like "1.05" -> "01.05"
+    if (preg_match('/^\d\./', $itemLista)) {
+        $itemLista = "0" . $itemLista;
+    }
+    
     $codigoCnae = $input['codigo_cnae'] ?? '6204000';
     $codigoTributacao = $input['codigo_tributacao'] ?? '7';
     // NBS default to what user mentioned
@@ -444,8 +449,8 @@ function buildGerarNfseXml($input)
         ];
         $str = strtr($str, $map);
 
-        // 3. Whitelist: Alphanumerics, space, hyphen, backslash, brackets, punctuation
-        return preg_replace('/[^a-zA-Z0-9 \-\\\\\[\]\n\r\.,;]/', ' ', $str);
+        // 3. Whitelist: Alphanumerics, space, hyphen, backslash, brackets, punctuation, parentheses
+        return trim(preg_replace('/[^a-zA-Z0-9 \-\(\)\\\\\[\]\n\r\.,;]/', ' ', $str));
     };
 
     // Sanitize Discriminacao
@@ -503,7 +508,7 @@ function buildGerarNfseXml($input)
     $enderecoTomador = $cleanString($input['tomador']['endereco'] ?? '');
     $numeroTomador = $cleanString($input['tomador']['numero'] ?? '');
     $complementoTomador = $cleanString($input['tomador']['complemento'] ?? '');
-    $bairroTomador = $cleanString($input['tomador']['bairro'] ?? '');
+    $bairroTomador = $cleanString(preg_replace('/\s+/', ' ', $input['tomador']['bairro'] ?? '')); // Remove double spaces
     $cepTomador = $cleanString($input['tomador']['cep'] ?? '');
     $ufTomador = $cleanString($input['tomador']['uf'] ?? '');
     $cidadeTomador = $cleanString($input['tomador']['codigo_municipio'] ?? '5300108'); // IBGE

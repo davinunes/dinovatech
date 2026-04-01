@@ -10,3 +10,4 @@ dados.sql
 estrutura.sql
 dinovatech/assets/*
 google/api-php-client/*
+debug/*
