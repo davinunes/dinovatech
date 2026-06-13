@@ -6,16 +6,20 @@ $empresaNome = AppHelper::getCompanyName();
 // Dynamic Landing Page Router
 $landingTheme = 'default';
 $landingPath = '';
+$empresaCNPJ = '';
+$empresaRazaoSocial = '';
 
 $dbPath = __DIR__ . '/database.php';
 if (file_exists($dbPath)) {
     require_once $dbPath;
     $link = DBConnect();
     if ($link) {
-        $res = @mysqli_query($link, "SELECT landing_page_theme, landing_page_path FROM ConfiguracoesEmissor LIMIT 1");
+        $res = @mysqli_query($link, "SELECT landing_page_theme, landing_page_path, cnpj, razao_social FROM ConfiguracoesEmissor LIMIT 1");
         if ($res && $row = mysqli_fetch_assoc($res)) {
             $landingTheme = $row['landing_page_theme'] ?? 'default';
             $landingPath = $row['landing_page_path'] ?? '';
+            $empresaCNPJ = $row['cnpj'] ?? '';
+            $empresaRazaoSocial = $row['razao_social'] ?? '';
         }
         DBClose($link);
     }

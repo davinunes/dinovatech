@@ -137,8 +137,14 @@
         <!-- Footer -->
         <footer class="w-full border-t border-slate-200/80 bg-white mt-auto py-8 z-10 relative">
             <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-                <div>
-                    &copy; <?= date('Y') ?> <?= $empresaNome ?>. Todos os direitos reservados.
+                <div class="text-center md:text-left">
+                    <span class="block">&copy; <?= date('Y') ?> <?= $empresaNome ?>. Todos os direitos reservados.</span>
+                    <?php if (!empty($empresaRazaoSocial) || !empty($empresaCNPJ)): ?>
+                        <span class="block mt-1 text-slate-400">
+                            <?= htmlspecialchars($empresaRazaoSocial) ?> 
+                            <?= !empty($empresaCNPJ) ? ' | CNPJ: ' . htmlspecialchars($empresaCNPJ) : '' ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
                 <div class="flex gap-6">
                     <a href="termos.html" class="hover:text-slate-700 transition-colors">Termos de Uso</a>
