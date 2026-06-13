@@ -225,6 +225,30 @@ if (!isset($_SESSION['usuario_id'])) {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Customização da Landing Page -->
+                        <div class="border-t pt-4 mt-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                <span class="material-icons mr-2 text-cyan-600">home</span> Customização da Página Inicial (Landing Page)
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Modelo/Tema da Página Inicial</label>
+                                    <select name="landing_page_theme" id="landing_page_theme" onchange="toggleLandingCustomPath()"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50">
+                                        <option value="default">Padrão (Empresa de Tecnologia)</option>
+                                        <option value="vet">Clínica Veterinária (Tema DinoVet)</option>
+                                        <option value="custom">Diretório Personalizado (Avançado)</option>
+                                    </select>
+                                </div>
+                                <div id="landing_path_container" class="hidden">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Caminho do Diretório Customizado</label>
+                                    <input type="text" name="landing_page_path" id="landing_page_path" placeholder="Ex: custom_home"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    <p class="text-xs text-gray-500 mt-1">Pasta no servidor que contém <code>index.php</code> ou <code>index.html</code>.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- TAB: CERTIFICADO -->
@@ -618,6 +642,14 @@ if (!isset($_SESSION['usuario_id'])) {
                     $('#ultimo_rps_producao').val(d.ultimo_rps_producao);
                     $('#caminho_certificado').val(d.caminho_certificado);
 
+                    if (d.landing_page_theme) {
+                        $('#landing_page_theme').val(d.landing_page_theme);
+                    }
+                    if (d.landing_page_path) {
+                        $('#landing_page_path').val(d.landing_page_path);
+                    }
+                    toggleLandingCustomPath();
+
                     // New Fields (Integration)
                     if (d.api_inter_client_id) $('#api_inter_client_id').val(d.api_inter_client_id);
                     if (d.api_inter_chave_pix) $('#api_inter_chave_pix').val(d.api_inter_chave_pix);
@@ -681,6 +713,16 @@ if (!isset($_SESSION['usuario_id'])) {
                     }
                 }
             }, 'json');
+
+            // Toggle landing path input display
+            window.toggleLandingCustomPath = function () {
+                const val = $('#landing_page_theme').val();
+                if (val === 'custom') {
+                    $('#landing_path_container').removeClass('hidden');
+                } else {
+                    $('#landing_path_container').addClass('hidden');
+                }
+            };
 
             // Switch Tab Function
             window.switchTab = function (tabName) {

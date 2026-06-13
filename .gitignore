@@ -11,3 +11,5 @@ estrutura.sql
 dinovatech/assets/*
 google/api-php-client/*
 debug/*
+custom_home/
+custom_landing/

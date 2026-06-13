@@ -96,6 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ultimo_rps_producao = $_POST['ultimo_rps_producao'] ?? 0;
             $caminho_certificado = $_POST['caminho_certificado'] ?? '';
             $senha_certificado = $_POST['senha_certificado'] ?? '';
+            $landing_page_theme = $_POST['landing_page_theme'] ?? 'default';
+            $landing_page_path = $_POST['landing_page_path'] ?? '';
 
             if (empty($razao_social) || empty($cnpj) || empty($inscricao_municipal)) {
                 $response['message'] = "Razão Social, CNPJ e Inscrição Municipal são obrigatórios.";
@@ -112,6 +114,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $ultimo_rps_homologacao = (int) $ultimo_rps_homologacao;
                 $ultimo_rps_producao = (int) $ultimo_rps_producao;
                 $telefone = mysqli_real_escape_string($link, $_POST['telefone'] ?? '');
+                $landing_page_theme = mysqli_real_escape_string($link, $landing_page_theme);
+                $landing_page_path = mysqli_real_escape_string($link, $landing_page_path);
 
                 // --- LOGO UPLOAD ---
                 $logo_url_update = "";
@@ -369,6 +373,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 caminho_certificado='$caminho_certificado',
                                 endereco='$endereco', numero='$numero', complemento='$complemento',
                                 bairro='$bairro', cep='$cep', uf='$uf', telefone='$telefone',
+                                landing_page_theme='$landing_page_theme',
+                                landing_page_path='$landing_page_path',
                                 api_inter_client_id='$api_inter_client_id', 
                                 api_inter_chave_pix='$api_inter_chave_pix',
                                 api_inter_conta_corrente='$api_inter_conta_corrente',
@@ -415,6 +421,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
                                endereco, numero, complemento, bairro, cep, uf, telefone, logo_url,
+                               landing_page_theme, landing_page_path,
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
                                api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
@@ -425,6 +432,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val,
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$telefone', $logo_val,
+                               '$landing_page_theme', '$landing_page_path',
                                '$api_inter_client_id', $inter_secret_val, 
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
                                $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,
