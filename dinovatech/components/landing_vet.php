@@ -33,6 +33,11 @@
             <div class="flex items-center gap-3">
                 <?php 
                 $logoUrl = AppHelper::getCompanyLogo();
+                if ($logoUrl) {
+                    if (strpos($logoUrl, 'assets/') === 0) {
+                        $logoUrl = 'dinovatech/' . $logoUrl;
+                    }
+                }
                 if ($logoUrl): ?>
                     <img src="<?= $logoUrl ?>" alt="Logo <?= $empresaNome ?>" class="h-10 w-auto object-contain">
                 <?php else: ?>
