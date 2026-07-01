@@ -50,10 +50,21 @@ try {
         exit();
     }
 
-    // 2. Determina a URI de Redirecionamento correspondente
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
-    $host = $_SERVER['HTTP_HOST'];
-    $redirectUri = "$protocol://$host/dinovatech/google_oauth_callback.php";
+    // 2. Determina a URI de Redirecionamento correspondente (passada via state para evitar mismatch com proxies)
+    $state = $_GET['state'] ?? null;
+    if ($state) {
+        $redirectUri = base64_decode(str_replace(['-', '_'], ['+', '/'], $state));
+    } else {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+            $protocol = $_SERVER['HTTP_X_FORWARDED_PROTO'];
+        }
+        $host = $_SERVER['HTTP_HOST'];
+        if (!empty($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+            $host = $_SERVER['HTTP_X_FORWARDED_HOST'];
+        }
+        $redirectUri = "$protocol://$host/dinovatech/google_oauth_callback.php";
+    }
 
     // 3. Solicita a troca do código pelos tokens
     $client = new GuzzleClient();

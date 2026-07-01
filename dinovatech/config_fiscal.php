@@ -813,7 +813,8 @@ if (!isset($_SESSION['usuario_id'])) {
                         gmailStatusText.text('E-mail de envio não vinculado.');
                         
                         if (d.google_oauth_client_id) {
-                            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${d.google_oauth_client_id}&redirect_uri=${encodeURIComponent(callbackUrl)}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email')}&access_type=offline&prompt=consent`;
+                            const stateParam = btoa(callbackUrl);
+                            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${d.google_oauth_client_id}&redirect_uri=${encodeURIComponent(callbackUrl)}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email')}&access_type=offline&prompt=consent&state=${stateParam}`;
                             gmailButtons.html(`
                                 <a href="${authUrl}" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs px-3 py-2 rounded font-medium transition-colors shadow-sm inline-block">
                                     Vincular Conta Google
