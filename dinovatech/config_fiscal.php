@@ -451,6 +451,66 @@ if (!isset($_SESSION['usuario_id'])) {
                                         </div>
                                     </div>
                                 </div>
+                        </div>
+
+                        <!-- Google Gmail OAuth 2.0 -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                <span class="material-icons text-cyan-600 mr-2">email</span>
+                                <h4 class="font-bold text-gray-800">Google Gmail (OAuth 2.0 - Envio de Faturas)</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Configuração para enviar faturas, NFS-e e arquivos anexados diretamente por e-mail.</p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Google Client ID</label>
+                                    <input type="text" name="google_oauth_client_id" id="google_oauth_client_id"
+                                        placeholder="Ex: 12345678-abcde.apps.googleusercontent.com"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Google Client Secret</label>
+                                    <div class="relative">
+                                        <input type="password" name="google_oauth_client_secret" id="google_oauth_client_secret"
+                                            placeholder="Preencha apenas para alterar ou cadastrar"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border pr-10">
+                                        <button type="button" onclick="togglePass('google_oauth_client_secret')"
+                                            class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                            <span class="material-icons text-sm">visibility</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">URI de Redirecionamento Autorizada</label>
+                                    <div class="bg-white p-3 rounded-lg text-xs font-mono select-all border border-gray-200" id="google_redirect_uri_display">
+                                        <!-- Preenchido via JavaScript -->
+                                    </div>
+                                    <p class="text-[10px] text-gray-500 mt-1">Copie esta URI e cadastre-na no console de credenciais do Google Cloud para este app.</p>
+                                </div>
+
+                                <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Template de E-mail de Fatura (Modelo de Documento)</label>
+                                    <select name="email_fatura_template_id" id="email_fatura_template_id"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 p-2.5 border bg-white">
+                                        <option value="">(Recomendado) Usar Modelo Premium Padrão da Dinovatech</option>
+                                        <!-- Preenchido via JavaScript -->
+                                    </select>
+                                    <p class="text-[10px] text-gray-500 mt-1">Escolha um modelo de documento cadastrado para servir de corpo do e-mail. Utilize tags como {{NOME_CLIENTE}}, {{VALOR_FATURA}}, {{DATA_VENCIMENTO}}, {{LINK_PAGAMENTO}}, {{BLOCO_NFSE}}, {{ITENS_FATURA}}.</p>
+                                </div>
+
+                                <!-- OAuth Bind Status -->
+                                <div class="md:col-span-2 bg-blue-50 border border-blue-100 rounded-lg p-4 mt-2">
+                                    <h5 class="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">Vínculo de Conta de Envio</h5>
+                                    <div id="gmail_connection_status" class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div class="flex items-center text-sm text-blue-800">
+                                            <span class="material-icons mr-2 text-blue-600 text-base" id="gmail_status_icon">help_outline</span>
+                                            <span id="gmail_status_text">Carregando status de vinculação...</span>
+                                        </div>
+                                        <div id="gmail_action_buttons">
+                                            <!-- Renderizado via JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -711,6 +771,59 @@ if (!isset($_SESSION['usuario_id'])) {
                         gStatus.text('Não configurado').removeClass('text-green-600').addClass('text-gray-600');
                         gInfo.find('.material-icons').removeClass('text-green-600').addClass('text-gray-400');
                     }
+
+                    // Google Gmail OAuth 2.0
+                    const protocol = window.location.protocol;
+                    const host = window.location.host;
+                    const callbackUrl = `${protocol}//${host}/dinovatech/google_oauth_callback.php`;
+                    $('#google_redirect_uri_display').text(callbackUrl);
+
+                    // Carrega a lista de templates (modelos de documentos)
+                    if (d.templates_list) {
+                        const select = $('#email_fatura_template_id');
+                        select.find('option:not(:first)').remove(); // Mantém apenas a primeira padrão
+                        d.templates_list.forEach(function (t) {
+                            select.append(`<option value="${t.id_modelo}">${t.titulo}</option>`);
+                        });
+                    }
+                    if (d.email_fatura_template_id) {
+                        $('#email_fatura_template_id').val(d.email_fatura_template_id);
+                    }
+
+                    if (d.google_oauth_client_id) {
+                        $('#google_oauth_client_id').val(d.google_oauth_client_id);
+                    }
+
+                    // Renderiza o status da vinculação do e-mail do Gmail
+                    const gmailStatusIcon = $('#gmail_status_icon');
+                    const gmailStatusText = $('#gmail_status_text');
+                    const gmailButtons = $('#gmail_action_buttons');
+
+                    if (d.google_oauth_email) {
+                        gmailStatusIcon.text('check_circle').removeClass('text-amber-500').addClass('text-green-600');
+                        gmailStatusText.html(`Vinculado com o e-mail: <strong class="font-semibold">${d.google_oauth_email}</strong>`);
+                        gmailButtons.html(`
+                            <button type="button" onclick="desvincularGmail()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded font-medium transition-colors">
+                                Desvincular Conta
+                            </button>
+                        `);
+                    } else {
+                        gmailStatusIcon.text('warning').removeClass('text-green-600').addClass('text-amber-500');
+                        gmailStatusText.text('E-mail de envio não vinculado.');
+                        
+                        if (d.google_oauth_client_id) {
+                            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${d.google_oauth_client_id}&redirect_uri=${encodeURIComponent(callbackUrl)}&response_type=code&scope=${encodeURIComponent('https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/userinfo.email')}&access_type=offline&prompt=consent`;
+                            gmailButtons.html(`
+                                <a href="${authUrl}" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs px-3 py-2 rounded font-medium transition-colors shadow-sm inline-block">
+                                    Vincular Conta Google
+                                </a>
+                            `);
+                        } else {
+                            gmailButtons.html(`
+                                <span class="text-xs text-gray-500 italic">Cadastre e salve o Client ID acima para poder vincular.</span>
+                            `);
+                        }
+                    }
                 }
             }, 'json');
 
@@ -852,6 +965,34 @@ if (!isset($_SESSION['usuario_id'])) {
                     }
                 }, 'json');
             });
+
+            // Desvincular e-mail do Gmail
+            window.desvincularGmail = function () {
+                if (confirm('Deseja realmente desvincular esta conta de envio do Gmail? O envio de faturas por e-mail ficará desabilitado.')) {
+                    $.post('app.php', { action: 'desvincular_gmail' }, function (res) {
+                        alert(res.message);
+                        if (res.success) {
+                            window.location.href = 'config_fiscal.php?tab=integracoes';
+                        }
+                    }, 'json');
+                }
+            };
+
+            // Exibir alertas e mudar de aba de acordo com retorno do OAuth
+            const urlParams = new URLSearchParams(window.location.search);
+            const successMsg = urlParams.get('success');
+            const errorMsg = urlParams.get('error');
+            const activeTab = urlParams.get('tab');
+
+            if (successMsg) {
+                alert(successMsg);
+            }
+            if (errorMsg) {
+                alert(errorMsg);
+            }
+            if (activeTab) {
+                switchTab(activeTab);
+            }
 
             // Executar Migrações
             $('#btnRunMigrations').click(function () {

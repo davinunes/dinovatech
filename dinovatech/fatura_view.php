@@ -18,7 +18,7 @@ if ($id_fatura) {
     $id_safe = mysqli_real_escape_string($link, $id_fatura);
 
     // Fetch Header
-    $query = "SELECT F.*, C.nome AS nome_cliente, C.cpf_cnpj 
+    $query = "SELECT F.*, C.nome AS nome_cliente, C.cpf_cnpj, C.email AS email_cliente 
               FROM Faturas F JOIN Clientes C ON F.id_cliente = C.id_cliente 
               WHERE F.id_fatura = '$id_safe'";
     $result = DBExecute($link, $query);
@@ -486,6 +486,17 @@ if ($id_fatura) {
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
                                 / PDF</button>
+
+                            <?php if (!empty($config_emissor['google_oauth_email'])): ?>
+                                <button id="btnEnviarEmail" onclick="enviarFaturaEmail(<?= $id_fatura ?>)"
+                                    class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2.5 rounded-lg font-medium transition mt-2 flex justify-center items-center gap-2">
+                                    <span class="material-icons text-base">email</span> Enviar por E-mail
+                                </button>
+                            <?php else: ?>
+                                <div class="text-[10px] text-gray-400 italic text-center mt-2">
+                                    Integração com Gmail inativa nas configurações.
+                                </div>
+                            <?php endif; ?>
 
                             <!-- Payment History -->
                             <div class="mt-6 pt-4 border-t">
@@ -1118,6 +1129,30 @@ if ($id_fatura) {
                     dataType: 'json'
                 });
             });
+
+            // Enviar Fatura por E-mail
+            window.enviarFaturaEmail = function (idFatura) {
+                const btn = $('#btnEnviarEmail');
+                const origHtml = btn.html();
+                
+                if (confirm('Deseja realmente enviar esta fatura por e-mail para o cliente?')) {
+                    btn.prop('disabled', true).addClass('opacity-75 cursor-wait').html('<span class="material-icons text-base animate-spin mr-1">sync</span> Enviando...');
+                    
+                    $.post('app.php', { action: 'enviar_fatura_email', id_fatura: idFatura }, function (res) {
+                        if (res.success) {
+                            showToast(res.message, 'success');
+                        } else {
+                            showToast(res.message, 'error');
+                        }
+                    }, 'json')
+                    .fail(function () {
+                        showToast('Erro de comunicação ao enviar e-mail.', 'error');
+                    })
+                    .always(function () {
+                        btn.prop('disabled', false).removeClass('opacity-75 cursor-wait').html(origHtml);
+                    });
+                }
+            };
         });
     </script>
 </body>

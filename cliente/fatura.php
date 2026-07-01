@@ -1,29 +1,46 @@
 <?php
 session_set_cookie_params(0, '/');
 session_start();
-// Security Check
-if (!isset($_SESSION['cliente_id'])) {
-    header("Location: index.php");
-    exit();
-}
 
 include "../database.php"; // Using backend database connection
 require_once __DIR__ . '/../dinovatech/helpers/AppHelper.php';
-$cliente_id = $_SESSION['cliente_id'];
+
+$cliente_id = $_SESSION['cliente_id'] ?? null;
 $id_fatura = $_GET['id'] ?? null;
+$token = $_GET['token'] ?? null;
 $fatura = null;
 $error_msg = "";
 
 if ($id_fatura) {
     $link = DBConnect();
     $id_safe = mysqli_real_escape_string($link, $id_fatura);
-    // Ensure the invoice belongs to the logged client
-    $query = "SELECT F.*, C.nome AS nome_cliente, C.cpf_cnpj 
-              FROM Faturas F JOIN Clientes C ON F.id_cliente = C.id_cliente 
-              WHERE F.id_fatura = '$id_safe' AND F.id_cliente = '$cliente_id'";
+    
+    if (!empty($token)) {
+        $token_safe = mysqli_real_escape_string($link, $token);
+        // Acesso direto via token único de segurança da fatura
+        $query = "SELECT F.*, C.nome AS nome_cliente, C.cpf_cnpj 
+                  FROM Faturas F JOIN Clientes C ON F.id_cliente = C.id_cliente 
+                  WHERE F.id_fatura = '$id_safe' AND F.token_acesso = '$token_safe' AND F.token_acesso IS NOT NULL AND F.token_acesso != ''";
+    } else {
+        // Validação padrão por sessão ativa
+        if (!$cliente_id) {
+            header("Location: index.php");
+            exit();
+        }
+        $query = "SELECT F.*, C.nome AS nome_cliente, C.cpf_cnpj 
+                  FROM Faturas F JOIN Clientes C ON F.id_cliente = C.id_cliente 
+                  WHERE F.id_fatura = '$id_safe' AND F.id_cliente = '$cliente_id'";
+    }
+
     $result = DBExecute($link, $query);
     if ($result && mysqli_num_rows($result) > 0) {
         $fatura = mysqli_fetch_assoc($result);
+
+        // Preenche a sessão para permitir navegação subsequente do cliente
+        if (!empty($token)) {
+            $_SESSION['cliente_id'] = $fatura['id_cliente'];
+            $_SESSION['cliente_nome'] = $fatura['nome_cliente'];
+        }
 
         $items = [];
         $query_items = "SELECT I.*, S.nome_servico FROM ItensFatura I JOIN Servicos S ON I.id_servico = S.id_servico WHERE I.id_fatura = '$id_safe'";

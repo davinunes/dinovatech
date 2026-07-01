@@ -300,7 +300,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $api_oracle_user = mysqli_real_escape_string($link, $_POST['api_oracle_user'] ?? '');
                 $api_oracle_url = mysqli_real_escape_string($link, $_POST['api_oracle_url'] ?? '');
-                $api_oracle_password_raw = $_POST['api_oracle_password'] ?? ''; // ADDED THIS LINE
+                $api_oracle_password_raw = $_POST['api_oracle_password'] ?? '';
+
+                $google_oauth_client_id = mysqli_real_escape_string($link, $_POST['google_oauth_client_id'] ?? '');
+                $google_oauth_client_secret_raw = $_POST['google_oauth_client_secret'] ?? '';
+                $email_fatura_template_id = $_POST['email_fatura_template_id'] ?? '';
+                $email_fatura_template_id_val = empty($email_fatura_template_id) ? "NULL" : (int) $email_fatura_template_id;
 
                 // Segredos (Encrypt)
                 $api_inter_client_secret_raw = $_POST['api_inter_client_secret'] ?? '';
@@ -338,6 +343,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!empty($api_oracle_password_raw)) {
                     $enc = EncryptionHelper::encrypt($api_oracle_password_raw);
                     $oracle_pass_sql_part = ", api_oracle_password = '$enc'";
+                }
+
+                // Google OAuth Client Secret
+                $google_secret_sql_part = "";
+                if (!empty($google_oauth_client_secret_raw)) {
+                    $enc = EncryptionHelper::encrypt($google_oauth_client_secret_raw);
+                    $google_secret_sql_part = ", google_oauth_client_secret = '$enc'";
                 }
 
                 // Google Service Account JSON
@@ -379,11 +391,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 api_inter_chave_pix='$api_inter_chave_pix',
                                 api_inter_conta_corrente='$api_inter_conta_corrente',
                                 api_oracle_user='$api_oracle_user',
-                                api_oracle_url='$api_oracle_url'
+                                api_oracle_url='$api_oracle_url',
+                                google_oauth_client_id='$google_oauth_client_id',
+                                email_fatura_template_id=$email_fatura_template_id_val
                                 $senha_sql_part
                                 $inter_secret_sql_part
                                 $oracle_pass_sql_part
                                 $google_json_sql_part
+                                $google_secret_sql_part
                                 $inter_files_sql_part
                                 $logo_sql_part
                               WHERE id_config='$id_config'";
@@ -392,15 +407,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $senha_val = empty($senha_certificado) ? "NULL" : "'" . EncryptionHelper::encrypt($senha_certificado) . "'";
                     $inter_secret_val = empty($api_inter_client_secret_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_inter_client_secret_raw) . "'";
                     $oracle_pass_val = empty($api_oracle_password_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_oracle_password_raw) . "'";
+                    $google_oauth_secret_val = empty($google_oauth_client_secret_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($google_oauth_client_secret_raw) . "'";
 
-                    // JSON Google (variable defined above if upload happened, else NULL)
-                    // Wait, logic above only defines google_json_sql_part. For insert need value.
-                    // Let's grab value from the part if exists or handle it cleanly.
-                    // Actually, simpler to just re-use logic or adapt.
-                    // I'll assume if upload happened, $google_json_sql_part has content.
-                    // Extract value or just use a variable.
-
-                    // Fixed logic:
+                    // JSON Google
                     $google_json_val = "NULL";
                     if (isset($_FILES['arquivo_google_json']) && $_FILES['arquivo_google_json']['error'] === UPLOAD_ERR_OK) {
                         $jsonContent = file_get_contents($_FILES['arquivo_google_json']['tmp_name']);
@@ -425,7 +434,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
                                api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
-                               api_oracle_user, api_oracle_password, api_oracle_url, google_service_account_json)
+                               api_oracle_user, api_oracle_password, api_oracle_url, google_service_account_json,
+                               google_oauth_client_id, google_oauth_client_secret, email_fatura_template_id)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$permitir_cadastro_sem_cpf', '$ambiente_padrao', '$serie_rps', 
@@ -436,7 +446,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                '$api_inter_client_id', $inter_secret_val, 
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
                                $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,
-                               '$api_oracle_user', $oracle_pass_val, '$api_oracle_url', $google_json_val)";
+                               '$api_oracle_user', $oracle_pass_val, '$api_oracle_url', $google_json_val,
+                               '$google_oauth_client_id', $google_oauth_secret_val, $email_fatura_template_id_val)";
                 }
 
                 if (DBExecute($link, $query)) {
@@ -491,11 +502,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $row['cert_validation'] = $certStatus;
 
-                // Não retorna senha por segurança, ou retorna mascarado? 
+                                // Não retorna senha por segurança, ou retorna mascarado? 
                 // Melhor não retornar a senha para o front.
                 unset($row['senha_certificado']);
                 unset($row['api_inter_client_secret']);
                 unset($row['api_oracle_password']);
+                unset($row['google_oauth_client_secret']);
+                unset($row['google_oauth_refresh_token']);
 
                 $row['google_json_configured'] = !empty($row['google_service_account_json']);
                 $row['google_email'] = '';
@@ -510,6 +523,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } catch (Exception $e) {
                     }
                 }
+
+                // Busca templates de documentos para vincular ao e-mail de fatura
+                $templates = [];
+                $qTemplates = "SELECT id_modelo, titulo FROM ModelosDocumentos WHERE ativo = 1 ORDER BY titulo ASC";
+                $resTemplates = DBExecute($link, $qTemplates);
+                if ($resTemplates) {
+                    while ($t = mysqli_fetch_assoc($resTemplates)) {
+                        $templates[] = $t;
+                    }
+                }
+                $row['templates_list'] = $templates;
 
                 unset($row['google_service_account_json']);
 
@@ -3128,6 +3152,219 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = "Usuário excluído com sucesso!";
             } else {
                 $response['message'] = "Erro ao excluir usuário: " . mysqli_error($link);
+            }
+            break;
+
+        case 'desvincular_gmail':
+            $query = "UPDATE ConfiguracoesEmissor SET google_oauth_email = NULL, google_oauth_refresh_token = NULL";
+            if (DBExecute($link, $query)) {
+                $response['success'] = true;
+                $response['message'] = "E-mail desvinculado com sucesso!";
+            } else {
+                $response['message'] = "Erro ao desvincular e-mail: " . mysqli_error($link);
+            }
+            break;
+
+        case 'enviar_fatura_email':
+            $id_fatura = $_POST['id_fatura'] ?? null;
+            if (empty($id_fatura)) {
+                $response['message'] = "ID da fatura é obrigatório.";
+                break;
+            }
+
+            $idFatura_safe = mysqli_real_escape_string($link, $id_fatura);
+
+            // 1. Busca fatura e e-mail do cliente
+            $query = "SELECT F.*, C.nome AS nome_cliente, C.email AS email_cliente 
+                      FROM Faturas F JOIN Clientes C ON F.id_cliente = C.id_cliente 
+                      WHERE F.id_fatura = '$idFatura_safe'";
+            $result = DBExecute($link, $query);
+            $fatura = mysqli_fetch_assoc($result);
+
+            if (!$fatura) {
+                $response['message'] = "Fatura não encontrada.";
+                break;
+            }
+
+            if (empty($fatura['email_cliente'])) {
+                $response['message'] = "Erro: O cliente " . htmlspecialchars($fatura['nome_cliente']) . " não possui e-mail cadastrado.";
+                break;
+            }
+
+            // 2. Busca configurações da empresa
+            $query_config = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
+            $res_config = DBExecute($link, $query_config);
+            $config_emissor = mysqli_fetch_assoc($res_config);
+
+            if (!$config_emissor || empty($config_emissor['google_oauth_email'])) {
+                $response['message'] = "Erro: Integração de e-mail de envio (Gmail) não configurada ou inativa.";
+                break;
+            }
+
+            // 3. Gera token_acesso se estiver em branco
+            $token = $fatura['token_acesso'] ?? '';
+            if (empty($token)) {
+                $token = bin2hex(random_bytes(16));
+                $token_safe = mysqli_real_escape_string($link, $token);
+                $query_update_token = "UPDATE Faturas SET token_acesso = '$token_safe' WHERE id_fatura = '$idFatura_safe'";
+                DBExecute($link, $query_update_token);
+            }
+
+            // 4. Busca itens da fatura
+            $items = [];
+            $query_items = "SELECT I.*, S.nome_servico FROM ItensFatura I JOIN Servicos S ON I.id_servico = S.id_servico WHERE I.id_fatura = '$idFatura_safe'";
+            $res_items = DBExecute($link, $query_items);
+            while ($row = mysqli_fetch_assoc($res_items)) {
+                $items[] = $row;
+            }
+
+            // Calcula total líquido
+            $calcTotals = AppHelper::calculateFaturaTotals($link, $id_fatura);
+            $valorLiquidoFatura = $calcTotals['valor_liquido'];
+
+            // 5. Verifica se existe NFS-e emitida com sucesso
+            $nfsePdfLink = "";
+            $nfseXmlLink = "";
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http";
+            $host = $_SERVER['HTTP_HOST'];
+
+            $queryNfse = "SELECT url_pdf, id_emissao FROM NfseEmissoes WHERE id_fatura = '$idFatura_safe' AND status = 'concluido' ORDER BY id_emissao DESC LIMIT 1";
+            $resNfse = DBExecute($link, $queryNfse);
+            if ($resNfse && mysqli_num_rows($resNfse) > 0) {
+                $nfse = mysqli_fetch_assoc($resNfse);
+                $nfsePdfLink = $nfse['url_pdf'] ?? "";
+                $nfseXmlLink = "$protocol://$host/dinovatech/ver_nfse_xml.php?id=" . $nfse['id_emissao'];
+            }
+
+            // 6. Busca anexos vinculados (FaturaArquivos -> Arquivos)
+            $attachments = [];
+            $query_arquivos = "SELECT A.nome_original, A.url_publica, A.tipo_mime 
+                               FROM Arquivos A 
+                               JOIN FaturaArquivos FA ON A.id_arquivo = FA.id_arquivo 
+                               WHERE FA.id_fatura = '$idFatura_safe'";
+            $res_arquivos = DBExecute($link, $query_arquivos);
+            while ($arq = mysqli_fetch_assoc($res_arquivos)) {
+                $fileContent = @file_get_contents($arq['url_publica']);
+                if ($fileContent !== false) {
+                    $attachments[] = [
+                        'name' => $arq['nome_original'],
+                        'data' => $fileContent,
+                        'mime' => $arq['tipo_mime']
+                    ];
+                }
+            }
+
+            // 7. Assunto e Corpo do E-mail
+            $subject = "Fatura #" . $fatura['id_fatura'] . " - " . ($config_emissor['nome_fantasia'] ?? 'Dinovatech');
+            $htmlBody = "";
+
+            if (!empty($config_emissor['email_fatura_template_id'])) {
+                $tempId = (int)$config_emissor['email_fatura_template_id'];
+                $qTemp = "SELECT titulo, conteudo FROM ModelosDocumentos WHERE id_modelo = $tempId";
+                $rTemp = DBExecute($link, $qTemp);
+                if ($rTemp && mysqli_num_rows($rTemp) > 0) {
+                    $templateData = mysqli_fetch_assoc($rTemp);
+                    $subject = $templateData['titulo'] . " #" . $fatura['id_fatura'];
+                    $htmlBody = $templateData['conteudo'];
+                }
+            }
+
+            // Fallback premium template if not set
+            if (empty($htmlBody)) {
+                $htmlBody = '
+                <div style="font-family: \'Helvetica Neue\', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                    <div style="text-align: center; border-bottom: 2px solid #0891b2; padding-bottom: 20px; margin-bottom: 25px;">
+                        <h2 style="color: #0891b2; font-weight: bold; margin: 0; font-size: 24px; text-transform: uppercase;">{{EMPRESA_NOME}}</h2>
+                        <span style="color: #6b7280; font-size: 14px;">Documento Auxiliar de Cobrança</span>
+                    </div>
+                    
+                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6; margin-bottom: 20px;">Olá, <strong>{{NOME_CLIENTE}}</strong>!</p>
+                    <p style="color: #4b5563; font-size: 15px; line-height: 1.6; margin-bottom: 20px;">Sua fatura foi emitida e já está disponível para visualização e pagamento. Veja os detalhes abaixo:</p>
+                    
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                        <table style="width: 100%; font-size: 14px; border-collapse: collapse; color: #334155;">
+                            <tr>
+                                <td style="padding: 6px 0; font-weight: 600;">Código da Fatura:</td>
+                                <td style="padding: 6px 0; text-align: right; font-family: monospace;">#{{FATURA_ID}}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0; font-weight: 600;">Data de Emissão:</td>
+                                <td style="padding: 6px 0; text-align: right;">' . date('d/m/Y', strtotime($fatura['data_emissao'])) . '</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 6px 0; font-weight: 600;">Vencimento:</td>
+                                <td style="padding: 6px 0; text-align: right; color: #b91c1c; font-weight: bold;">{{DATA_VENCIMENTO}}</td>
+                            </tr>
+                            <tr style="border-top: 1px solid #e2e8f0;">
+                                <td style="padding: 12px 0 0 0; font-size: 16px; font-weight: 700; color: #0f172a;">Valor Total:</td>
+                                <td style="padding: 12px 0 0 0; text-align: right; font-size: 18px; font-weight: 700; color: #0891b2;">R$ {{VALOR_FATURA}}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <a href="{{LINK_PAGAMENTO}}" style="background-color: #0891b2; color: #ffffff; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block; box-shadow: 0 4px 6px rgba(8,145,178,0.25); transition: background-color 0.2s;">Acessar Área de Pagamento (PIX / Código QR)</a>
+                    </div>
+
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 14px; color: #4b5563;">
+                        <p style="margin: 0 0 10px 0; font-weight: 600;">Serviços Prestados:</p>
+                        {{ITENS_FATURA}}
+                    </div>
+                    
+                    {{BLOCO_NFSE}}
+                    
+                    <p style="color: #94a3b8; font-size: 12px; margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; text-align: center;">Este é um e-mail automático enviado pelo sistema. Por favor, não responda diretamente a este endereço.</p>
+                </div>';
+            }
+
+            // 8. Substitui placeholders no template carregado ou no fallback
+            $itemsHtml = '<ul style="margin: 0; padding-left: 20px; line-height: 1.5;">';
+            foreach ($items as $item) {
+                $itemsHtml .= '<li style="margin-bottom: 5px;">' . htmlspecialchars($item['nome_servico']) . ' (x' . $item['quantidade'] . ') - R$ ' . number_format($item['valor_unitario'] * $item['quantidade'], 2, ',', '.') . '</li>';
+            }
+            $itemsHtml .= '</ul>';
+
+            $directPaymentLink = "$protocol://$host/cliente/fatura.php?id=" . $fatura['id_fatura'] . "&token=" . $token;
+            $valorFormatado = number_format($valorLiquidoFatura, 2, ',', '.');
+            $vencimentoFormatado = date('d/m/Y', strtotime($fatura['data_vencimento']));
+            $empresaNome = $config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? 'Dinovatech';
+
+            $blocoNfse = "";
+            if (!empty($nfsePdfLink)) {
+                $blocoNfse = '
+                <div style="border-top: 1px dashed #e2e8f0; margin-top: 25px; padding-top: 20px;">
+                    <p style="color: #334155; font-size: 14px; font-weight: 600; margin: 0 0 10px 0;">Sua Nota Fiscal de Serviços Eletrônica (NFS-e) já foi emitida:</p>
+                    <p style="margin: 5px 0; font-size: 14px;">
+                        <a href="' . $nfsePdfLink . '" target="_blank" style="color: #dc2626; font-weight: 700; text-decoration: underline; margin-right: 20px;">Visualizar PDF da NFS-e</a>
+                        <a href="' . $nfseXmlLink . '" target="_blank" style="color: #2563eb; font-weight: 700; text-decoration: underline;">Baixar XML</a>
+                    </p>
+                </div>';
+            }
+
+            $placeholders = [
+                '{{NOME_CLIENTE}}' => htmlspecialchars($fatura['nome_cliente']),
+                '{{CLIENTE_NOME}}' => htmlspecialchars($fatura['nome_cliente']),
+                '{{VALOR_FATURA}}' => $valorFormatado,
+                '{{DATA_VENCIMENTO}}' => $vencimentoFormatado,
+                '{{LINK_PAGAMENTO}}' => $directPaymentLink,
+                '{{LINK_NFSE_PDF}}' => $nfsePdfLink,
+                '{{LINK_NFSE_XML}}' => $nfseXmlLink,
+                '{{BLOCO_NFSE}}' => $blocoNfse,
+                '{{ITENS_FATURA}}' => $itemsHtml,
+                '{{EMPRESA_NOME}}' => htmlspecialchars($empresaNome),
+                '{{FATURA_ID}}' => $fatura['id_fatura']
+            ];
+
+            $htmlBody = str_replace(array_keys($placeholders), array_values($placeholders), $htmlBody);
+
+            // 9. Dispara o e-mail pelo helper do Gmail
+            require_once __DIR__ . '/helpers/GmailHelper.php';
+            try {
+                GmailHelper::sendEmail($fatura['email_cliente'], $subject, $htmlBody, $attachments);
+                $response['success'] = true;
+                $response['message'] = "Fatura enviada por e-mail com sucesso para " . htmlspecialchars($fatura['email_cliente']) . "!";
+            } catch (Exception $e) {
+                $response['message'] = "Falha ao enviar e-mail: " . $e->getMessage();
             }
             break;
 
