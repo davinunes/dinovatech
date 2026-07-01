@@ -7,6 +7,7 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 
+require_once __DIR__ . '/config.php';
 include "../database.php";
 require_once __DIR__ . '/helpers/EncryptionHelper.php';
 require_once __DIR__ . '/../google/api-php-client/autoload.php';
