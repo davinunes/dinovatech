@@ -86,6 +86,12 @@ try {
         throw new Exception("Access token não retornado no fluxo de autorização.");
     }
 
+    // Valida se o escopo do Gmail foi concedido
+    $scopesGranted = $tokenData['scope'] ?? '';
+    if (strpos($scopesGranted, 'gmail.send') === false) {
+        throw new Exception("A permissão para envio de e-mails (Gmail API) não foi concedida pelo usuário. Por favor, repita o processo e certifique-se de marcar a caixinha correspondente na tela de autorização do Google.");
+    }
+
     // Nota: O Google só envia o refresh_token se as permissões foram requisitadas com prompt=consent e access_type=offline,
     // e apenas na primeira autorização. Se já estiver autorizado e vincular novamente, o refresh_token pode vir vazio.
     // Vamos tratar isso.
