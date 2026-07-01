@@ -3,6 +3,7 @@ session_set_cookie_params(0, '/');
 session_start();
 $cliente_logado = isset($_SESSION['cliente_id']);
 $nome_cliente = $_SESSION['cliente_nome'] ?? '';
+// comentei
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
