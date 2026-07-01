@@ -451,6 +451,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
                         </div>
 
                         <!-- Google Gmail OAuth 2.0 -->
