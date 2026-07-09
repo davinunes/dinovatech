@@ -235,15 +235,15 @@ function calcularIdade($data_nasc)
                                 while ($vac = mysqli_fetch_assoc($res_vacinas)):
                                     $vencida = $vac['data_vencimento'] && $vac['data_vencimento'] < date('Y-m-d');
                                     ?>
-                                    <div class="p-4 hover:bg-gray-50 transition">
-                                        <div class="flex justify-between items-start">
+                                    <div class="p-4 hover:bg-gray-50 transition group relative">
+                                        <div class="flex justify-between items-start pr-16">
                                             <span
                                                 class="font-bold text-gray-700"><?= htmlspecialchars($vac['nome_vacina']) ?></span>
                                             <span
                                                 class="text-xs text-gray-400"><?= date('d/m/y', strtotime($vac['data_aplicacao'])) ?></span>
                                         </div>
                                         <?php if ($vac['data_vencimento']): ?>
-                                            <div class="mt-1 flex items-center text-xs">
+                                            <div class="mt-1 flex items-center text-xs pr-16">
                                                 <span
                                                     class="material-icons text-[14px] mr-1 <?= $vencida ? 'text-red-500' : 'text-green-500' ?>">event_repeat</span>
                                                 <span class="<?= $vencida ? 'text-red-600 font-bold' : 'text-green-600' ?>">
@@ -252,8 +252,31 @@ function calcularIdade($data_nasc)
                                             </div>
                                         <?php endif; ?>
                                         <?php if ($vac['lote']): ?>
-                                            <div class="text-xs text-gray-400 mt-1">Lote: <?= htmlspecialchars($vac['lote']) ?></div>
+                                            <div class="text-xs text-gray-400 mt-1 pr-16">Lote: <?= htmlspecialchars($vac['lote']) ?></div>
                                         <?php endif; ?>
+                                        <?php if ($vac['observacao']): ?>
+                                            <div class="text-xs text-gray-500 mt-1 italic pr-16">Obs: <?= htmlspecialchars($vac['observacao']) ?></div>
+                                        <?php endif; ?>
+
+                                        <!-- Actions (Edit/Delete) on hover -->
+                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <?php
+                                            $vac_json = json_encode([
+                                                'id_carteira' => $vac['id_carteira'],
+                                                'id_vacina' => $vac['id_vacina'],
+                                                'data_aplicacao' => $vac['data_aplicacao'],
+                                                'data_vencimento' => $vac['data_vencimento'] ?: '',
+                                                'lote' => $vac['lote'] ?: '',
+                                                'observacao' => $vac['observacao'] ?: ''
+                                            ], JSON_HEX_APOS | JSON_HEX_QUOT);
+                                            ?>
+                                            <button onclick='editVacina(<?= $vac_json ?>)' class="p-1 text-cyan-600 hover:bg-cyan-50 rounded transition" title="Editar">
+                                                <span class="material-icons text-[18px]">edit</span>
+                                            </button>
+                                            <button onclick="deleteVacina(<?= $vac['id_carteira'] ?>)" class="p-1 text-red-600 hover:bg-red-50 rounded transition" title="Excluir">
+                                                <span class="material-icons text-[18px]">delete</span>
+                                            </button>
+                                        </div>
                                     </div>
                                     <?php
                                 endwhile;
@@ -523,13 +546,71 @@ function calcularIdade($data_nasc)
     <?php include dirname(__DIR__, 2) . '/components/layout_scripts.php'; ?>
     <script>
         function openVacinaModal() {
+            $('#modalVacina h3').text('Registrar Vacina');
+            $('#formVacina input[name="action"]').val('register_vaccine');
+            $('#id_carteira').remove();
+            
+            // Reset fields
+            $('#id_vacina').val('').trigger('change');
+            $('#data_aplicacao').val('<?= date('Y-m-d') ?>');
+            $('#data_proxima').val('');
+            $('#formVacina input[name="lote"]').val('');
+            $('#formVacina textarea[name="observacoes"]').val('');
+            
+            $('#modalVacina button[type="submit"]').text('Registrar');
             $('#modalVacina').removeClass('hidden');
         }
         function closeVacinaModal() {
             $('#modalVacina').addClass('hidden');
         }
 
-        function onVacinaChange() {
+        function editVacina(data) {
+            $('#modalVacina h3').text('Editar Vacina Aplicada');
+            $('#formVacina input[name="action"]').val('edit_vaccine');
+            
+            if ($('#id_carteira').length === 0) {
+                $('#formVacina').prepend('<input type="hidden" name="id_carteira" id="id_carteira">');
+            }
+            $('#id_carteira').val(data.id_carteira);
+            $('#id_vacina').val(data.id_vacina);
+            
+            // Setup cycles but skip auto calculation of proxima dose
+            onVacinaChange(true);
+            
+            $('#data_aplicacao').val(data.data_aplicacao);
+            $('#data_proxima').val(data.data_vencimento);
+            $('#formVacina input[name="lote"]').val(data.lote);
+            $('#formVacina textarea[name="observacoes"]').val(data.observacao);
+            
+            $('#modalVacina button[type="submit"]').text('Salvar Alterações');
+            $('#modalVacina').removeClass('hidden');
+        }
+
+        function deleteVacina(id_carteira) {
+            if (confirm('Tem certeza que deseja remover esta aplicação de vacina?')) {
+                $.ajax({
+                    url: '../../app.php',
+                    type: 'POST',
+                    data: {
+                        action: 'delete_vaccine',
+                        id_carteira: id_carteira
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.success) {
+                            location.reload();
+                        } else {
+                            alert('Erro: ' + response.message);
+                        }
+                    },
+                    error: function () {
+                        alert('Erro de conexão ao remover vacina.');
+                    }
+                });
+            }
+        }
+
+        function onVacinaChange(skipCalculation = false) {
             const opt = $('#id_vacina option:selected');
             const ciclos = opt.data('ciclos');
             const defaultDias = opt.data('dias');
@@ -549,8 +630,10 @@ function calcularIdade($data_nasc)
                 divCiclo.addClass('hidden');
             }
 
-            // Apply default calculation
-            calcularProxima(defaultDias);
+            if (!skipCalculation) {
+                // Apply default calculation
+                calcularProxima(defaultDias);
+            }
         }
 
         function applyCiclo() {

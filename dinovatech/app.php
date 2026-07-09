@@ -78,6 +78,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+        case 'edit_vaccine':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_carteira = $_POST['id_carteira'] ?? '';
+            $id_vacina = $_POST['id_vacina'] ?? '';
+            $data_aplicacao = $_POST['data_aplicacao'] ?? '';
+            $data_proxima = $_POST['data_proxima'] ?? NULL;
+            $lote = $_POST['lote'] ?? '';
+            $observacoes = $_POST['observacoes'] ?? '';
+
+            if (empty($id_carteira) || empty($id_vacina) || empty($data_aplicacao)) {
+                $response['message'] = "ID da aplicação, Vacina e Data de Aplicação são obrigatórios.";
+            } else {
+                $id_carteira = (int) $id_carteira;
+                $id_vacina = (int) $id_vacina;
+                $data_aplicacao = mysqli_real_escape_string($link, $data_aplicacao);
+                $data_proxima_val = $data_proxima ? "'" . mysqli_real_escape_string($link, $data_proxima) . "'" : "NULL";
+                $lote = mysqli_real_escape_string($link, $lote);
+                $observacoes = mysqli_real_escape_string($link, $observacoes);
+
+                $query = "UPDATE CarteiraVacinas SET 
+                            id_vacina = $id_vacina, 
+                            data_aplicacao = '$data_aplicacao', 
+                            data_vencimento = $data_proxima_val, 
+                            lote = '$lote', 
+                            observacao = '$observacoes' 
+                          WHERE id_carteira = $id_carteira";
+
+                if (DBExecute($link, $query)) {
+                    $response['success'] = true;
+                    $response['message'] = "Vacina atualizada com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao atualizar vacina: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'delete_vaccine':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_carteira = $_POST['id_carteira'] ?? '';
+
+            if (empty($id_carteira)) {
+                $response['message'] = "ID da aplicação é obrigatório.";
+            } else {
+                $id_carteira = (int) $id_carteira;
+                $query = "DELETE FROM CarteiraVacinas WHERE id_carteira = $id_carteira";
+
+                if (DBExecute($link, $query)) {
+                    $response['success'] = true;
+                    $response['message'] = "Vacina removida com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao remover vacina: " . mysqli_error($link);
+                }
+            }
+            break;
+
         // NOVA ACTION: Configuração Fiscal
         case 'save_config_fiscal':
             // Recebe dados do POST

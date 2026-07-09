@@ -38,21 +38,14 @@ if ($link) {
     $where_clause = !empty($where_conditions) ? "WHERE " . implode(' AND ', $where_conditions) : "";
 
     $query_total = "SELECT COUNT(id_cliente) AS total FROM Clientes $where_clause";
-    // ...
-    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email, telefone, ativo FROM Clientes $where_clause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
-    // ...
+    $result_total = DBExecute($link, $query_total);
+    if ($result_total) {
+        $row_total = mysqli_fetch_assoc($result_total);
+        $total_records = (int) $row_total['total'];
+        $total_pages = ceil($total_records / $limit);
+    }
 
-    // UI Updates below ...
-    // Filter Buttons (Inside Search Bar Div or beside it)
-    /*
-    <div class="flex gap-2 mb-2">
-        <a href="?status=ativos" class="...">Ativos</a> ...
-    </div>
-    */
-    // Since I'm replacing chunks, I'll do multiple edits or one big one if contiguous?
-    // The search logic is at top. The UI is further down.
-    // I will use replace_file_content for logic first, then UI.
-    // Actually, I can replace the whole PHP block at the top first.
+    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email, telefone, ativo FROM Clientes $where_clause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
     $result_clientes = DBExecute($link, $query_clientes);
     if ($result_clientes) {
         while ($row = mysqli_fetch_assoc($result_clientes)) {
@@ -219,17 +212,17 @@ if ($link) {
                     <div class="py-6 flex justify-center">
                         <nav class="flex gap-1">
                             <?php if ($current_page > 1): ?>
-                                <a href="?page=<?= $current_page - 1 ?>&search=<?= urlencode($search) ?>"
+                                <a href="?page=<?= $current_page - 1 ?>&search=<?= urlencode($search) ?>&status=<?= urlencode($status_filter) ?>"
                                     class="px-3 py-1 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm">Anterior</a>
                             <?php endif; ?>
 
                             <?php for ($i = 1; $i <= $total_pages; $i++): ?>
-                                <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>"
+                                <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&status=<?= urlencode($status_filter) ?>"
                                     class="px-3 py-1 rounded border shadow-sm <?= $i == $current_page ? 'bg-cyan-600 text-white border-cyan-600' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50' ?>"><?= $i ?></a>
                             <?php endfor; ?>
 
                             <?php if ($current_page < $total_pages): ?>
-                                <a href="?page=<?= $current_page + 1 ?>&search=<?= urlencode($search) ?>"
+                                <a href="?page=<?= $current_page + 1 ?>&search=<?= urlencode($search) ?>&status=<?= urlencode($status_filter) ?>"
                                     class="px-3 py-1 rounded bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 shadow-sm">Próximo</a>
                             <?php endif; ?>
                         </nav>
