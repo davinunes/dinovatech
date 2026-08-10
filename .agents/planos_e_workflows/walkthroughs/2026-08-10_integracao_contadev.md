@@ -31,7 +31,7 @@ Foi implementada a integração completa com a plataforma **ContaDev-Contabilida
   - Adicionou o card **ContaDev-Contabilidade** na aba **Integrações (API)**.
   - Exibe formulário de e-mail/senha ou o status do vínculo ativo com botão de desconectar.
 - **`dinovatech/fatura_view.php`**:
-  - Adicionou o **Card Premium ContaDev Contabilidade** na barra lateral direita imediatamente acima do botão **Imprimir / PDF**.
+  - Adicionou o **Card Premium ContaDev Contabilidade** na barra lateral direita imediatamente acima do botão **Imprimir / PDF**, exibido **exclusivamente quando houver nota fiscal gerada/concluída para a fatura**.
   - Exibe o status da nota (Sincronizada / Não Importada) e botão interativo "Importar no ContaDev" com feedback via Toast.
 
 ---
