@@ -1820,12 +1820,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result_atrasado = DBExecute($link, $query_atrasado);
             $total_atrasado = mysqli_fetch_assoc($result_atrasado)['total'] ?? 0;
 
-            // 4. Faturas Recentes (A query de seleção de lista é a mesma, pois já filtramos pelo WHERE base)
+            // 4. Faturas Recentes (Prioriza faturas Em Aberto e Atrasadas em primeiro lugar)
             $query_recentes = "SELECT f.id_fatura, c.nome, f.valor_total_fatura, f.status, f.data_vencimento 
                                FROM Faturas f 
                                JOIN Clientes c ON f.id_cliente = c.id_cliente 
                                WHERE $where_fatura_base
-                               ORDER BY f.id_fatura DESC LIMIT 5";
+                               ORDER BY (CASE WHEN f.status = 'Em Aberto' THEN 0 WHEN f.status = 'Atrasada' THEN 1 ELSE 2 END) ASC, f.id_fatura DESC LIMIT 5";
             $result_recentes = DBExecute($link, $query_recentes);
             $recentes = [];
             while ($row = mysqli_fetch_assoc($result_recentes)) {
