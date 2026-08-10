@@ -59,7 +59,11 @@ Tabela para registro histórico e auditoria de todas as requisições à API da 
 ### 2.2 Verificação de Desduplicação (Pré-Importação)
 Antes de enviar qualquer arquivo, a requisição fará uma verificação em duas etapas:
 1. **Verificação Local**: Checa se `nf_contadev_sync` possui registro com `status_importacao = 'sucesso'` para a `id_fatura`.
-2. **Verificação na API ContaDev**: Chama `GET https://api-app.conta-dev.com/platform/nf` e compara se existe alguma nota com o mesmo CPF/CNPJ do tomador (`tomadorSnapshot.documento`), mesmo valor (`value`) e mesma data (`issuedAt`) ou menção à fatura na descrição. Se encontrada, atualiza a tabela local de sync e notifica que a nota já existia na plataforma.
+2. **Verificação na API ContaDev (`GET /platform/nf`)**:
+   - **Identificador Principal (Padrão na Descrição)**: Na importação, a descrição é gerada com o trecho padronizado `"Conforme documento auxiliar de cobranca numero {id_fatura}"`. Na listagem de notas da ContaDev, o sistema busca na propriedade `description` se contém `"numero {id_fatura}"`.
+   - **Identificador Secundário (Nome do Arquivo na S3)**: Checa se a propriedade `xmlS3Uri` ou `issuedS3Uri` contém a referência do número da nota/fatura (ex: `nfse_{numero}.xml` ou `_{id_fatura}_`).
+   - **Identificador de Fallback (Combinação Tríplice)**: Compara se `tomadorSnapshot.documento` (CPF/CNPJ limpo), `value` (valor total da fatura) e `issuedAt` (data da emissão YYYY-MM-DD) coincidem exatamente.
+   - Se encontrada por qualquer um dos identificadores, vincula a nota existente salvando o `id` da ContaDev em `nf_contadev_sync` e notifica na tela que a nota já existia na plataforma.
 
 ### 2.3 Gestão de Tomadores (Clientes)
 1. Chama `GET https://api-app.conta-dev.com/platform/tomadores?cnpjId={contadev_cnpj_id}`.

@@ -7,6 +7,7 @@ include "../database.php"; // Seu arquivo com DBConnect, DBExecute, etc.
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers/AppHelper.php';
 require_once __DIR__ . '/helpers/EncryptionHelper.php';
+require_once __DIR__ . '/helpers/ContaDevHelper.php';
 
 // ACTION GET: Toggle Status Cliente (Direct Link)
 if (isset($_GET['action']) && $_GET['action'] === 'toggle_status_cliente') {
@@ -43,6 +44,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     switch ($action) {
+        // ACTIONS: ContaDev Integration
+        case 'contadev_login':
+            $email = trim($_POST['email'] ?? '');
+            $password = trim($_POST['password'] ?? '');
+            $res = ContaDevHelper::login($link, $email, $password);
+            $response = array_merge($response, $res);
+            break;
+
+        case 'contadev_status':
+            $res = ContaDevHelper::getAccountStatus($link);
+            $response['success'] = true;
+            $response['data'] = $res;
+            break;
+
+        case 'contadev_disconnect':
+            $res = ContaDevHelper::disconnect($link);
+            $response = array_merge($response, $res);
+            break;
+
+        case 'contadev_import_fatura':
+            $idFatura = $_POST['id_fatura'] ?? null;
+            if (!$idFatura) {
+                $response['message'] = "ID da fatura não fornecido.";
+                break;
+            }
+            $res = ContaDevHelper::importInvoice($link, $idFatura);
+            $response = array_merge($response, $res);
+            break;
+
+        case 'contadev_check_fatura':
+            $idFatura = $_POST['id_fatura'] ?? $_GET['id_fatura'] ?? null;
+            if (!$idFatura) {
+                $response['message'] = "ID da fatura não fornecido.";
+                break;
+            }
+            $statusAcc = ContaDevHelper::getAccountStatus($link);
+            if (!$statusAcc['active']) {
+                $response['success'] = true;
+                $response['data'] = ['already_imported' => false, 'active' => false];
+                break;
+            }
+            $config = ContaDevHelper::getConfig($link);
+            $token = EncryptionHelper::decrypt($config['contadev_token'] ?? '');
+            $cnpjId = $config['contadev_cnpj_id'] ?? '';
+            $res = ContaDevHelper::checkInvoiceAlreadyImported($link, $idFatura, $token, $cnpjId);
+            $response['success'] = true;
+            $response['data'] = $res;
+            break;
+
         // NOVA ACTION: Registrar Vacina
         case 'register_vaccine':
             if (!AppHelper::isVetMode()) {

@@ -515,6 +515,66 @@ if (!isset($_SESSION['usuario_id'])) {
                             </div>
                         </div>
 
+                        <!-- ContaDev-Contabilidade Integration -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
+                                <span class="material-icons text-emerald-600 mr-2">account_balance</span>
+                                <h4 class="font-bold text-gray-800">ContaDev-Contabilidade</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-4">Sincronização e importação direta de notas fiscais emitidas (PDF e XML) para o ContaDev.</p>
+
+                            <div id="contadev_form_container" class="space-y-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail do Usuário ContaDev</label>
+                                        <input type="email" id="contadev_email_input" placeholder="seu-email@dominio.com"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha do ContaDev</label>
+                                        <div class="relative">
+                                            <input type="password" id="contadev_password_input" placeholder="••••••••••••"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border pr-10">
+                                            <button type="button" onclick="togglePass('contadev_password_input')"
+                                                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                                <span class="material-icons text-sm">visibility</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <button type="button" onclick="loginContaDev()" id="btn_login_contadev"
+                                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors shadow-sm inline-flex items-center">
+                                        <span class="material-icons text-sm mr-1">login</span> Conectar ContaDev
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Vínculo Ativo Status Card -->
+                            <div id="contadev_status_container" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <div class="flex items-center text-sm text-emerald-900 font-bold mb-1">
+                                            <span class="material-icons text-emerald-600 text-base mr-1">check_circle</span>
+                                            ContaDev Conectado e Ativo
+                                        </div>
+                                        <div class="text-xs text-emerald-800 space-y-0.5">
+                                            <p><strong>E-mail:</strong> <span id="contadev_status_email">...</span></p>
+                                            <p><strong>Usuário:</strong> <span id="contadev_status_user">...</span></p>
+                                            <p><strong>Empresa Vinculada:</strong> <span id="contadev_status_company">...</span></p>
+                                            <p class="text-[10px] text-emerald-600 font-mono"><strong>CNPJ ID:</strong> <span id="contadev_status_cnpj_id">...</span></p>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <button type="button" onclick="desconectarContaDev()"
+                                            class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+                                            Desconectar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- TAB: ATUALIZAÇÕES -->
@@ -979,6 +1039,60 @@ if (!isset($_SESSION['usuario_id'])) {
                     }, 'json');
                 }
             };
+
+            // --- CONTADEV INTEGRATION JS ---
+            window.loadContaDevStatus = function() {
+                $.post('app.php', { action: 'contadev_status' }, function(res) {
+                    if (res.success && res.data && res.data.active) {
+                        $('#contadev_form_container').addClass('hidden');
+                        $('#contadev_status_container').removeClass('hidden');
+                        $('#contadev_status_email').text(res.data.email || '-');
+                        $('#contadev_status_user').text(res.data.user_name || '-');
+                        $('#contadev_status_company').text(res.data.company_name || '-');
+                        $('#contadev_status_cnpj_id').text(res.data.cnpj_id || '-');
+                    } else {
+                        $('#contadev_form_container').removeClass('hidden');
+                        $('#contadev_status_container').addClass('hidden');
+                    }
+                }, 'json');
+            };
+
+            window.loginContaDev = function() {
+                const email = $('#contadev_email_input').val().trim();
+                const password = $('#contadev_password_input').val().trim();
+
+                if (!email || !password) {
+                    alert('Por favor, preencha o e-mail e a senha do ContaDev.');
+                    return;
+                }
+
+                const btn = $('#btn_login_contadev');
+                btn.prop('disabled', true).addClass('opacity-75');
+
+                $.post('app.php', { action: 'contadev_login', email: email, password: password }, function(res) {
+                    btn.prop('disabled', false).removeClass('opacity-75');
+                    if (res.success) {
+                        alert(res.message);
+                        loadContaDevStatus();
+                    } else {
+                        alert(res.message || 'Erro ao conectar com o ContaDev.');
+                    }
+                }, 'json').fail(function() {
+                    btn.prop('disabled', false).removeClass('opacity-75');
+                    alert('Erro de conexão com o servidor.');
+                });
+            };
+
+            window.desconectarContaDev = function() {
+                if (confirm('Deseja realmente desconectar a integração com o ContaDev-Contabilidade?')) {
+                    $.post('app.php', { action: 'contadev_disconnect' }, function(res) {
+                        alert(res.message);
+                        loadContaDevStatus();
+                    }, 'json');
+                }
+            };
+
+            loadContaDevStatus();
 
             // Exibir alertas e mudar de aba de acordo com retorno do OAuth
             const urlParams = new URLSearchParams(window.location.search);

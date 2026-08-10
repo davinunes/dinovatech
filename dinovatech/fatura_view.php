@@ -481,6 +481,28 @@ if ($id_fatura) {
                                         <span class="material-icons text-sm mr-2">receipt</span> Gerar NFS-e
                                     </button>
                                 <?php endif; ?>
+                            <!-- Premium Card: ContaDev-Contabilidade -->
+                            <div class="mt-4 border-t pt-4">
+                                <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-4 rounded-xl shadow-md border border-slate-700 mb-3 relative overflow-hidden">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="material-icons text-emerald-400 text-lg">cloud_upload</span>
+                                            <h3 class="font-bold text-sm text-white">ContaDev Contabilidade</h3>
+                                        </div>
+                                        <span id="badge_contadev_sync" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300">
+                                            Verificando...
+                                        </span>
+                                    </div>
+
+                                    <div id="contadev_feedback_info" class="text-xs text-slate-300 space-y-1 mb-3">
+                                        <p class="text-[11px] leading-tight">Sincronize os arquivos desta fatura (PDF e XML assinado) com seu painel de contabilidade.</p>
+                                    </div>
+
+                                    <button id="btnImportarContaDev" onclick="importarContaDev(<?= $id_fatura ?>)"
+                                        class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-2.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+                                        <span class="material-icons text-sm">cloud_upload</span> Importar no ContaDev
+                                    </button>
+                                </div>
                             </div>
 
                             <button onclick="window.print()"
@@ -1153,6 +1175,59 @@ if ($id_fatura) {
                     });
                 }
             };
+
+            // --- CONTADEV INTEGRATION JS ---
+            window.verificarStatusContaDevFatura = function() {
+                $.post('app.php', { action: 'contadev_check_fatura', id_fatura: <?= (int)$id_fatura ?> }, function(res) {
+                    if (res.success && res.data) {
+                        const data = res.data;
+                        const badge = $('#badge_contadev_sync');
+                        const info = $('#contadev_feedback_info');
+                        const btn = $('#btnImportarContaDev');
+
+                        if (data.already_imported) {
+                            badge.removeClass('bg-slate-700 text-slate-300 bg-red-950 text-red-300').addClass('bg-emerald-950 text-emerald-300 border border-emerald-700/50').text('Sincronizada');
+                            
+                            let detailsHtml = '<p class="text-emerald-400 font-semibold flex items-center"><span class="material-icons text-xs mr-1">check_circle</span> Fatura já importada na ContaDev</p>';
+                            if (data.sync && data.sync.contadev_nf_id) {
+                                detailsHtml += `<p class="text-[10px] text-slate-400 font-mono">ID ContaDev: ${data.sync.contadev_nf_id}</p>`;
+                            }
+                            if (data.sync && data.sync.issued_at) {
+                                detailsHtml += `<p class="text-[10px] text-slate-400">Data Emissão: ${data.sync.issued_at}</p>`;
+                            }
+                            info.html(detailsHtml);
+                            btn.html('<span class="material-icons text-sm">refresh</span> Re-importar no ContaDev');
+                        } else {
+                            badge.removeClass('bg-emerald-950 text-emerald-300 bg-red-950 text-red-300').addClass('bg-amber-950 text-amber-300 border border-amber-700/50').text('Não Importada');
+                            info.html('<p class="text-[11px] text-slate-300 leading-tight">Fatura pronta para ser importada para a contabilidade no ContaDev.</p>');
+                            btn.html('<span class="material-icons text-sm">cloud_upload</span> Importar no ContaDev');
+                        }
+                    }
+                }, 'json');
+            };
+
+            window.importarContaDev = function(idFatura) {
+                const btn = $('#btnImportarContaDev');
+                const origHtml = btn.html();
+
+                btn.prop('disabled', true).addClass('opacity-75 cursor-wait').html('<span class="material-icons text-sm animate-spin mr-1">sync</span> Importando...');
+
+                $.post('app.php', { action: 'contadev_import_fatura', id_fatura: idFatura }, function(res) {
+                    btn.prop('disabled', false).removeClass('opacity-75 cursor-wait').html(origHtml);
+
+                    if (res.success) {
+                        showToast(res.message, 'success');
+                        verificarStatusContaDevFatura();
+                    } else {
+                        showToast(res.message || 'Erro ao importar fatura no ContaDev.', 'error');
+                    }
+                }, 'json').fail(function() {
+                    btn.prop('disabled', false).removeClass('opacity-75 cursor-wait').html(origHtml);
+                    showToast('Erro de comunicação com o servidor ao importar.', 'error');
+                });
+            };
+
+            verificarStatusContaDevFatura();
         });
     </script>
 </body>
