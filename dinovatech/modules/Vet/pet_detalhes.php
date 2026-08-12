@@ -408,20 +408,28 @@ function calcularIdade($data_nasc)
 
                             if ($res_int && mysqli_num_rows($res_int) > 0):
                                 while ($int = mysqli_fetch_assoc($res_int)):
-                                    $status_class = match($int['status']) {
-                                        'internado' => 'bg-amber-100 text-amber-800 border-amber-200',
-                                        'alta' => 'bg-green-100 text-green-800 border-green-200',
-                                        'obito' => 'bg-gray-100 text-gray-800 border-gray-200',
-                                        'cancelado' => 'bg-red-100 text-red-800 border-red-200',
-                                        default => 'bg-gray-100 text-gray-800'
-                                    };
-                                    $status_label = match($int['status']) {
-                                        'internado' => 'Em Internação',
-                                        'alta' => 'Alta Médica',
-                                        'obito' => 'Óbito',
-                                        'cancelado' => 'Cancelado',
-                                        default => ucfirst($int['status'])
-                                    };
+                                    switch ($int['status']) {
+                                        case 'internado':
+                                            $status_class = 'bg-amber-100 text-amber-800 border-amber-200';
+                                            $status_label = 'Em Internação';
+                                            break;
+                                        case 'alta':
+                                            $status_class = 'bg-green-100 text-green-800 border-green-200';
+                                            $status_label = 'Alta Médica';
+                                            break;
+                                        case 'obito':
+                                            $status_class = 'bg-gray-100 text-gray-800 border-gray-200';
+                                            $status_label = 'Óbito';
+                                            break;
+                                        case 'cancelado':
+                                            $status_class = 'bg-red-100 text-red-800 border-red-200';
+                                            $status_label = 'Cancelado';
+                                            break;
+                                        default:
+                                            $status_class = 'bg-gray-100 text-gray-800';
+                                            $status_label = ucfirst($int['status']);
+                                            break;
+                                    }
                                     $int_json = json_encode($int, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
                                     ?>
                                     <div class="p-5 hover:bg-gray-50/80 transition">
