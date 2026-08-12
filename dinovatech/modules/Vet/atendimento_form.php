@@ -140,48 +140,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (DBExecute($link, $q)) {
         // Post-Save Actions
+        $savedIdAtendimento = $is_edit ? (int) $id_atendimento : mysqli_insert_id($link);
 
-        // 1. Update Linked Appointment Status
+        // 1. Determine Linked Appointment ID (if any)
         $savedIdAgendamento = $_POST['id_agendamento'] ?? null;
-        if ($savedIdAgendamento) {
-            DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado' WHERE id_agendamento = " . (int) $savedIdAgendamento);
+        if (empty($savedIdAgendamento) && $is_edit && !empty($atendimento['id_agendamento'])) {
+            $savedIdAgendamento = $atendimento['id_agendamento'];
         }
 
-        // 2. Auto-Create Agenda Event (if checked)
-        if (isset($_POST['sync_agenda']) && $_POST['sync_agenda'] == '1') {
+        // 2. Check Vet Google Calendar integration
+        $resV = DBExecute($link, "SELECT google_calendar_id FROM Veterinarios WHERE id_vet = $id_veterinario");
+        $rowV = mysqli_fetch_assoc($resV);
+        $googleCalendarId = $rowV['google_calendar_id'] ?? null;
+
+        $hasGoogleCalendar = !empty($googleCalendarId) && class_exists('GoogleCalendarHelper');
+        $forceSync = isset($_POST['sync_agenda']) && $_POST['sync_agenda'] == '1';
+
+        if ($hasGoogleCalendar || $savedIdAgendamento || $forceSync) {
             $titulo = "Atendimento - " . ($pet['nome'] ?? 'Pet');
             $end_time = date('Y-m-d H:i:s', strtotime($data_safe . ' +1 hour'));
             $data_inicio_iso = (new DateTime($data_safe, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s');
             $data_fim_iso = (new DateTime($end_time, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s');
+            $descricao_evento = "Atendimento Realizado via Prontuário.\nPet: " . ($pet['nome'] ?? 'N/A') . "\nTutor: " . ($pet['nome_tutor'] ?? 'N/A') . "\nMotivo: " . ($motivo ?: 'Consulta');
 
-            // Insert DB
-            $q_new_ag = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, data_inicio, data_fim, status)
-                        VALUES ($id_veterinario, " . ((int) $pet['id_cliente']) . ", $id_pet, '$titulo', '$data_safe:00', '$end_time', 'Realizado')";
+            $google_event_id = null;
+            $agendamento_row = null;
 
-            if (DBExecute($link, $q_new_ag)) {
-                $new_ag_id = mysqli_insert_id($link);
+            if ($savedIdAgendamento) {
+                $id_ag_safe = (int) $savedIdAgendamento;
+                $resAg = DBExecute($link, "SELECT * FROM Agendamentos WHERE id_agendamento = $id_ag_safe");
+                if ($resAg && mysqli_num_rows($resAg) > 0) {
+                    $agendamento_row = mysqli_fetch_assoc($resAg);
+                    $google_event_id = $agendamento_row['google_event_id'] ?? null;
+                }
+            }
 
-                // Google Sync
-                if (class_exists('GoogleCalendarHelper')) {
-                    // Fetch Vet Calendar ID
-                    $resV = DBExecute($link, "SELECT google_calendar_id FROM Veterinarios WHERE id_vet = $id_veterinario");
-                    $rowV = mysqli_fetch_assoc($resV);
-                    if ($rowV && !empty($rowV['google_calendar_id'])) {
-                        try {
-                            $google = new GoogleCalendarHelper($rowV['google_calendar_id']);
-                            $gEventId = $google->createEvent([
-                                'summary' => $titulo,
-                                'description' => "Atendimento Realizado via Prontuário.\nMotivo: $motivo",
-                                'start' => $data_inicio_iso,
-                                'end' => $data_fim_iso
-                            ]);
-                            if ($gEventId) {
-                                DBExecute($link, "UPDATE Agendamentos SET google_event_id = '$gEventId' WHERE id_agendamento = $new_ag_id");
-                            }
-                        } catch (Exception $e) {
-                            error_log("Erro Auto-Sync Google (Atendimento): " . $e->getMessage());
+            if ($hasGoogleCalendar) {
+                try {
+                    $google = new GoogleCalendarHelper($googleCalendarId);
+
+                    if (!empty($google_event_id)) {
+                        // Update existing Google Calendar event
+                        $google->updateEvent($google_event_id, [
+                            'summary' => $titulo,
+                            'description' => $descricao_evento,
+                            'start' => $data_inicio_iso,
+                            'end' => $data_fim_iso
+                        ]);
+                    } else {
+                        // Create new Google Calendar event
+                        $gEventId = $google->createEvent([
+                            'summary' => $titulo,
+                            'description' => $descricao_evento,
+                            'start' => $data_inicio_iso,
+                            'end' => $data_fim_iso
+                        ]);
+                        if ($gEventId) {
+                            $google_event_id = $gEventId;
                         }
                     }
+                } catch (Exception $e) {
+                    error_log("Erro Auto-Sync Google Calendar (Atendimento): " . $e->getMessage());
+                }
+            }
+
+            // Update or Create Agendamentos DB record
+            if ($agendamento_row) {
+                $gEvtUpdate = $google_event_id ? ", google_event_id = '" . mysqli_real_escape_string($link, $google_event_id) . "'" : "";
+                $titulo_safe = mysqli_real_escape_string($link, $titulo);
+                DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado', id_vet = $id_veterinario, data_inicio = '$data_safe:00', data_fim = '$end_time', titulo = '$titulo_safe' $gEvtUpdate WHERE id_agendamento = " . (int) $savedIdAgendamento);
+            } else if ($hasGoogleCalendar || $forceSync) {
+                $id_tutor = (int) ($pet['id_cliente'] ?? 0);
+                $titulo_safe = mysqli_real_escape_string($link, $titulo);
+                $gEvtVal = $google_event_id ? "'" . mysqli_real_escape_string($link, $google_event_id) . "'" : "NULL";
+
+                $q_new_ag = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, data_inicio, data_fim, status, google_event_id)
+                             VALUES ($id_veterinario, $id_tutor, $id_pet, '$titulo_safe', '$data_safe:00', '$end_time', 'Realizado', $gEvtVal)";
+                if (DBExecute($link, $q_new_ag)) {
+                    $new_ag_id = mysqli_insert_id($link);
+                    DBExecute($link, "UPDATE Atendimentos SET id_agendamento = $new_ag_id WHERE id_atendimento = $savedIdAtendimento");
                 }
             }
         }
@@ -275,7 +312,10 @@ DBClose($link);
 
                     <div class="flex justify-between items-center mb-4 sticky top-4 z-10">
                         <div class="flex items-center gap-2">
-                            <?php if (!$is_edit && !$id_agendamento_pre): ?>
+                            <?php 
+                            $id_ag_active = $id_agendamento_pre ?: ($atendimento['id_agendamento'] ?? null);
+                            if (!$is_edit && !$id_ag_active): 
+                            ?>
                                 <label
                                     class="inline-flex items-center bg-white p-2 rounded shadow-sm border cursor-pointer">
                                     <input type="checkbox" name="sync_agenda" value="1"
@@ -283,12 +323,12 @@ DBClose($link);
                                     <span class="ml-2 text-gray-700 font-medium">Sincronizar Agenda/Google</span>
                                 </label>
                             <?php endif; ?>
-                            <?php if ($id_agendamento_pre): ?>
+                            <?php if ($id_ag_active): ?>
                                 <span
                                     class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold border border-green-200">
                                     <span class="material-icons text-xs align-middle">link</span> Vinculado à Agenda
                                 </span>
-                                <input type="hidden" name="id_agendamento" value="<?= $id_agendamento_pre ?>">
+                                <input type="hidden" name="id_agendamento" value="<?= $id_ag_active ?>">
                             <?php endif; ?>
                         </div>
                         <button type="submit"

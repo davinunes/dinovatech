@@ -1,7 +1,9 @@
-# Walkthrough / Resumo de Entrega: Atendimentos Recentes no Dashboard
+# Walkthrough / Resumo de Entrega: Atendimentos Recentes no Dashboard e Sincronização Google Calendar
 
 **Data:** 2026-08-12  
-**Funcionalidade:** Exibição da sessão de Atendimentos Recentes no Dashboard com paginação (10 itens por página), visível somente no Modo Clínico (`APP_MODE_VET`).
+**Funcionalidade:**
+1. Exibição da sessão de Atendimentos Recentes no Dashboard com paginação (10 itens por página), visível somente no Modo Clínico (`APP_MODE_VET`).
+2. Sincronização automática (criação/atualização) de eventos no Google Calendar do veterinário ao salvar um atendimento.
 
 ## Alterações Realizadas
 
@@ -17,14 +19,17 @@
    - Implementado rodapé com resumo da paginação ("Mostrando X-Y de Z atendimentos") e botões interativos "Anterior" / "Próximo".
    - Adicionadas funções JavaScript `loadAtendimentosRecentes(page)` e `renderAtendimentosPaginacao(...)` que executam chamadas AJAX fluidas sem atualizar a página.
 
+3. **[atendimento_form.php](file:///e:/DEV/dinovatech/dinovatech/modules/Vet/atendimento_form.php)**
+   - Atualizado o fluxo de pós-salvamento (criação e edição de prontuários).
+   - Verifica se o veterinário selecionado possui a integração com Google Agenda configurada (`google_calendar_id`).
+   - Caso possua um agendamento pré-existente vinculado com `google_event_id`, atualiza o evento na API do Google via `GoogleCalendarHelper::updateEvent()`.
+   - Caso ainda não possua evento/agendamento, cria um novo evento na API do Google via `GoogleCalendarHelper::createEvent()`, registra na tabela `Agendamentos` local (status='Realizado') e vincula ao atendimento.
+
 ## Instruções de Teste e Validação
 
-1. **Modo Clínico Ativo (`APP_MODE_VET=true`)**:
-   - Acesse o Dashboard (`dashboard.php`).
-   - Verifique que o card "Atendimentos Recentes" é renderizado com ícone clínico, badge com o total de atendimentos e a listagem dos 10 atendimentos mais recentes.
-   - Clique em "Próximo" e "Anterior" para verificar a navegação entre as páginas.
-   - Clique em qualquer linha de atendimento para ser direcionado ao formulário/prontuário do atendimento (`modules/Vet/atendimento_form.php?id=...`).
-
-2. **Modo Tradicional (`APP_MODE_VET=false`)**:
-   - Acesse o Dashboard.
-   - Confirme que a seção "Atendimentos Recentes" fica oculta, mantendo o layout limpo do painel financeiro.
+1. **Atendimentos Recentes no Dashboard**:
+   - Acesse o Dashboard (`dashboard.php`) em modo veterinário.
+   - Verifique o bloco "Atendimentos Recentes" com paginação de 10 em 10 itens.
+2. **Integração Google Calendar**:
+   - Acesse ou crie um atendimento selecionando um veterinário com ID de Agenda Google configurado em seu cadastro.
+   - Ao salvar ou atualizar o prontuário, confirme que o evento correspondente é criado ou atualizado no Google Agenda do profissional com os dados do Pet, Tutor e Motivo da Consulta.
