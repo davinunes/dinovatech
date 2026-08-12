@@ -218,6 +218,61 @@ DBClose($linkDB);
                 <?php endif; ?>
             </div>
 
+            <?php if (AppHelper::isVetMode()): ?>
+                <!-- Atendimentos Recentes Section -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mb-8">
+                    <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gradient-to-r from-teal-50/50 to-white">
+                        <div class="flex items-center">
+                            <span class="material-icons text-teal-600 mr-2">medical_services</span>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Atendimentos Recentes</h3>
+                                <p class="text-xs text-gray-500">Histórico de consultas e atendimentos clínicos registrados.</p>
+                            </div>
+                        </div>
+                        <span id="atendimentosTotalBadge" class="text-xs font-semibold bg-teal-100 text-teal-800 px-3 py-1 rounded-full self-start sm:self-auto">
+                            0 Atendimentos
+                        </span>
+                    </div>
+
+                    <!-- Desktop Table -->
+                    <div class="hidden md:block overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-600 text-xs uppercase tracking-wider">
+                                    <th class="p-4 font-medium">ID</th>
+                                    <th class="p-4 font-medium">Data / Hora</th>
+                                    <th class="p-4 font-medium">Pet</th>
+                                    <th class="p-4 font-medium">Tutor</th>
+                                    <th class="p-4 font-medium">Veterinário</th>
+                                    <th class="p-4 font-medium">Motivo / Queixa</th>
+                                    <th class="p-4 font-medium text-right w-16">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaAtendimentosRecentes" class="text-gray-700 text-sm">
+                                <tr>
+                                    <td colspan="7" class="p-4 text-center text-gray-500">Carregando atendimentos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards -->
+                    <div id="listaAtendimentosRecentesCards" class="md:hidden space-y-4 p-4 bg-gray-50">
+                        <div class="text-center text-gray-500 py-4">Carregando atendimentos...</div>
+                    </div>
+
+                    <!-- Pagination Footer -->
+                    <div id="paginacaoAtendimentosRecentes" class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 bg-gray-50/50">
+                        <div class="text-xs text-gray-500 text-center sm:text-left" id="atendimentosPaginacaoInfo">
+                            Mostrando 0 de 0
+                        </div>
+                        <div class="flex items-center space-x-2" id="atendimentosPaginacaoBotoes">
+                            <!-- Page buttons inserted by JS -->
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <!-- Chart Section -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -493,6 +548,141 @@ DBClose($linkDB);
                 const [year, month, day] = dateString.split('-');
                 return `${day}/${month}/${year}`;
             }
+
+            // Atendimentos Recentes (Modo Clínico)
+            <?php if (AppHelper::isVetMode()): ?>
+            window.loadAtendimentosRecentes = function(page = 1) {
+                $.ajax({
+                    url: 'app.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'get_atendimentos_recentes',
+                        page: page,
+                        limit: 10
+                    },
+                    success: function (response) {
+                        if (response.success) {
+                            const data = response.data;
+                            const items = data.items || [];
+                            const total = data.total || 0;
+                            const totalPages = data.total_pages || 1;
+                            const currentPage = data.page || 1;
+
+                            $('#atendimentosTotalBadge').text(`${total} Atendimento${total !== 1 ? 's' : ''}`);
+
+                            let htmlTable = '';
+                            let htmlCards = '';
+
+                            if (items.length > 0) {
+                                items.forEach(atend => {
+                                    const dataFormatada = formatDateTime(atend.data_atendimento);
+                                    const queixa = atend.queixa_principal ? escapeHtml(atend.queixa_principal) : '<span class="text-gray-400 italic">Não informada</span>';
+                                    const petNome = escapeHtml(atend.pet_nome || 'N/A');
+                                    const tutorNome = escapeHtml(atend.tutor_nome || 'N/A');
+                                    const vetNome = escapeHtml(atend.vet_nome || 'N/A');
+                                    const linkForm = `modules/Vet/atendimento_form.php?id=${atend.id_atendimento}&pet_id=${atend.id_pet || ''}`;
+
+                                    // Table row
+                                    htmlTable += `
+                                        <tr class="border-b border-gray-50 hover:bg-gray-100 transition cursor-pointer" onclick="window.location.href='${linkForm}'" title="Ver / Editar Atendimento">
+                                            <td class="p-4 font-semibold text-gray-700">#${atend.id_atendimento}</td>
+                                            <td class="p-4 text-xs font-medium text-gray-600">${dataFormatada}</td>
+                                            <td class="p-4 font-semibold text-teal-700">${petNome}</td>
+                                            <td class="p-4 text-gray-600">${tutorNome}</td>
+                                            <td class="p-4 text-gray-600">${vetNome}</td>
+                                            <td class="p-4 text-xs text-gray-500 max-w-xs truncate">${queixa}</td>
+                                            <td class="p-4 text-right">
+                                                <span class="material-icons text-teal-600 text-sm hover:text-teal-800">visibility</span>
+                                            </td>
+                                        </tr>
+                                    `;
+
+                                    // Card Mobile
+                                    htmlCards += `
+                                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3 cursor-pointer hover:shadow-md transition hover:border-teal-200" onclick="window.location.href='${linkForm}'">
+                                            <div class="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <span class="text-xs text-gray-400">#${atend.id_atendimento} • ${dataFormatada}</span>
+                                                    <h4 class="font-bold text-teal-700">${petNome}</h4>
+                                                    <p class="text-xs text-gray-500">Tutor: ${tutorNome}</p>
+                                                </div>
+                                                <span class="material-icons text-teal-600 text-sm">chevron_right</span>
+                                            </div>
+                                            <div class="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-600">
+                                                <div><strong>Vet:</strong> ${vetNome}</div>
+                                                <div class="mt-1 text-gray-500 truncate"><strong>Queixa:</strong> ${queixa}</div>
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+                            } else {
+                                htmlTable = '<tr><td colspan="7" class="p-4 text-center text-gray-500">Nenhum atendimento registrado.</td></tr>';
+                                htmlCards = '<div class="text-center text-gray-500 py-4">Nenhum atendimento registrado.</div>';
+                            }
+
+                            $('#listaAtendimentosRecentes').html(htmlTable);
+                            $('#listaAtendimentosRecentesCards').html(htmlCards);
+
+                            // Render Pagination
+                            renderAtendimentosPaginacao(currentPage, totalPages, total);
+                        }
+                    },
+                    error: function (err) {
+                        console.error('Erro ao carregar atendimentos recentes:', err);
+                    }
+                });
+            };
+
+            function renderAtendimentosPaginacao(currentPage, totalPages, total) {
+                const perPage = 10;
+                const startItem = total === 0 ? 0 : (currentPage - 1) * perPage + 1;
+                const endItem = Math.min(currentPage * perPage, total);
+
+                $('#atendimentosPaginacaoInfo').text(`Mostrando ${startItem} - ${endItem} de ${total} atendimentos`);
+
+                let botoesHtml = '';
+
+                // Botão Anterior
+                if (currentPage > 1) {
+                    botoesHtml += `<button onclick="loadAtendimentosRecentes(${currentPage - 1})" class="px-3 py-1 rounded text-xs border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium transition flex items-center gap-1"><span class="material-icons text-xs">chevron_left</span> Anterior</button>`;
+                } else {
+                    botoesHtml += `<button disabled class="px-3 py-1 rounded text-xs border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed font-medium flex items-center gap-1"><span class="material-icons text-xs">chevron_left</span> Anterior</button>`;
+                }
+
+                // Indicador de Página
+                botoesHtml += `<span class="px-3 py-1 text-xs font-semibold text-gray-700">Página ${currentPage} de ${totalPages}</span>`;
+
+                // Botão Próximo
+                if (currentPage < totalPages) {
+                    botoesHtml += `<button onclick="loadAtendimentosRecentes(${currentPage + 1})" class="px-3 py-1 rounded text-xs border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium transition flex items-center gap-1">Próximo <span class="material-icons text-xs">chevron_right</span></button>`;
+                } else {
+                    botoesHtml += `<button disabled class="px-3 py-1 rounded text-xs border border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed font-medium flex items-center gap-1">Próximo <span class="material-icons text-xs">chevron_right</span></button>`;
+                }
+
+                $('#atendimentosPaginacaoBotoes').html(botoesHtml);
+            }
+
+            function formatDateTime(dtStr) {
+                if (!dtStr) return '-';
+                const parts = dtStr.split(' ');
+                const datePart = parts[0] ? formatDate(parts[0]) : '-';
+                const timePart = parts[1] ? parts[1].substring(0, 5) : '';
+                return timePart ? `${datePart} às ${timePart}` : datePart;
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                return text
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            loadAtendimentosRecentes(1);
+            <?php endif; ?>
 
             // Init
             loadDashboard();

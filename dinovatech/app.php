@@ -1858,6 +1858,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
             break;
 
+        case 'get_atendimentos_recentes':
+            $page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+            if ($page < 1) $page = 1;
+            $limit = isset($_POST['limit']) ? (int)$_POST['limit'] : 10;
+            if ($limit < 1) $limit = 10;
+            $offset = ($page - 1) * $limit;
+
+            // Total count
+            $qCount = "SELECT COUNT(*) as total FROM Atendimentos";
+            $rCount = DBExecute($link, $qCount);
+            $total = 0;
+            if ($rCount && $rowC = mysqli_fetch_assoc($rCount)) {
+                $total = (int)$rowC['total'];
+            }
+            $totalPages = $total > 0 ? (int)ceil($total / $limit) : 1;
+
+            // Fetch items
+            $qAtend = "SELECT 
+                        a.id_atendimento,
+                        a.id_pet,
+                        a.data_atendimento,
+                        a.queixa_principal,
+                        a.diagnostico,
+                        p.nome as pet_nome,
+                        p.especie as pet_especie,
+                        c.nome as tutor_nome,
+                        v.nome as vet_nome
+                      FROM Atendimentos a
+                      LEFT JOIN Pets p ON a.id_pet = p.id_pet
+                      LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
+                      LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
+                      ORDER BY a.data_atendimento DESC, a.id_atendimento DESC
+                      LIMIT $offset, $limit";
+            $rAtend = DBExecute($link, $qAtend);
+            $items = [];
+            if ($rAtend) {
+                while ($row = mysqli_fetch_assoc($rAtend)) {
+                    $items[] = $row;
+                }
+            }
+
+            $response['success'] = true;
+            $response['data'] = [
+                'items' => $items,
+                'page' => $page,
+                'per_page' => $limit,
+                'total' => $total,
+                'total_pages' => $totalPages
+            ];
+            break;
+
         default:
             $response['message'] = "Ação inválida.";
             break;
