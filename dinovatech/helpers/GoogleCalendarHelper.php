@@ -108,6 +108,10 @@ class GoogleCalendarHelper
             ],
         ];
 
+        if (!empty($data['attendees'])) {
+            $payload['attendees'] = $data['attendees'];
+        }
+
         try {
             $response = $this->httpClient->post($this->baseUri . urlencode($this->calendarId) . '/events', [
                 'json' => $payload
@@ -147,6 +151,10 @@ class GoogleCalendarHelper
                 'dateTime' => $data['end'],
                 'timeZone' => 'America/Sao_Paulo',
             ];
+        }
+
+        if (!empty($data['attendees'])) {
+            $payload['attendees'] = $data['attendees'];
         }
 
         try {

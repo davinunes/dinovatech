@@ -31,11 +31,24 @@ function syncGoogle($link, $id_vet, $agendamentoData, $eventId = null)
         try {
             $google = new GoogleCalendarHelper($vet['google_calendar_id']);
 
+            $attendees = [];
+            $idCliente = (int) ($agendamentoData['id_cliente'] ?? 0);
+            if ($idCliente > 0) {
+                $resC = DBExecute($link, "SELECT email, google_calendar_id FROM Clientes WHERE id_cliente = '$idCliente'");
+                if ($resC && $rowC = mysqli_fetch_assoc($resC)) {
+                    $clientTarget = !empty($rowC['google_calendar_id']) ? $rowC['google_calendar_id'] : ($rowC['email'] ?? '');
+                    if (!empty($clientTarget)) {
+                        $attendees[] = ['email' => $clientTarget];
+                    }
+                }
+            }
+
             $gData = [
                 'summary' => $agendamentoData['titulo'],
                 'description' => $agendamentoData['descricao'] ?? '',
                 'start' => $agendamentoData['data_inicio'], // ISO 8601
-                'end' => $agendamentoData['data_fim']
+                'end' => $agendamentoData['data_fim'],
+                'attendees' => $attendees
             ];
 
             if ($eventId) {

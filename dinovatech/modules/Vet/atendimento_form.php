@@ -179,13 +179,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     $google = new GoogleCalendarHelper($googleCalendarId);
 
+                    // Fetch Client Calendar ID / Email for attendees invite
+                    $attendees = [];
+                    $idClientePet = (int) ($pet['id_cliente'] ?? 0);
+                    if ($idClientePet > 0) {
+                        $resC = DBExecute($link, "SELECT email, google_calendar_id FROM Clientes WHERE id_cliente = $idClientePet");
+                        if ($resC && $rowC = mysqli_fetch_assoc($resC)) {
+                            $clientCalendarTarget = !empty($rowC['google_calendar_id']) ? $rowC['google_calendar_id'] : ($rowC['email'] ?? '');
+                            if (!empty($clientCalendarTarget)) {
+                                $attendees[] = ['email' => $clientCalendarTarget];
+                            }
+                        }
+                    }
+
                     if (!empty($google_event_id)) {
                         // Update existing Google Calendar event
                         $google->updateEvent($google_event_id, [
                             'summary' => $titulo,
                             'description' => $descricao_evento,
                             'start' => $data_inicio_iso,
-                            'end' => $data_fim_iso
+                            'end' => $data_fim_iso,
+                            'attendees' => $attendees
                         ]);
                     } else {
                         // Create new Google Calendar event
@@ -193,7 +207,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'summary' => $titulo,
                             'description' => $descricao_evento,
                             'start' => $data_inicio_iso,
-                            'end' => $data_fim_iso
+                            'end' => $data_fim_iso,
+                            'attendees' => $attendees
                         ]);
                         if ($gEventId) {
                             $google_event_id = $gEventId;

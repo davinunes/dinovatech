@@ -1909,6 +1909,192 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
             break;
 
+        case 'get_cliente_dashboard_data':
+            $id_cliente = $_SESSION['cliente_id'] ?? ($_POST['id_cliente'] ?? '');
+            if (empty($id_cliente)) {
+                $response['message'] = "Sessão de cliente expirada ou ID não fornecido.";
+                break;
+            }
+
+            $id_cliente_safe = mysqli_real_escape_string($link, $id_cliente);
+
+            // 1. Dados Cadastrais do Cliente
+            $qCliente = "SELECT id_cliente, nome, cpf_cnpj, email, telefone, endereco, numero, complemento, bairro, cep, uf, codigo_municipio, google_calendar_id FROM Clientes WHERE id_cliente = '$id_cliente_safe'";
+            $rCliente = DBExecute($link, $qCliente);
+            $clienteData = mysqli_fetch_assoc($rCliente);
+
+            // 2. Faturas (Estatísticas e Próximo Vencimento)
+            $qFaturas = "SELECT F.id_fatura, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status,
+                                COALESCE(SUM(P.valor_pago), 0) AS total_pago_fatura
+                         FROM Faturas F
+                         LEFT JOIN Pagamentos P ON F.id_fatura = P.id_fatura AND P.status_pagamento = 'Confirmado'
+                         WHERE F.id_cliente = '$id_cliente_safe'
+                         GROUP BY F.id_fatura
+                         ORDER BY F.data_vencimento ASC";
+            $rFaturas = DBExecute($link, $qFaturas);
+            $faturasList = [];
+            $totalAbertoVal = 0.0;
+            $countAberto = 0;
+            $totalPagoVal = 0.0;
+            $countPago = 0;
+            $proximaFaturaPendente = null;
+
+            if ($rFaturas) {
+                while ($f = mysqli_fetch_assoc($rFaturas)) {
+                    $faturasList[] = $f;
+                    $isLiq = ($f['status'] === 'Liquidada');
+                    if ($isLiq) {
+                        $totalPagoVal += (float)$f['valor_total_fatura'];
+                        $countPago++;
+                    } else {
+                        $totalAbertoVal += (float)$f['valor_total_fatura'];
+                        $countAberto++;
+                        if (!$proximaFaturaPendente) {
+                            $proximaFaturaPendente = $f;
+                        }
+                    }
+                }
+            }
+
+            // 3. Agendamentos do Cliente
+            $qAgend = "SELECT a.id_agendamento, a.titulo, a.data_inicio, a.data_fim, a.status,
+                              p.nome as pet_nome, v.nome as vet_nome
+                       FROM Agendamentos a
+                       LEFT JOIN Pets p ON a.id_pet = p.id_pet
+                       LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
+                       WHERE a.id_cliente = '$id_cliente_safe'
+                       ORDER BY a.data_inicio DESC
+                       LIMIT 10";
+            $rAgend = DBExecute($link, $qAgend);
+            $agendamentos = [];
+            if ($rAgend) {
+                while ($ag = mysqli_fetch_assoc($rAgend)) {
+                    $agendamentos[] = $ag;
+                }
+            }
+
+            // 4. Se Modo Vet (Pets, Atendimentos e Vacinas)
+            $pets = [];
+            $atendimentosRecentes = [];
+            $carteiraVacinas = [];
+
+            if (AppHelper::isVetMode()) {
+                // Pets
+                $qPets = "SELECT * FROM Pets WHERE id_cliente = '$id_cliente_safe' ORDER BY nome ASC";
+                $rPets = DBExecute($link, $qPets);
+                if ($rPets) {
+                    while ($pt = mysqli_fetch_assoc($rPets)) {
+                        $pets[] = $pt;
+                    }
+                }
+
+                // Atendimentos Recentes
+                $qAtendRec = "SELECT a.id_atendimento, a.id_pet, a.data_atendimento, a.queixa_principal, a.diagnostico,
+                                     p.nome as pet_nome, v.nome as vet_nome
+                              FROM Atendimentos a
+                              JOIN Pets p ON a.id_pet = p.id_pet
+                              LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
+                              WHERE p.id_cliente = '$id_cliente_safe'
+                              ORDER BY a.data_atendimento DESC, a.id_atendimento DESC
+                              LIMIT 10";
+                $rAtendRec = DBExecute($link, $qAtendRec);
+                if ($rAtendRec) {
+                    while ($at = mysqli_fetch_assoc($rAtendRec)) {
+                        $atendimentosRecentes[] = $at;
+                    }
+                }
+
+                // Vacinas
+                $qVac = "SELECT cv.*, v.nome as vacina_nome, p.nome as pet_nome
+                         FROM CarteiraVacinas cv
+                         JOIN Vacinas v ON cv.id_vacina = v.id_vacina
+                         JOIN Pets p ON cv.id_pet = p.id_pet
+                         WHERE p.id_cliente = '$id_cliente_safe'
+                         ORDER BY cv.data_vencimento ASC";
+                $rVac = DBExecute($link, $qVac);
+                if ($rVac) {
+                    while ($vc = mysqli_fetch_assoc($rVac)) {
+                        $carteiraVacinas[] = $vc;
+                    }
+                }
+            }
+
+            // 5. System Google Integration Hint
+            $googleServiceEmailHint = '';
+            $qConf = "SELECT google_service_account_json FROM ConfiguracoesEmissor LIMIT 1";
+            $rConf = DBExecute($link, $qConf);
+            if ($rConf && $conf = mysqli_fetch_assoc($rConf)) {
+                if (!empty($conf['google_service_account_json'])) {
+                    $jsonDecrypted = EncryptionHelper::decrypt($conf['google_service_account_json']);
+                    if ($jsonDecrypted) {
+                        $dataJson = json_decode($jsonDecrypted, true);
+                        if (isset($dataJson['client_email'])) {
+                            $googleServiceEmailHint = $dataJson['client_email'];
+                        }
+                    }
+                }
+            }
+
+            $response['success'] = true;
+            $response['data'] = [
+                'cliente' => $clienteData,
+                'faturas_summary' => [
+                    'total_aberto' => $totalAbertoVal,
+                    'count_aberto' => $countAberto,
+                    'total_pago' => $totalPagoVal,
+                    'count_pago' => $countPago,
+                    'proxima_pendente' => $proximaFaturaPendente
+                ],
+                'faturas' => $faturasList,
+                'agendamentos' => $agendamentos,
+                'pets' => $pets,
+                'atendimentos' => $atendimentosRecentes,
+                'vacinas' => $carteiraVacinas,
+                'google_service_email_hint' => $googleServiceEmailHint,
+                'is_vet_mode' => AppHelper::isVetMode()
+            ];
+            break;
+
+        case 'atualizar_dados_cliente':
+            $id_cliente = $_SESSION['cliente_id'] ?? '';
+            if (empty($id_cliente)) {
+                $response['message'] = "Sessão de cliente inválida.";
+                break;
+            }
+
+            $id_cliente_safe = mysqli_real_escape_string($link, $id_cliente);
+            $email = mysqli_real_escape_string($link, $_POST['email'] ?? '');
+            $telefone = mysqli_real_escape_string($link, $_POST['telefone'] ?? '');
+            $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
+            $numero = mysqli_real_escape_string($link, $_POST['numero'] ?? '');
+            $complemento = mysqli_real_escape_string($link, $_POST['complemento'] ?? '');
+            $bairro = mysqli_real_escape_string($link, $_POST['bairro'] ?? '');
+            $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
+            $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
+            $codigo_municipio = mysqli_real_escape_string($link, $_POST['codigo_municipio'] ?? '');
+            $google_calendar_id = mysqli_real_escape_string($link, $_POST['google_calendar_id'] ?? '');
+
+            $qUpdate = "UPDATE Clientes SET 
+                        email = '$email',
+                        telefone = '$telefone',
+                        endereco = '$endereco',
+                        numero = '$numero',
+                        complemento = '$complemento',
+                        bairro = '$bairro',
+                        cep = '$cep',
+                        uf = '$uf',
+                        codigo_municipio = '$codigo_municipio',
+                        google_calendar_id = '$google_calendar_id'
+                        WHERE id_cliente = '$id_cliente_safe'";
+
+            if (DBExecute($link, $qUpdate)) {
+                $response['success'] = true;
+                $response['message'] = "Dados atualizados com sucesso!";
+            } else {
+                $response['message'] = "Erro ao atualizar dados: " . mysqli_error($link);
+            }
+            break;
+
         default:
             $response['message'] = "Ação inválida.";
             break;
