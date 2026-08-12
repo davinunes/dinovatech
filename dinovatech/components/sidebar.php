@@ -163,7 +163,7 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 <script>
     function fazerBackup(e) {
         e.preventDefault();
-        if (!confirm('Deseja gerar um backup completo do banco de dados?\n\nIsso criará os arquivos "estrutura.sql" e "dados.sql" na raiz do sistema, substituindo versões anteriores.')) return;
+        if (!confirm('Deseja gerar um backup completo do banco de dados?\n\nIsso salvará os arquivos na raiz do sistema e iniciará o download automático.')) return;
 
         const btn = e.currentTarget;
         const iconSpan = btn.querySelector('.material-icons');
@@ -176,7 +176,11 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 
         $.post('<?= $basePath ?>app.php', { action: 'fazer_backup' }, function (res) {
             if (res.success) {
-                alert(res.message);
+                if (res.download_url) {
+                    window.location.href = res.download_url;
+                } else {
+                    alert(res.message);
+                }
             } else {
                 alert('Erro: ' + res.message);
             }

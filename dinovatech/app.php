@@ -25,6 +25,50 @@ if (isset($_GET['action']) && $_GET['action'] === 'toggle_status_cliente') {
     exit();
 }
 
+// ACTION GET/POST: Download Backup BD
+if ((isset($_GET['action']) && $_GET['action'] === 'download_backup') || (isset($_POST['action']) && $_POST['action'] === 'download_backup')) {
+    $file = null;
+    $filename = null;
+    $contentType = 'application/octet-stream';
+
+    if (file_exists('../backup_bd.zip')) {
+        $file = '../backup_bd.zip';
+        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.zip';
+        $contentType = 'application/zip';
+    } elseif (file_exists('../backup_bd.sql.gz')) {
+        $file = '../backup_bd.sql.gz';
+        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.sql.gz';
+        $contentType = 'application/x-gzip';
+    } elseif (file_exists('../backup_bd.sql')) {
+        $file = '../backup_bd.sql';
+        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.sql';
+        $contentType = 'application/sql';
+    } elseif (file_exists('../estrutura.sql') && file_exists('../dados.sql')) {
+        $file = '../estrutura.sql';
+        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.sql';
+        $contentType = 'application/sql';
+    }
+
+    if ($file && file_exists($file)) {
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+        header('Content-Description: File Transfer');
+        header('Content-Type: ' . $contentType);
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        header('Expires: 0');
+        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+        header('Pragma: public');
+        header('Content-Length: ' . filesize($file));
+        readfile($file);
+        exit();
+    } else {
+        header('Content-Type: text/plain');
+        echo "Arquivo de backup nao encontrado.";
+        exit();
+    }
+}
+
 header('Content-Type: application/json'); // Sempre retorna JSON
 
 $link = DBConnect(); // Abre a conexão UMA VEZ para toda a requisição AJAX
@@ -660,12 +704,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // 1. Configurações
             $pathEstrutura = '../estrutura.sql';
             $pathDados = '../dados.sql';
+            $pathZip = '../backup_bd.zip';
+            $pathGz = '../backup_bd.sql.gz';
+            $pathSql = '../backup_bd.sql';
 
             // 2. Apaga arquivos anteriores se existirem (opcional, mas bom pra garantir limpeza)
             if (file_exists($pathEstrutura))
                 unlink($pathEstrutura);
             if (file_exists($pathDados))
                 unlink($pathDados);
+            if (file_exists($pathZip))
+                unlink($pathZip);
+            if (file_exists($pathGz))
+                unlink($pathGz);
+            if (file_exists($pathSql))
+                unlink($pathSql);
 
             $estruturaContent = "";
             $dadosContent = "";
@@ -688,8 +741,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $numFields = mysqli_num_fields($resultSelect);
 
                 $dadosContent .= "\n\n-- Dumping data for table `$table` --\n";
-                // Desabilita checagem de chave estrangeira pra facilitar import
-                // $dadosContent .= "/*!40000 ALTER TABLE `$table` DISABLE KEYS */;\n"; 
 
                 while ($row = mysqli_fetch_row($resultSelect)) {
                     $dadosContent .= "INSERT INTO `$table` VALUES(";
@@ -707,16 +758,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     $dadosContent .= ");\n";
                 }
-                // $dadosContent .= "/*!40000 ALTER TABLE `$table` ENABLE KEYS */;\n";
             }
 
-            // 4. Salva os arquivos
-            $resEstrutura = file_put_contents($pathEstrutura, "-- Estrutura do Banco de Dados - Gerado em " . date('Y-m-d H:i:s') . "\n" . $estruturaContent);
-            $resDados = file_put_contents($pathDados, "-- Dados do Banco de Dados - Gerado em " . date('Y-m-d H:i:s') . "\n" . $dadosContent);
+            // 4. Salva os arquivos no servidor
+            $headerTime = "-- Backup do Banco de Dados - Gerado em " . date('Y-m-d H:i:s') . "\n";
+            $resEstrutura = file_put_contents($pathEstrutura, $headerTime . $estruturaContent);
+            $resDados = file_put_contents($pathDados, $headerTime . $dadosContent);
 
+            // 5. Compactação do arquivo para download (ZIP / GZ / SQL)
             if ($resEstrutura !== false && $resDados !== false) {
+                if (class_exists('ZipArchive')) {
+                    $zip = new ZipArchive();
+                    if ($zip->open($pathZip, ZipArchive::CREATE | ZipArchive::OVERWRITE) === TRUE) {
+                        $zip->addFile($pathEstrutura, 'estrutura.sql');
+                        $zip->addFile($pathDados, 'dados.sql');
+                        $zip->close();
+                    }
+                } else {
+                    $fullContent = $headerTime . "\n-- ESTRUTURA DO BANCO DE DADOS --\n" . $estruturaContent . "\n\n-- DADOS DO BANCO DE DADOS --\n" . $dadosContent;
+                    $acceptEncoding = $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '';
+                    if (function_exists('gzencode') && strpos($acceptEncoding, 'gzip') !== false) {
+                        $gzData = gzencode($fullContent, 9);
+                        if ($gzData !== false) {
+                            file_put_contents($pathGz, $gzData);
+                        } else {
+                            file_put_contents($pathSql, $fullContent);
+                        }
+                    } else {
+                        file_put_contents($pathSql, $fullContent);
+                    }
+                }
+
                 $response['success'] = true;
-                $response['message'] = "Backup realizado com sucesso! Arquivos salvos na raiz.";
+                $response['message'] = "Backup realizado com sucesso! Baixando arquivo...";
+                $response['download_url'] = 'app.php?action=download_backup';
             } else {
                 $response['message'] = "Erro ao gravar arquivos de backup no disco. Verifique permissões.";
             }
