@@ -101,11 +101,6 @@ $is_vet = AppHelper::isVetMode();
                         data-target="meusdados">
                         <span class="material-icons text-lg">person</span> Meus Dados
                     </button>
-                    <button
-                        class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
-                        data-target="assinaturas">
-                        <span class="material-icons text-lg text-purple-600">auto_renew</span> Minhas Assinaturas
-                    </button>
                     <?php if ($is_vet): ?>
                         <button
                             class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
@@ -415,21 +410,20 @@ $is_vet = AppHelper::isVetMode();
                             </div>
                         </form>
                     </div>
-                </div>
 
-                <!-- 5. ASSINATURAS E CONTRATOS TAB -->
-                <div id="assinaturas" class="tab-content hidden">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div>
-                            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                                <span class="material-icons text-purple-600">history_edu</span> Assinaturas & Termos Contratuais
-                            </h3>
-                            <p class="text-sm text-gray-500">Consulte suas assinaturas ativas e visualize os documentos/termos vinculados.</p>
+                    <!-- Bloco de Assinaturas e Contratos -->
+                    <div class="mt-8 bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-3 border-b pb-4 mb-6">
+                            <span class="material-icons text-purple-600 text-2xl">history_edu</span>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">Minhas Assinaturas & Termos Contratuais</h3>
+                                <p class="text-xs text-gray-500">Consulte suas assinaturas ativas e visualize os documentos/termos vinculados.</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="listaRecorrenciasFull" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <p class="col-span-full text-center text-gray-500 py-8">Carregando assinaturas...</p>
+                        <div id="listaRecorrenciasFull" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <p class="col-span-full text-center text-gray-500 py-8">Carregando assinaturas...</p>
+                        </div>
                     </div>
                 </div>
 
@@ -1078,6 +1072,20 @@ $is_vet = AppHelper::isVetMode();
                     const dataUltimo = pet.ultimo_atendimento ? formatDateTime(pet.ultimo_atendimento) : 'Sem registros';
                     const queixaUltimo = pet.ultimo_atendimento_queixa ? escapeHtml(pet.ultimo_atendimento_queixa) : 'Nenhuma queixa';
 
+                    // Vacinas do Pet
+                    const vacinasPet = (globalDashboardData.vacinas || []).filter(v => v.id_pet == pet.id_pet);
+                    const hoje = new Date().toISOString().split('T')[0];
+                    const temVencidas = vacinasPet.some(v => v.data_vencimento < hoje);
+
+                    let vacinaStatusBadge = '';
+                    if (vacinasPet.length === 0) {
+                        vacinaStatusBadge = '<span class="text-gray-500 font-medium">Nenhuma vacina cadastrada</span>';
+                    } else if (temVencidas) {
+                        vacinaStatusBadge = '<span class="text-red-700 font-bold flex items-center gap-1"><span class="material-icons text-xs">warning</span> Vacina Vencida / Pendente</span>';
+                    } else {
+                        vacinaStatusBadge = '<span class="text-green-700 font-bold flex items-center gap-1"><span class="material-icons text-xs">check_circle</span> Imunização Em Dia (' + vacinasPet.length + ')</span>';
+                    }
+
                     // Histórico de Peso
                     const historicoPeso = pet.historico_peso || [];
                     let blocoPesoHtml = '';
@@ -1134,7 +1142,7 @@ $is_vet = AppHelper::isVetMode();
 
                             <!-- Pet Metrics -->
                             <div class="p-5 space-y-4">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                                     <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
                                         <span class="text-gray-400 block font-medium uppercase mb-0.5">Consultas Realizadas</span>
                                         <strong class="text-base text-gray-800">${totalConsultas} atendimento(s)</strong>
@@ -1143,6 +1151,13 @@ $is_vet = AppHelper::isVetMode();
                                         <span class="text-gray-400 block font-medium uppercase mb-0.5">Última Consulta</span>
                                         <strong class="text-gray-800">${dataUltimo}</strong>
                                         <div class="text-gray-500 truncate mt-0.5" title="${queixaUltimo}">${queixaUltimo}</div>
+                                    </div>
+                                    <div class="p-3 bg-teal-50/70 hover:bg-teal-100/80 rounded-lg border border-teal-200 cursor-pointer transition flex flex-col justify-between group" onclick="irParaCarteiraVacinas()">
+                                        <div>
+                                            <span class="text-teal-800 block font-semibold uppercase mb-0.5 text-[10px]">Carteira de Vacinação</span>
+                                            <div class="text-xs">${vacinaStatusBadge}</div>
+                                        </div>
+                                        <span class="text-xs text-teal-700 font-bold group-hover:underline flex items-center gap-0.5 mt-1">Ver Carteira <span class="material-icons text-xs">arrow_forward</span></span>
                                     </div>
                                 </div>
 
@@ -1214,6 +1229,14 @@ $is_vet = AppHelper::isVetMode();
             $(document).on('click', '#btnCloseModalPets, #btnFecharModalPetsBottom, #modalMeusPetsBackdrop', function() {
                 $('#modalMeusPetsDetalhes').addClass('hidden');
             });
+
+            window.irParaCarteiraVacinas = function() {
+                $('#modalMeusPetsDetalhes').addClass('hidden');
+                const btnVac = $('.tab-btn[data-target="vacinas"]');
+                if (btnVac.length) {
+                    btnVac.trigger('click');
+                }
+            };
 
             function renderVacinasBreveList(vacinas) {
                 const container = $('#dashListaVacinasBreve');

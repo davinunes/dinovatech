@@ -1,32 +1,23 @@
-# Walkthrough / Resumo de Entrega: Modal Meus Pets com Estatísticas e Gráfico de Evolução de Peso
+# Walkthrough / Resumo de Entrega: Organização de Assinaturas em Meus Dados & Card de Vacina no Modal dos Pets
 
 **Data:** 2026-08-12  
 **Funcionalidades:**
-1. Migration SQL `20260812_0003_add_peso_to_atendimentos.sql` adicionando a coluna `peso` na tabela `Atendimentos` para registro histórico de pesagem a cada consulta.
-2. Atualização de `atendimento_form.php` gravando o peso do atendimento em `Atendimentos.peso` e atualizando o peso atual em `Pets.peso`.
-3. Modal interativo **"Meus Pets — Saúde & Estatísticas"** acionado ao clicar no card KPI "Meus Pets" na Dashboard do Cliente.
-4. Exibição das estatísticas por pet (consultas acumuladas, última consulta e motivo) e **gráfico de linha Chart.js** para evolução de peso quando houver 2+ pesagens, ou card de última pesagem quando houver 1 registro.
+1. A aba de navegação isolada "Minhas Assinaturas" foi removida do menu superior para despoluir o cabeçalho.
+2. O bloco **"Minhas Assinaturas & Termos Contratuais"** foi incorporado dentro da aba **"Meus Dados"** (`#meusdados`), mantendo também o resumo na Dashboard.
+3. No modal **"Meus Pets — Saúde & Estatísticas"**, adicionado um card interativo com o **Status da Carteira de Vacinação** de cada pet (com badges indicando *Imunização Em Dia* ou *Vacina Vencida/Pendente*).
+4. O card de vacinação no modal funciona como um link clicável que fecha o modal e altera diretamente para a aba da **Carteira de Vacinação** (`#vacinas`).
 
 ## Alterações Realizadas
 
-1. **[20260812_0003_add_peso_to_atendimentos.sql](file:///e:/DEV/dinovatech/database/migrations/20260812_0003_add_peso_to_atendimentos.sql)**
-   - Criada migration SQL para adicionar a coluna `peso DECIMAL(5,2) DEFAULT NULL` em `Atendimentos`.
-
-2. **[atendimento_form.php](file:///e:/DEV/dinovatech/dinovatech/modules/Vet/atendimento_form.php)**
-   - Atualizadas as queries de UPDATE e INSERT de `Atendimentos` para salvar o valor do campo `$peso`.
-
-3. **[app.php](file:///e:/DEV/dinovatech/dinovatech/app.php)**
-   - Atualizado o endpoint `get_cliente_dashboard_data` para agrupar o histórico de pesagens (`data_atendimento` e `peso`), total de atendimentos e queixa da última consulta para cada pet do cliente.
-
-4. **[cliente/index.php](file:///e:/DEV/dinovatech/cliente/index.php)**
-   - Adicionada a biblioteca Chart.js via CDN no `<head>`.
-   - Card KPI "Meus Pets" ajustado para estilo clicável (`onclick="abrirModalMeusPets()"`).
-   - Adicionado o Modal HTML `#modalMeusPetsDetalhes`.
-   - Implementada a função `abrirModalMeusPets()` gerando os gráficos de linha do peso para pets com 2+ pesagens e cards de status.
+1. **[cliente/index.php](file:///e:/DEV/dinovatech/cliente/index.php)**
+   - Removido o botão de aba superior `data-target="assinaturas"`.
+   - Movido o bloco de contratos/assinaturas para o final da aba `#meusdados`.
+   - Adicionada a métrica de Vacinação em cada pet dentro de `abrirModalMeusPets()`.
+   - Adicionada a função `irParaCarteiraVacinas()` que direciona o tutor automaticamente para a carteira virtual de vacinação.
 
 ## Instruções de Teste e Validação
 
-1. Execute a migration SQL `database/migrations/20260812_0003_add_peso_to_atendimentos.sql`.
-2. Acesse a Área do Cliente em `cliente/index.php` (Modo Veterinário).
-3. Na Dashboard, clique no card KPI **"Meus Pets"**.
-4. Confirme que o modal é aberto exibindo os cards dos pets com total de consultas e a evolução de peso (gráfico de linha se houver 2+ pesagens, ou última pesagem se houver 1).
+1. Acesse o Portal do Cliente (`cliente/index.php`).
+2. Acesse a aba **Meus Dados** e role a página para visualizar a seção **Minhas Assinaturas & Termos Contratuais**.
+3. Na Dashboard, clique no card KPI **Meus Pets**.
+4. No modal exibido, observe o novo card **Carteira de Vacinação** com status em dia/vencida. Clique nele e confirme que o modal fecha e a tela alterna para a aba **Carteira de Vacinação**.
