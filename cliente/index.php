@@ -19,6 +19,7 @@ $is_vet = AppHelper::isVetMode();
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -153,14 +154,16 @@ $is_vet = AppHelper::isVetMode();
                         </div>
 
                         <?php if ($is_vet): ?>
-                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                                <div class="p-3 rounded-full bg-teal-100 text-teal-600 mr-4">
-                                    <span class="material-icons text-3xl">pets</span>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Meus Pets</p>
-                                    <h3 class="text-xl font-bold text-gray-800" id="dashCountPets">0</h3>
-                                    <p class="text-xs text-gray-400">cadastrados</p>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-teal-300 transition group" onclick="abrirModalMeusPets()">
+                                <div class="flex items-center">
+                                    <div class="p-3 rounded-full bg-teal-100 text-teal-600 mr-4 group-hover:bg-teal-600 group-hover:text-white transition">
+                                        <span class="material-icons text-3xl">pets</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Meus Pets</p>
+                                        <h3 class="text-xl font-bold text-gray-800" id="dashCountPets">0</h3>
+                                        <p class="text-xs text-teal-600 font-semibold flex items-center gap-0.5 mt-0.5">Estatísticas & Peso <span class="material-icons text-xs">chevron_right</span></p>
+                                    </div>
                                 </div>
                             </div>
                         <?php else: ?>
@@ -552,6 +555,48 @@ $is_vet = AppHelper::isVetMode();
                 <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between items-center">
                     <span class="text-xs text-gray-400" id="mAtendIdTag">ID Atendimento: #--</span>
                     <button type="button" id="btnFecharModalBottom" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold transition">
+                        Fechar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Meus Pets - Saúde e Estatísticas -->
+    <div id="modalMeusPetsDetalhes" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div id="modalMeusPetsBackdrop" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-gray-100 w-full">
+                
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-teal-800 to-cyan-900 p-6 text-white flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 bg-white/10 rounded-xl">
+                            <span class="material-icons text-3xl text-teal-200">pets</span>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold">Meus Pets — Saúde & Estatísticas</h3>
+                            <p class="text-xs text-teal-100">Acompanhe a evolução do peso e o histórico médico dos seus pets.</p>
+                        </div>
+                    </div>
+                    <button type="button" id="btnCloseModalPets" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto bg-gray-50/50">
+                    <div id="mListaMeusPetsCards" class="space-y-6">
+                        <p class="text-center text-gray-500 py-8 text-sm">Carregando pets...</p>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-white px-6 py-4 border-t border-gray-100 flex justify-end">
+                    <button type="button" id="btnFecharModalPetsBottom" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold transition">
                         Fechar
                     </button>
                 </div>
@@ -995,6 +1040,179 @@ $is_vet = AppHelper::isVetMode();
 
             $(document).on('click', '#btnCloseModalAtendimento, #btnFecharModalBottom, #modalAtendimentoBackdrop', function() {
                 $('#modalAtendimentoDetalhes').addClass('hidden');
+            });
+
+            let activePetCharts = {};
+
+            window.abrirModalMeusPets = function() {
+                if (!globalDashboardData || !globalDashboardData.pets) {
+                    alert('Dados dos pets não carregados.');
+                    return;
+                }
+
+                const pets = globalDashboardData.pets;
+                const container = $('#mListaMeusPetsCards');
+                container.empty();
+
+                // Destroy previous Chart instances
+                Object.keys(activePetCharts).forEach(key => {
+                    if (activePetCharts[key]) {
+                        try { activePetCharts[key].destroy(); } catch(e){}
+                    }
+                });
+                activePetCharts = {};
+
+                if (pets.length === 0) {
+                    container.html('<p class="text-center text-gray-500 py-8">Nenhum pet cadastrado.</p>');
+                    $('#modalMeusPetsDetalhes').removeClass('hidden');
+                    return;
+                }
+
+                pets.forEach(pet => {
+                    const especieRaca = [pet.especie, pet.raca].filter(Boolean).join(' • ') || 'Espécie/Raça não informada';
+                    const sexoBadge = pet.sexo === 'M' 
+                        ? '<span class="px-2.5 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">Macho</span>' 
+                        : (pet.sexo === 'F' ? '<span class="px-2.5 py-1 rounded text-xs font-semibold bg-pink-100 text-pink-800">Fêmea</span>' : '');
+
+                    const totalConsultas = pet.total_atendimentos || 0;
+                    const dataUltimo = pet.ultimo_atendimento ? formatDateTime(pet.ultimo_atendimento) : 'Sem registros';
+                    const queixaUltimo = pet.ultimo_atendimento_queixa ? escapeHtml(pet.ultimo_atendimento_queixa) : 'Nenhuma queixa';
+
+                    // Histórico de Peso
+                    const historicoPeso = pet.historico_peso || [];
+                    let blocoPesoHtml = '';
+                    const canvasId = `chartPesoPet_${pet.id_pet}`;
+
+                    if (historicoPeso.length >= 2) {
+                        blocoPesoHtml = `
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1">
+                                        <span class="material-icons text-teal-600 text-base">show_chart</span> Evolução do Peso (kg)
+                                    </span>
+                                    <span class="text-xs text-gray-400 font-medium">${historicoPeso.length} pesagens registradas</span>
+                                </div>
+                                <div class="bg-white p-3 rounded-lg border border-gray-200 h-52 relative">
+                                    <canvas id="${canvasId}"></canvas>
+                                </div>
+                            </div>
+                        `;
+                    } else if (historicoPeso.length === 1) {
+                        const pUnico = historicoPeso[0];
+                        blocoPesoHtml = `
+                            <div class="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between bg-teal-50/50 p-3 rounded-lg border border-teal-100">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-icons text-teal-600">monitor_weight</span>
+                                    <span class="text-xs font-semibold text-teal-900">Última Pesagem Registrada:</span>
+                                </div>
+                                <span class="text-sm font-bold text-teal-950">${pUnico.peso.toFixed(2)} kg <span class="text-xs font-normal text-gray-500">(${formatDate(pUnico.data)})</span></span>
+                            </div>
+                        `;
+                    } else {
+                        blocoPesoHtml = `
+                            <div class="mt-4 pt-4 border-t border-gray-100 text-xs text-gray-400 italic">
+                                Nenhuma pesagem registrada nos atendimentos.
+                            </div>
+                        `;
+                    }
+
+                    container.append(`
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <!-- Pet Header -->
+                            <div class="p-4 bg-teal-50/60 border-b border-teal-100 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-3 bg-teal-600 text-white rounded-full shadow-sm">
+                                        <span class="material-icons text-2xl">pets</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-bold text-gray-800">${escapeHtml(pet.nome)}</h4>
+                                        <span class="text-xs text-gray-500">${escapeHtml(especieRaca)}</span>
+                                    </div>
+                                </div>
+                                <div>${sexoBadge}</div>
+                            </div>
+
+                            <!-- Pet Metrics -->
+                            <div class="p-5 space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <span class="text-gray-400 block font-medium uppercase mb-0.5">Consultas Realizadas</span>
+                                        <strong class="text-base text-gray-800">${totalConsultas} atendimento(s)</strong>
+                                    </div>
+                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                        <span class="text-gray-400 block font-medium uppercase mb-0.5">Última Consulta</span>
+                                        <strong class="text-gray-800">${dataUltimo}</strong>
+                                        <div class="text-gray-500 truncate mt-0.5" title="${queixaUltimo}">${queixaUltimo}</div>
+                                    </div>
+                                </div>
+
+                                ${blocoPesoHtml}
+                            </div>
+                        </div>
+                    `);
+                });
+
+                $('#modalMeusPetsDetalhes').removeClass('hidden');
+
+                // Render Chart.js charts for pets with 2+ weight entries
+                setTimeout(() => {
+                    pets.forEach(pet => {
+                        const historicoPeso = pet.historico_peso || [];
+                        if (historicoPeso.length >= 2) {
+                            const canvasId = `chartPesoPet_${pet.id_pet}`;
+                            const ctx = document.getElementById(canvasId);
+                            if (ctx) {
+                                const labels = historicoPeso.map(h => formatDate(h.data));
+                                const dataPoints = historicoPeso.map(h => h.peso);
+
+                                activePetCharts[pet.id_pet] = new Chart(ctx, {
+                                    type: 'line',
+                                    data: {
+                                        labels: labels,
+                                        datasets: [{
+                                            label: 'Peso (kg)',
+                                            data: dataPoints,
+                                            borderColor: '#0d9488',
+                                            backgroundColor: 'rgba(13, 148, 136, 0.1)',
+                                            borderWidth: 3,
+                                            pointBackgroundColor: '#0f766e',
+                                            pointRadius: 5,
+                                            pointHoverRadius: 7,
+                                            tension: 0.3,
+                                            fill: true
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: { display: false },
+                                            tooltip: {
+                                                callbacks: {
+                                                    label: function(context) {
+                                                        return `Peso: ${context.parsed.y.toFixed(2)} kg`;
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: false,
+                                                ticks: {
+                                                    callback: function(val) { return val + ' kg'; }
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }, 150);
+            };
+
+            $(document).on('click', '#btnCloseModalPets, #btnFecharModalPetsBottom, #modalMeusPetsBackdrop', function() {
+                $('#modalMeusPetsDetalhes').addClass('hidden');
             });
 
             function renderVacinasBreveList(vacinas) {

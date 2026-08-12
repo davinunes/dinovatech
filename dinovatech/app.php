@@ -2054,11 +2054,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $carteiraVacinas = [];
 
             if (AppHelper::isVetMode()) {
-                // Pets
+                // Pets com histórico de peso e estatísticas
                 $qPets = "SELECT * FROM Pets WHERE id_cliente = '$id_cliente_safe' ORDER BY nome ASC";
                 $rPets = DBExecute($link, $qPets);
                 if ($rPets) {
                     while ($pt = mysqli_fetch_assoc($rPets)) {
+                        $idPet = $pt['id_pet'];
+
+                        // 1. Estatísticas de Atendimentos do Pet
+                        $qStatAtend = "SELECT COUNT(*) as total_atendimentos, 
+                                             MAX(data_atendimento) as ultimo_atendimento
+                                      FROM Atendimentos WHERE id_pet = '$idPet'";
+                        $rStatAtend = DBExecute($link, $qStatAtend);
+                        $statAtend = mysqli_fetch_assoc($rStatAtend);
+                        $pt['total_atendimentos'] = (int)($statAtend['total_atendimentos'] ?? 0);
+                        $pt['ultimo_atendimento'] = $statAtend['ultimo_atendimento'] ?? null;
+
+                        // Queixa do último atendimento
+                        $pt['ultimo_atendimento_queixa'] = null;
+                        if (!empty($pt['ultimo_atendimento'])) {
+                            $qUltQueixa = "SELECT queixa_principal FROM Atendimentos WHERE id_pet = '$idPet' ORDER BY data_atendimento DESC LIMIT 1";
+                            $rUltQueixa = DBExecute($link, $qUltQueixa);
+                            if ($rUltQueixa && $rowQ = mysqli_fetch_assoc($rUltQueixa)) {
+                                $pt['ultimo_atendimento_queixa'] = $rowQ['queixa_principal'];
+                            }
+                        }
+
+                        // 2. Histórico de Pesagem (Atendimentos com peso > 0)
+                        $qPesoHist = "SELECT DATE_FORMAT(data_atendimento, '%Y-%m-%d') as data, peso 
+                                      FROM Atendimentos 
+                                      WHERE id_pet = '$idPet' AND peso IS NOT NULL AND peso > 0 
+                                      ORDER BY data_atendimento ASC";
+                        $rPesoHist = DBExecute($link, $qPesoHist);
+                        $pesosHist = [];
+                        if ($rPesoHist) {
+                            while ($pRow = mysqli_fetch_assoc($rPesoHist)) {
+                                $pesosHist[] = [
+                                    'data' => $pRow['data'],
+                                    'peso' => (float)$pRow['peso']
+                                ];
+                            }
+                        }
+
+                        // Se não houver histórico em Atendimentos mas houver no cadastro do Pet, inclui como Ponto Atual
+                        if (empty($pesosHist) && !empty($pt['peso']) && (float)$pt['peso'] > 0) {
+                            $pesosHist[] = [
+                                'data' => date('Y-m-d'),
+                                'peso' => (float)$pt['peso']
+                            ];
+                        }
+
+                        $pt['historico_peso'] = $pesosHist;
+
                         $pets[] = $pt;
                     }
                 }

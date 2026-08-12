@@ -129,13 +129,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($is_edit) {
         $q = "UPDATE Atendimentos SET id_vet=$id_veterinario, data_atendimento='$data_safe', queixa_principal='$motivo', 
-              anamnese='$anamnese', exame_fisico='$exame', diagnostico='$diag', conduta_tratamento='$presc'
+              anamnese='$anamnese', exame_fisico='$exame', diagnostico='$diag', conduta_tratamento='$presc', peso=$peso_safe
               WHERE id_atendimento=$id_atendimento";
     } else {
         $id_agendamento = isset($_POST['id_agendamento']) ? (int) $_POST['id_agendamento'] : "NULL";
 
-        $q = "INSERT INTO Atendimentos (id_pet, id_vet, data_atendimento, queixa_principal, anamnese, exame_fisico, diagnostico, conduta_tratamento, id_agendamento)
-              VALUES ($id_pet, $id_veterinario, '$data_safe', '$motivo', '$anamnese', '$exame', '$diag', '$presc', $id_agendamento)";
+        $q = "INSERT INTO Atendimentos (id_pet, id_vet, data_atendimento, queixa_principal, anamnese, exame_fisico, diagnostico, conduta_tratamento, id_agendamento, peso)
+              VALUES ($id_pet, $id_veterinario, '$data_safe', '$motivo', '$anamnese', '$exame', '$diag', '$presc', $id_agendamento, $peso_safe)";
     }
 
     if (DBExecute($link, $q)) {
