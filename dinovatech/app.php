@@ -233,6 +233,271 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+        // ACTIONS: Módulo de Internação Veterinária
+        case 'save_internacao':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_internacao = $_POST['id_internacao'] ?? '';
+            $id_pet = $_POST['id_pet'] ?? '';
+            $id_vet = $_POST['id_vet'] ?? NULL;
+            $data_internacao = $_POST['data_internacao'] ?? date('Y-m-d H:i:s');
+            $data_alta = !empty($_POST['data_alta']) ? $_POST['data_alta'] : NULL;
+            $suspeita_clinica = $_POST['suspeita_clinica'] ?? '';
+            $status = $_POST['status'] ?? 'internado';
+            $observacoes = $_POST['observacoes'] ?? '';
+
+            if (empty($id_pet) || empty($data_internacao)) {
+                $response['message'] = "Pet e Data da Internação são obrigatórios.";
+            } else {
+                $id_pet = (int) $id_pet;
+                $id_vet_val = !empty($id_vet) ? (int)$id_vet : "NULL";
+                $data_internacao_val = mysqli_real_escape_string($link, $data_internacao);
+                $data_alta_val = $data_alta ? "'" . mysqli_real_escape_string($link, $data_alta) . "'" : "NULL";
+                $suspeita_val = mysqli_real_escape_string($link, $suspeita_clinica);
+                $status_val = mysqli_real_escape_string($link, $status);
+                $obs_val = mysqli_real_escape_string($link, $observacoes);
+
+                if (!empty($id_internacao)) {
+                    $id_int = (int) $id_internacao;
+                    $query = "UPDATE Internacoes SET 
+                                id_vet = $id_vet_val, 
+                                data_internacao = '$data_internacao_val', 
+                                data_alta = $data_alta_val, 
+                                suspeita_clinica = '$suspeita_val', 
+                                status = '$status_val', 
+                                observacoes = '$obs_val' 
+                              WHERE id_internacao = $id_int";
+                    if (DBExecute($link, $query)) {
+                        $response['success'] = true;
+                        $response['message'] = "Internação atualizada com sucesso!";
+                        $response['id_internacao'] = $id_int;
+                    } else {
+                        $response['message'] = "Erro ao atualizar internação: " . mysqli_error($link);
+                    }
+                } else {
+                    $query = "INSERT INTO Internacoes (id_pet, id_vet, data_internacao, data_alta, suspeita_clinica, status, observacoes) 
+                              VALUES ($id_pet, $id_vet_val, '$data_internacao_val', $data_alta_val, '$suspeita_val', '$status_val', '$obs_val')";
+                    if (DBExecute($link, $query)) {
+                        $new_id = mysqli_insert_id($link);
+                        // Auto-criar Dia 1 se não houver
+                        $data_hoje = date('Y-m-d', strtotime($data_internacao));
+                        DBExecute($link, "INSERT INTO InternacaoDias (id_internacao, data_dia) VALUES ($new_id, '$data_hoje')");
+                        
+                        $response['success'] = true;
+                        $response['message'] = "Internação cadastrada com sucesso!";
+                        $response['id_internacao'] = $new_id;
+                    } else {
+                        $response['message'] = "Erro ao cadastrar internação: " . mysqli_error($link);
+                    }
+                }
+            }
+            break;
+
+        case 'delete_internacao':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_internacao = $_POST['id_internacao'] ?? '';
+            if (empty($id_internacao)) {
+                $response['message'] = "ID da internação é obrigatório.";
+            } else {
+                $id_int = (int) $id_internacao;
+                if (DBExecute($link, "DELETE FROM Internacoes WHERE id_internacao = $id_int")) {
+                    $response['success'] = true;
+                    $response['message'] = "Internação removida com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao remover internação: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'save_internacao_dia':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_dia = $_POST['id_dia'] ?? '';
+            $id_internacao = $_POST['id_internacao'] ?? '';
+            $data_dia = $_POST['data_dia'] ?? date('Y-m-d');
+            $soro = $_POST['soro'] ?? '';
+            $volume = $_POST['volume'] ?? '';
+            $frequencia = $_POST['frequencia'] ?? '';
+            $observacoes = $_POST['observacoes'] ?? '';
+
+            if (empty($id_internacao) || empty($data_dia)) {
+                $response['message'] = "Internação e Data do Dia são obrigatórios.";
+            } else {
+                $id_int = (int) $id_internacao;
+                $data_dia_val = mysqli_real_escape_string($link, $data_dia);
+                $soro_val = mysqli_real_escape_string($link, $soro);
+                $volume_val = mysqli_real_escape_string($link, $volume);
+                $freq_val = mysqli_real_escape_string($link, $frequencia);
+                $obs_val = mysqli_real_escape_string($link, $observacoes);
+
+                if (!empty($id_dia)) {
+                    $id_d = (int) $id_dia;
+                    $query = "UPDATE InternacaoDias SET 
+                                data_dia = '$data_dia_val', 
+                                soro = '$soro_val', 
+                                volume = '$volume_val', 
+                                frequencia = '$freq_val', 
+                                observacoes = '$obs_val' 
+                              WHERE id_dia = $id_d";
+                    if (DBExecute($link, $query)) {
+                        $response['success'] = true;
+                        $response['message'] = "Ficha do dia atualizada!";
+                        $response['id_dia'] = $id_d;
+                    } else {
+                        $response['message'] = "Erro ao atualizar dia: " . mysqli_error($link);
+                    }
+                } else {
+                    $query = "INSERT INTO InternacaoDias (id_internacao, data_dia, soro, volume, frequencia, observacoes) 
+                              VALUES ($id_int, '$data_dia_val', '$soro_val', '$volume_val', '$freq_val', '$obs_val')";
+                    if (DBExecute($link, $query)) {
+                        $response['success'] = true;
+                        $response['message'] = "Dia de internação adicionado!";
+                        $response['id_dia'] = mysqli_insert_id($link);
+                    } else {
+                        $response['message'] = "Erro ao adicionar dia: " . mysqli_error($link);
+                    }
+                }
+            }
+            break;
+
+        case 'delete_internacao_dia':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_dia = $_POST['id_dia'] ?? '';
+            if (empty($id_dia)) {
+                $response['message'] = "ID do dia é obrigatório.";
+            } else {
+                $id_d = (int) $id_dia;
+                if (DBExecute($link, "DELETE FROM InternacaoDias WHERE id_dia = $id_d")) {
+                    $response['success'] = true;
+                    $response['message'] = "Dia removido com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao remover dia: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'save_internacao_medicacao':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_medicacao = $_POST['id_medicacao'] ?? '';
+            $id_dia = $_POST['id_dia'] ?? '';
+            $medicacao = trim($_POST['medicacao'] ?? '');
+            $dose = trim($_POST['dose'] ?? '');
+            $via = trim($_POST['via'] ?? '');
+            $horarios_json = $_POST['horarios'] ?? '[]';
+
+            if (empty($id_dia) || empty($medicacao)) {
+                $response['message'] = "Dia da Ficha e Nome da Medicação são obrigatórios.";
+            } else {
+                $id_d = (int) $id_dia;
+                $med_val = mysqli_real_escape_string($link, $medicacao);
+                $dose_val = mysqli_real_escape_string($link, $dose);
+                $via_val = mysqli_real_escape_string($link, $via);
+
+                if (is_array($horarios_json)) {
+                    $horarios_json = json_encode($horarios_json);
+                }
+                $horarios_val = mysqli_real_escape_string($link, $horarios_json);
+
+                if (!empty($id_medicacao)) {
+                    $id_m = (int) $id_medicacao;
+                    $query = "UPDATE InternacaoMedicacoes SET 
+                                medicacao = '$med_val', 
+                                dose = '$dose_val', 
+                                via = '$via_val', 
+                                horarios = '$horarios_val' 
+                              WHERE id_medicacao = $id_m";
+                    if (DBExecute($link, $query)) {
+                        $response['success'] = true;
+                        $response['message'] = "Medicação atualizada!";
+                        $response['id_medicacao'] = $id_m;
+                    } else {
+                        $response['message'] = "Erro ao atualizar medicação: " . mysqli_error($link);
+                    }
+                } else {
+                    $query = "INSERT INTO InternacaoMedicacoes (id_dia, medicacao, dose, via, horarios) 
+                              VALUES ($id_d, '$med_val', '$dose_val', '$via_val', '$horarios_val')";
+                    if (DBExecute($link, $query)) {
+                        $response['success'] = true;
+                        $response['message'] = "Medicação adicionada!";
+                        $response['id_medicacao'] = mysqli_insert_id($link);
+                    } else {
+                        $response['message'] = "Erro ao adicionar medicação: " . mysqli_error($link);
+                    }
+                }
+            }
+            break;
+
+        case 'delete_internacao_medicacao':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_medicacao = $_POST['id_medicacao'] ?? '';
+            if (empty($id_medicacao)) {
+                $response['message'] = "ID da medicação é obrigatório.";
+            } else {
+                $id_m = (int) $id_medicacao;
+                if (DBExecute($link, "DELETE FROM InternacaoMedicacoes WHERE id_medicacao = $id_m")) {
+                    $response['success'] = true;
+                    $response['message'] = "Medicação removida!";
+                } else {
+                    $response['message'] = "Erro ao remover medicação: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'get_internacao_details':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Modo Veterinário desativado.";
+                break;
+            }
+            $id_internacao = (int)($_POST['id_internacao'] ?? 0);
+            $q_int = "SELECT i.*, v.nome as vet_nome, v.crmv as vet_crmv 
+                      FROM Internacoes i 
+                      LEFT JOIN Veterinarios v ON i.id_vet = v.id_vet 
+                      WHERE i.id_internacao = $id_internacao";
+            $r_int = DBExecute($link, $q_int);
+            if ($r_int && mysqli_num_rows($r_int) > 0) {
+                $int_data = mysqli_fetch_assoc($r_int);
+                $dias_data = [];
+                $q_d = "SELECT * FROM InternacaoDias WHERE id_internacao = $id_internacao ORDER BY data_dia ASC";
+                $r_d = DBExecute($link, $q_d);
+                if ($r_d) {
+                    while ($d = mysqli_fetch_assoc($r_d)) {
+                        $id_d = $d['id_dia'];
+                        $meds = [];
+                        $q_m = "SELECT * FROM InternacaoMedicacoes WHERE id_dia = $id_d ORDER BY ordem ASC, id_medicacao ASC";
+                        $r_m = DBExecute($link, $q_m);
+                        if ($r_m) {
+                            while ($m = mysqli_fetch_assoc($r_m)) {
+                                $meds[] = $m;
+                            }
+                        }
+                        $d['medicacoes'] = $meds;
+                        $dias_data[] = $d;
+                    }
+                }
+                $response['success'] = true;
+                $response['internacao'] = $int_data;
+                $response['dias'] = $dias_data;
+            } else {
+                $response['message'] = "Internação não encontrada.";
+            }
+            break;
+
         // NOVA ACTION: Configuração Fiscal
         case 'save_config_fiscal':
             // Recebe dados do POST

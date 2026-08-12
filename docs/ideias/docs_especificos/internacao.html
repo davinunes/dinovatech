@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha de Internação</title>
+    <style>
+        /* Configurações de página e impressão */
+        @page {
+            size: A4 portrait;
+            margin: 10mm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #000;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        .page {
+            width: 190mm;
+            /* 210mm - 20mm de margens */
+            height: 277mm;
+            /* 297mm - 20mm de margens */
+            margin: 10mm auto;
+            background: #fff;
+            padding: 0;
+            box-sizing: border-box;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        @media print {
+            body {
+                background: none;
+            }
+
+            .page {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: avoid;
+            }
+        }
+
+        /* Estrutura de Tabelas e Layout */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
+
+        th,
+        td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .header-title {
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            background-color: #f2f2f2;
+            padding: 6px;
+        }
+
+        .label {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        /* Seções de medicação repetidas */
+        .section-block {
+            border: 2px solid #000;
+            margin-top: 5px;
+            padding: 0;
+        }
+
+        .med-table th {
+            background-color: #f9f9f9;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .checkbox-cell {
+            text-align: center;
+            width: 32px;
+            font-size: 9px;
+            white-space: nowrap;
+        }
+
+        .checkbox-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .checkbox-box {
+            display: inline-block;
+            width: 14px;
+            height: 12px;
+            border: 1px solid #000;
+            margin-right: 2px;
+            vertical-align: middle;
+        }
+
+        .fluid-info {
+            display: flex;
+            border-top: 1px solid #000;
+            background: #fff;
+        }
+
+        .fluid-field {
+            flex: 1;
+            padding: 4px;
+            border-right: 1px solid #000;
+        }
+
+        .fluid-field:last-child {
+            border-right: none;
+            flex: 2;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="page">
+
+        <!-- Cabeçalho Principal da Ficha -->
+        <table>
+            <tr>
+                <td colspan="4" class="header-title">FICHA DE INTERNAÇÃO</td>
+            </tr>
+            <tr>
+                <td style="width: 50%;"><span class="label">Nome:</span></td>
+                <td style="width: 15%;"><span class="label">Espécie:</span></td>
+                <td style="width: 20%;"><span class="label">Raça:</span></td>
+                <td style="width: 15%;"><span class="label">Cor:</span></td>
+            </tr>
+            <tr>
+                <td><span class="label">Idade:</span></td>
+                <td><span class="label">Peso:</span></td>
+                <td colspan="2"><span class="label">Suspeita Clínica:</span></td>
+            </tr>
+            <tr>
+                <td colspan="2"><span class="label">Proprietário:</span></td>
+                <td colspan="2"><span class="label">Fone:</span></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <span class="label">Data da Internação:</span> &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; /
+                    <span class="label" style="margin-left: 20px;">Horário:</span>
+                </td>
+                <td colspan="2"><span class="label">Médico Veterinário:</span></td>
+            </tr>
+        </table>
+
+        <!-- BLOCO DE MEDICAÇÃO 1 -->
+        <div class="section-block">
+            <table class="med-table" style="margin-bottom: 0;">
+                <tr>
+                    <td colspan="4" style="border: none; padding: 4px;"><span class="label">Data:</span>
+                        &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; /</td>
+                </tr>
+                <tr>
+                    <th style="width: 45%;">MEDICAÇÃO</th>
+                    <th style="width: 12%;">DOSE</th>
+                    <th style="width: 10%;">VIA</th>
+                    <th style="width: 33%;">HORÁRIO</th>
+                </tr>
+                <!-- Loop de 11 linhas para preenchimento manual -->
+                <!-- Cada linha contém 6 slots de horários com mini caixas de checagem -->
+                <script>
+                    for (let i = 0; i < 11; i++) {
+                        document.write(`
+                    <tr>
+                        <td style="height: 15px;"></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="checkbox-container">
+                                ${'<div class="checkbox-cell"><span class="checkbox-box"></span>( )</div>'.repeat(6)}
+                            </div>
+                        </td>
+                    </tr>`);
+                    }
+                </script>
+            </table>
+            <div class="fluid-info">
+                <div class="fluid-field"><span class="label">Soro:</span></div>
+                <div class="fluid-field"><span class="label">Volume:</span></div>
+                <div class="fluid-field"><span class="label">Frequência:</span></div>
+                <div class="fluid-field"><span class="label">Obs:</span></div>
+            </div>
+        </div>
+
+        <!-- BLOCO DE MEDICAÇÃO 2 -->
+        <div class="section-block">
+            <table class="med-table" style="margin-bottom: 0;">
+                <tr>
+                    <td colspan="4" style="border: none; padding: 4px;"><span class="label">Data:</span>
+                        &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; /</td>
+                </tr>
+                <tr>
+                    <th style="width: 45%;">MEDICAÇÃO</th>
+                    <th style="width: 12%;">DOSE</th>
+                    <th style="width: 10%;">VIA</th>
+                    <th style="width: 33%;">HORÁRIO</th>
+                </tr>
+                <script>
+                    for (let i = 0; i < 11; i++) {
+                        document.write(`
+                    <tr>
+                        <td style="height: 15px;"></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="checkbox-container">
+                                ${'<div class="checkbox-cell"><span class="checkbox-box"></span>( )</div>'.repeat(6)}
+                            </div>
+                        </td>
+                    </tr>`);
+                    }
+                </script>
+            </table>
+            <div class="fluid-info">
+                <div class="fluid-field"><span class="label">Soro:</span></div>
+                <div class="fluid-field"><span class="label">Volume:</span></div>
+                <div class="fluid-field"><span class="label">Frequência:</span></div>
+                <div class="fluid-field"><span class="label">Obs:</span></div>
+            </div>
+        </div>
+
+        <!-- BLOCO DE MEDICAÇÃO 3 -->
+        <div class="section-block">
+            <table class="med-table" style="margin-bottom: 0;">
+                <tr>
+                    <td colspan="4" style="border: none; padding: 4px;"><span class="label">Data:</span>
+                        &nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; /</td>
+                </tr>
+                <tr>
+                    <th style="width: 45%;">MEDICAÇÃO</th>
+                    <th style="width: 12%;">DOSE</th>
+                    <th style="width: 10%;">VIA</th>
+                    <th style="width: 33%;">HORÁRIO</th>
+                </tr>
+                <script>
+                    for (let i = 0; i < 11; i++) {
+                        document.write(`
+                    <tr>
+                        <td style="height: 15px;"></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="checkbox-container">
+                                ${'<div class="checkbox-cell"><span class="checkbox-box"></span>( )</div>'.repeat(6)}
+                            </div>
+                        </td>
+                    </tr>`);
+                    }
+                </script>
+            </table>
+            <div class="fluid-info">
+                <div class="fluid-field"><span class="label">Soro:</span></div>
+                <div class="fluid-field"><span class="label">Volume:</span></div>
+                <div class="fluid-field"><span class="label">Frequência:</span></div>
+                <div class="fluid-field"><span class="label">Obs:</span></div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
