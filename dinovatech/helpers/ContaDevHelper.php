@@ -152,10 +152,15 @@ class ContaDevHelper
             return ['success' => false, 'message' => 'Nenhum CNPJ vinculado foi encontrado na sua conta ContaDev.'];
         }
 
+        // Garante que a coluna contadev_password existe na tabela
+        @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN contadev_password TEXT DEFAULT NULL");
+
         // Salva na tabela ConfiguracoesEmissor
         $tokenEnc = EncryptionHelper::encrypt($token);
+        $passwordEnc = EncryptionHelper::encrypt($password);
         $emailSafe = mysqli_real_escape_string($link, $email);
         $tokenEncSafe = mysqli_real_escape_string($link, $tokenEnc);
+        $passwordEncSafe = mysqli_real_escape_string($link, $passwordEnc);
         $userIdSafe = mysqli_real_escape_string($link, $userId);
         $cnpjIdSafe = mysqli_real_escape_string($link, $cnpjId);
         $companyNameSafe = mysqli_real_escape_string($link, $companyName);
@@ -167,6 +172,7 @@ class ContaDevHelper
             $sql = "UPDATE ConfiguracoesEmissor SET 
                     contadev_email = '$emailSafe',
                     contadev_token = '$tokenEncSafe',
+                    contadev_password = '$passwordEncSafe',
                     contadev_user_id = '$userIdSafe',
                     contadev_cnpj_id = '$cnpjIdSafe',
                     contadev_company_name = '$companyNameSafe',
@@ -175,8 +181,8 @@ class ContaDevHelper
                     WHERE id_config = {$config['id_config']}";
         } else {
             $sql = "INSERT INTO ConfiguracoesEmissor 
-                    (razao_social, cnpj, inscricao_municipal, contadev_email, contadev_token, contadev_user_id, contadev_cnpj_id, contadev_company_name, contadev_user_name, contadev_ativo)
-                    VALUES ('Empresa', '00000000000000', '0', '$emailSafe', '$tokenEncSafe', '$userIdSafe', '$cnpjIdSafe', '$companyNameSafe', '$userNameSafe', 1)";
+                    (razao_social, cnpj, inscricao_municipal, contadev_email, contadev_token, contadev_password, contadev_user_id, contadev_cnpj_id, contadev_company_name, contadev_user_name, contadev_ativo)
+                    VALUES ('Empresa', '00000000000000', '0', '$emailSafe', '$tokenEncSafe', '$passwordEncSafe', '$userIdSafe', '$cnpjIdSafe', '$companyNameSafe', '$userNameSafe', 1)";
         }
 
         if (DBExecute($link, $sql)) {
@@ -197,24 +203,61 @@ class ContaDevHelper
     }
 
     /**
+     * Obtém um token válido do ContaDev. Se o token atual estiver expirado ou ausente,
+     * tenta renová-lo automaticamente realizando o re-login com as credenciais salvas.
+     */
+    public static function getValidToken($link)
+    {
+        $config = self::getConfig($link);
+        if (!$config || empty($config['contadev_ativo'])) {
+            return null;
+        }
+
+        $token = !empty($config['contadev_token']) ? EncryptionHelper::decrypt($config['contadev_token']) : null;
+
+        // 1. Testa token atual no endpoint /platform/me
+        if (!empty($token)) {
+            $urlMe = self::$baseUrl . '/platform/me';
+            $resMe = self::makeRequest($urlMe, 'GET', null, $token);
+            if ($resMe['status'] === 200) {
+                return $token;
+            }
+            self::log($link, null, 'auto_refresh', 'info', "Token ContaDev expirado ou inválido (HTTP {$resMe['status']}). Tentando re-login automático...");
+        }
+
+        // 2. Se token expirou ou não é válido, tenta re-login automático se e-mail e senha existirem
+        if (!empty($config['contadev_email']) && !empty($config['contadev_password'])) {
+            $password = EncryptionHelper::decrypt($config['contadev_password']);
+            if (!empty($password)) {
+                $loginRes = self::login($link, $config['contadev_email'], $password);
+                if ($loginRes['success']) {
+                    self::log($link, null, 'auto_refresh', 'sucesso', 'Token ContaDev renovado automaticamente com sucesso via credenciais salvas.');
+                    $configUpdated = self::getConfig($link);
+                    return !empty($configUpdated['contadev_token']) ? EncryptionHelper::decrypt($configUpdated['contadev_token']) : null;
+                } else {
+                    self::log($link, null, 'auto_refresh', 'erro', "Falha ao renovar token automaticamente: " . ($loginRes['message'] ?? ''));
+                }
+            }
+        }
+
+        // Se a re-autenticação falhar, inativa a integração no banco
+        DBExecute($link, "UPDATE ConfiguracoesEmissor SET contadev_ativo = 0 WHERE id_config = {$config['id_config']}");
+        return null;
+    }
+
+    /**
      * Retorna o status atual da conexão com a ContaDev.
      */
     public static function getAccountStatus($link)
     {
         $config = self::getConfig($link);
-        if (!$config || empty($config['contadev_ativo']) || empty($config['contadev_token'])) {
+        if (!$config || empty($config['contadev_ativo'])) {
             return ['active' => false, 'message' => 'ContaDev não conectada.'];
         }
 
-        $token = EncryptionHelper::decrypt($config['contadev_token']);
-        if (!$token) {
-            return ['active' => false, 'message' => 'Token do ContaDev inválido.'];
-        }
-
-        $urlMe = self::$baseUrl . '/platform/me';
-        $resMe = self::makeRequest($urlMe, 'GET', null, $token);
-
-        if ($resMe['status'] === 200) {
+        $validToken = self::getValidToken($link);
+        if ($validToken) {
+            $config = self::getConfig($link);
             return [
                 'active' => true,
                 'email' => $config['contadev_email'],
@@ -223,10 +266,7 @@ class ContaDevHelper
                 'cnpj_id' => $config['contadev_cnpj_id']
             ];
         } else {
-            // Token expirou ou é inválido -> inativar
-            DBExecute($link, "UPDATE ConfiguracoesEmissor SET contadev_ativo = 0 WHERE id_config = {$config['id_config']}");
-            self::log($link, null, 'get_me', 'erro', "Sessão expirada ContaDev HTTP {$resMe['status']}", null, $resMe['body']);
-            return ['active' => false, 'message' => 'Sessão expirada na ContaDev. Por favor, conecte-se novamente.'];
+            return ['active' => false, 'message' => 'Sessão expirada na ContaDev e falha na re-autenticação. Por favor, conecte-se novamente.'];
         }
     }
 
@@ -240,6 +280,7 @@ class ContaDevHelper
             $sql = "UPDATE ConfiguracoesEmissor SET 
                     contadev_ativo = 0,
                     contadev_token = NULL,
+                    contadev_password = NULL,
                     contadev_user_id = NULL,
                     contadev_cnpj_id = NULL,
                     contadev_email = NULL,
@@ -441,14 +482,13 @@ class ContaDevHelper
     {
         $id_safe = (int)$id_fatura;
 
-        // 1. Valida configuração do ContaDev
-        $statusAcc = self::getAccountStatus($link);
-        if (!$statusAcc['active']) {
-            return ['success' => false, 'message' => 'Integração ContaDev inativa: ' . ($statusAcc['message'] ?? 'Faça login nas configurações.')];
+        // 1. Valida configuração do ContaDev e garante token válido (com auto-refresh se necessário)
+        $token = self::getValidToken($link);
+        if (!$token) {
+            return ['success' => false, 'message' => 'Integração ContaDev inativa ou sessão expirada. Por favor, reconecte nas configurações.'];
         }
 
         $config = self::getConfig($link);
-        $token = EncryptionHelper::decrypt($config['contadev_token']);
         $cnpjId = $config['contadev_cnpj_id'];
 
         // 2. Busca dados da Fatura
