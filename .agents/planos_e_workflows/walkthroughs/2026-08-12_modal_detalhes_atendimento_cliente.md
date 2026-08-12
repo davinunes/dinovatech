@@ -1,18 +1,14 @@
-# Walkthrough / Resumo de Entrega: Correção do Status de Contratos Vencidos no Portal do Cliente
+# Walkthrough / Resumo de Entrega: Correção da Variável dataFim na Exibição de Contratos
 
 **Data:** 2026-08-12  
-**Funcionalidade:** Verificação dinâmica da data de encerramento da cobrança (`data_fim_cobranca`) para marcar contratos vencidos/expirados com o devido badge visual no Portal do Cliente (`cliente/index.php`).
+**Funcionalidade:** Correção de exceção JS no loop de contratos que impedia a renderização dos cards na Dashboard e na aba Meus Dados.
 
-## Alterações Realizadas
+## Causa & Correção
 
-1. **[cliente/index.php](file:///e:/DEV/dinovatech/cliente/index.php)**
-   - Atualizada a função `renderRecorrenciasList`: agora compara `data_fim_cobranca` com a data atual (`hojeStr`).
-   - Se `data_fim_cobranca` for inferior à data de hoje, o contrato é rotulado como **"Vencido"** com badge vermelho (`bg-red-100 text-red-800`), e a data de término é destacada em vermelho.
-   - Se o contrato for inativo/cancelado, exibe a etiqueta **"Cancelado"**.
-   - Se estiver dentro da vigência ou sem data de término, permanece rotulado como **"Ativa"** (verde).
+- **Causa**: Na alteração anterior, a constante `dataFim` havia sido removida acidentalmente do escopo do loop `recorrencias.forEach`, disparando a exceção `ReferenceError: dataFim is not defined` ao tentar montar o template string do card.
+- **Solução**: Restabelecida a constante `const dataFim = rec.data_fim_cobranca ? formatDate(rec.data_fim_cobranca) : 'Indeterminado';`. Agora todos os contratos (tanto ativos quanto vencidos) são renderizados perfeitamente com seus respectivos badges.
 
 ## Instruções de Teste e Validação
 
-1. Acesse a Área do Cliente em `cliente/index.php`.
-2. Na aba **Visão Geral** ou na seção **Minhas Assinaturas** (em **Meus Dados**), observe os cards de contrato.
-3. Confirme que contratos cujo término da vigência já passou são exibidos com o status **"Vencido"** em vermelho em vez de "Ativa".
+1. Acesse o Portal do Cliente (`cliente/index.php`).
+2. Na Dashboard ou na aba **Meus Dados**, verifique que a lista de contratos é carregada exibindo todos os contratos ativos e vencidos.

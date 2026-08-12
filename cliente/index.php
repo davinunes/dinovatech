@@ -782,6 +782,7 @@ $is_vet = AppHelper::isVetMode();
                     const valorFormatado = formatCurrency(valorTotal);
                     const periodo = escapeHtml(rec.tipo_periodo || 'Mês').toLowerCase();
                     const dataInicio = formatDate(rec.data_inicio_cobranca);
+                    const dataFim = rec.data_fim_cobranca ? formatDate(rec.data_fim_cobranca) : 'Indeterminado';
                     const hojeStr = new Date().toISOString().split('T')[0];
                     const isExpirado = rec.data_fim_cobranca && rec.data_fim_cobranca < hojeStr;
                     const isCancelado = rec.status && (rec.status.toLowerCase() === 'cancelada' || rec.status.toLowerCase() === 'cancelado' || rec.status.toLowerCase() === 'inativa');
