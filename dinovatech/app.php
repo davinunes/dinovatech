@@ -2170,6 +2170,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+        case 'get_atendimento_detalhes_cliente':
+            $id_cliente = $_SESSION['cliente_id'] ?? '';
+            $id_atendimento = $_POST['id_atendimento'] ?? '';
+
+            if (empty($id_cliente) || empty($id_atendimento)) {
+                $response['message'] = "Parâmetros inválidos ou sessão expirada.";
+                break;
+            }
+
+            $id_cliente_safe = mysqli_real_escape_string($link, $id_cliente);
+            $id_atendimento_safe = mysqli_real_escape_string($link, $id_atendimento);
+
+            // 1. Fetch Atendimento and check ownership via Pet -> Cliente
+            $qAtend = "SELECT a.*, 
+                        p.nome as pet_nome, p.especie as pet_especie, p.raca as pet_raca, p.sexo as pet_sexo, p.peso as pet_peso, p.data_nascimento as pet_nascimento,
+                        v.nome as vet_nome, v.crmv as vet_crmv, v.uf_crmv as vet_uf_crmv
+                       FROM Atendimentos a
+                       JOIN Pets p ON a.id_pet = p.id_pet
+                       LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet
+                       WHERE a.id_atendimento = '$id_atendimento_safe' AND p.id_cliente = '$id_cliente_safe'";
+            $rAtend = DBExecute($link, $qAtend);
+            if (!$rAtend || mysqli_num_rows($rAtend) === 0) {
+                $response['message'] = "Atendimento não encontrado ou acesso não permitido.";
+                break;
+            }
+
+            $atendimentoData = mysqli_fetch_assoc($rAtend);
+
+            // 2. Fetch Attached Files
+            $qArq = "SELECT arq.id_arquivo, arq.nome_original, arq.url_publica, arq.tamanho_bytes, arq.data_upload
+                     FROM Arquivos arq
+                     JOIN AtendimentoArquivos aa ON arq.id_arquivo = aa.id_arquivo
+                     WHERE aa.id_atendimento = '$id_atendimento_safe'
+                     ORDER BY arq.data_upload DESC";
+            $rArq = DBExecute($link, $qArq);
+            $arquivos = [];
+            if ($rArq) {
+                while ($ar = mysqli_fetch_assoc($rArq)) {
+                    $arquivos[] = $ar;
+                }
+            }
+
+            // 3. Fetch Prescriptions (Receitas) & Items
+            $qRec = "SELECT * FROM Receitas WHERE id_atendimento = '$id_atendimento_safe' ORDER BY data_receita DESC";
+            $rRec = DBExecute($link, $qRec);
+            $receitas = [];
+            if ($rRec) {
+                while ($rec = mysqli_fetch_assoc($rRec)) {
+                    $idRec = $rec['id_receita'];
+                    $qItens = "SELECT * FROM ItensReceita WHERE id_receita = '$idRec' ORDER BY id_item ASC";
+                    $rItens = DBExecute($link, $qItens);
+                    $itens = [];
+                    if ($rItens) {
+                        while ($it = mysqli_fetch_assoc($rItens)) {
+                            $itens[] = $it;
+                        }
+                    }
+                    $rec['itens'] = $itens;
+                    $receitas[] = $rec;
+                }
+            }
+
+            $response['success'] = true;
+            $response['data'] = [
+                'atendimento' => $atendimentoData,
+                'arquivos' => $arquivos,
+                'receitas' => $receitas
+            ];
+            break;
+
         default:
             $response['message'] = "Ação inválida.";
             break;

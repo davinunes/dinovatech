@@ -419,6 +419,113 @@ $is_vet = AppHelper::isVetMode();
 
     </main>
 
+    <!-- Modal Detalhes do Atendimento Clínico -->
+    <div id="modalAtendimentoDetalhes" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Backdrop -->
+        <div id="modalAtendimentoBackdrop" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
+
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
+            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border border-gray-100 w-full">
+                
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-teal-700 to-cyan-800 p-6 text-white flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-icons text-teal-200">medical_services</span>
+                            <span class="text-xs uppercase tracking-wider font-semibold text-teal-200" id="mAtendData">--/--/----</span>
+                        </div>
+                        <h3 class="text-2xl font-bold" id="mAtendPetNome">Atendimento Clínico</h3>
+                        <p class="text-xs text-teal-100 mt-1" id="mAtendPetDetalhes">--</p>
+                    </div>
+                    <button type="button" id="btnCloseModalAtendimento" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+
+                    <!-- Info Vet -->
+                    <div class="bg-teal-50/50 p-4 rounded-xl border border-teal-100 flex flex-col sm:flex-row justify-between sm:items-center text-sm gap-2">
+                        <div>
+                            <span class="text-xs text-gray-500 font-medium uppercase block">Veterinário Responsável</span>
+                            <strong class="text-teal-900 text-base" id="mAtendVetNome">--</strong>
+                        </div>
+                        <div class="text-xs text-teal-800 bg-teal-100 px-3 py-1.5 rounded-lg font-semibold w-fit" id="mAtendVetCrmv">
+                            CRMV: --
+                        </div>
+                    </div>
+
+                    <!-- Tabs de Conteúdo do Atendimento -->
+                    <div class="border-b border-gray-200 flex gap-4 text-sm font-semibold">
+                        <button type="button" class="m-tab-btn active border-b-2 border-teal-600 text-teal-700 pb-2 flex items-center gap-1" data-mtarget="m-prontuario">
+                            <span class="material-icons text-base">assignment</span> Prontuário Clínico
+                        </button>
+                        <button type="button" class="m-tab-btn text-gray-500 hover:text-gray-700 pb-2 flex items-center gap-1" data-mtarget="m-receitas">
+                            <span class="material-icons text-base">receipt</span> Receitas (<span id="mCountReceitas">0</span>)
+                        </button>
+                        <button type="button" class="m-tab-btn text-gray-500 hover:text-gray-700 pb-2 flex items-center gap-1" data-mtarget="m-anexos">
+                            <span class="material-icons text-base">attach_file</span> Exames & Anexos (<span id="mCountAnexos">0</span>)
+                        </button>
+                    </div>
+
+                    <!-- M-TAB 1: Prontuário -->
+                    <div id="m-prontuario" class="m-tab-content space-y-4">
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Motivo / Queixa Principal</h4>
+                            <p class="text-sm text-gray-800 whitespace-pre-line" id="mAtendQueixa">--</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Anamnese / Histórico</h4>
+                                <p class="text-sm text-gray-800 whitespace-pre-line" id="mAtendAnamnese">--</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Exame Físico</h4>
+                                <p class="text-sm text-gray-800 whitespace-pre-line" id="mAtendExameFisico">--</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-amber-50/60 p-4 rounded-lg border border-amber-200">
+                            <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Diagnóstico</h4>
+                            <p class="text-sm text-amber-950 font-medium whitespace-pre-line" id="mAtendDiagnostico">--</p>
+                        </div>
+
+                        <div class="bg-emerald-50/60 p-4 rounded-lg border border-emerald-200">
+                            <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-1">Conduta & Tratamento Recomendado</h4>
+                            <p class="text-sm text-emerald-950 whitespace-pre-line" id="mAtendTratamento">--</p>
+                        </div>
+                    </div>
+
+                    <!-- M-TAB 2: Receitas Emitidas -->
+                    <div id="m-receitas" class="m-tab-content hidden space-y-4">
+                        <div id="mListaReceitas" class="space-y-4">
+                            <p class="text-center text-gray-500 py-4 text-sm">Carregando receitas...</p>
+                        </div>
+                    </div>
+
+                    <!-- M-TAB 3: Anexos e Exames -->
+                    <div id="m-anexos" class="m-tab-content hidden space-y-4">
+                        <div id="mListaAnexos" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <p class="col-span-full text-center text-gray-500 py-4 text-sm">Carregando anexos...</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between items-center">
+                    <span class="text-xs text-gray-400" id="mAtendIdTag">ID Atendimento: #--</span>
+                    <button type="button" id="btnFecharModalBottom" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold transition">
+                        Fechar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <script>
         $(document).ready(function () {
             let globalDashboardData = null;
@@ -617,17 +724,160 @@ $is_vet = AppHelper::isVetMode();
                     const queixa = at.queixa_principal ? escapeHtml(at.queixa_principal) : 'Consulta de rotina';
 
                     container.append(`
-                        <div class="p-3 bg-teal-50/40 rounded-lg border border-teal-100 text-sm">
+                        <div class="p-3.5 bg-teal-50/50 hover:bg-teal-100/60 rounded-xl border border-teal-100 text-sm cursor-pointer transition shadow-sm hover:shadow" onclick="abrirModalAtendimento(${at.id_atendimento})">
                             <div class="flex justify-between items-start mb-1">
-                                <span class="font-bold text-teal-800">${escapeHtml(at.pet_nome || 'Pet')}</span>
-                                <span class="text-xs text-gray-500">${dataFormatada}</span>
+                                <span class="font-bold text-teal-900 flex items-center gap-1">
+                                    <span class="material-icons text-xs text-teal-600">pets</span> ${escapeHtml(at.pet_nome || 'Pet')}
+                                </span>
+                                <span class="text-xs text-gray-500 font-medium">${dataFormatada}</span>
                             </div>
-                            <div class="text-xs text-gray-600 truncate"><strong>Motivo:</strong> ${queixa}</div>
-                            ${at.vet_nome ? `<div class="text-xs text-gray-500 mt-1"><strong>Vet:</strong> ${escapeHtml(at.vet_nome)}</div>` : ''}
+                            <div class="text-xs text-gray-700 truncate"><strong>Motivo:</strong> ${queixa}</div>
+                            <div class="flex justify-between items-center mt-2 pt-2 border-t border-teal-100 text-xs">
+                                <span class="text-gray-500">${at.vet_nome ? 'Vet: ' + escapeHtml(at.vet_nome) : ''}</span>
+                                <span class="text-teal-700 font-semibold flex items-center hover:underline">Ver Prontuário Completo <span class="material-icons text-xs">chevron_right</span></span>
+                            </div>
                         </div>
                     `);
                 });
             }
+
+            window.abrirModalAtendimento = function(idAtendimento) {
+                $('#mAtendPetNome').text('Carregando...');
+                $('#mAtendPetDetalhes').text('');
+                $('#mAtendVetNome').text('Carregando...');
+                $('#mAtendVetCrmv').text('CRMV: --');
+                $('#mAtendQueixa').text('Carregando...');
+                $('#mAtendAnamnese').text('Carregando...');
+                $('#mAtendExameFisico').text('Carregando...');
+                $('#mAtendDiagnostico').text('Carregando...');
+                $('#mAtendTratamento').text('Carregando...');
+                $('#mListaReceitas').html('<p class="text-center text-gray-500 py-4 text-sm">Carregando receitas...</p>');
+                $('#mListaAnexos').html('<p class="col-span-full text-center text-gray-500 py-4 text-sm">Carregando anexos...</p>');
+                
+                // Reset tab active
+                $('.m-tab-btn').removeClass('border-b-2 border-teal-600 text-teal-700 active').addClass('text-gray-500 hover:text-gray-700');
+                $('.m-tab-btn[data-mtarget="m-prontuario"]').addClass('border-b-2 border-teal-600 text-teal-700 active').removeClass('text-gray-500 hover:text-gray-700');
+                $('.m-tab-content').addClass('hidden');
+                $('#m-prontuario').removeClass('hidden');
+
+                $('#modalAtendimentoDetalhes').removeClass('hidden');
+
+                $.ajax({
+                    url: '../dinovatech/app.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: {
+                        action: 'get_atendimento_detalhes_cliente',
+                        id_atendimento: idAtendimento
+                    },
+                    success: function(response) {
+                        if (response.success && response.data) {
+                            const at = response.data.atendimento;
+                            const arquivos = response.data.arquivos || [];
+                            const receitas = response.data.receitas || [];
+
+                            $('#mAtendIdTag').text(`ID Atendimento: #${at.id_atendimento}`);
+                            $('#mAtendData').text(formatDateTime(at.data_atendimento));
+                            $('#mAtendPetNome').text(at.pet_nome || 'Pet');
+                            $('#mAtendPetDetalhes').text(`${at.pet_especie || ''} ${at.pet_raca ? '• ' + at.pet_raca : ''} ${at.pet_peso ? '• ' + at.pet_peso + ' kg' : ''}`);
+                            
+                            $('#mAtendVetNome').text(at.vet_nome || 'Veterinário Não Especificado');
+                            $('#mAtendVetCrmv').text(`CRMV: ${at.vet_crmv || 'N/A'}${at.vet_uf_crmv ? '/' + at.vet_uf_crmv : ''}`);
+
+                            $('#mAtendQueixa').text(at.queixa_principal || 'Não informada');
+                            $('#mAtendAnamnese').text(at.anamnese || 'Não informada');
+                            $('#mAtendExameFisico').text(at.exame_fisico || 'Não informado');
+                            $('#mAtendDiagnostico').text(at.diagnostico || 'Sem diagnóstico registrado');
+                            $('#mAtendTratamento').text(at.conduta_tratamento || 'Sem conduta médica registrada');
+
+                            $('#mCountReceitas').text(receitas.length);
+                            $('#mCountAnexos').text(arquivos.length);
+
+                            // Render Receitas
+                            let rHtml = '';
+                            if (receitas.length > 0) {
+                                receitas.forEach(rec => {
+                                    let itensHtml = '';
+                                    if (rec.itens && rec.itens.length > 0) {
+                                        rec.itens.forEach(it => {
+                                            itensHtml += `
+                                                <div class="p-2.5 bg-white rounded border border-gray-200 text-xs mb-2">
+                                                    <div class="font-bold text-gray-800">${escapeHtml(it.nome_medicamento || 'Medicamento')}</div>
+                                                    <div class="text-gray-600 mt-0.5"><strong>Posologia:</strong> ${escapeHtml(it.posologia || 'Não informada')}</div>
+                                                </div>
+                                            `;
+                                        });
+                                    } else {
+                                        itensHtml = '<p class="text-xs text-gray-400 italic">Sem itens na receita.</p>';
+                                    }
+
+                                    rHtml += `
+                                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                                                <div>
+                                                    <span class="text-xs text-gray-500 font-semibold uppercase">Receita #${rec.id_receita}</span>
+                                                    <div class="text-xs text-gray-400">${formatDateTime(rec.data_receita)}</div>
+                                                </div>
+                                                <a href="../dinovatech/modules/Vet/receita_print.php?id=${rec.id_receita}" target="_blank" class="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded text-xs font-bold transition flex items-center gap-1 shadow-sm w-fit">
+                                                    <span class="material-icons text-xs">print</span> Imprimir / Visualizar Receita
+                                                </a>
+                                            </div>
+                                            ${rec.observacoes ? `<div class="text-xs text-gray-600 mb-3 bg-white p-2 rounded border border-gray-100"><strong>Observações:</strong> ${escapeHtml(rec.observacoes)}</div>` : ''}
+                                            <div class="space-y-1">${itensHtml}</div>
+                                        </div>
+                                    `;
+                                });
+                            } else {
+                                rHtml = '<p class="text-center text-gray-500 py-6 text-sm italic">Nenhuma receita prescrita neste atendimento.</p>';
+                            }
+                            $('#mListaReceitas').html(rHtml);
+
+                            // Render Anexos
+                            let aHtml = '';
+                            if (arquivos.length > 0) {
+                                arquivos.forEach(arq => {
+                                    aHtml += `
+                                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-between text-xs">
+                                            <div class="flex items-center gap-2 truncate mr-2">
+                                                <span class="material-icons text-cyan-600 text-base">insert_drive_file</span>
+                                                <span class="font-medium text-gray-800 truncate" title="${escapeHtml(arq.nome_original)}">${escapeHtml(arq.nome_original)}</span>
+                                            </div>
+                                            <a href="${arq.url_publica}" target="_blank" class="px-2.5 py-1 bg-white border border-gray-300 rounded hover:bg-gray-100 text-gray-700 font-medium flex items-center gap-1 transition shrink-0">
+                                                <span class="material-icons text-xs">open_in_new</span> Abrir
+                                            </a>
+                                        </div>
+                                    `;
+                                });
+                            } else {
+                                aHtml = '<p class="col-span-full text-center text-gray-500 py-6 text-sm italic">Nenhum exame ou arquivo anexado.</p>';
+                            }
+                            $('#mListaAnexos').html(aHtml);
+
+                        } else {
+                            alert(response.message || 'Erro ao carregar detalhes.');
+                            $('#modalAtendimentoDetalhes').addClass('hidden');
+                        }
+                    },
+                    error: function() {
+                        alert('Erro ao conectar ao servidor.');
+                        $('#modalAtendimentoDetalhes').addClass('hidden');
+                    }
+                });
+            };
+
+            // Modal Tabs & Close Handlers
+            $(document).on('click', '.m-tab-btn', function() {
+                $('.m-tab-btn').removeClass('border-b-2 border-teal-600 text-teal-700 active').addClass('text-gray-500 hover:text-gray-700');
+                $(this).removeClass('text-gray-500 hover:text-gray-700').addClass('border-b-2 border-teal-600 text-teal-700 active');
+
+                const target = $(this).data('mtarget');
+                $('.m-tab-content').addClass('hidden');
+                $('#' + target).removeClass('hidden');
+            });
+
+            $(document).on('click', '#btnCloseModalAtendimento, #btnFecharModalBottom, #modalAtendimentoBackdrop', function() {
+                $('#modalAtendimentoDetalhes').addClass('hidden');
+            });
 
             function renderVacinasBreveList(vacinas) {
                 const container = $('#dashListaVacinasBreve');
