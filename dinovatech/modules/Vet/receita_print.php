@@ -1,8 +1,12 @@
 <?php
 session_start();
-if (!isset($_SESSION['usuario_id'])) {
+$usuario_logado = isset($_SESSION['usuario_id']);
+$cliente_logado = isset($_SESSION['cliente_id']);
+
+if (!$usuario_logado && !$cliente_logado) {
     die("Acesso negado");
 }
+
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers/AppHelper.php';
 include "../../../database.php";
@@ -16,7 +20,7 @@ $link = DBConnect();
 // Fetch Recipe + Details
 $q = "SELECT r.*, a.data_atendimento, 
              p.nome as pet_nome, p.especie, p.raca, p.peso,
-             c.nome as tutor_nome, 
+             c.id_cliente, c.nome as tutor_nome, 
              v.nome as vet_nome, v.crmv, v.url_assinatura
       FROM Receitas r
       JOIN Atendimentos a ON r.id_atendimento = a.id_atendimento
@@ -29,6 +33,11 @@ $res = DBExecute($link, $q);
 if (!$res || mysqli_num_rows($res) == 0)
     die("Receita não encontrada.");
 $receita = mysqli_fetch_assoc($res);
+
+// Validação de acesso do cliente
+if ($cliente_logado && !$usuario_logado && $receita['id_cliente'] != $_SESSION['cliente_id']) {
+    die("Acesso negado.");
+}
 
 // Fetch Items
 $itens = [];

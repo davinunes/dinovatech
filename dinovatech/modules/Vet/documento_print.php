@@ -15,7 +15,10 @@ if (!file_exists($pathConfig) || !file_exists($pathDB)) {
 require_once $pathConfig;
 require_once $pathHelper;
 
-if (!isset($_SESSION['usuario_id'])) {
+$usuario_logado = isset($_SESSION['usuario_id']);
+$cliente_logado = isset($_SESSION['cliente_id']);
+
+if (!$usuario_logado && !$cliente_logado) {
     die("Acesso negado.");
 }
 
@@ -55,6 +58,10 @@ if ($id_atendimento) {
     $dados = mysqli_fetch_assoc($r);
     $dados['tipo_origem'] = 'atendimento';
     $dados['id_cliente'] = $dados['pet_id_cliente'] ?? $dados['client_id_final']; // Ensure id_cliente is set
+
+    if ($cliente_logado && !$usuario_logado && $dados['id_cliente'] != $_SESSION['cliente_id']) {
+        die("Acesso negado.");
+    }
 } elseif ($id_recorrencia) {
     // 1. Fetch Recurrence + Client + Service
     $q = "SELECT r.*, r.id_cliente as rec_id_cliente,
