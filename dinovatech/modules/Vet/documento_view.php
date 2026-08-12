@@ -15,7 +15,10 @@ if (!file_exists($pathConfig) || !file_exists($pathDB)) {
 require_once $pathConfig;
 require_once $pathHelper;
 
-if (!isset($_SESSION['usuario_id'])) {
+$usuario_logado = isset($_SESSION['usuario_id']);
+$cliente_logado = isset($_SESSION['cliente_id']);
+
+if (!$usuario_logado && !$cliente_logado) {
     die("Acesso negado.");
 }
 
@@ -38,6 +41,11 @@ if (!$result || mysqli_num_rows($result) == 0) {
 }
 
 $doc = mysqli_fetch_assoc($result);
+
+// Validação de segurança para acesso do cliente
+if ($cliente_logado && !$usuario_logado && $doc['id_cliente'] != $_SESSION['cliente_id']) {
+    die("Acesso negado.");
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">

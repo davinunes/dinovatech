@@ -2094,6 +2094,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // 4.5. Contratos / Recorrências do Cliente + Documentos Emitidos
+            $recorrencias = [];
+            $qRec = "SELECT R.*, S.nome_servico 
+                     FROM Recorrencias R 
+                     JOIN Servicos S ON R.id_servico = S.id_servico 
+                     WHERE R.id_cliente = '$id_cliente_safe' 
+                     ORDER BY R.data_inicio_cobranca DESC";
+            $rRec = DBExecute($link, $qRec);
+            if ($rRec) {
+                while ($rec = mysqli_fetch_assoc($rRec)) {
+                    $idRec = $rec['id_recorrencia'];
+                    
+                    // Fetch linked documents
+                    $qDocs = "SELECT d.id_documento_emitido, d.titulo, d.tipo, d.data_emissao 
+                              FROM DocumentosEmitidos d 
+                              WHERE d.id_recorrencia = '$idRec' 
+                              ORDER BY d.data_emissao DESC";
+                    $rDocs = DBExecute($link, $qDocs);
+                    $docs = [];
+                    if ($rDocs) {
+                        while ($docRow = mysqli_fetch_assoc($rDocs)) {
+                            $docs[] = $docRow;
+                        }
+                    }
+                    $rec['documentos'] = $docs;
+                    $recorrencias[] = $rec;
+                }
+            }
+
             // 5. System Google Integration Hint
             $googleServiceEmailHint = '';
             $qConf = "SELECT google_service_account_json FROM ConfiguracoesEmissor LIMIT 1";
@@ -2125,6 +2154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'pets' => $pets,
                 'atendimentos' => $atendimentosRecentes,
                 'vacinas' => $carteiraVacinas,
+                'recorrencias' => $recorrencias,
                 'google_service_email_hint' => $googleServiceEmailHint,
                 'is_vet_mode' => AppHelper::isVetMode()
             ];

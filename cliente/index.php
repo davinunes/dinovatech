@@ -100,6 +100,11 @@ $is_vet = AppHelper::isVetMode();
                         data-target="meusdados">
                         <span class="material-icons text-lg">person</span> Meus Dados
                     </button>
+                    <button
+                        class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                        data-target="assinaturas">
+                        <span class="material-icons text-lg text-purple-600">auto_renew</span> Minhas Assinaturas
+                    </button>
                     <?php if ($is_vet): ?>
                         <button
                             class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
@@ -235,6 +240,20 @@ $is_vet = AppHelper::isVetMode();
                             </div>
                         <?php endif; ?>
 
+                    </div>
+
+                    <!-- Assinaturas & Contratos (Seção na Dashboard) -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+                        <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-purple-600">auto_renew</span>
+                                <h3 class="font-bold text-gray-800 text-lg">Minhas Assinaturas & Contratos</h3>
+                            </div>
+                            <span class="text-xs text-gray-500 font-semibold" id="dashCountRecorrenciasTag">0 contratos</span>
+                        </div>
+                        <div id="dashListaRecorrencias" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <p class="col-span-full text-center text-gray-500 py-4 text-sm">Carregando assinaturas...</p>
+                        </div>
                     </div>
 
                     <?php if ($is_vet): ?>
@@ -393,6 +412,21 @@ $is_vet = AppHelper::isVetMode();
                             </div>
                             <div id="meusDadosMsg" class="text-right text-sm font-semibold mt-2"></div>
                         </form>
+                </div>
+
+                <!-- 5. ASSINATURAS E CONTRATOS TAB -->
+                <div id="assinaturas" class="tab-content hidden">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <span class="material-icons text-purple-600">history_edu</span> Assinaturas & Termos Contratuais
+                            </h3>
+                            <p class="text-sm text-gray-500">Consulte suas assinaturas ativas e visualize os documentos/termos vinculados.</p>
+                        </div>
+                    </div>
+
+                    <div id="listaRecorrenciasFull" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <p class="col-span-full text-center text-gray-500 py-8">Carregando assinaturas...</p>
                     </div>
                 </div>
 
@@ -674,6 +708,9 @@ $is_vet = AppHelper::isVetMode();
                 // Lista de Agendamentos
                 renderAgendamentosList(data.agendamentos || []);
 
+                // Lista de Assinaturas e Contratos
+                renderRecorrenciasList(data.recorrencias || []);
+
                 // Atendimentos ou Faturas Breve
                 if (data.is_vet_mode) {
                     renderAtendimentosList(data.atendimentos || []);
@@ -681,6 +718,87 @@ $is_vet = AppHelper::isVetMode();
                 } else {
                     renderFaturasBreveList(data.faturas || []);
                 }
+            }
+
+            function renderRecorrenciasList(recorrencias) {
+                const dashContainer = $('#dashListaRecorrencias');
+                const fullContainer = $('#listaRecorrenciasFull');
+                dashContainer.empty();
+                if (fullContainer.length) fullContainer.empty();
+
+                $('#dashCountRecorrenciasTag').text(`${recorrencias.length} contrato(s)`);
+
+                if (recorrencias.length === 0) {
+                    const emptyMsg = '<p class="col-span-full text-center text-gray-500 py-6 text-sm italic">Nenhuma assinatura ou contrato ativo encontrado.</p>';
+                    dashContainer.html(emptyMsg);
+                    if (fullContainer.length) fullContainer.html(emptyMsg);
+                    return;
+                }
+
+                let htmlContent = '';
+
+                recorrencias.forEach(rec => {
+                    const servicoNome = escapeHtml(rec.nome_servico || rec.descricao_personalizada || 'Assinatura');
+                    const valorTotal = (parseFloat(rec.valor_sugerido_recorrencia || 0) * (parseInt(rec.quantidade) || 1));
+                    const valorFormatado = formatCurrency(valorTotal);
+                    const periodo = escapeHtml(rec.tipo_periodo || 'Mês').toLowerCase();
+                    const dataInicio = formatDate(rec.data_inicio_cobranca);
+                    const dataFim = rec.data_fim_cobranca ? formatDate(rec.data_fim_cobranca) : 'Indeterminado';
+
+                    // Documentos vinculados
+                    const documentos = rec.documentos || [];
+                    let docsHtml = '';
+
+                    if (documentos.length > 0) {
+                        docsHtml += '<div class="space-y-2 mt-3 pt-3 border-t border-gray-100">';
+                        docsHtml += '<span class="text-xs font-bold text-gray-600 uppercase tracking-wider block mb-1">Documentos & Termos:</span>';
+                        documentos.forEach(doc => {
+                            docsHtml += `
+                                <div class="p-2.5 bg-purple-50/60 rounded-lg border border-purple-100 flex items-center justify-between text-xs">
+                                    <div class="flex items-center gap-2 truncate mr-2">
+                                        <span class="material-icons text-purple-700 text-base">description</span>
+                                        <span class="font-semibold text-purple-950 truncate">${escapeHtml(doc.titulo)}</span>
+                                    </div>
+                                    <a href="../dinovatech/modules/Vet/documento_view.php?id=${doc.id_documento_emitido}" target="_blank" class="px-2.5 py-1 bg-white border border-purple-200 rounded hover:bg-purple-100 text-purple-800 font-bold transition shrink-0 flex items-center gap-1 shadow-sm">
+                                        <span class="material-icons text-xs">visibility</span> Visualizar
+                                    </a>
+                                </div>
+                            `;
+                        });
+                        docsHtml += '</div>';
+                    } else {
+                        docsHtml = '<div class="mt-3 pt-2 border-t border-gray-100 text-xs text-gray-400 italic">Nenhum documento/termo anexado a este contrato.</div>';
+                    }
+
+                    const cardHtml = `
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition p-5 flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <div class="p-2 rounded-lg bg-purple-100 text-purple-700">
+                                            <span class="material-icons">auto_renew</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 text-base">${servicoNome}</h4>
+                                            <span class="text-xs text-gray-400">Contrato #${rec.id_recorrencia}</span>
+                                        </div>
+                                    </div>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Ativa</span>
+                                </div>
+                                <div class="my-3">
+                                    <div class="text-2xl font-bold text-gray-800">${valorFormatado} <span class="text-xs font-normal text-gray-500">/ ${periodo}</span></div>
+                                    <div class="text-xs text-gray-500 mt-1">Início: <strong>${dataInicio}</strong> • Fim: <strong>${dataFim}</strong></div>
+                                </div>
+                                ${docsHtml}
+                            </div>
+                        </div>
+                    `;
+
+                    htmlContent += cardHtml;
+                });
+
+                dashContainer.html(htmlContent);
+                if (fullContainer.length) fullContainer.html(htmlContent);
             }
 
             function renderAgendamentosList(agendamentos) {
