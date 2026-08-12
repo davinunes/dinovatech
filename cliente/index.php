@@ -413,8 +413,8 @@ $is_vet = AppHelper::isVetMode();
                                     <span class="material-icons">save</span> Salvar Meus Dados
                                 </button>
                             </div>
-                            <div id="meusDadosMsg" class="text-right text-sm font-semibold mt-2"></div>
                         </form>
+                    </div>
                 </div>
 
                 <!-- 5. ASSINATURAS E CONTRATOS TAB -->
