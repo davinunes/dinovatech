@@ -20,7 +20,7 @@ $link = DBConnect();
 
 // Fetch Internacao + Pet + Client + Vet
 $query = "SELECT i.*, 
-                 p.nome as pet_nome, p.especie, p.raca, p.cor, p.peso as pet_peso, p.sexo, p.data_nascimento,
+                 p.nome as pet_nome, p.especie, p.raca, '' as cor, p.peso as pet_peso, p.sexo, p.data_nascimento,
                  c.id_cliente, c.nome as tutor_nome, c.telefone as tel_tutor,
                  v.nome as vet_nome, v.crmv as vet_crmv
           FROM Internacoes i
@@ -31,7 +31,7 @@ $query = "SELECT i.*,
 
 $res = DBExecute($link, $query);
 if (!$res || mysqli_num_rows($res) == 0) {
-    die("Internação não encontrada.");
+    die("Internação não encontrada. (Erro DB: " . mysqli_error($link) . ")");
 }
 $internacao = mysqli_fetch_assoc($res);
 
