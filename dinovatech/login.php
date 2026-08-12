@@ -1,5 +1,34 @@
 <?php
 session_start();
+require_once '../database.php';
+require_once __DIR__ . '/config.php';
+
+// Auto-login via cookie de permanência se não houver sessão ativa
+if (!isset($_SESSION['usuario_id']) && !empty($_COOKIE['dinovatech_remember'])) {
+    $parts = explode(':', $_COOKIE['dinovatech_remember'], 2);
+    if (count($parts) === 2) {
+        $userId = (int) $parts[0];
+        $tokenHash = $parts[1];
+        $link = DBConnect();
+        if ($link) {
+            $userIdSafe = mysqli_real_escape_string($link, $userId);
+            $res = DBExecute($link, "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios WHERE id_usuario = '$userIdSafe' LIMIT 1");
+            if ($res && mysqli_num_rows($res) === 1) {
+                $user = mysqli_fetch_assoc($res);
+                $masterKey = defined('APP_MASTER_KEY') && !empty(APP_MASTER_KEY) ? APP_MASTER_KEY : 'dinovatech_secret_key';
+                $expectedHash = hash_hmac('sha256', $user['id_usuario'] . $user['email'], $masterKey);
+                if (hash_equals($expectedHash, $tokenHash)) {
+                    $_SESSION['usuario_id'] = $user['id_usuario'];
+                    $_SESSION['usuario_nome'] = $user['nome'];
+                    $_SESSION['usuario_email'] = $user['email'];
+                    $_SESSION['nivel_acesso'] = $user['nivel_acesso'];
+                }
+            }
+            DBClose($link);
+        }
+    }
+}
+
 // Se o usuário já estiver logado, redireciona para o painel
 if (isset($_SESSION['usuario_id'])) {
     header("Location: index.php");
@@ -7,7 +36,6 @@ if (isset($_SESSION['usuario_id'])) {
 }
 
 // Fetch Company Name from DB
-require_once '../database.php';
 $link = DBConnect();
 $empresa_nome = "DinoVet"; // Fallback
 if ($link) {
@@ -59,13 +87,20 @@ if ($link) {
                     class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-cyan-500"
                     id="email" name="email" type="email" placeholder="seuemail@exemplo.com" required>
             </div>
-            <div class="mb-6">
+            <div class="mb-4">
                 <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
                     Senha
                 </label>
                 <input
-                    class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-cyan-500"
                     id="password" name="senha" type="password" placeholder="******************" required>
+            </div>
+            <div class="mb-6 flex items-center justify-between">
+                <label class="flex items-center text-sm text-gray-600 cursor-pointer select-none">
+                    <input type="checkbox" name="permanecer_logado" value="1"
+                        class="rounded border-gray-300 text-cyan-600 focus:ring-cyan-500 mr-2 h-4 w-4">
+                    Permanecer logado
+                </label>
             </div>
             <div class="flex items-center justify-between">
                 <button

@@ -2684,6 +2684,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             break;
 
+        case 'excluir_fatura':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            if (empty($id_fatura)) {
+                $response['message'] = "ID da fatura é obrigatório.";
+                break;
+            }
+
+            $id_safe = mysqli_real_escape_string($link, $id_fatura);
+
+            // 1. Busca a fatura para verificar existência e status
+            $qFatura = "SELECT status, id_cliente FROM Faturas WHERE id_fatura = '$id_safe'";
+            $rFatura = DBExecute($link, $qFatura);
+            if (!$rFatura || mysqli_num_rows($rFatura) === 0) {
+                $response['message'] = "Fatura não encontrada.";
+                break;
+            }
+
+            $faturaData = mysqli_fetch_assoc($rFatura);
+            if ($faturaData['status'] === 'Liquidada') {
+                $response['message'] = "Faturas já liquidadas não podem ser excluídas.";
+                break;
+            }
+
+            $id_cliente = $faturaData['id_cliente'];
+
+            // 2. Limpeza de Arquivos vinculados (busca id_arquivo em FaturaArquivos)
+            $qArquivos = "SELECT id_arquivo FROM FaturaArquivos WHERE id_fatura = '$id_safe'";
+            $rArquivos = DBExecute($link, $qArquivos);
+            $arquivosIds = [];
+            if ($rArquivos) {
+                while ($rowArq = mysqli_fetch_assoc($rArquivos)) {
+                    $arquivosIds[] = "'" . mysqli_real_escape_string($link, $rowArq['id_arquivo']) . "'";
+                }
+            }
+
+            // Exclui vínculos e arquivos órfãos
+            DBExecute($link, "DELETE FROM FaturaArquivos WHERE id_fatura = '$id_safe'");
+            if (!empty($arquivosIds)) {
+                $idsList = implode(',', $arquivosIds);
+                DBExecute($link, "DELETE FROM Arquivos WHERE id_arquivo IN ($idsList) AND id_arquivo NOT IN (SELECT id_arquivo FROM AtendimentoArquivos)");
+            }
+
+            // 3. Exclui registros das demais tabelas relacionais
+            DBExecute($link, "DELETE FROM ItensFatura WHERE id_fatura = '$id_safe'");
+            DBExecute($link, "DELETE FROM Pagamentos WHERE id_fatura = '$id_safe'");
+            DBExecute($link, "DELETE FROM NfseEmissoes WHERE id_fatura = '$id_safe'");
+            DBExecute($link, "DELETE FROM nf_contadev_sync WHERE id_fatura = '$id_safe'");
+            DBExecute($link, "DELETE FROM contadev_logs WHERE id_fatura = '$id_safe'");
+
+            // 4. Exclui a fatura principal
+            if (DBExecute($link, "DELETE FROM Faturas WHERE id_fatura = '$id_safe'")) {
+                $response['success'] = true;
+                $response['message'] = "Fatura excluída com sucesso!";
+                $response['id_cliente'] = $id_cliente;
+            } else {
+                $response['message'] = "Erro ao excluir fatura: " . mysqli_error($link);
+            }
+            break;
+
 
 
 

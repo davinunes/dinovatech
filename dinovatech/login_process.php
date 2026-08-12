@@ -37,6 +37,20 @@ if ($result && mysqli_num_rows($result) === 1) {
         $_SESSION['usuario_email'] = $usuario['email'];
         $_SESSION['nivel_acesso'] = $usuario['nivel_acesso'];
 
+        // Se o usuário selecionou permanecer logado
+        if (!empty($_POST['permanecer_logado'])) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), session_id(), time() + 2592000, $params["path"], $params["domain"], $params["secure"], $params["httponly"]);
+
+            require_once __DIR__ . '/config.php';
+            $masterKey = defined('APP_MASTER_KEY') && !empty(APP_MASTER_KEY) ? APP_MASTER_KEY : 'dinovatech_secret_key';
+            $tokenHash = hash_hmac('sha256', $usuario['id_usuario'] . $usuario['email'], $masterKey);
+            $cookieValue = $usuario['id_usuario'] . ':' . $tokenHash;
+            setcookie('dinovatech_remember', $cookieValue, time() + 2592000, '/', '', false, true);
+        } else {
+            setcookie('dinovatech_remember', '', time() - 3600, '/');
+        }
+
         DBClose($link);
         header('Location: clientes.php'); // Redireciona para o painel principal (Clientes)
         exit();

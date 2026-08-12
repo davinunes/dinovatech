@@ -827,11 +827,25 @@ if ($id_fatura) {
                         menor que o total.</p>
                 </div>
 
-                <div class="flex justify-end gap-2">
-                    <button type="button" onclick="$('#modalEditarFatura').addClass('hidden')"
-                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancelar</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Salvar
-                        Alterações</button>
+                <div class="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                    <?php if (($fatura['status'] ?? '') !== 'Liquidada'): ?>
+                        <button type="button" onclick="excluirFaturaAtual(<?= (int)$id_fatura ?>)"
+                            class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 font-medium rounded-lg transition flex items-center gap-1">
+                            <span class="material-icons text-sm">delete</span> Excluir Fatura
+                        </button>
+                    <?php else: ?>
+                        <button type="button" disabled title="Faturas liquidadas não podem ser excluídas"
+                            class="px-4 py-2 bg-gray-100 text-gray-400 font-medium rounded-lg cursor-not-allowed flex items-center gap-1">
+                            <span class="material-icons text-sm">block</span> Excluir (Liquidada)
+                        </button>
+                    <?php endif; ?>
+
+                    <div class="flex gap-2">
+                        <button type="button" onclick="$('#modalEditarFatura').addClass('hidden')"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Salvar
+                            Alterações</button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -842,6 +856,27 @@ if ($id_fatura) {
 
     <?php include 'components/layout_scripts.php'; ?>
     <script>
+        function excluirFaturaAtual(idFatura) {
+            if (!confirm("ATENÇÃO: Tem certeza que deseja excluir esta fatura?\n\nEsta ação é irreversível e excluirá permanentemente os itens, pagamentos e arquivos vinculados a ela.")) {
+                return;
+            }
+            
+            $.post('app.php', { action: 'excluir_fatura', id_fatura: idFatura }, function (res) {
+                if (res.success) {
+                    alert(res.message);
+                    if (res.id_cliente) {
+                        window.location.href = 'cliente_detalhes.php?id=' + res.id_cliente;
+                    } else {
+                        window.location.href = 'clientes.php';
+                    }
+                } else {
+                    alert('Erro: ' + (res.message || 'Falha ao excluir fatura.'));
+                }
+            }, 'json').fail(function() {
+                alert('Erro ao se comunicar com o servidor.');
+            });
+        }
+
         $(document).ready(function () {
             $('#formEditarFatura').on('submit', function (e) {
                 e.preventDefault();
