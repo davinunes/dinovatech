@@ -76,6 +76,12 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                 <span class="material-icons text-xl mr-3">pets</span>
                 <span class="font-medium">Pets</span>
             </a>
+
+            <a href="<?= $basePath ?>modules/Vet/internacoes.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'internacoes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3">local_hospital</span>
+                <span class="font-medium">Internações</span>
+            </a>
         <?php endif; ?>
 
         <a href="<?= $basePath ?>servicos.php"
