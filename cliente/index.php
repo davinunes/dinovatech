@@ -782,7 +782,20 @@ $is_vet = AppHelper::isVetMode();
                     const valorFormatado = formatCurrency(valorTotal);
                     const periodo = escapeHtml(rec.tipo_periodo || 'Mês').toLowerCase();
                     const dataInicio = formatDate(rec.data_inicio_cobranca);
-                    const dataFim = rec.data_fim_cobranca ? formatDate(rec.data_fim_cobranca) : 'Indeterminado';
+                    const hojeStr = new Date().toISOString().split('T')[0];
+                    const isExpirado = rec.data_fim_cobranca && rec.data_fim_cobranca < hojeStr;
+                    const isCancelado = rec.status && (rec.status.toLowerCase() === 'cancelada' || rec.status.toLowerCase() === 'cancelado' || rec.status.toLowerCase() === 'inativa');
+
+                    let statusLabel = 'Ativa';
+                    let statusClass = 'bg-green-100 text-green-800';
+
+                    if (isCancelado) {
+                        statusLabel = 'Cancelado';
+                        statusClass = 'bg-gray-100 text-gray-700';
+                    } else if (isExpirado) {
+                        statusLabel = 'Vencido';
+                        statusClass = 'bg-red-100 text-red-800';
+                    }
 
                     // Documentos vinculados
                     const documentos = rec.documentos || [];
@@ -814,7 +827,7 @@ $is_vet = AppHelper::isVetMode();
                             <div>
                                 <div class="flex justify-between items-start mb-2">
                                     <div class="flex items-center gap-2">
-                                        <div class="p-2 rounded-lg bg-purple-100 text-purple-700">
+                                        <div class="p-2 rounded-lg ${isExpirado ? 'bg-red-100 text-red-700' : 'bg-purple-100 text-purple-700'}">
                                             <span class="material-icons">auto_renew</span>
                                         </div>
                                         <div>
@@ -822,11 +835,11 @@ $is_vet = AppHelper::isVetMode();
                                             <span class="text-xs text-gray-400">Contrato #${rec.id_recorrencia}</span>
                                         </div>
                                     </div>
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Ativa</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusLabel}</span>
                                 </div>
                                 <div class="my-3">
                                     <div class="text-2xl font-bold text-gray-800">${valorFormatado} <span class="text-xs font-normal text-gray-500">/ ${periodo}</span></div>
-                                    <div class="text-xs text-gray-500 mt-1">Início: <strong>${dataInicio}</strong> • Fim: <strong>${dataFim}</strong></div>
+                                    <div class="text-xs text-gray-500 mt-1">Início: <strong>${dataInicio}</strong> • Fim: <strong class="${isExpirado ? 'text-red-600 font-bold' : ''}">${dataFim}</strong></div>
                                 </div>
                                 ${docsHtml}
                             </div>

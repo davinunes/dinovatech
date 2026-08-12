@@ -1,15 +1,18 @@
-# Walkthrough / Resumo de Entrega: Correção da Aba Minhas Assinaturas no Portal do Cliente
+# Walkthrough / Resumo de Entrega: Correção do Status de Contratos Vencidos no Portal do Cliente
 
 **Data:** 2026-08-12  
-**Funcionalidade:** Correção de alinhamento HTML da aba de "Minhas Assinaturas" no Portal do Cliente (`cliente/index.php`).
+**Funcionalidade:** Verificação dinâmica da data de encerramento da cobrança (`data_fim_cobranca`) para marcar contratos vencidos/expirados com o devido badge visual no Portal do Cliente (`cliente/index.php`).
 
-## Causa do Problema & Correção
+## Alterações Realizadas
 
-- **Causa**: O contêiner da aba anterior (`#meusdados`) não continha o fechamento `</div>` correspondente. Com isso, a `<div id="assinaturas">` ficou aninhada dentro de `#meusdados`. Ao alternar de aba, o utilitário `.tab-content` adicionava a classe `hidden` na div `#meusdados`, ocultando acidentalmente a div `#assinaturas` que estava dentro dela (resultando em tela branca).
-- **Solução**: Fechado corretamente o contêiner `div#meusdados` em `cliente/index.php`. A aba `<div id="assinaturas">` passou a ser um elemento irmão correto, exibindo a listagem de contratos e documentos perfeitamente ao clicar no botão.
+1. **[cliente/index.php](file:///e:/DEV/dinovatech/cliente/index.php)**
+   - Atualizada a função `renderRecorrenciasList`: agora compara `data_fim_cobranca` com a data atual (`hojeStr`).
+   - Se `data_fim_cobranca` for inferior à data de hoje, o contrato é rotulado como **"Vencido"** com badge vermelho (`bg-red-100 text-red-800`), e a data de término é destacada em vermelho.
+   - Se o contrato for inativo/cancelado, exibe a etiqueta **"Cancelado"**.
+   - Se estiver dentro da vigência ou sem data de término, permanece rotulado como **"Ativa"** (verde).
 
 ## Instruções de Teste e Validação
 
 1. Acesse a Área do Cliente em `cliente/index.php`.
-2. Clique no botão da aba **"Minhas Assinaturas"** no menu superior.
-3. Confirme que o painel de assinaturas e contratos é exibido com sucesso sem telas brancas.
+2. Na aba **Visão Geral** ou na seção **Minhas Assinaturas** (em **Meus Dados**), observe os cards de contrato.
+3. Confirme que contratos cujo término da vigência já passou são exibidos com o status **"Vencido"** em vermelho em vez de "Ativa".
