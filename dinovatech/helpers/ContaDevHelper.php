@@ -718,13 +718,16 @@ class ContaDevHelper
         $existingNfId = $checkDedup['sync']['contadev_nf_id'] ?? $checkDedup['contadev_nf']['id'] ?? null;
 
         if ($force && !empty($existingNfId)) {
-            // Tenta primeiramente PUT no endpoint do recurso existente se for re-sincronização
+            // Tenta requisição PUT para atualizar o registro existente na ContaDev
             $urlPut = self::$baseUrl . '/platform/nf/' . $existingNfId;
             $resImport = self::makeRequest($urlPut, 'PUT', $payloadImport, $token);
 
-            // Se o PUT não for suportado pela API (retornando status != 200/201), tenta POST /platform/nf/import
-            if ($resImport['status'] !== 200 && $resImport['status'] !== 201) {
-                $resImport = self::makeRequest($urlImport, 'POST', $payloadImport, $token);
+            // Se o PUT não for suportado pela API (404/405), evita POST cego para não gerar duplicatas
+            if ($resImport['status'] === 404 || $resImport['status'] === 405) {
+                return [
+                    'success' => false,
+                    'message' => 'A plataforma ContaDev não permite atualização direta de notas já importadas (HTTP ' . $resImport['status'] . '). Para reimportar, é necessário excluir a nota antiga no painel da ContaDev antes.'
+                ];
             }
         } else {
             $resImport = self::makeRequest($urlImport, 'POST', $payloadImport, $token);
