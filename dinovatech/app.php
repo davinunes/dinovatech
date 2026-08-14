@@ -109,11 +109,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         case 'contadev_import_fatura':
             $idFatura = $_POST['id_fatura'] ?? null;
+            $force = !empty($_POST['force']);
             if (!$idFatura) {
                 $response['message'] = "ID da fatura não fornecido.";
                 break;
             }
-            $res = ContaDevHelper::importInvoice($link, $idFatura);
+            $res = ContaDevHelper::importInvoice($link, $idFatura, $force);
             $response = array_merge($response, $res);
             break;
 

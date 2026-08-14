@@ -541,7 +541,7 @@ class ContaDevHelper
     /**
      * Orquestra a importação completa de uma fatura para o ContaDev.
      */
-    public static function importInvoice($link, $id_fatura)
+    public static function importInvoice($link, $id_fatura, $force = false)
     {
         $id_safe = (int)$id_fatura;
 
@@ -564,9 +564,9 @@ class ContaDevHelper
         }
         $fatura = mysqli_fetch_assoc($resFatura);
 
-        // 3. Checa desduplicação antes de tudo
+        // 3. Checa desduplicação antes de tudo (se não for forçado)
         $checkDedup = self::checkInvoiceAlreadyImported($link, $id_safe, $token, $cnpjId);
-        if ($checkDedup['already_imported']) {
+        if (!$force && $checkDedup['already_imported']) {
             return [
                 'success' => true,
                 'already_imported' => true,
@@ -701,7 +701,7 @@ class ContaDevHelper
         }
         $descFinal = $descString . "\nConforme documento auxiliar de cobranca numero " . $id_safe;
 
-        // 10. Chamada de Importação Final `POST /platform/nf/import`
+        // 10. Chamada de Importação Final `POST /platform/nf/import` ou `PUT /platform/nf/{id}`
         $urlImport = self::$baseUrl . '/platform/nf/import';
         $payloadImport = [
             'isForeign' => false,
@@ -714,7 +714,21 @@ class ContaDevHelper
             'xmlS3Uri' => $preSignedXml['s3Uri']
         ];
 
-        $resImport = self::makeRequest($urlImport, 'POST', $payloadImport, $token);
+        $resImport = null;
+        $existingNfId = $checkDedup['sync']['contadev_nf_id'] ?? $checkDedup['contadev_nf']['id'] ?? null;
+
+        if ($force && !empty($existingNfId)) {
+            // Tenta primeiramente PUT no endpoint do recurso existente se for re-sincronização
+            $urlPut = self::$baseUrl . '/platform/nf/' . $existingNfId;
+            $resImport = self::makeRequest($urlPut, 'PUT', $payloadImport, $token);
+
+            // Se o PUT não for suportado pela API (retornando status != 200/201), tenta POST /platform/nf/import
+            if ($resImport['status'] !== 200 && $resImport['status'] !== 201) {
+                $resImport = self::makeRequest($urlImport, 'POST', $payloadImport, $token);
+            }
+        } else {
+            $resImport = self::makeRequest($urlImport, 'POST', $payloadImport, $token);
+        }
 
         if (($resImport['status'] === 200 || $resImport['status'] === 201) && !empty($resImport['json']['id'])) {
             $contadevNfId = mysqli_real_escape_string($link, $resImport['json']['id']);

@@ -1237,23 +1237,23 @@ if ($id_fatura) {
                                 detailsHtml += `<p class="text-[10px] text-slate-400">Data Emissão: ${data.sync.issued_at}</p>`;
                             }
                             info.html(detailsHtml);
-                            btn.html('<span class="material-icons text-sm">refresh</span> Re-importar no ContaDev');
+                            btn.attr('onclick', `importarContaDev(<?= (int)$id_fatura ?>, true)`).html('<span class="material-icons text-sm">refresh</span> Re-importar no ContaDev');
                         } else {
                             badge.removeClass('bg-emerald-950 text-emerald-300 bg-red-950 text-red-300').addClass('bg-amber-950 text-amber-300 border border-amber-700/50').text('Não Importada');
                             info.html('<p class="text-[11px] text-slate-300 leading-tight">Fatura pronta para ser importada para a contabilidade no ContaDev.</p>');
-                            btn.html('<span class="material-icons text-sm">cloud_upload</span> Importar no ContaDev');
+                            btn.attr('onclick', `importarContaDev(<?= (int)$id_fatura ?>, false)`).html('<span class="material-icons text-sm">cloud_upload</span> Importar no ContaDev');
                         }
                     }
                 }, 'json');
             };
 
-            window.importarContaDev = function(idFatura) {
+            window.importarContaDev = function(idFatura, force = false) {
                 const btn = $('#btnImportarContaDev');
                 const origHtml = btn.html();
 
-                btn.prop('disabled', true).addClass('opacity-75 cursor-wait').html('<span class="material-icons text-sm animate-spin mr-1">sync</span> Importando...');
+                btn.prop('disabled', true).addClass('opacity-75 cursor-wait').html('<span class="material-icons text-sm animate-spin mr-1">sync</span> Sincronizando...');
 
-                $.post('app.php', { action: 'contadev_import_fatura', id_fatura: idFatura }, function(res) {
+                $.post('app.php', { action: 'contadev_import_fatura', id_fatura: idFatura, force: force ? 1 : 0 }, function(res) {
                     btn.prop('disabled', false).removeClass('opacity-75 cursor-wait').html(origHtml);
 
                     if (res.success) {
