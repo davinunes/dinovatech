@@ -576,11 +576,13 @@ class ContaDevHelper
 
         // 4. Busca XML (Emissão NFS-e autorizada ou anexo)
         $xmlContent = null;
-        $qNfse = "SELECT xml_retorno FROM NfseEmissoes WHERE id_fatura = '$id_safe' AND status = 'concluido' ORDER BY id_emissao DESC LIMIT 1";
+        $nfseDataEmissao = null;
+        $qNfse = "SELECT xml_retorno, data_emissao FROM NfseEmissoes WHERE id_fatura = '$id_safe' AND status = 'concluido' ORDER BY id_emissao DESC LIMIT 1";
         $resNfse = DBExecute($link, $qNfse);
         if ($resNfse && mysqli_num_rows($resNfse) > 0) {
             $rowNfse = mysqli_fetch_assoc($resNfse);
             $xmlContent = $rowNfse['xml_retorno'];
+            $nfseDataEmissao = $rowNfse['data_emissao'] ?? null;
         }
 
         // Se não encontrou na tabela NfseEmissoes, busca anexo .xml na fatura
@@ -605,6 +607,7 @@ class ContaDevHelper
         // 5. Busca PDF (Anexos em FaturaArquivos)
         $pdfContent = null;
         $pdfFileName = "nfse-$id_safe.pdf";
+        $anexoDataUpload = null;
         $qAnexo = "SELECT A.* FROM Arquivos A 
                    JOIN FaturaArquivos FA ON A.id_arquivo = FA.id_arquivo 
                    WHERE FA.id_fatura = '$id_safe' 
@@ -616,6 +619,7 @@ class ContaDevHelper
                 if (!empty($content)) {
                     $pdfContent = $content;
                     $pdfFileName = !empty($anexo['nome_original']) ? $anexo['nome_original'] : "fatura-$id_safe.pdf";
+                    $anexoDataUpload = $anexo['data_upload'] ?? null;
                     break;
                 }
             }
@@ -627,6 +631,32 @@ class ContaDevHelper
         }
         if (empty($pdfContent)) {
             return ['success' => false, 'message' => 'Nenhum anexo em PDF foi encontrado na fatura. Adicione o PDF da nota nos anexos da fatura antes de importar.'];
+        }
+
+        // Determina a data real de emissão da Nota Fiscal (issuedAt)
+        $issuedAt = null;
+        if (!empty($xmlContent)) {
+            if (preg_match('/<(?:DataEmissao|dhEmi|DataEmissaoRps|dtEmissao)>([^<]+)<\//i', $xmlContent, $m)) {
+                $ts = strtotime(trim($m[1]));
+                if ($ts !== false && $ts > 0) {
+                    $issuedAt = date('Y-m-d', $ts);
+                }
+            }
+        }
+        if (empty($issuedAt) && !empty($nfseDataEmissao)) {
+            $ts = strtotime($nfseDataEmissao);
+            if ($ts !== false && $ts > 0) {
+                $issuedAt = date('Y-m-d', $ts);
+            }
+        }
+        if (empty($issuedAt) && !empty($anexoDataUpload)) {
+            $ts = strtotime($anexoDataUpload);
+            if ($ts !== false && $ts > 0) {
+                $issuedAt = date('Y-m-d', $ts);
+            }
+        }
+        if (empty($issuedAt)) {
+            $issuedAt = !empty($fatura['data_emissao']) ? date('Y-m-d', strtotime($fatura['data_emissao'])) : date('Y-m-d');
         }
 
         // 6. Obtém/Cria Tomador na ContaDev
@@ -679,7 +709,7 @@ class ContaDevHelper
             'cnpjId' => $cnpjId,
             'description' => $descFinal,
             'tomadorId' => $tomadorId,
-            'issuedAt' => date('Y-m-d', strtotime($fatura['data_emissao'])),
+            'issuedAt' => $issuedAt,
             'pdfS3Uri' => $preSignedPdf['s3Uri'],
             'xmlS3Uri' => $preSignedXml['s3Uri']
         ];
@@ -692,7 +722,7 @@ class ContaDevHelper
             $pdfUriSafe = mysqli_real_escape_string($link, $preSignedPdf['s3Uri']);
             $xmlUriSafe = mysqli_real_escape_string($link, $preSignedXml['s3Uri']);
             $valorVal = (float)$fatura['valor_total_fatura'];
-            $dataEmissaoVal = date('Y-m-d', strtotime($fatura['data_emissao']));
+            $dataEmissaoVal = mysqli_real_escape_string($link, $issuedAt);
             $resDetails = mysqli_real_escape_string($link, json_encode($resImport['json'], JSON_UNESCAPED_UNICODE));
 
             $qUpsert = "INSERT INTO nf_contadev_sync 
