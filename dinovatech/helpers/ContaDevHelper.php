@@ -476,6 +476,69 @@ class ContaDevHelper
     }
 
     /**
+     * Obtém o conteúdo de um arquivo a partir de uma URL pública (HTTP/HTTPS) ou caminho local.
+     */
+    public static function getFileContent($urlOrPath)
+    {
+        if (empty($urlOrPath)) {
+            return null;
+        }
+
+        // Se for URL HTTP/HTTPS
+        if (preg_match('/^https?:\/\//i', $urlOrPath)) {
+            $opts = [
+                'http' => [
+                    'method' => 'GET',
+                    'timeout' => 20,
+                    'header' => "User-Agent: DinovaTech-ContaDevSync/1.0\r\n"
+                ],
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false
+                ]
+            ];
+            $context = stream_context_create($opts);
+            $content = @file_get_contents($urlOrPath, false, $context);
+
+            if ($content !== false && !empty($content)) {
+                return $content;
+            }
+
+            // Fallback via cURL se file_get_contents falhar
+            if (function_exists('curl_init')) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, $urlOrPath);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+                $content = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($httpCode === 200 && !empty($content)) {
+                    return $content;
+                }
+            }
+
+            return null;
+        }
+
+        // Se for caminho de arquivo local
+        $localPath = dirname(__DIR__, 2) . '/' . ltrim($urlOrPath, '/');
+        if (file_exists($localPath)) {
+            return @file_get_contents($localPath);
+        }
+
+        if (file_exists($urlOrPath)) {
+            return @file_get_contents($urlOrPath);
+        }
+
+        return null;
+    }
+
+    /**
      * Orquestra a importação completa de uma fatura para o ContaDev.
      */
     public static function importInvoice($link, $id_fatura)
@@ -520,17 +583,41 @@ class ContaDevHelper
             $xmlContent = $rowNfse['xml_retorno'];
         }
 
-        // 5. Busca PDF (Primeiro anexo em FaturaArquivos)
+        // Se não encontrou na tabela NfseEmissoes, busca anexo .xml na fatura
+        if (empty($xmlContent)) {
+            $qAnexoXml = "SELECT A.* FROM Arquivos A 
+                          JOIN FaturaArquivos FA ON A.id_arquivo = FA.id_arquivo 
+                          WHERE FA.id_fatura = '$id_safe' 
+                          AND (A.nome_original LIKE '%.xml' OR A.url_publica LIKE '%.xml' OR A.tipo_mime LIKE '%xml%')
+                          ORDER BY FA.id_vinculo ASC";
+            $resAnexoXml = DBExecute($link, $qAnexoXml);
+            if ($resAnexoXml && mysqli_num_rows($resAnexoXml) > 0) {
+                while ($anexoXml = mysqli_fetch_assoc($resAnexoXml)) {
+                    $contentXml = self::getFileContent($anexoXml['url_publica']);
+                    if (!empty($contentXml)) {
+                        $xmlContent = $contentXml;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 5. Busca PDF (Anexos em FaturaArquivos)
         $pdfContent = null;
         $pdfFileName = "nfse-$id_safe.pdf";
-        $qAnexo = "SELECT A.* FROM Arquivos A JOIN FaturaArquivos FA ON A.id_arquivo = FA.id_arquivo WHERE FA.id_fatura = '$id_safe' ORDER BY FA.id_vinculo ASC LIMIT 1";
+        $qAnexo = "SELECT A.* FROM Arquivos A 
+                   JOIN FaturaArquivos FA ON A.id_arquivo = FA.id_arquivo 
+                   WHERE FA.id_fatura = '$id_safe' 
+                   ORDER BY (CASE WHEN A.nome_original LIKE '%.pdf' OR A.url_publica LIKE '%.pdf' OR A.tipo_mime LIKE '%pdf%' THEN 1 ELSE 2 END), FA.id_vinculo ASC";
         $resAnexo = DBExecute($link, $qAnexo);
         if ($resAnexo && mysqli_num_rows($resAnexo) > 0) {
-            $anexo = mysqli_fetch_assoc($resAnexo);
-            $localPath = dirname(__DIR__, 2) . '/' . ltrim($anexo['url_publica'], '/');
-            if (file_exists($localPath)) {
-                $pdfContent = file_get_contents($localPath);
-                $pdfFileName = $anexo['nome_original'] ?? "fatura-$id_safe.pdf";
+            while ($anexo = mysqli_fetch_assoc($resAnexo)) {
+                $content = self::getFileContent($anexo['url_publica']);
+                if (!empty($content)) {
+                    $pdfContent = $content;
+                    $pdfFileName = !empty($anexo['nome_original']) ? $anexo['nome_original'] : "fatura-$id_safe.pdf";
+                    break;
+                }
             }
         }
 
