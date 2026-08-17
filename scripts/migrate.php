@@ -29,11 +29,21 @@ if (mysqli_num_rows($checkTable) == 0) {
 // 2. Scan Files
 $migrationsDir = __DIR__ . '/../database/migrations/';
 if (!is_dir($migrationsDir)) {
-    mkdir($migrationsDir, 0755, true);
+    if (is_dir(__DIR__ . '/database/migrations/')) {
+        $migrationsDir = __DIR__ . '/database/migrations/';
+    } elseif (is_dir(__DIR__ . '/../dinovatech/database/migrations/')) {
+        $migrationsDir = __DIR__ . '/../dinovatech/database/migrations/';
+    } else {
+        mkdir($migrationsDir, 0755, true);
+    }
 }
 
 $files = glob($migrationsDir . '*.sql');
-sort($files); // Ensure alphabetical order
+if ($files) {
+    sort($files); // Ensure alphabetical order
+} else {
+    $files = [];
+}
 
 // 3. Get Executed Migrations
 $executed = [];

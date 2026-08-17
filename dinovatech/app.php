@@ -3638,8 +3638,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
         case 'check_migrations_status':
             $migrationsDir = __DIR__ . '/../database/migrations/';
-            if (!is_dir($migrationsDir))
-                mkdir($migrationsDir, 0755, true);
+            if (!is_dir($migrationsDir)) {
+                if (is_dir(__DIR__ . '/database/migrations/')) {
+                    $migrationsDir = __DIR__ . '/database/migrations/';
+                } else {
+                    mkdir($migrationsDir, 0755, true);
+                }
+            }
 
             // Ensure table exists
             $link->query("CREATE TABLE IF NOT EXISTS migrations_history (
@@ -3655,9 +3660,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $executed[] = $row['migration_name'];
 
             $pending = 0;
-            foreach ($files as $file) {
-                if (!in_array(basename($file), $executed))
-                    $pending++;
+            if ($files) {
+                foreach ($files as $file) {
+                    if (!in_array(basename($file), $executed))
+                        $pending++;
+                }
             }
 
             $response['success'] = true;
@@ -3666,8 +3673,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
         case 'run_migrations':
             $migrationsDir = __DIR__ . '/../database/migrations/';
-            if (!is_dir($migrationsDir))
-                mkdir($migrationsDir, 0755, true);
+            if (!is_dir($migrationsDir)) {
+                if (is_dir(__DIR__ . '/database/migrations/')) {
+                    $migrationsDir = __DIR__ . '/database/migrations/';
+                } else {
+                    mkdir($migrationsDir, 0755, true);
+                }
+            }
 
             // Ensure table exists
             $link->query("CREATE TABLE IF NOT EXISTS migrations_history (
@@ -3677,7 +3689,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
              )");
 
             $files = glob($migrationsDir . '*.sql');
-            sort($files);
+            if ($files) {
+                sort($files);
+            } else {
+                $files = [];
+            }
 
             $executed = [];
             $res = $link->query("SELECT migration_name FROM migrations_history");
