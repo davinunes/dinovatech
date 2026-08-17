@@ -62,210 +62,240 @@ if (!isset($_SESSION['usuario_id'])) {
                     </div>
 
                     <!-- TAB: FISCAL -->
-                    <div id="content-fiscal" class="tab-content active">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                            <span class="material-icons mr-2 text-cyan-600">business</span> Dados da Empresa e Emissão
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Razão Social</label>
-                                <input type="text" name="razao_social" id="razao_social" required
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Nome Fantasia</label>
-                                <input type="text" name="nome_fantasia" id="nome_fantasia"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">CNPJ</label>
-                                <input type="text" name="cnpj" id="cnpj" required
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Inscrição Municipal</label>
-                                <input type="text" name="inscricao_municipal" id="inscricao_municipal" required
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Inscrição Estadual
-                                    (Opcional)</label>
-                                <input type="text" name="inscricao_estadual" id="inscricao_estadual"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
-                                <input type="text" name="telefone" id="telefone"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                            </div>
-                        </div>
-
-                        <div class="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
-                            <label
-                                class="flex items-center space-x-2 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                <input type="checkbox" name="permitir_cadastro_sem_cpf" id="permitir_cadastro_sem_cpf"
-                                    value="1" class="form-checkbox h-5 w-5 text-cyan-600 rounded">
-                                <span class="text-gray-700 font-medium">Permitir cadastro de clientes sem CPF</span>
-                            </label>
-                            <p class="text-xs text-gray-500 mt-1 ml-1">Se habilitado, o campo CPF/CNPJ será opcional no
-                                cadastro de novos clientes. (Atenção: A emissão de NFS-e pode falhar sem CPF).</p>
-                        </div>
-
-                        <div class="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Logo da Empresa</label>
-                            <div class="flex items-center space-x-4">
-                                <div
-                                    class="flex-shrink-0 h-16 w-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
-                                    <img id="logo_preview" src="" alt="Logo"
-                                        class="h-full w-full object-contain hidden">
-                                    <span id="logo_placeholder" class="material-icons text-gray-400">image</span>
-                                </div>
-                                <div class="flex-1">
-                                    <input type="file" name="arquivo_logo" id="arquivo_logo"
-                                        accept=".png, .jpg, .jpeg, .webp"
-                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 transition-colors">
-                                    <p class="text-xs text-gray-500 mt-1">Recomendado: 200x200px (PNG ou JPG). O
-                                        arquivo será sobrescrito ao atualizar.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Endereço -->
-                        <div class="md:col-span-2 border-t pt-4 mt-2">
-                            <h4 class="text-sm font-semibold text-gray-600 mb-3">Endereço (Obrigatório para NFSe)
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Logradouro</label>
-                                    <input type="text" name="endereco" id="endereco" required
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
-                                    <input type="text" name="numero" id="numero" required
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
-                                    <input type="text" name="complemento" id="complemento"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
-                                    <input type="text" name="bairro" id="bairro" required
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-                                    <input type="text" name="cep" id="cep" required
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">UF</label>
-                                    <input type="text" name="uf" id="uf" required maxlength="2"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 uppercase">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Cód. Município
-                                (IBGE)</label>
-                            <input type="text" name="codigo_municipio" id="codigo_municipio" required value="5300108"
-                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Regime Tributário</label>
-                            <select name="regime_tributario" id="regime_tributario"
-                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                <option value="simples">Simples Nacional</option>
-                                <option value="lucro_presumido">Lucro Presumido</option>
-                                <option value="lucro_real">Lucro Real</option>
-                            </select>
-                        </div>
-                        <div class="flex items-center pt-6">
-                            <input type="checkbox" name="optante_simples" id="optante_simples" value="1"
-                                class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
-                            <label for="optante_simples" class="ml-2 block text-sm text-gray-900">
-                                Optante pelo Simples Nacional
-                            </label>
-                        </div>
-
-
-                        <div class="border-t pt-4 mt-6">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                <span class="material-icons mr-2 text-cyan-600">settings_remote</span> Parâmetros NFS-e
+                    <!-- TAB: GERAL / FISCAL -->
+                    <div id="content-fiscal" class="tab-content active space-y-6">
+                        
+                        <!-- CARD 1: DADOS GERAIS DA EMPRESA & IDENTIDADE -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                                <span class="material-icons mr-2 text-cyan-600">business</span> Dados Gerais da Empresa
                             </h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Ambiente Padrão</label>
-                                    <select name="ambiente_padrao" id="ambiente_padrao"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50">
-                                        <option value="homologacao">Homologação (Teste)</option>
-                                        <option value="producao">Produção (Valendo)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Série RPS</label>
-                                    <input type="text" name="serie_rps" id="serie_rps" value="8"
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Razão Social *</label>
+                                    <input type="text" name="razao_social" id="razao_social" required
                                         class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
-                                        (Homologação)</label>
-                                    <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao"
-                                        value="0"
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome Fantasia</label>
+                                    <input type="text" name="nome_fantasia" id="nome_fantasia"
                                         class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Último RPS
-                                        (Produção)</label>
-                                    <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 border-orange-200">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">CNPJ *</label>
+                                    <input type="text" name="cnpj" id="cnpj" required
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefone / WhatsApp</label>
+                                    <input type="text" name="telefone" id="telefone"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Customização da Landing Page -->
-                        <div class="border-t pt-4 mt-6">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                <span class="material-icons mr-2 text-cyan-600">home</span> Customização da Página Inicial (Landing Page)
-                            </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Modelo/Tema da Página Inicial</label>
-                                    <select name="landing_page_theme" id="landing_page_theme" onchange="toggleLandingCustomPath()"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50">
-                                        <option value="default">Padrão (Empresa de Tecnologia)</option>
-                                        <option value="vet">Clínica Veterinária (Tema DinoVet)</option>
-                                        <option value="custom">Diretório Personalizado (Avançado)</option>
-                                    </select>
-                                </div>
-                                <div id="landing_path_container" class="hidden">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Caminho do Diretório Customizado</label>
-                                    <input type="text" name="landing_page_path" id="landing_page_path" placeholder="Ex: custom_home"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
-                                    <p class="text-xs text-gray-500 mt-1">Pasta no servidor que contém <code>index.php</code> ou <code>index.html</code>.</p>
-                                </div>
+                            <div class="border-t border-gray-100 pt-4 mt-4">
+                                <label
+                                    class="flex items-center space-x-2 cursor-pointer bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                    <input type="checkbox" name="permitir_cadastro_sem_cpf" id="permitir_cadastro_sem_cpf"
+                                        value="1" class="form-checkbox h-5 w-5 text-cyan-600 rounded">
+                                    <span class="text-gray-700 font-medium">Permitir cadastro de clientes sem CPF</span>
+                                </label>
+                                <p class="text-xs text-gray-500 mt-1 ml-1">Se habilitado, o campo CPF/CNPJ será opcional no cadastro de novos clientes.</p>
                             </div>
-                        </div>
 
-                        <!-- Módulo Banho & Tosa (DinoVet) -->
-                        <div class="border-t pt-4 mt-6">
-                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                <span class="material-icons mr-2 text-teal-600">shower</span> Módulo Banho e Tosa (DinoVet)
-                            </h3>
-                            <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
-                                <label class="flex items-center space-x-3 cursor-pointer">
-                                    <input type="checkbox" name="banho_checkin_foto_ativo" id="banho_checkin_foto_ativo" value="1"
-                                        class="h-5 w-5 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
-                                    <div>
-                                        <span class="text-sm font-bold text-gray-800">Ativar Check-in Fotográfico na Recepção</span>
-                                        <p class="text-xs text-gray-500 mt-0.5">Permite à equipe anexar fotos de nós, avarias ou ferimentos pré-existentes na esteira/fila de produção do banho e tosa.</p>
+                            <div class="border-t border-gray-100 pt-4 mt-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Logo da Empresa</label>
+                                <div class="flex items-center space-x-4">
+                                    <div
+                                        class="flex-shrink-0 h-16 w-16 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                                        <img id="logo_preview" src="" alt="Logo"
+                                            class="h-full w-full object-contain hidden">
+                                        <span id="logo_placeholder" class="material-icons text-gray-400">image</span>
                                     </div>
+                                    <div class="flex-1">
+                                        <input type="file" name="arquivo_logo" id="arquivo_logo"
+                                            accept=".png, .jpg, .jpeg, .webp"
+                                            class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 transition-colors">
+                                        <p class="text-xs text-gray-500 mt-1">Recomendado: 200x200px (PNG ou JPG).</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Customização da Landing Page -->
+                            <div class="border-t border-gray-100 pt-4 mt-4">
+                                <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                                    <span class="material-icons mr-1.5 text-cyan-600 text-sm">home</span> Customização da Página Inicial (Landing Page)
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Modelo/Tema da Página Inicial</label>
+                                        <select name="landing_page_theme" id="landing_page_theme" onchange="toggleLandingCustomPath()"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50 text-sm">
+                                            <option value="default">Padrão (Empresa de Tecnologia)</option>
+                                            <option value="vet">Clínica Veterinária (Tema DinoVet)</option>
+                                            <option value="custom">Diretório Personalizado (Avançado)</option>
+                                        </select>
+                                    </div>
+                                    <div id="landing_path_container" class="hidden">
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Caminho do Diretório Customizado</label>
+                                        <input type="text" name="landing_page_path" id="landing_page_path" placeholder="Ex: custom_home"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Módulo Banho & Tosa (DinoVet) -->
+                            <div class="border-t border-gray-100 pt-4 mt-4">
+                                <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                                    <span class="material-icons mr-1.5 text-teal-600 text-sm">shower</span> Módulo de Estética & Banho (DinoVet)
+                                </h4>
+                                <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-3.5">
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="checkbox" name="banho_checkin_foto_ativo" id="banho_checkin_foto_ativo" value="1"
+                                            class="h-5 w-5 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
+                                        <div>
+                                            <span class="text-sm font-bold text-gray-800">Ativar Check-in Fotográfico na Recepção</span>
+                                            <p class="text-xs text-gray-500 mt-0.5">Permite à equipe anexar fotos de nós, avarias ou ferimentos pré-existentes na esteira de produção do banho e tosa.</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CARD 2: EMISSÃO DE NOTA FISCAL (NFS-E) - SEPARADO VISUALMENTE -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                                        <span class="material-icons mr-2 text-indigo-600">receipt_long</span> Integração & Emissão de Nota Fiscal (NFS-e)
+                                    </h3>
+                                    <p class="text-xs text-gray-500 mt-0.5">Configure aqui a tributação municipal e parâmetros para emissão automática de NFS-e.</p>
+                                </div>
+                                
+                                <!-- Toggle de Ativação Fiscal -->
+                                <label class="flex items-center space-x-2 cursor-pointer bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl">
+                                    <input type="checkbox" id="toggle_modulo_fiscal" onchange="toggleCardFiscal()"
+                                        class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                                    <span class="text-xs font-bold text-indigo-900">Ativar Módulo Fiscal (NFS-e)</span>
                                 </label>
                             </div>
+
+                            <!-- Fiscal Inactive Banner -->
+                            <div id="bannerFiscalInativo" class="p-6 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                <span class="material-icons text-4xl text-gray-300 mb-1">receipt</span>
+                                <p class="text-sm font-semibold text-gray-600">Emissão de NFS-e não ativada</p>
+                                <p class="text-xs text-gray-400 mt-0.5">Marque a opção acima caso sua empresa emita notas fiscais de serviço.</p>
+                            </div>
+
+                            <!-- Fiscal Fields Container -->
+                            <div id="containerCamposFiscais" class="hidden space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Inscrição Municipal *</label>
+                                        <input type="text" name="inscricao_municipal" id="inscricao_municipal"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Inscrição Estadual (Opcional)</label>
+                                        <input type="text" name="inscricao_estadual" id="inscricao_estadual"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500">
+                                    </div>
+                                </div>
+
+                                <!-- Endereço Fiscal -->
+                                <div class="border-t border-gray-100 pt-4">
+                                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Endereço da Empresa (Obrigatório para NFS-e)</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Logradouro</label>
+                                            <input type="text" name="endereco" id="endereco"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Número</label>
+                                            <input type="text" name="numero" id="numero"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Complemento</label>
+                                            <input type="text" name="complemento" id="complemento"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Bairro</label>
+                                            <input type="text" name="bairro" id="bairro"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">CEP</label>
+                                            <input type="text" name="cep" id="cep"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">UF</label>
+                                            <input type="text" name="uf" id="uf" maxlength="2"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 uppercase text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tributação -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-100 pt-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Cód. Município (IBGE)</label>
+                                        <input type="text" name="codigo_municipio" id="codigo_municipio" value="5300108"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Regime Tributário</label>
+                                        <select name="regime_tributario" id="regime_tributario"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                            <option value="simples">Simples Nacional</option>
+                                            <option value="lucro_presumido">Lucro Presumido</option>
+                                            <option value="lucro_real">Lucro Real</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center pt-5">
+                                        <input type="checkbox" name="optante_simples" id="optante_simples" value="1"
+                                            class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
+                                        <label for="optante_simples" class="ml-2 block text-xs font-medium text-gray-900">
+                                            Optante pelo Simples Nacional
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Parâmetros RPS -->
+                                <div class="border-t border-gray-100 pt-4">
+                                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Parâmetros de Numeração e RPS</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Ambiente Padrão</label>
+                                            <select name="ambiente_padrao" id="ambiente_padrao"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50 text-sm">
+                                                <option value="homologacao">Homologação (Teste)</option>
+                                                <option value="producao">Produção (Valendo)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Série RPS</label>
+                                            <input type="text" name="serie_rps" id="serie_rps" value="8"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Último RPS (Homologação)</label>
+                                            <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao" value="0"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">Último RPS (Produção)</label>
+                                            <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
 
                     <!-- TAB: CERTIFICADO -->
@@ -907,8 +937,26 @@ if (!isset($_SESSION['usuario_id'])) {
                             `);
                         }
                     }
+
+                    // Toggle Fiscal Module Card Visibility
+                    if (d.inscricao_municipal || d.caminho_certificado || (d.serie_rps && d.serie_rps != '')) {
+                        $('#toggle_modulo_fiscal').prop('checked', true);
+                    }
+                    toggleCardFiscal();
                 }
             }, 'json');
+
+            // Toggle Fiscal Card display
+            window.toggleCardFiscal = function () {
+                const isAtivo = $('#toggle_modulo_fiscal').is(':checked');
+                if (isAtivo) {
+                    $('#containerCamposFiscais').removeClass('hidden');
+                    $('#bannerFiscalInativo').addClass('hidden');
+                } else {
+                    $('#containerCamposFiscais').addClass('hidden');
+                    $('#bannerFiscalInativo').removeClass('hidden');
+                }
+            };
 
             // Toggle landing path input display
             window.toggleLandingCustomPath = function () {

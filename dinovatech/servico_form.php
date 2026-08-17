@@ -112,69 +112,76 @@ if ($id_servico) {
                                     </label>
                                 </div>
                             </div>
-
                             <!-- VITRINE / IDENTIFICAÇÃO VISUAL -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label for="icone_servico" class="block text-sm font-medium text-gray-700 mb-1">
-                                        Ícone (Material Icons)
+                                        Ícone do Serviço
                                     </label>
                                     <div class="flex items-center space-x-2">
                                         <input type="text" id="icone_servico" name="icone_servico"
                                             value="<?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?>"
-                                            placeholder="Ex: pets, content_cut, shower"
+                                            placeholder="Ex: pets, shower"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                        <div class="p-3 bg-gray-100 rounded-lg border border-gray-200 text-cyan-600 flex items-center justify-center">
+                                        <div class="p-3 bg-gray-100 rounded-lg border border-gray-200 text-cyan-600 flex items-center justify-center cursor-pointer" onclick="abrirModalIconesServico()">
                                             <span class="material-icons" id="iconePreview"><?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?></span>
                                         </div>
+                                        <button type="button" onclick="abrirModalIconesServico()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-3 rounded-lg text-xs font-semibold whitespace-nowrap transition">
+                                            Escolher
+                                        </button>
                                     </div>
-                                    <span class="text-xs text-gray-400">Exemplos: pets, content_cut, shower, spa, clean_hands</span>
                                 </div>
                                 <div>
                                     <label for="imagem_url" class="block text-sm font-medium text-gray-700 mb-1">
-                                        URL da Imagem / Vitrine (Opcional)
+                                        Foto / Imagem do Serviço
                                     </label>
-                                    <input type="url" id="imagem_url" name="imagem_url"
-                                        value="<?= htmlspecialchars($servico['imagem_url'] ?? '') ?>"
-                                        placeholder="https://exemplo.com/imagem.png"
-                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    <div class="flex items-center space-x-2">
+                                        <input type="url" id="imagem_url" name="imagem_url"
+                                            value="<?= htmlspecialchars($servico['imagem_url'] ?? '') ?>"
+                                            placeholder="https://... ou faça upload"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <input type="file" id="upload_foto_servico_input" accept="image/*" class="hidden" onchange="enviarFotoOracleServico(this)">
+                                        <button type="button" onclick="$('#upload_foto_servico_input').click()" id="btnUploadFotoServico"
+                                            class="bg-teal-600 hover:bg-teal-700 text-white px-3 py-3 rounded-lg text-xs font-semibold whitespace-nowrap flex items-center gap-1 transition shadow-sm">
+                                            <span class="material-icons text-sm">cloud_upload</span> Upar Foto
+                                        </button>
+                                    </div>
+                                    <div id="previewFotoServicoContainer" class="<?= empty($servico['imagem_url']) ? 'hidden' : '' ?> mt-2 flex items-center gap-2">
+                                        <img id="previewFotoServicoImg" src="<?= htmlspecialchars($servico['imagem_url'] ?? '') ?>" class="w-12 h-12 object-cover rounded-lg border border-gray-200">
+                                        <span class="text-xs text-gray-500">Preview da imagem</span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- DADOS FISCAIS -->
-                            <div class="border-t pt-4 mt-4">
+                            <!-- DADOS FISCAIS / NFSE -->
+                            <div class="border-t pt-4 mt-2">
                                 <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                    <span class="material-icons mr-2 text-cyan-600">receipt_long</span> Dados Fiscais
-                                    (NFS-e)
+                                    <span class="material-icons mr-2 text-cyan-600">receipt_long</span> Parâmetros Fiscais (NFS-e)
                                 </h3>
-
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label for="item_lista_servico"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Item Lista Serviço (LC
-                                            116)</label>
-                                        <input type="text" id="item_lista_servico" name="item_lista_servico"
-                                            value="<?= $servico['item_lista_servico'] ?? '' ?>" placeholder="Ex: 01.07"
+                                        <label for="codigo_servico_lc116"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Item LC 116/03
+                                            (Ex: 01.07)</label>
+                                        <input type="text" id="codigo_servico_lc116" name="codigo_servico_lc116"
+                                            value="<?= $servico['codigo_servico_lc116'] ?? '' ?>"
+                                            placeholder="Ex: 01.07"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                     <div>
-                                        <label for="codigo_nbs"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Código NBS</label>
-                                        <input type="text" id="codigo_nbs" name="codigo_nbs"
-                                            value="<?= $servico['codigo_nbs'] ?? '' ?>" placeholder="Ex: 1.01"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                    </div>
-                                    <div>
-                                        <label for="codigo_cnae"
-                                            class="block text-sm font-medium text-gray-700 mb-1">CNAE</label>
+                                        <label for="codigo_cnae" class="block text-sm font-medium text-gray-700 mb-1">CNAE
+                                            (Apenas números)</label>
                                         <input type="text" id="codigo_cnae" name="codigo_cnae"
-                                            value="<?= $servico['codigo_cnae'] ?? '' ?>" placeholder="Ex: 6204000"
+                                            value="<?= $servico['codigo_cnae'] ?? '' ?>" placeholder="Ex: 6201501"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                                     <div>
                                         <label for="codigo_tributacao_municipio"
                                             class="block text-sm font-medium text-gray-700 mb-1">Cód. Tributação
-                                            Mun.</label>
+                                            Municipal</label>
                                         <input type="text" id="codigo_tributacao_municipio"
                                             name="codigo_tributacao_municipio"
                                             value="<?= $servico['codigo_tributacao_municipio'] ?? '' ?>"
@@ -182,21 +189,24 @@ if ($id_servico) {
                                     </div>
                                     <div>
                                         <label for="aliquota_iss"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Alíquota ISS
-                                            (%)</label>
-                                        <input type="number" id="aliquota_iss" name="aliquota_iss" step="0.01" min="0"
-                                            max="100" value="<?= $servico['aliquota_iss'] ?? '0.00' ?>"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Alíquota ISS (%)</label>
+                                        <input type="number" step="0.01" id="aliquota_iss" name="aliquota_iss"
+                                            value="<?= $servico['aliquota_iss'] ?? '0.00' ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
-                                    <div class="flex items-center pt-8">
-                                        <input type="checkbox" name="iss_retido" id="iss_retido" value="1"
-                                            <?= ($servico['iss_retido'] ?? 0) ? 'checked' : '' ?>
-                                            class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
-                                        <label for="iss_retido" class="ml-2 block text-sm text-gray-900">
-                                            ISS Retido na Fonte?
-                                        </label>
+                                    <div>
+                                        <label for="iss_retido" class="block text-sm font-medium text-gray-700 mb-1">ISS
+                                            Retido?</label>
+                                        <select id="iss_retido" name="iss_retido"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <option value="0" <?= ($servico['iss_retido'] ?? 0) == 0 ? 'selected' : '' ?>>
+                                                Não</option>
+                                            <option value="1" <?= ($servico['iss_retido'] ?? 0) == 1 ? 'selected' : '' ?>>
+                                                Sim</option>
+                                        </select>
                                     </div>
                                 </div>
+
                                 <div class="mt-4">
                                     <label for="descricao_nfse_padrao"
                                         class="block text-sm font-medium text-gray-700 mb-1">Descrição Padrão
@@ -224,8 +234,112 @@ if ($id_servico) {
         </main>
     </div>
 
+    <!-- Modal Seletor de Ícones Material Icons -->
+    <div id="modalIconesServico" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black bg-opacity-50">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl overflow-y-auto max-h-[85vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <span class="material-icons text-cyan-600">palette</span> Escolher Ícone
+                </h3>
+                <button type="button" onclick="fecharModalIconesServico()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <input type="text" id="filtroIconesServico" placeholder="Filtrar ícones..."
+                    class="w-full p-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500">
+            </div>
+
+            <div class="grid grid-cols-5 sm:grid-cols-8 gap-3 max-h-[50vh] overflow-y-auto p-1" id="gridIconesServico">
+                <!-- Populated via JS -->
+            </div>
+        </div>
+    </div>
+
     <?php include 'components/layout_scripts.php'; ?>
     <script>
+        const listaIconesServicos = [
+            'shower', 'bathtub', 'pets', 'cut', 'spa', 'card_giftcard', 'wash', 'brush',
+            'clean_hands', 'health_and_safety', 'favorite', 'star', 'diamond', 'inventory_2',
+            'local_offer', 'verified', 'bolt', 'category', 'loyalty', 'medical_services',
+            'healing', 'vaccines', 'psychology', 'emergency', 'local_hospital', 'content_cut',
+            'dry_cleaning', 'soap', 'sanitizer', 'auto_awesome', 'water_drop', 'flare',
+            'shield', 'sentiment_very_satisfied', 'face', 'cruelty_free'
+        ];
+
+        function abrirModalIconesServico() {
+            renderGridIconesServico(listaIconesServicos);
+            $('#filtroIconesServico').val('');
+            $('#modalIconesServico').removeClass('hidden');
+        }
+
+        function fecharModalIconesServico() {
+            $('#modalIconesServico').addClass('hidden');
+        }
+
+        function renderGridIconesServico(icones) {
+            const grid = $('#gridIconesServico');
+            grid.empty();
+            icones.forEach(ic => {
+                grid.append(`
+                    <button type="button" onclick="selecionarIconeServico('${ic}')"
+                        class="p-3 bg-gray-50 hover:bg-cyan-50 hover:text-cyan-600 border border-gray-100 hover:border-cyan-300 rounded-xl flex flex-col items-center justify-center transition group">
+                        <span class="material-icons text-2xl text-gray-600 group-hover:text-cyan-600">${ic}</span>
+                        <span class="text-[9px] text-gray-400 group-hover:text-cyan-700 truncate w-full text-center mt-1">${ic}</span>
+                    </button>
+                `);
+            });
+        }
+
+        function selecionarIconeServico(nomeIcone) {
+            $('#icone_servico').val(nomeIcone);
+            $('#iconePreview').text(nomeIcone);
+            fecharModalIconesServico();
+        }
+
+        $('#filtroIconesServico').on('input', function() {
+            const termo = $(this).val().toLowerCase().trim();
+            const filtrados = listaIconesServicos.filter(i => i.toLowerCase().includes(termo));
+            renderGridIconesServico(filtrados);
+        });
+
+        function enviarFotoOracleServico(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('action', 'upload_imagem_oracle');
+            formData.append('foto', file);
+
+            const btn = $('#btnUploadFotoServico');
+            const origHtml = btn.html();
+            btn.prop('disabled', true).html('<span class="material-icons animate-spin text-sm">sync</span> Enviando...');
+
+            $.ajax({
+                url: 'app.php',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(res) {
+                    btn.prop('disabled', false).html(origHtml);
+                    if (res.success && res.url) {
+                        $('#imagem_url').val(res.url);
+                        $('#previewFotoServicoImg').attr('src', res.url.startsWith('http') ? res.url : res.url);
+                        $('#previewFotoServicoContainer').removeClass('hidden');
+                        alert('Foto carregada com sucesso!');
+                    } else {
+                        alert(res.message || 'Erro ao enviar foto.');
+                    }
+                },
+                error: function() {
+                    btn.prop('disabled', false).html(origHtml);
+                    alert('Erro de conexão ao enviar imagem.');
+                }
+            });
+        }
+
         $(document).ready(function () {
             $('#icone_servico').on('input', function() {
                 const val = $(this).val().trim();

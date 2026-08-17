@@ -84,8 +84,8 @@ ini_set('display_errors', 1);
 
 $response = ['success' => false, 'message' => ''];
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET') {
+    $action = $_POST['action'] ?? $_GET['action'] ?? $_REQUEST['action'] ?? '';
 
     switch ($action) {
         // ACTIONS: ContaDev Integration
@@ -2460,6 +2460,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
+            // 4.6. Pacotes e Saldos de Banho & Tosa do Cliente
+            $clientePacotes = [];
+            $qPacotes = "SELECT cp.*, p.nome_pacote, p.valor_total, p.is_recorrente, p.icone, p.imagem_url 
+                         FROM ClientePacotes cp 
+                         JOIN Pacotes p ON cp.id_pacote = p.id_pacote 
+                         WHERE cp.id_cliente = '$id_cliente_safe' AND cp.status = 'ativo' 
+                         ORDER BY cp.data_aquisicao DESC";
+            $rPacotes = DBExecute($link, $qPacotes);
+            if ($rPacotes) {
+                while ($cp = mysqli_fetch_assoc($rPacotes)) {
+                    $idCP = (int)$cp['id_cliente_pacote'];
+                    $qS = "SELECT cps.*, s.nome_servico, s.duracao_minutos, (cps.qtd_total - cps.qtd_utilizada) as saldo_restante 
+                           FROM ClientePacoteSaldos cps 
+                           JOIN Servicos s ON cps.id_servico = s.id_servico 
+                           WHERE cps.id_cliente_pacote = $idCP";
+                    $rS = DBExecute($link, $qS);
+                    $saldos = [];
+                    if ($rS) {
+                        while ($sRow = mysqli_fetch_assoc($rS)) {
+                            $saldos[] = $sRow;
+                        }
+                    }
+                    $cp['saldos'] = $saldos;
+                    $clientePacotes[] = $cp;
+                }
+            }
+
+            // 4.7. Status de Banho ao Vivo na Esteira para os Pets do Cliente
+            $banhoFilaAoVivo = [];
+            $qFilaAoVivo = "SELECT f.*, p.nome as pet_nome, p.porte, p.tipo_pelagem,
+                            DATE_FORMAT(f.horario_entrada, '%H:%i') as horario_entrada_fmt
+                            FROM BanhoProducaoFila f 
+                            JOIN Pets p ON f.id_pet = p.id_pet 
+                            WHERE p.id_cliente = '$id_cliente_safe' AND f.etapa != 'finalizado' 
+                            ORDER BY f.horario_entrada DESC";
+            $rFilaAoVivo = DBExecute($link, $qFilaAoVivo);
+            if ($rFilaAoVivo) {
+                while ($fRow = mysqli_fetch_assoc($rFilaAoVivo)) {
+                    $banhoFilaAoVivo[] = $fRow;
+                }
+            }
+
+            // 4.8. Serviços disponíveis para agendamento online de Banho & Tosa
+            $servicosBanho = [];
+            $qServBanho = "SELECT id_servico, nome_servico, duracao_minutos, valor_sugerido, icone_servico 
+                           FROM Servicos 
+                           WHERE disponivel_banho = 1 OR (disponivel_clinica = 0 AND disponivel_banho = 0) 
+                           ORDER BY nome_servico ASC";
+            $rServBanho = DBExecute($link, $qServBanho);
+            if ($rServBanho) {
+                while ($sb = mysqli_fetch_assoc($rServBanho)) {
+                    $servicosBanho[] = $sb;
+                }
+            }
+
             // 5. System Google Integration Hint
             $googleServiceEmailHint = '';
             $qConf = "SELECT google_service_account_json FROM ConfiguracoesEmissor LIMIT 1";
@@ -2492,6 +2547,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'atendimentos' => $atendimentosRecentes,
                 'vacinas' => $carteiraVacinas,
                 'recorrencias' => $recorrencias,
+                'pacotes' => $clientePacotes,
+                'banho_ao_vivo' => $banhoFilaAoVivo,
+                'servicos_banho' => $servicosBanho,
                 'google_service_email_hint' => $googleServiceEmailHint,
                 'is_vet_mode' => AppHelper::isVetMode()
             ];
@@ -2534,6 +2592,169 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $response['message'] = "Dados atualizados com sucesso!";
             } else {
                 $response['message'] = "Erro ao atualizar dados: " . mysqli_error($link);
+            }
+            break;
+
+        case 'cliente_agendar_banho':
+            $id_cliente = $_SESSION['cliente_id'] ?? '';
+            if (empty($id_cliente)) {
+                $response['message'] = "Sessão expirada. Faça login novamente.";
+                break;
+            }
+
+            $id_cliente_safe = (int)$id_cliente;
+            $id_pet = (int)($_POST['id_pet'] ?? 0);
+            $id_servico = (int)($_POST['id_servico'] ?? 0);
+            $data_inicio = $_POST['data_inicio'] ?? '';
+            $observacoes = mysqli_real_escape_string($link, $_POST['observacoes'] ?? 'Agendado pelo Portal do Tutor');
+            $usar_saldo = isset($_POST['usar_saldo_pacote']) && $_POST['usar_saldo_pacote'] == 1;
+
+            if ($id_pet <= 0 || $id_servico <= 0 || empty($data_inicio)) {
+                $response['message'] = "Preencha todos os campos obrigatórios (Pet, Serviço e Horário).";
+                break;
+            }
+
+            // Verify Pet belongs to Client
+            $resPet = DBExecute($link, "SELECT p.*, s.duracao_minutos, s.nome_servico 
+                                        FROM Pets p 
+                                        LEFT JOIN Servicos s ON s.id_servico = $id_servico 
+                                        WHERE p.id_pet = $id_pet AND p.id_cliente = $id_cliente_safe");
+            if (!$resPet || mysqli_num_rows($resPet) == 0) {
+                $response['message'] = "Pet não localizado ou não pertence ao seu cadastro.";
+                break;
+            }
+
+            $pInfo = mysqli_fetch_assoc($resPet);
+            $duracaoBase = (int)($pInfo['duracao_minutos'] ?: 30);
+            $porte = $pInfo['porte'] ?: 'P';
+            $pelagem = $pInfo['tipo_pelagem'] ?: 'Curto';
+
+            // Multiplier
+            $mult = 1.0;
+            if ($porte === 'M') $mult = 1.2;
+            if ($porte === 'G') $mult = 1.5;
+            if ($porte === 'GG') $mult = 2.0;
+
+            $duracaoFinal = (int) round($duracaoBase * $mult);
+            if ($pelagem === 'Longo' || $pelagem === 'Dupla Pelagem') {
+                $duracaoFinal += 15;
+            }
+
+            $dtInicio = new DateTime($data_inicio, new DateTimeZone('America/Sao_Paulo'));
+            $dtFim = clone $dtInicio;
+            $dtFim->modify("+{$duracaoFinal} minutes");
+
+            $startStr = $dtInicio->format('Y-m-d H:i:s');
+            $endStr = $dtFim->format('Y-m-d H:i:s');
+
+            $titulo = mysqli_real_escape_string($link, "Banho/Tosa: " . $pInfo['nome'] . " (" . $pInfo['nome_servico'] . ")");
+
+            // Check if using package balance
+            $id_cliente_pacote_val = "NULL";
+            if ($usar_saldo) {
+                $qPac = "SELECT cp.id_cliente_pacote, cps.id_saldo, cps.qtd_total, cps.qtd_utilizada 
+                         FROM ClientePacotes cp 
+                         JOIN ClientePacoteSaldos cps ON cp.id_cliente_pacote = cps.id_cliente_pacote 
+                         WHERE cp.id_cliente = $id_cliente_safe 
+                           AND cp.status = 'ativo' 
+                           AND cps.id_servico = $id_servico 
+                           AND (cps.qtd_total - cps.qtd_utilizada) > 0 
+                         ORDER BY cp.data_aquisicao ASC LIMIT 1";
+                $rPac = DBExecute($link, $qPac);
+                if ($rPac && $pacRow = mysqli_fetch_assoc($rPac)) {
+                    $id_cliente_pacote_val = (int)$pacRow['id_cliente_pacote'];
+                    $newUtil = $pacRow['qtd_utilizada'] + 1;
+                    $idSaldo = (int)$pacRow['id_saldo'];
+                    DBExecute($link, "UPDATE ClientePacoteSaldos SET qtd_utilizada = $newUtil WHERE id_saldo = $idSaldo");
+                }
+            }
+
+            $query = "INSERT INTO Agendamentos (id_cliente, id_pet, id_servico, id_cliente_pacote, tipo_agenda, titulo, descricao, data_inicio, data_fim, status) 
+                      VALUES ($id_cliente_safe, $id_pet, $id_servico, $id_cliente_pacote_val, 'banho_tosa', '$titulo', '$observacoes', '$startStr', '$endStr', 'Agendado')";
+            if (DBExecute($link, $query)) {
+                $newAgendId = mysqli_insert_id($link);
+
+                // Auto enqueue to BanhoProducaoFila
+                DBExecute($link, "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, etapa, horario_entrada, observacoes_estetica) 
+                                  VALUES ($newAgendId, $id_pet, 'aguardando', '$startStr', '$observacoes')");
+
+                // Log consumo if package was used
+                if ($id_cliente_pacote_val !== "NULL") {
+                    DBExecute($link, "INSERT INTO ClientePacoteConsumo (id_cliente_pacote, id_servico, id_pet, id_agendamento, observacao) 
+                                      VALUES ($id_cliente_pacote_val, $id_servico, $id_pet, $newAgendId, 'Agendamento Online pelo Tutor')");
+                }
+
+                $response['success'] = true;
+                $response['message'] = "Agendamento de Banho & Tosa realizado com sucesso!";
+            } else {
+                $response['message'] = "Erro ao agendar: " . mysqli_error($link);
+            }
+            break;
+
+        case 'upload_imagem_oracle':
+            if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
+                $response['message'] = "Nenhum arquivo enviado ou erro no upload.";
+                break;
+            }
+
+            $origName = $_FILES['foto']['name'];
+            $tmpPath = $_FILES['foto']['tmp_name'];
+            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
+                $response['message'] = "Apenas imagens (JPG, PNG, WEBP, GIF) são permitidas.";
+                break;
+            }
+
+            // Check Oracle Preauth URL
+            $qConf = "SELECT api_oracle_url FROM ConfiguracoesEmissor LIMIT 1";
+            $resConf = DBExecute($link, $qConf);
+            $urlOracle = '';
+            if ($resConf && $rC = mysqli_fetch_assoc($resConf)) {
+                $urlOracle = $rC['api_oracle_url'] ?? '';
+            }
+
+            if (!empty($urlOracle)) {
+                if (substr($urlOracle, -1) !== '/') $urlOracle .= '/';
+                $bucketFileName = 'imagens/' . time() . '_' . substr(md5(uniqid()), 0, 8) . '.' . $ext;
+                $urlUpload = $urlOracle . $bucketFileName;
+
+                $content = file_get_contents($tmpPath);
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($tmpPath);
+
+                $ch = curl_init($urlUpload);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: ' . $mimeType,
+                    'Content-Length: ' . strlen($content)
+                ]);
+                curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($httpCode >= 200 && $httpCode < 300) {
+                    $response['success'] = true;
+                    $response['url'] = $urlUpload;
+                    $response['message'] = "Imagem enviada para o Oracle Cloud com sucesso!";
+                    break;
+                }
+            }
+
+            // Fallback Local Storage
+            $uploadDir = __DIR__ . '/uploads/imagens/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $localName = 'img_' . time() . '_' . substr(md5(uniqid()), 0, 8) . '.' . $ext;
+            if (move_uploaded_file($tmpPath, $uploadDir . $localName)) {
+                $response['success'] = true;
+                $response['url'] = 'uploads/imagens/' . $localName;
+                $response['message'] = "Imagem salva com sucesso!";
+            } else {
+                $response['message'] = "Erro ao salvar imagem no servidor.";
             }
             break;
 
@@ -4733,7 +4954,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     }
 } else {
-    $response['message'] = "Requisição inválida (apenas POST permitido).";
+    $response['message'] = "Requisição inválida ou ação não informada.";
 }
 
 DBClose($link);

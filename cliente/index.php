@@ -107,6 +107,11 @@ $is_vet = AppHelper::isVetMode();
                             data-target="vacinas">
                             <span class="material-icons text-lg text-teal-600">vaccines</span> Carteira de Vacinação
                         </button>
+                        <button
+                            class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                            data-target="banhotosa">
+                            <span class="material-icons text-lg text-teal-600">shower</span> Banho & Tosa
+                        </button>
                     <?php endif; ?>
                 </div>
 
@@ -443,6 +448,48 @@ $is_vet = AppHelper::isVetMode();
                             <p class="text-center text-gray-500 py-8">Carregando carteira de vacinação...</p>
                         </div>
                     </div>
+
+                    <!-- 6. BANHO & TOSA TAB (Modo Vet) -->
+                    <div id="banhotosa" class="tab-content hidden">
+                        <!-- Top Header & Agendar Button -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <span class="material-icons text-teal-600">shower</span> Estética, Banhos & Pacotes
+                                </h3>
+                                <p class="text-sm text-gray-500">Acompanhe seus créditos de pacotes e agende banhos para seus pets com facilidade.</p>
+                            </div>
+                            <button type="button" onclick="abrirModalAgendarBanhoCliente()"
+                                class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-md transition flex items-center gap-2 text-sm">
+                                <span class="material-icons text-lg">calendar_month</span> Agendar Banho / Tosa
+                            </button>
+                        </div>
+
+                        <!-- Status Ao Vivo na Linha de Produção (Se houver pet em atendimento) -->
+                        <div id="containerBanhoAoVivo" class="hidden mb-6">
+                            <div class="bg-gradient-to-r from-teal-900 to-slate-900 text-white rounded-2xl p-6 shadow-lg border border-teal-500/30">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-3 h-3 rounded-full bg-teal-400 animate-ping"></span>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-teal-300">Acompanhamento em Tempo Real</span>
+                                </div>
+                                <div id="listaPetsAoVivo" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Dynamic Live Pets -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meus Pacotes & Saldos -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+                            <div class="flex items-center gap-2 border-b pb-4 mb-4">
+                                <span class="material-icons text-amber-500">card_giftcard</span>
+                                <h4 class="font-bold text-gray-800 text-lg">Meus Pacotes & Créditos Ativos</h4>
+                            </div>
+
+                            <div id="listaPacotesCliente" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <p class="col-span-full text-center text-gray-400 py-6 text-sm">Carregando pacotes...</p>
+                            </div>
+                        </div>
+                    </div>
                 <?php endif; ?>
 
             </div>
@@ -711,6 +758,7 @@ $is_vet = AppHelper::isVetMode();
                             populateMeusDados(response.data.cliente || {}, response.data.google_service_email_hint || '');
                             if (response.data.is_vet_mode) {
                                 renderCarteiraVacinasFull(response.data.vacinas || [], response.data.pets || []);
+                                renderBanhoTosaSection(response.data);
                             }
                         }
                     },
@@ -1381,7 +1429,6 @@ $is_vet = AppHelper::isVetMode();
 
             function renderCarteiraVacinasFull(vacinas, pets) {
                 const container = $('#listaCarteiraVacinasFull');
-                if (!container.length) return;
                 container.empty();
 
                 if (!pets || pets.length === 0) {
@@ -1391,15 +1438,15 @@ $is_vet = AppHelper::isVetMode();
 
                 pets.forEach(pet => {
                     const petVacinas = vacinas.filter(v => v.id_pet == pet.id_pet);
-
                     let vacinasRows = '';
+
                     if (petVacinas.length > 0) {
                         petVacinas.forEach(vc => {
+                            let statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Em dia</span>';
                             const hoje = new Date().toISOString().split('T')[0];
-                            const isVencida = vc.data_vencimento < hoje;
-                            const statusBadge = isVencida 
-                                ? '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">Vencida</span>'
-                                : '<span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">Em dia</span>';
+                            if (vc.data_vencimento < hoje) {
+                                statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800">Atrasada</span>';
+                            }
 
                             vacinasRows += `
                                 <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
@@ -1438,15 +1485,206 @@ $is_vet = AppHelper::isVetMode();
                                             <th class="p-3 text-right">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        ${vacinasRows}
-                                    </tbody>
+                                    <tbody>${vacinasRows}</tbody>
                                 </table>
                             </div>
                         </div>
                     `);
                 });
             }
+
+            // --- RENDER BANHO & TOSA TAB ---
+            function renderBanhoTosaSection(data) {
+                // 1. Live Production Status
+                const aoVivo = data.banho_ao_vivo || [];
+                const containerAoVivo = $('#containerBanhoAoVivo');
+                const listaAoVivo = $('#listaPetsAoVivo');
+                listaAoVivo.empty();
+
+                if (aoVivo.length > 0) {
+                    containerAoVivo.removeClass('hidden');
+                    aoVivo.forEach(f => {
+                        let etapaNome = '1. Recepção / Aguardando';
+                        let etapaCor = 'bg-amber-400 text-amber-950';
+                        if (f.etapa === 'em_banho') { etapaNome = '2. Em Banho & Hidratação 🛁'; etapaCor = 'bg-cyan-400 text-cyan-950'; }
+                        else if (f.etapa === 'secagem') { etapaNome = '3. Em Secagem & Soprador 💨'; etapaCor = 'bg-blue-400 text-blue-950'; }
+                        else if (f.etapa === 'tosa_finalizacao') { etapaNome = '4. Tosa & Estética ✂️'; etapaCor = 'bg-purple-400 text-purple-950'; }
+                        else if (f.etapa === 'pronto') { etapaNome = '5. Pronto para Retirada! 🐾'; etapaCor = 'bg-emerald-400 text-emerald-950 font-bold'; }
+
+                        listaAoVivo.append(`
+                            <div class="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/10 flex items-center justify-between">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-extrabold text-lg text-white">${escapeHtml(f.pet_nome)}</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-semibold">Porte ${f.porte || 'P'}</span>
+                                    </div>
+                                    <span class="text-xs text-teal-200">Entrada hoje às ${f.horario_entrada_fmt || '--:--'}</span>
+                                </div>
+                                <span class="px-3 py-1.5 rounded-xl text-xs font-bold ${etapaCor} shadow-sm">${etapaNome}</span>
+                            </div>
+                        `);
+                    });
+                } else {
+                    containerAoVivo.addClass('hidden');
+                }
+
+                // 2. Pacotes & Saldos
+                const pacotes = data.pacotes || [];
+                const containerPac = $('#listaPacotesCliente');
+                containerPac.empty();
+
+                if (pacotes.length > 0) {
+                    pacotes.forEach(p => {
+                        let saldosHtml = '';
+                        (p.saldos || []).forEach(sal => {
+                            const total = parseInt(sal.qtd_total) || 1;
+                            const util = parseInt(sal.qtd_utilizada) || 0;
+                            const rest = parseInt(sal.saldo_restante) || 0;
+                            const perc = Math.round((util / total) * 100);
+
+                            saldosHtml += `
+                                <div class="space-y-1">
+                                    <div class="flex justify-between text-xs font-medium text-gray-700">
+                                        <span>${escapeHtml(sal.nome_servico)}</span>
+                                        <span class="font-bold ${rest > 0 ? 'text-teal-700' : 'text-gray-400'}">${rest} de ${total} restantes</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                        <div class="bg-teal-600 h-2 rounded-full transition-all" style="width: ${100 - perc}%"></div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+
+                        containerPac.append(`
+                            <div class="bg-gray-50 rounded-2xl p-5 border border-gray-200/80 shadow-sm flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-start justify-between gap-2 mb-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center shadow-sm">
+                                                <span class="material-icons text-2xl">${escapeHtml(p.icone || 'card_giftcard')}</span>
+                                            </div>
+                                            <div>
+                                                <h5 class="font-bold text-gray-900 text-base leading-snug">${escapeHtml(p.nome_pacote)}</h5>
+                                                <span class="text-xs text-gray-500">Adquirido em ${formatDate(p.data_aquisicao)}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-3 pt-3 border-t border-gray-200">
+                                        ${saldosHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                    });
+                } else {
+                    containerPac.html(`
+                        <div class="col-span-full text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <span class="material-icons text-4xl text-gray-300 mb-2">card_giftcard</span>
+                            <p class="text-gray-500 text-sm font-medium">Você ainda não possui nenhum pacote ou combo ativo.</p>
+                            <p class="text-xs text-gray-400 mt-1">Converse com a recepção da clínica para conhecer nossos planos com desconto!</p>
+                        </div>
+                    `);
+                }
+            }
+
+            window.abrirModalAgendarBanhoCliente = function () {
+                if (!globalDashboardData) return;
+                const pets = globalDashboardData.pets || [];
+                const servicos = globalDashboardData.servicos_banho || [];
+
+                // Populate Pets
+                const selectPet = $('#modalAgendarPet');
+                selectPet.empty().append('<option value="">Selecione seu pet...</option>');
+                pets.forEach(p => {
+                    selectPet.append(`<option value="${p.id_pet}">${escapeHtml(p.nome)} (${p.porte ? 'Porte ' + p.porte : 'Pet'})</option>`);
+                });
+
+                // Populate Services
+                const selectServ = $('#modalAgendarServico');
+                selectServ.empty().append('<option value="">Selecione o serviço desejado...</option>');
+                servicos.forEach(s => {
+                    selectServ.append(`<option value="${s.id_servico}" data-duracao="${s.duracao_minutos}" data-preco="${s.valor_sugerido}">
+                        ${escapeHtml(s.nome_servico)} (R$ ${parseFloat(s.valor_sugerido).toFixed(2).replace('.', ',')} • ${s.duracao_minutos}min)
+                    </option>`);
+                });
+
+                // Set default tomorrow at 09:00
+                const am = new Date();
+                am.setDate(am.getDate() + 1);
+                const pad = (n) => n < 10 ? '0' + n : n;
+                const dtDef = `${am.getFullYear()}-${pad(am.getMonth() + 1)}-${pad(am.getDate())}T09:00`;
+                $('#modalAgendarDataInicio').val(dtDef);
+
+                $('#modalAgendarMsg, #boxAgendarSaldoBadge').addClass('hidden');
+                $('#modalAgendarBanho').removeClass('hidden');
+            };
+
+            window.fecharModalAgendarBanhoCliente = function () {
+                $('#modalAgendarBanho').addClass('hidden');
+            };
+
+            // Detect package credit on service change in client modal
+            $(document).on('change', '#modalAgendarServico', function () {
+                const idServico = $(this).val();
+                if (!idServico || !globalDashboardData) {
+                    $('#boxAgendarSaldoBadge').addClass('hidden');
+                    return;
+                }
+
+                const pacotes = globalDashboardData.pacotes || [];
+                let temSaldo = false;
+                let pacoteNome = '';
+
+                pacotes.forEach(p => {
+                    (p.saldos || []).forEach(sal => {
+                        if (sal.id_servico == idServico && parseInt(sal.saldo_restante) > 0) {
+                            temSaldo = true;
+                            pacoteNome = p.nome_pacote;
+                        }
+                    });
+                });
+
+                if (temSaldo) {
+                    $('#boxAgendarSaldoBadge').removeClass('hidden');
+                    $('#textoAgendarSaldoBadge').text(`Você possui créditos inclusos no ${pacoteNome}!`);
+                    $('#modalAgendarUsarSaldo').prop('checked', true);
+                } else {
+                    $('#boxAgendarSaldoBadge').addClass('hidden');
+                    $('#modalAgendarUsarSaldo').prop('checked', false);
+                }
+            });
+
+            // Submit booking
+            $('#formAgendarBanhoCliente').on('submit', function (e) {
+                e.preventDefault();
+                const btn = $(this).find('button[type="submit"]');
+                btn.prop('disabled', true).text('Confirmando...');
+
+                $.ajax({
+                    url: '../dinovatech/app.php',
+                    type: 'POST',
+                    dataType: 'json',
+                    data: $(this).serialize() + '&action=cliente_agendar_banho',
+                    success: function (res) {
+                        const msg = $('#modalAgendarMsg');
+                        msg.removeClass('hidden text-green-600 text-red-600');
+                        if (res.success) {
+                            msg.addClass('text-green-600').text(res.message);
+                            setTimeout(() => {
+                                fecharModalAgendarBanhoCliente();
+                                loadClienteDashboard();
+                            }, 1500);
+                        } else {
+                            msg.addClass('text-red-600').text(res.message);
+                            btn.prop('disabled', false).text('Confirmar Agendamento');
+                        }
+                    },
+                    error: function () {
+                        alert('Erro de conexão ao agendar.');
+                        btn.prop('disabled', false).text('Confirmar Agendamento');
+                    }
+                });
+            });
 
             function formatCurrency(value) {
                 return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
@@ -1477,6 +1715,72 @@ $is_vet = AppHelper::isVetMode();
             }
         });
     </script>
+
+    <!-- Modal Agendar Banho / Tosa (Portal do Tutor) -->
+    <div id="modalAgendarBanho" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-teal-600">shower</span>
+                    <h3 class="text-lg font-bold text-gray-800">Agendar Banho & Tosa</h3>
+                </div>
+                <button type="button" onclick="fecharModalAgendarBanhoCliente()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <form id="formAgendarBanhoCliente" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Escolha seu Pet *</label>
+                    <select name="id_pet" id="modalAgendarPet" class="w-full border-gray-300 rounded-xl p-3 border text-sm font-medium" required>
+                        <!-- Dynamic Pets -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Serviço Desejado *</label>
+                    <select name="id_servico" id="modalAgendarServico" class="w-full border-gray-300 rounded-xl p-3 border text-sm font-medium" required>
+                        <!-- Dynamic Services -->
+                    </select>
+                </div>
+
+                <!-- Package Credit Detected Badge -->
+                <div id="boxAgendarSaldoBadge" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
+                    <span class="font-bold flex items-center gap-1 text-amber-800 mb-1">
+                        <span class="material-icons text-sm text-amber-600">card_giftcard</span> Crédito de Pacote Disponível!
+                    </span>
+                    <p id="textoAgendarSaldoBadge" class="text-amber-800 font-medium"></p>
+                    <label class="flex items-center space-x-2 cursor-pointer mt-2">
+                        <input type="checkbox" name="usar_saldo_pacote" id="modalAgendarUsarSaldo" value="1" checked
+                            class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
+                        <span class="font-bold text-amber-900">Utilizar 1 crédito do meu pacote (sem custo adicional)</span>
+                    </label>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Data & Horário Preferencial *</label>
+                    <input type="datetime-local" name="data_inicio" id="modalAgendarDataInicio" required
+                        class="w-full border-gray-300 rounded-xl p-3 border text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Observações ou Preferências de Corte</label>
+                    <textarea name="observacoes" id="modalAgendarObservacoes" rows="2"
+                        placeholder="Ex: Não cortar unhas, tosa higiênica baixa, usar perfume suave..."
+                        class="w-full border-gray-300 rounded-xl p-3 border text-sm"></textarea>
+                </div>
+
+                <div id="modalAgendarMsg" class="text-xs font-bold text-center hidden"></div>
+
+                <div class="flex justify-end gap-2 pt-3 border-t">
+                    <button type="button" onclick="fecharModalAgendarBanhoCliente()"
+                        class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition">Cancelar</button>
+                    <button type="submit"
+                        class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold shadow-md transition">Confirmar Agendamento</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 
 </html>
