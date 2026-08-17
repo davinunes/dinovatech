@@ -3,7 +3,7 @@
 
 SET FOREIGN_KEY_CHECKS = 0;
 
--- 1. Alterações na tabela Servicos
+-- 1. Alterações na tabela Servicos 
 SET @dbname = DATABASE();
 SET @tablename = "Servicos";
 
