@@ -12,7 +12,7 @@ if (!isset($_SESSION['usuario_id'])) {
 <html lang="pt-BR">
 
 <head>
-    <title>Configuração Fiscal (NFS-e) - Dinovatech</title>
+    <title>Configurações - <?= htmlspecialchars(AppHelper::getCompanyName()) ?></title>
     <?php include 'components/layout_head.php'; ?>
 </head>
 
@@ -25,8 +25,8 @@ if (!isset($_SESSION['usuario_id'])) {
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-800">Configuração Fiscal (NFS-e)</h2>
-                    <p class="text-gray-500">Dados da empresa emissora e certificado digital.</p>
+                    <h2 class="text-3xl font-bold text-gray-800">Configurações</h2>
+                    <p class="text-gray-500">Dados da empresa, parâmetros fiscais, integrações e sistema.</p>
                 </div>
             </div>
 
@@ -131,8 +131,10 @@ if (!isset($_SESSION['usuario_id'])) {
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Modelo/Tema da Página Inicial</label>
                                         <select name="landing_page_theme" id="landing_page_theme" onchange="toggleLandingCustomPath()"
                                             class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 bg-gray-50 text-sm">
-                                            <option value="default">Padrão (Empresa de Tecnologia)</option>
-                                            <option value="vet">Clínica Veterinária (Tema DinoVet)</option>
+                                            <option value="default">Padrão (Empresa de Tecnologia / Serviços)</option>
+                                            <?php if (AppHelper::isVetMode()): ?>
+                                                <option value="vet">Clínica Veterinária (Tema DinoVet)</option>
+                                            <?php endif; ?>
                                             <option value="custom">Diretório Personalizado (Avançado)</option>
                                         </select>
                                     </div>
@@ -145,6 +147,7 @@ if (!isset($_SESSION['usuario_id'])) {
                             </div>
 
                             <!-- Módulo Banho & Tosa (DinoVet) -->
+                            <?php if (AppHelper::isVetMode()): ?>
                             <div class="border-t border-gray-100 pt-4 mt-4 space-y-4">
                                 <h4 class="text-sm font-bold text-gray-700 flex items-center">
                                     <span class="material-icons mr-1.5 text-teal-600 text-sm">shower</span> Módulo de Estética & Banho (DinoVet)
@@ -172,6 +175,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- CARD 2: EMISSÃO DE NOTA FISCAL (NFS-E) - SEPARADO VISUALMENTE -->
