@@ -27,7 +27,7 @@ if ($id_servico) {
 
 <head>
     <title>
-        <?= $is_edit ? 'Editar Serviço' : 'Novo Serviço' ?> - Dinovatech
+        <?= $is_edit ? 'Editar Serviço' : 'Novo Serviço' ?> - <?= htmlspecialchars(AppHelper::getCompanyName()) ?>
     </title>
     <?php include 'components/layout_head.php'; ?>
 </head>
@@ -94,7 +94,8 @@ if ($id_servico) {
                                 </div>
                             </div>
 
-                            <!-- MÓDULOS DE DISPONIBILIDADE -->
+                            <!-- MÓDULOS DE DISPONIBILIDADE (Apenas Modo Veterinário / Pet Shop) -->
+                            <?php if (AppHelper::isVetMode()): ?>
                             <div class="bg-cyan-50 border border-cyan-100 rounded-xl p-4">
                                 <label class="block text-sm font-semibold text-cyan-900 mb-2">Disponibilidade do Serviço</label>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -112,7 +113,13 @@ if ($id_servico) {
                                     </label>
                                 </div>
                             </div>
+                            <?php endif; ?>
+
                             <!-- VITRINE / IDENTIFICAÇÃO VISUAL -->
+                            <?php 
+                            $defaultIcon = AppHelper::isVetMode() ? 'pets' : 'build';
+                            $currentIcon = !empty($servico['icone_servico']) ? $servico['icone_servico'] : $defaultIcon;
+                            ?>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label for="icone_servico" class="block text-sm font-medium text-gray-700 mb-1">
@@ -120,11 +127,11 @@ if ($id_servico) {
                                     </label>
                                     <div class="flex items-center space-x-2">
                                         <input type="text" id="icone_servico" name="icone_servico"
-                                            value="<?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?>"
-                                            placeholder="Ex: pets, shower"
+                                            value="<?= htmlspecialchars($currentIcon) ?>"
+                                            placeholder="Ex: <?= AppHelper::isVetMode() ? 'pets, shower' : 'build, work, receipt_long' ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                         <div class="p-3 bg-gray-100 rounded-lg border border-gray-200 text-cyan-600 flex items-center justify-center cursor-pointer" onclick="abrirModalIconesServico()">
-                                            <span class="material-icons" id="iconePreview"><?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?></span>
+                                            <span class="material-icons" id="iconePreview"><?= htmlspecialchars($currentIcon) ?></span>
                                         </div>
                                         <button type="button" onclick="abrirModalIconesServico()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-3 rounded-lg text-xs font-semibold whitespace-nowrap transition">
                                             Escolher
@@ -259,14 +266,20 @@ if ($id_servico) {
 
     <?php include 'components/layout_scripts.php'; ?>
     <script>
-        const listaIconesServicos = [
-            'shower', 'bathtub', 'pets', 'cut', 'spa', 'card_giftcard', 'wash', 'brush',
+        const listaIconesServicos = <?= AppHelper::isVetMode() ? json_encode([
+            'pets', 'shower', 'bathtub', 'cut', 'spa', 'card_giftcard', 'wash', 'brush',
             'clean_hands', 'health_and_safety', 'favorite', 'star', 'diamond', 'inventory_2',
             'local_offer', 'verified', 'bolt', 'category', 'loyalty', 'medical_services',
             'healing', 'vaccines', 'psychology', 'emergency', 'local_hospital', 'content_cut',
             'dry_cleaning', 'soap', 'sanitizer', 'auto_awesome', 'water_drop', 'flare',
             'shield', 'sentiment_very_satisfied', 'face', 'cruelty_free'
-        ];
+        ]) : json_encode([
+            'build', 'work', 'receipt_long', 'construction', 'handyman', 'design_services',
+            'computer', 'code', 'support_agent', 'analytics', 'campaign', 'paid', 'shopping_bag',
+            'local_shipping', 'schedule', 'settings', 'verified', 'star', 'diamond', 'bolt',
+            'category', 'loyalty', 'shield', 'assignment', 'inventory_2', 'account_balance',
+            'engineering', 'psychology', 'group', 'badge', 'store', 'devices'
+        ]) ?>;
 
         function abrirModalIconesServico() {
             renderGridIconesServico(listaIconesServicos);
@@ -343,7 +356,7 @@ if ($id_servico) {
         $(document).ready(function () {
             $('#icone_servico').on('input', function() {
                 const val = $(this).val().trim();
-                $('#iconePreview').text(val || 'pets');
+                $('#iconePreview').text(val || '<?= AppHelper::isVetMode() ? "pets" : "build" ?>');
             });
 
             $('#servicoForm').on('submit', function (e) {

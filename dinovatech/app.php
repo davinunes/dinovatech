@@ -1236,11 +1236,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
                 
                 // Módulos e Banho e Tosa
-                $disponivel_clinica = isset($_POST['disponivel_clinica']) ? 1 : 0;
-                $disponivel_banho = isset($_POST['disponivel_banho']) ? 1 : 0;
+                $disponivel_clinica = (AppHelper::isVetMode() && isset($_POST['disponivel_clinica'])) ? 1 : 0;
+                $disponivel_banho = (AppHelper::isVetMode() && isset($_POST['disponivel_banho'])) ? 1 : 0;
                 $duracao_minutos = (int) ($_POST['duracao_minutos'] ?? 30);
                 if ($duracao_minutos <= 0) $duracao_minutos = 30;
-                $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : 'pets');
+                $defaultIconServ = AppHelper::isVetMode() ? 'pets' : 'build';
+                $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : $defaultIconServ);
                 $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
 
                 $query = "INSERT INTO Servicos 
@@ -1300,11 +1301,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
                 // Módulos e Banho e Tosa
-                $disponivel_clinica = isset($_POST['disponivel_clinica']) ? 1 : 0;
-                $disponivel_banho = isset($_POST['disponivel_banho']) ? 1 : 0;
+                $disponivel_clinica = (AppHelper::isVetMode() && isset($_POST['disponivel_clinica'])) ? 1 : 0;
+                $disponivel_banho = (AppHelper::isVetMode() && isset($_POST['disponivel_banho'])) ? 1 : 0;
                 $duracao_minutos = (int) ($_POST['duracao_minutos'] ?? 30);
                 if ($duracao_minutos <= 0) $duracao_minutos = 30;
-                $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : 'pets');
+                $defaultIconServ = AppHelper::isVetMode() ? 'pets' : 'build';
+                $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : $defaultIconServ);
                 $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
 
                 $query = "UPDATE Servicos SET 

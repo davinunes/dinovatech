@@ -30,7 +30,7 @@ if ($link) {
 <html lang="pt-BR">
 
 <head>
-    <title>Serviços - Dinovatech</title>
+    <title>Serviços - <?= htmlspecialchars(AppHelper::getCompanyName()) ?></title>
     <?php include 'components/layout_head.php'; ?>
 </head>
 
@@ -77,7 +77,9 @@ if ($link) {
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
                                 <th class="p-4 font-medium">Serviço</th>
-                                <th class="p-4 font-medium">Módulos</th>
+                                <?php if (AppHelper::isVetMode()): ?>
+                                    <th class="p-4 font-medium">Módulos</th>
+                                <?php endif; ?>
                                 <th class="p-4 font-medium">Duração</th>
                                 <th class="p-4 font-medium">Valor Sugerido</th>
                                 <th class="p-4 font-medium text-right">Ações</th>
@@ -89,7 +91,7 @@ if ($link) {
                                     <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
                                         <td class="p-4 font-medium text-gray-900 flex items-center gap-3">
                                             <div class="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center flex-shrink-0">
-                                                <span class="material-icons text-lg"><?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?></span>
+                                                <span class="material-icons text-lg"><?= htmlspecialchars($servico['icone_servico'] ?? (AppHelper::isVetMode() ? 'pets' : 'build')) ?></span>
                                             </div>
                                             <div>
                                                 <div class="font-semibold text-gray-900"><?= htmlspecialchars($servico['nome_servico']) ?></div>
@@ -98,23 +100,25 @@ if ($link) {
                                                 <?php endif; ?>
                                             </div>
                                         </td>
-                                        <td class="p-4">
-                                            <div class="flex flex-wrap gap-1">
-                                                <?php if (!empty($servico['disponivel_clinica'])): ?>
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                                                        <span class="material-icons text-[12px] mr-1">local_hospital</span> Clínica
-                                                    </span>
-                                                <?php endif; ?>
-                                                <?php if (!empty($servico['disponivel_banho'])): ?>
-                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
-                                                        <span class="material-icons text-[12px] mr-1">shower</span> Banho & Tosa
-                                                    </span>
-                                                <?php endif; ?>
-                                                <?php if (empty($servico['disponivel_clinica']) && empty($servico['disponivel_banho'])): ?>
-                                                    <span class="text-xs text-gray-400">Geral</span>
-                                                <?php endif; ?>
-                                            </div>
-                                        </td>
+                                        <?php if (AppHelper::isVetMode()): ?>
+                                            <td class="p-4">
+                                                <div class="flex flex-wrap gap-1">
+                                                    <?php if (!empty($servico['disponivel_clinica'])): ?>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                                            <span class="material-icons text-[12px] mr-1">local_hospital</span> Clínica
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($servico['disponivel_banho'])): ?>
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                                                            <span class="material-icons text-[12px] mr-1">shower</span> Banho & Tosa
+                                                        </span>
+                                                    <?php endif; ?>
+                                                    <?php if (empty($servico['disponivel_clinica']) && empty($servico['disponivel_banho'])): ?>
+                                                        <span class="text-xs text-gray-400">Geral</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                        <?php endif; ?>
                                         <td class="p-4 text-gray-600">
                                             <span class="inline-flex items-center gap-1">
                                                 <span class="material-icons text-sm text-gray-400">schedule</span>
@@ -134,7 +138,7 @@ if ($link) {
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5" class="p-8 text-center text-gray-500">Nenhum serviço encontrado.</td>
+                                    <td colspan="<?= AppHelper::isVetMode() ? '5' : '4' ?>" class="p-8 text-center text-gray-500">Nenhum serviço encontrado.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -149,7 +153,7 @@ if ($link) {
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                             <div class="flex items-center gap-3 mb-3">
                                 <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center flex-shrink-0">
-                                    <span class="material-icons text-xl"><?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?></span>
+                                    <span class="material-icons text-xl"><?= htmlspecialchars($servico['icone_servico'] ?? (AppHelper::isVetMode() ? 'pets' : 'build')) ?></span>
                                 </div>
                                 <div class="flex-1">
                                     <h3 class="font-bold text-gray-900 leading-snug"><?= htmlspecialchars($servico['nome_servico']) ?></h3>
@@ -159,18 +163,20 @@ if ($link) {
                                 </div>
                             </div>
                             
-                            <div class="flex flex-wrap gap-1 mb-3">
-                                <?php if (!empty($servico['disponivel_clinica'])): ?>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
-                                        Clínica
-                                    </span>
-                                <?php endif; ?>
-                                <?php if (!empty($servico['disponivel_banho'])): ?>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
-                                        Banho & Tosa
-                                    </span>
-                                <?php endif; ?>
-                            </div>
+                            <?php if (AppHelper::isVetMode()): ?>
+                                <div class="flex flex-wrap gap-1 mb-3">
+                                    <?php if (!empty($servico['disponivel_clinica'])): ?>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                            Clínica
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($servico['disponivel_banho'])): ?>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                                            Banho & Tosa
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
 
                             <div class="text-gray-600 mb-4 flex justify-between items-baseline pt-2 border-t border-gray-50">
                                 <span class="text-xs uppercase tracking-wide text-gray-400 block">Valor Sugerido</span>

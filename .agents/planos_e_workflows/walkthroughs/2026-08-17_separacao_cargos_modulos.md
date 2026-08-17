@@ -1,31 +1,37 @@
-# Walkthrough: Separação de Módulos e Cargos de Colaboradores
+# Walkthrough: Revisão e Isolamento de Módulos (Serviços e Colaboradores)
 
-Implementamos a segregação de cargos/funções, habilitações de agenda e campos específicos (como CRMV) de acordo com o status da flag de Modo Veterinário (`APP_MODE_VET`).
-
----
-
-## Modificações Realizadas
-
-### 1. Formulário de Colaborador (`veterinario_form.php`)
-- **Seleção Dinâmica de Funções / Cargos**:
-  - **Modo Veterinário Ativo**: Lista funções clínicas e de pet shop (Veterinário(a), Banhista & Tosador(a) / Estética, Auxiliar Veterinário, Recepção / Administrativo, Geral / Multidisciplinar).
-  - **Modo Padrão (Não Veterinário)**: Lista funções empresariais gerais (Recepção / Administrativo, Atendimento / Comercial, Técnico / Operacional, Gestão / Gerência, Geral / Colaborador).
-- **Isolamento de Habilitações de Módulos**:
-  - O bloco de habilitação de módulos (Banho & Tosa e Atendimento Clínico) agora é renderizado **apenas** quando `AppHelper::isVetMode()` for `true`.
-  - O processamento de POST ignora ou zera essas flags quando fora do modo vet.
-- **Isolamento do Bloco CRMV**:
-  - Bloco de CRMV e UF CRMV e sua validação de obrigatoriedade só entram em ação quando `AppHelper::isVetMode()` for `true`.
-- **Textos e Nomenclaturas Contextuais**:
-  - O título da página e as dicas de assinatura digital foram ajustados para refletir o contexto correto da empresa.
+Implementamos a segregação completa de campos, opções visuais e módulos clínicos/pet shop entre o **Modo Veterinário** e o **Modo Padrão (Empresarial)**.
 
 ---
 
-### 2. Listagem de Colaboradores (`veterinarios.php`)
-- **Badges de Cargos Expandidos**: Mapeamento de estilos visuais e ícones para os novos cargos (`atendente`, `tecnico`, `gerente`, etc.).
-- **Tags de Módulos e CRMV Condicionais**: As tags de "Banho & Tosa", "Clínico" e número de CRMV só aparecem nos cards de colaboradores se o Modo Veterinário estiver ativo.
-- **Textos de Interface e Busca**: Placeholder de busca e descrição do topo adaptados para o modo em uso.
+## 1. Cadastro e Formulário de Serviços (`servico_form.php`)
+- **Módulos de Disponibilidade (Clínica e Banho & Tosa)**:
+  - O bloco de checkboxes "Disponibilidade do Serviço" (Módulo Clínica / Consultas e Módulo Banho e Tosa) agora é exibido **apenas** quando `AppHelper::isVetMode()` for `true`.
+- **Ícones Padrão e Catálogo de Ícones**:
+  - O ícone padrão do serviço agora é `build` (chave/ferramenta) no modo empresarial e `pets` (pata) no modo veterinário.
+  - O modal seletor de ícones Material Icons carrega paletas distintas:
+    - **Modo Veterinário**: Ícones de pets, banho, clínica, vacinas, spa, etc.
+    - **Modo Padrão**: Ícones de serviços, ferramentas, tecnologia, finanças, consultoria, suporte e logística.
+- **Título da Página**:
+  - Título dinâmico baseado no nome fantasia da empresa (`AppHelper::getCompanyName()`).
 
 ---
 
-### 3. Modal de Agendamentos (`form_modal.php`)
-- O botão de atalho "Iniciar Atendimento" (que leva para prontuário clínico) agora é condicionalizado com `AppHelper::isVetMode()`.
+## 2. Listagem de Serviços (`servicos.php`)
+- **Coluna "Módulos" Condicional**:
+  - A coluna de "Módulos" (com tags de Clínica e Banho & Tosa) na tabela desktop e nos cards mobile só é renderizada se `AppHelper::isVetMode()` for `true`.
+  - Em modo padrão, a tabela se ajusta de forma limpa com 4 colunas (Serviço, Duração, Valor Sugerido, Ações).
+- **Ícones de Linha**: Fallback automático para `build` quando fora do modo veterinário.
+
+---
+
+## 3. Backend e Processamento (`app.php`)
+- Nas ações `criar_servico` e `editar_servico`:
+  - `disponivel_clinica` e `disponivel_banho` são desativados (0) se `!AppHelper::isVetMode()`.
+  - `icone_servico` recebe fallback de acordo com o modo ativo.
+
+---
+
+## 4. Formulário e Listagem de Colaboradores (`veterinario_form.php` e `veterinarios.php`)
+- Funções e cargos segmentados (Empresariais vs Clínicos/Pet).
+- Campos de CRMV e habilitações de agenda/esteira ocultos quando `APP_MODE_VET=false`.
