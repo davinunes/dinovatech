@@ -95,27 +95,38 @@ switch ($action) {
         $start = $_GET['start'] ?? date('Y-m-01');
         $end = $_GET['end'] ?? date('Y-m-t');
         $id_vet = $_GET['id_vet'] ?? '';
+        $tipo_agenda = $_GET['tipo_agenda'] ?? 'clinica';
 
         $start = mysqli_real_escape_string($link, $start);
         $end = mysqli_real_escape_string($link, $end);
 
-        $where = "WHERE data_inicio BETWEEN '$start' AND '$end'";
+        $where = "WHERE A.data_inicio BETWEEN '$start' AND '$end'";
         if (!empty($id_vet)) {
             $id_vet = mysqli_real_escape_string($link, $id_vet);
             $where .= " AND A.id_vet = '$id_vet'";
         }
 
-        $query = "SELECT A.*, V.nome as nome_vet, C.nome as nome_cliente, P.nome as nome_pet 
+        if ($tipo_agenda === 'banho_tosa') {
+            $where .= " AND A.tipo_agenda = 'banho_tosa'";
+        } else {
+            $where .= " AND (A.tipo_agenda = 'clinica' OR A.tipo_agenda IS NULL)";
+        }
+
+        $query = "SELECT A.*, V.nome as nome_vet, C.nome as nome_cliente, P.nome as nome_pet, S.nome_servico 
                   FROM Agendamentos A
-                  JOIN Veterinarios V ON A.id_vet = V.id_vet
+                  LEFT JOIN Veterinarios V ON A.id_vet = V.id_vet
                   LEFT JOIN Clientes C ON A.id_cliente = C.id_cliente
                   LEFT JOIN Pets P ON A.id_pet = P.id_pet
+                  LEFT JOIN Servicos S ON A.id_servico = S.id_servico
                   $where";
 
         $result = DBExecute($link, $query);
         $events = [];
         while ($row = mysqli_fetch_assoc($result)) {
             $color = '#3788d8'; // Default Blue
+            if ($row['tipo_agenda'] === 'banho_tosa') {
+                $color = '#0d9488'; // Teal for Banho & Tosa
+            }
             if ($row['status'] == 'Realizado')
                 $color = '#10b981'; // Green
             if ($row['status'] == 'Cancelado')
@@ -126,7 +137,7 @@ switch ($action) {
             $events[] = [
                 'id' => $row['id_agendamento'],
                 'title' => $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
-                'start' => str_replace(' ', 'T', $row['data_inicio']), // Raw DB value
+                'start' => str_replace(' ', 'T', $row['data_inicio']),
                 'end' => str_replace(' ', 'T', $row['data_fim']),
                 'color' => $color,
                 'extendedProps' => [
@@ -134,43 +145,84 @@ switch ($action) {
                     'id_vet' => $row['id_vet'],
                     'id_cliente' => $row['id_cliente'],
                     'id_pet' => $row['id_pet'],
+                    'id_servico' => $row['id_servico'],
+                    'id_cliente_pacote' => $row['id_cliente_pacote'],
+                    'tipo_agenda' => $row['tipo_agenda'],
                     'status' => $row['status']
                 ]
             ];
         }
-        $json = json_encode($events);
-        error_log("API Debug Events: " . $json); // DEBUG TIMEZONE
 
-        echo $json;
+        echo json_encode($events);
         break;
 
     case 'save':
-        $id = $_POST['id'] ?? '';
-        $titulo = mysqli_real_escape_string($link, $_POST['titulo']);
-        $start = $_POST['start']; // Format: Y-m-d H:i:s
-        $end = $_POST['end'];
-        error_log("API Debug SAVE Input: ID=$id Start=$start End=$end"); // DEBUG INPUT
-
+        $id = $_POST['id'] ?? $_POST['id_agendamento'] ?? '';
+        $titulo = $_POST['titulo'] ?? '';
+        $start = $_POST['start'] ?? $_POST['data_inicio'] ?? '';
+        $end = $_POST['end'] ?? $_POST['data_fim'] ?? '';
         $descricao = mysqli_real_escape_string($link, $_POST['descricao'] ?? '');
         $status = $_POST['status'] ?? 'Agendado';
+        $tipo_agenda = $_POST['tipo_agenda'] ?? 'clinica';
 
         // Nullable fields
         $id_vet = !empty($_POST['id_vet']) ? "'" . mysqli_real_escape_string($link, $_POST['id_vet']) . "'" : 'NULL';
         $id_vet_val = !empty($_POST['id_vet']) ? $_POST['id_vet'] : null;
 
-        $id_cliente = !empty($_POST['id_cliente']) ? $_POST['id_cliente'] : 'NULL';
-        $id_pet = !empty($_POST['id_pet']) ? $_POST['id_pet'] : 'NULL';
+        $id_cliente = !empty($_POST['id_cliente']) ? (int)$_POST['id_cliente'] : 'NULL';
+        $id_pet = !empty($_POST['id_pet']) ? (int)$_POST['id_pet'] : 'NULL';
+        $id_servico = !empty($_POST['id_servico']) ? (int)$_POST['id_servico'] : 'NULL';
+        $id_cliente_pacote = !empty($_POST['id_cliente_pacote']) ? (int)$_POST['id_cliente_pacote'] : 'NULL';
+        $usar_saldo_pacote = isset($_POST['usar_saldo_pacote']) && $_POST['usar_saldo_pacote'] == 1;
+
+        if (empty($titulo)) {
+            // Auto generate title if empty
+            if ($tipo_agenda === 'banho_tosa' && $id_pet !== 'NULL') {
+                $resPet = DBExecute($link, "SELECT p.nome as pet_nome, s.nome_servico FROM Pets p LEFT JOIN Servicos s ON s.id_servico = $id_servico WHERE p.id_pet = $id_pet");
+                if ($resPet && $pRow = mysqli_fetch_assoc($resPet)) {
+                    $titulo = "Banho/Tosa: " . $pRow['pet_nome'] . ($pRow['nome_servico'] ? " (" . $pRow['nome_servico'] . ")" : "");
+                } else {
+                    $titulo = "Banho e Tosa";
+                }
+            } else {
+                $titulo = "Agendamento";
+            }
+        }
+        $titulo = mysqli_real_escape_string($link, $titulo);
 
         if (empty($id)) {
             // Insert
-            $query = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, descricao, data_inicio, data_fim, status)
-                      VALUES ($id_vet, $id_cliente, $id_pet, '$titulo', '$descricao', '$start', '$end', '$status')";
+            $query = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, id_servico, id_cliente_pacote, tipo_agenda, titulo, descricao, data_inicio, data_fim, status)
+                      VALUES ($id_vet, $id_cliente, $id_pet, $id_servico, $id_cliente_pacote, '$tipo_agenda', '$titulo', '$descricao', '$start', '$end', '$status')";
             if (DBExecute($link, $query)) {
                 $newId = mysqli_insert_id($link);
+
+                // If Banho e Tosa, automatically enqueue into BanhoProducaoFila
+                if ($tipo_agenda === 'banho_tosa' && $id_pet !== 'NULL') {
+                    $colabVal = $id_vet !== 'NULL' ? $id_vet : 'NULL';
+                    $obsFila = $descricao;
+                    DBExecute($link, "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica) 
+                                      VALUES ($newId, $id_pet, $colabVal, 'aguardando', NOW(), '$obsFila')");
+                }
+
+                // If using package balance, consume 1 credit
+                if ($usar_saldo_pacote && $id_cliente_pacote !== 'NULL' && $id_servico !== 'NULL' && $id_pet !== 'NULL') {
+                    $qSaldo = "SELECT id_saldo, qtd_utilizada, qtd_total FROM ClientePacoteSaldos WHERE id_cliente_pacote = $id_cliente_pacote AND id_servico = $id_servico";
+                    $rSaldo = DBExecute($link, $qSaldo);
+                    if ($rSaldo && $sRow = mysqli_fetch_assoc($rSaldo)) {
+                        if ($sRow['qtd_utilizada'] < $sRow['qtd_total']) {
+                            $nextUtil = $sRow['qtd_utilizada'] + 1;
+                            DBExecute($link, "UPDATE ClientePacoteSaldos SET qtd_utilizada = $nextUtil WHERE id_saldo = " . (int)$sRow['id_saldo']);
+                            DBExecute($link, "INSERT INTO ClientePacoteConsumo (id_cliente_pacote, id_servico, id_pet, id_agendamento, observacao) 
+                                              VALUES ($id_cliente_pacote, $id_servico, $id_pet, $newId, 'Agendado via Agenda Banho')");
+                        }
+                    }
+                }
 
                 // Google Sync (Only if Vet is selected)
                 if ($id_vet_val) {
                     $gEventId = syncGoogle($link, $id_vet_val, [
+                        'id_cliente' => $id_cliente !== 'NULL' ? $id_cliente : null,
                         'titulo' => $titulo,
                         'descricao' => $descricao,
                         'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),
@@ -192,6 +244,9 @@ switch ($action) {
                         id_vet = $id_vet,
                         id_cliente = $id_cliente,
                         id_pet = $id_pet,
+                        id_servico = $id_servico,
+                        id_cliente_pacote = $id_cliente_pacote,
+                        tipo_agenda = '$tipo_agenda',
                         titulo = '$titulo',
                         descricao = '$descricao',
                         data_inicio = '$start',
@@ -206,6 +261,7 @@ switch ($action) {
                     $gEventId = $curr['google_event_id'] ?? null;
 
                     $newGEventId = syncGoogle($link, $id_vet_val, [
+                        'id_cliente' => $id_cliente !== 'NULL' ? $id_cliente : null,
                         'titulo' => $titulo,
                         'descricao' => $descricao,
                         'data_inicio' => (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s'),

@@ -249,6 +249,23 @@ if (!isset($_SESSION['usuario_id'])) {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Módulo Banho & Tosa (DinoVet) -->
+                        <div class="border-t pt-4 mt-6">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                                <span class="material-icons mr-2 text-teal-600">shower</span> Módulo Banho e Tosa (DinoVet)
+                            </h3>
+                            <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+                                <label class="flex items-center space-x-3 cursor-pointer">
+                                    <input type="checkbox" name="banho_checkin_foto_ativo" id="banho_checkin_foto_ativo" value="1"
+                                        class="h-5 w-5 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
+                                    <div>
+                                        <span class="text-sm font-bold text-gray-800">Ativar Check-in Fotográfico na Recepção</span>
+                                        <p class="text-xs text-gray-500 mt-0.5">Permite à equipe anexar fotos de nós, avarias ou ferimentos pré-existentes na esteira/fila de produção do banho e tosa.</p>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- TAB: CERTIFICADO -->
@@ -812,6 +829,10 @@ if (!isset($_SESSION['usuario_id'])) {
 
                     if (d.optante_simples == 1) {
                         $('#optante_simples').prop('checked', true);
+                    }
+
+                    if (d.banho_checkin_foto_ativo == 1) {
+                        $('#banho_checkin_foto_ativo').prop('checked', true);
                     }
 
                     // Google JSON Status

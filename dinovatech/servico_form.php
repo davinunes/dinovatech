@@ -61,7 +61,7 @@ if ($id_servico) {
                                 <label for="nome_servico" class="block text-sm font-medium text-gray-700 mb-1">Nome do
                                     Serviço</label>
                                 <input type="text" id="nome_servico" name="nome_servico"
-                                    value="<?= $servico['nome_servico'] ?? '' ?>" required
+                                    value="<?= htmlspecialchars($servico['nome_servico'] ?? '') ?>" required
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
                             </div>
 
@@ -72,26 +72,73 @@ if ($id_servico) {
                                 </label>
                                 <textarea id="descricao_fiscal" name="descricao_fiscal" rows="2"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
-                                    placeholder="Ex: Consultoria Técnica (Deixe em branco para usar o nome do serviço)"><?= $servico['descricao_fiscal'] ?? '' ?></textarea>
+                                    placeholder="Ex: Consultoria Técnica (Deixe em branco para usar o nome do serviço)"><?= htmlspecialchars($servico['descricao_fiscal'] ?? '') ?></textarea>
                             </div>
 
-                            <div>
-                                <label for="descricao_fiscal" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Descrição Fiscal (Opcional)
-                                    <span class="text-xs text-gray-500 font-normal ml-1">- Substitui o nome do serviço
-                                        na NFS-e</span>
-                                </label>
-                                <textarea id="descricao_fiscal" name="descricao_fiscal" rows="2"
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
-                                    placeholder="Ex: Consultoria Técnica (Deixe em branco para usar o nome do serviço)"><?= $servico['descricao_fiscal'] ?? '' ?></textarea>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="valor_sugerido" class="block text-sm font-medium text-gray-700 mb-1">Valor
+                                        Sugerido (R$)</label>
+                                    <input type="number" id="valor_sugerido" name="valor_sugerido" step="0.01" min="0.00"
+                                        value="<?= $servico['valor_sugerido'] ?? '' ?>" required
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+                                </div>
+                                <div>
+                                    <label for="duracao_minutos" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Tempo Padrão de Duração (Minutos)
+                                    </label>
+                                    <input type="number" id="duracao_minutos" name="duracao_minutos" min="5" step="5"
+                                        value="<?= $servico['duracao_minutos'] ?? 30 ?>" required
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+                                    <span class="text-xs text-gray-400">Referência para cálculo da agenda</span>
+                                </div>
                             </div>
 
-                            <div>
-                                <label for="valor_sugerido" class="block text-sm font-medium text-gray-700 mb-1">Valor
-                                    Sugerido (R$)</label>
-                                <input type="number" id="valor_sugerido" name="valor_sugerido" step="0.01" min="0.00"
-                                    value="<?= $servico['valor_sugerido'] ?? '' ?>" required
-                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+                            <!-- MÓDULOS DE DISPONIBILIDADE -->
+                            <div class="bg-cyan-50 border border-cyan-100 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-cyan-900 mb-2">Disponibilidade do Serviço</label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <label class="flex items-center space-x-2 cursor-pointer bg-white p-3 rounded-lg border border-cyan-200 hover:bg-cyan-50/50 transition">
+                                        <input type="checkbox" name="disponivel_clinica" id="disponivel_clinica" value="1"
+                                            <?= ($servico['disponivel_clinica'] ?? 1) ? 'checked' : '' ?>
+                                            class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
+                                        <span class="text-sm font-medium text-gray-700">Módulo Clínica / Consultas</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer bg-white p-3 rounded-lg border border-cyan-200 hover:bg-cyan-50/50 transition">
+                                        <input type="checkbox" name="disponivel_banho" id="disponivel_banho" value="1"
+                                            <?= ($servico['disponivel_banho'] ?? 0) ? 'checked' : '' ?>
+                                            class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
+                                        <span class="text-sm font-medium text-gray-700">Módulo Banho e Tosa</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- VITRINE / IDENTIFICAÇÃO VISUAL -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="icone_servico" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Ícone (Material Icons)
+                                    </label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="text" id="icone_servico" name="icone_servico"
+                                            value="<?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?>"
+                                            placeholder="Ex: pets, content_cut, shower"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <div class="p-3 bg-gray-100 rounded-lg border border-gray-200 text-cyan-600 flex items-center justify-center">
+                                            <span class="material-icons" id="iconePreview"><?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?></span>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-400">Exemplos: pets, content_cut, shower, spa, clean_hands</span>
+                                </div>
+                                <div>
+                                    <label for="imagem_url" class="block text-sm font-medium text-gray-700 mb-1">
+                                        URL da Imagem / Vitrine (Opcional)
+                                    </label>
+                                    <input type="url" id="imagem_url" name="imagem_url"
+                                        value="<?= htmlspecialchars($servico['imagem_url'] ?? '') ?>"
+                                        placeholder="https://exemplo.com/imagem.png"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                </div>
                             </div>
 
                             <!-- DADOS FISCAIS -->
@@ -180,6 +227,11 @@ if ($id_servico) {
     <?php include 'components/layout_scripts.php'; ?>
     <script>
         $(document).ready(function () {
+            $('#icone_servico').on('input', function() {
+                const val = $(this).val().trim();
+                $('#iconePreview').text(val || 'pets');
+            });
+
             $('#servicoForm').on('submit', function (e) {
                 e.preventDefault();
                 const btn = $(this).find('button[type="submit"]');

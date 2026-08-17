@@ -40,6 +40,9 @@ $data_nascimento = '';
 $peso = '';
 $chip_id = '';
 $obs = '';
+$porte = 'P';
+$tipo_pelagem = 'Curto';
+$preferencias_banho = '';
 
 // Load Existing Data
 if ($is_edit) {
@@ -57,6 +60,9 @@ if ($is_edit) {
         $peso = $pet['peso'];
         $chip_id = $pet['chip_id'];
         $obs = $pet['obs'];
+        $porte = $pet['porte'] ?? 'P';
+        $tipo_pelagem = $pet['tipo_pelagem'] ?? 'Curto';
+        $preferencias_banho = $pet['preferencias_banho'] ?? '';
     } else {
         $erro = "Pet não encontrado.";
         $is_edit = false;
@@ -79,6 +85,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $peso = $_POST['peso'] ?: NULL;
     $chip_id = $_POST['chip_id'] ?? '';
     $obs = $_POST['obs'] ?? '';
+    $porte = $_POST['porte'] ?? 'P';
+    $tipo_pelagem = $_POST['tipo_pelagem'] ?? 'Curto';
+    $preferencias_banho = $_POST['preferencias_banho'] ?? '';
 
     // Validation
     if (empty($nome) || empty($id_cliente) || empty($especie)) {
@@ -93,6 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $peso_val = $peso ? "'$peso'" : "NULL";
         $chip_id_safe = mysqli_real_escape_string($link, $chip_id);
         $obs_safe = mysqli_real_escape_string($link, $obs);
+        $porte_safe = mysqli_real_escape_string($link, $porte);
+        $tipo_pelagem_safe = mysqli_real_escape_string($link, $tipo_pelagem);
+        $preferencias_banho_safe = mysqli_real_escape_string($link, $preferencias_banho);
 
         if ($is_edit) {
             $query = "UPDATE Pets SET 
@@ -104,11 +116,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 data_nascimento = $data_nascimento_val,
                 peso = $peso_val,
                 chip_id = '$chip_id_safe',
-                obs = '$obs_safe'
+                obs = '$obs_safe',
+                porte = '$porte_safe',
+                tipo_pelagem = '$tipo_pelagem_safe',
+                preferencias_banho = '$preferencias_banho_safe'
                 WHERE id_pet = " . (int) $id_pet;
         } else {
-            $query = "INSERT INTO Pets (id_cliente, nome, especie, raca, sexo, data_nascimento, peso, chip_id, obs) VALUES 
-                ($id_cliente_int, '$nome_safe', '$especie_safe', '$raca_safe', '$sexo_safe', $data_nascimento_val, $peso_val, '$chip_id_safe', '$obs_safe')";
+            $query = "INSERT INTO Pets (id_cliente, nome, especie, raca, sexo, data_nascimento, peso, chip_id, obs, porte, tipo_pelagem, preferencias_banho) VALUES 
+                ($id_cliente_int, '$nome_safe', '$especie_safe', '$raca_safe', '$sexo_safe', $data_nascimento_val, $peso_val, '$chip_id_safe', '$obs_safe', '$porte_safe', '$tipo_pelagem_safe', '$preferencias_banho_safe')";
         }
 
         if (DBExecute($link, $query)) {
@@ -261,10 +276,55 @@ DBClose($link);
                                     class="w-full border-gray-300 rounded-lg shadow-sm focus:border-cyan-500 focus:ring focus:ring-cyan-200 focus:ring-opacity-50 p-2 border">
                             </div>
 
+                            <!-- Porte e Pelagem (Estética / Banho e Tosa) -->
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Porte</label>
+                                <select name="porte"
+                                    class="w-full border-gray-300 rounded-lg shadow-sm focus:border-cyan-500 focus:ring focus:ring-cyan-200 focus:ring-opacity-50 p-2 border">
+                                    <option value="P" <?= $porte == 'P' ? 'selected' : '' ?>>Pequeno (P)</option>
+                                    <option value="M" <?= $porte == 'M' ? 'selected' : '' ?>>Médio (M)</option>
+                                    <option value="G" <?= $porte == 'G' ? 'selected' : '' ?>>Grande (G)</option>
+                                    <option value="GG" <?= $porte == 'GG' ? 'selected' : '' ?>>Gigante (GG)</option>
+                                </select>
+                                <span class="text-xs text-gray-400">Usado no cálculo de tempo da agenda</span>
+                            </div>
+
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-2">Tipo de Pelagem</label>
+                                <select name="tipo_pelagem"
+                                    class="w-full border-gray-300 rounded-lg shadow-sm focus:border-cyan-500 focus:ring focus:ring-cyan-200 focus:ring-opacity-50 p-2 border">
+                                    <option value="Curto" <?= $tipo_pelagem == 'Curto' ? 'selected' : '' ?>>Pelo Curto</option>
+                                    <option value="Medio" <?= $tipo_pelagem == 'Medio' ? 'selected' : '' ?>>Pelo Médio</option>
+                                    <option value="Longo" <?= $tipo_pelagem == 'Longo' ? 'selected' : '' ?>>Pelo Longo</option>
+                                    <option value="Dupla Pelagem" <?= $tipo_pelagem == 'Dupla Pelagem' ? 'selected' : '' ?>>Dupla Pelagem / Subpelo</option>
+                                </select>
+                            </div>
+
+                            <!-- Ficha de Preferências do Banho & Tosa -->
+                            <div class="col-span-1 md:col-span-2 bg-teal-50 border border-teal-200 rounded-xl p-4">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="material-icons text-teal-700">shower</span>
+                                    <h3 class="font-semibold text-teal-900">Preferências & Cuidados no Banho e Tosa</h3>
+                                </div>
+                                <p class="text-xs text-teal-700 mb-3">Essas informações serão exibidas em destaque para os banhistas/tosadores no Kanban, na TV e no agendamento.</p>
+
+                                <div class="flex flex-wrap gap-2 mb-3" id="tagContainer">
+                                    <button type="button" class="btn-tag text-xs px-3 py-1 rounded-full border border-teal-300 bg-white hover:bg-teal-100 text-teal-800 transition" data-tag="Alérgico a perfume">🏷️ Alérgico a perfume</button>
+                                    <button type="button" class="btn-tag text-xs px-3 py-1 rounded-full border border-teal-300 bg-white hover:bg-teal-100 text-teal-800 transition" data-tag="Medo de soprador">🏷️ Medo de soprador</button>
+                                    <button type="button" class="btn-tag text-xs px-3 py-1 rounded-full border border-teal-300 bg-white hover:bg-teal-100 text-teal-800 transition" data-tag="Não cortar unhas">🏷️ Não cortar unhas</button>
+                                    <button type="button" class="btn-tag text-xs px-3 py-1 rounded-full border border-teal-300 bg-white hover:bg-teal-100 text-teal-800 transition" data-tag="Tosa apenas na tesoura">🏷️ Tosa na tesoura</button>
+                                    <button type="button" class="btn-tag text-xs px-3 py-1 rounded-full border border-teal-300 bg-white hover:bg-teal-100 text-teal-800 transition" data-tag="Sensível nos ouvidos">🏷️ Sensível nos ouvidos</button>
+                                    <button type="button" class="btn-tag text-xs px-3 py-1 rounded-full border border-teal-300 bg-white hover:bg-teal-100 text-teal-800 transition" data-tag="Reativo com outros cães">🏷️ Reativo com cães</button>
+                                </div>
+
+                                <textarea id="preferencias_banho" name="preferencias_banho" rows="2"
+                                    placeholder="Ex: Alérgico a perfume; Cuidado especial com pata traseira esquerda..."
+                                    class="w-full border-teal-200 rounded-lg shadow-sm focus:border-teal-500 focus:ring focus:ring-teal-200 bg-white p-2 border text-sm text-gray-700"><?= htmlspecialchars($preferencias_banho) ?></textarea>
+                            </div>
+
                             <!-- Obs -->
                             <div class="col-span-1 md:col-span-2">
-                                <label class="block text-gray-700 font-medium mb-2">Observações /
-                                    Características</label>
+                                <label class="block text-gray-700 font-medium mb-2">Observações Clínicas Gerais</label>
                                 <textarea name="obs" rows="3"
                                     class="w-full border-gray-300 rounded-lg shadow-sm focus:border-cyan-500 focus:ring focus:ring-cyan-200 focus:ring-opacity-50 p-2 border"><?= htmlspecialchars($obs) ?></textarea>
                             </div>
@@ -293,6 +353,15 @@ DBClose($link);
                     noResults: function () {
                         return "Nenhum cliente encontrado";
                     }
+                }
+            });
+
+            $('.btn-tag').on('click', function() {
+                const tag = $(this).data('tag');
+                const textarea = $('#preferencias_banho');
+                let current = textarea.val().trim();
+                if (current.indexOf(tag) === -1) {
+                    textarea.val(current ? current + '; ' + tag : tag);
                 }
             });
         });

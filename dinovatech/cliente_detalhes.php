@@ -44,12 +44,39 @@ if ($id_cliente) {
 
         // Get Pets (Patients) - Only if VET Mode
         $pets = [];
+        $cliente_pacotes = [];
         if (AppHelper::isVetMode()) {
             $query_pets = "SELECT p.*, (SELECT MAX(data_atendimento) FROM Atendimentos WHERE id_pet = p.id_pet) as ultimo_atend FROM Pets p WHERE p.id_cliente = '$id_safe' ORDER BY p.nome ASC";
             $result_pets = DBExecute($link, $query_pets);
             if ($result_pets) {
                 while ($row = mysqli_fetch_assoc($result_pets)) {
                     $pets[] = $row;
+                }
+            }
+
+            // Get Pacotes & Saldos
+            $query_pacotes = "SELECT cp.*, p.nome_pacote, p.valor_total, p.is_recorrente, p.icone 
+                              FROM ClientePacotes cp 
+                              JOIN Pacotes p ON cp.id_pacote = p.id_pacote 
+                              WHERE cp.id_cliente = '$id_safe' 
+                              ORDER BY cp.data_aquisicao DESC";
+            $res_pacotes = DBExecute($link, $query_pacotes);
+            if ($res_pacotes) {
+                while ($cp = mysqli_fetch_assoc($res_pacotes)) {
+                    $id_cp = (int)$cp['id_cliente_pacote'];
+                    $qS = "SELECT cps.*, s.nome_servico, s.duracao_minutos, (cps.qtd_total - cps.qtd_utilizada) as saldo_restante 
+                           FROM ClientePacoteSaldos cps 
+                           JOIN Servicos s ON cps.id_servico = s.id_servico 
+                           WHERE cps.id_cliente_pacote = $id_cp";
+                    $rS = DBExecute($link, $qS);
+                    $saldos = [];
+                    if ($rS) {
+                        while ($sRow = mysqli_fetch_assoc($rS)) {
+                            $saldos[] = $sRow;
+                        }
+                    }
+                    $cp['saldos'] = $saldos;
+                    $cliente_pacotes[] = $cp;
                 }
             }
         }
@@ -437,6 +464,78 @@ if ($id_cliente) {
                             <?php endif; ?>
                         </div>
                     </div>
+
+                    <?php if (AppHelper::isVetMode()): ?>
+                        <!-- Pacotes & Saldos de Banho/Tosa Section -->
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mt-6">
+                            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-teal-50/50 to-white">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-icons text-teal-600">card_giftcard</span>
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-800">Pacotes & Créditos de Banho/Tosa</h3>
+                                        <p class="text-xs text-gray-500">Saldos de utilização e combos ativos deste cliente.</p>
+                                    </div>
+                                </div>
+                                <a href="modules/Vet/pacotes.php"
+                                    class="bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold py-1.5 px-3 rounded-lg flex items-center transition shadow-sm">
+                                    <span class="material-icons text-sm mr-1">add</span> Vincular Pacote
+                                </a>
+                            </div>
+
+                            <div class="p-6">
+                                <?php if (empty($cliente_pacotes)): ?>
+                                    <div class="text-center py-6 text-gray-400 text-sm">
+                                        Nenhum pacote de banho/tosa ativo para este cliente.
+                                    </div>
+                                <?php else: ?>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <?php foreach ($cliente_pacotes as $cp): ?>
+                                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200/80 shadow-sm flex flex-col justify-between">
+                                                <div>
+                                                    <div class="flex items-start justify-between gap-2 mb-2">
+                                                        <div class="flex items-center gap-2">
+                                                            <div class="w-9 h-9 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center">
+                                                                <span class="material-icons text-lg"><?= htmlspecialchars($cp['icone'] ?: 'card_giftcard') ?></span>
+                                                            </div>
+                                                            <div>
+                                                                <h4 class="font-bold text-sm text-gray-900"><?= htmlspecialchars($cp['nome_pacote']) ?></h4>
+                                                                <span class="text-[11px] text-gray-500">Adquirido em <?= date('d/m/Y', strtotime($cp['data_aquisicao'])) ?></span>
+                                                            </div>
+                                                        </div>
+                                                        <span class="px-2 py-0.5 rounded text-[11px] font-bold <?= $cp['status'] === 'ativo' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600' ?>">
+                                                            <?= ucfirst($cp['status']) ?>
+                                                        </span>
+                                                    </div>
+
+                                                    <!-- Saldos list -->
+                                                    <div class="space-y-2 mt-3 pt-3 border-t border-gray-200">
+                                                        <?php foreach ($cp['saldos'] as $sal):
+                                                            $total = (int)$sal['qtd_total'];
+                                                            $util = (int)$sal['qtd_utilizada'];
+                                                            $rest = (int)$sal['saldo_restante'];
+                                                            $perc = $total > 0 ? round(($util / $total) * 100) : 0;
+                                                        ?>
+                                                            <div>
+                                                                <div class="flex justify-between text-xs font-medium text-gray-700 mb-1">
+                                                                    <span><?= htmlspecialchars($sal['nome_servico']) ?></span>
+                                                                    <span class="font-bold <?= $rest > 0 ? 'text-teal-700' : 'text-gray-400' ?>">
+                                                                        <?= $rest ?> de <?= $total ?> restantes
+                                                                    </span>
+                                                                </div>
+                                                                <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                                                    <div class="bg-teal-600 h-1.5 rounded-full" style="width: <?= 100 - $perc ?>%"></div>
+                                                                </div>
+                                                            </div>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                 </div>
 

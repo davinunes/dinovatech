@@ -149,6 +149,12 @@ function calcularIdade($data_nasc)
                                         </span>
                                     </div>
                                     <div>
+                                        <span class="block text-xs font-medium text-gray-400 uppercase">Porte / Pelagem</span>
+                                        <span class="block text-gray-700 font-medium">
+                                            Porte <?= htmlspecialchars($pet['porte'] ?? 'P') ?> • <?= htmlspecialchars($pet['tipo_pelagem'] ?? 'Curto') ?>
+                                        </span>
+                                    </div>
+                                    <div>
                                         <span class="block text-xs font-medium text-gray-400 uppercase">Idade</span>
                                         <span class="block text-gray-700 font-medium">
                                             <?= calcularIdade($pet['data_nascimento']) ?>
@@ -168,9 +174,20 @@ function calcularIdade($data_nasc)
                                     </div>
                                 </div>
 
+                                <?php if (!empty($pet['preferencias_banho'])): ?>
+                                    <div class="mt-4 pt-3 border-t border-teal-100 bg-teal-50/70 p-3 rounded-lg border">
+                                        <span class="block text-xs font-semibold text-teal-800 uppercase mb-1 flex items-center gap-1">
+                                            <span class="material-icons text-sm text-teal-600">shower</span> Preferências do Banho & Tosa
+                                        </span>
+                                        <p class="text-sm font-medium text-teal-900">
+                                            <?= nl2br(htmlspecialchars($pet['preferencias_banho'])) ?>
+                                        </p>
+                                    </div>
+                                <?php endif; ?>
+
                                 <?php if ($pet['obs']): ?>
                                     <div class="mt-4 pt-4 border-t border-gray-50">
-                                        <span class="block text-xs font-medium text-gray-400 uppercase mb-1">Observações</span>
+                                        <span class="block text-xs font-medium text-gray-400 uppercase mb-1">Observações Clínicas</span>
                                         <p class="text-sm text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-100">
                                             <?= nl2br(htmlspecialchars($pet['obs'])) ?>
                                         </p>

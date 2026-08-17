@@ -794,6 +794,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $logo_sql_part = ", logo_url = '$logo_url_update_safe'";
                 }
 
+                $banho_checkin_foto_ativo = isset($_POST['banho_checkin_foto_ativo']) ? 1 : 0;
+
                 if (!empty($id_config)) {
                     // Update
                     $query = "UPDATE ConfiguracoesEmissor SET 
@@ -808,6 +810,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 bairro='$bairro', cep='$cep', uf='$uf', telefone='$telefone',
                                 landing_page_theme='$landing_page_theme',
                                 landing_page_path='$landing_page_path',
+                                banho_checkin_foto_ativo='$banho_checkin_foto_ativo',
                                 api_inter_client_id='$api_inter_client_id', 
                                 api_inter_chave_pix='$api_inter_chave_pix',
                                 api_inter_conta_corrente='$api_inter_conta_corrente',
@@ -841,7 +844,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     // For Insert, we use the variables directly (checked empty above)
                     $api_inter_cert_val = !empty($api_inter_cert_path) ? "'$api_inter_cert_path'" : "NULL";
-                    $api_inter_key_val = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
+                    $api_inter_key_path = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
                     $api_inter_ca_val = !empty($api_inter_ca_path) ? "'$api_inter_ca_path'" : "NULL";
                     $logo_val = !empty($logo_url_update) ? "'" . mysqli_real_escape_string($link, $logo_url_update) . "'" : "NULL";
 
@@ -851,7 +854,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
                                endereco, numero, complemento, bairro, cep, uf, telefone, logo_url,
-                               landing_page_theme, landing_page_path,
+                               landing_page_theme, landing_page_path, banho_checkin_foto_ativo,
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
                                api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
@@ -863,8 +866,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao',
                                '$caminho_certificado', $senha_val,
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$telefone', $logo_val,
-                               '$landing_page_theme', '$landing_page_path',
-                               '$api_inter_client_id', $inter_secret_val, 
+                               '$landing_page_theme', '$landing_page_path', '$banho_checkin_foto_ativo',
+                               '$api_inter_client_id', $inter_secret_val,
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
                                $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,
                                '$api_oracle_user', $oracle_pass_val, '$api_oracle_url', $google_json_val,
@@ -1218,7 +1221,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $nome_servico = mysqli_real_escape_string($link, $nome_servico);
                 $valor_sugerido = mysqli_real_escape_string($link, $valor_sugerido);
 
-                // Novos Campos Fiscais
+                // Novos Campos Fiscais e Módulos
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? '');
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
@@ -1227,11 +1230,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $iss_retido = isset($_POST['iss_retido']) ? 1 : 0;
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
+                
+                // Módulos e Banho e Tosa
+                $disponivel_clinica = isset($_POST['disponivel_clinica']) ? 1 : 0;
+                $disponivel_banho = isset($_POST['disponivel_banho']) ? 1 : 0;
+                $duracao_minutos = (int) ($_POST['duracao_minutos'] ?? 30);
+                if ($duracao_minutos <= 0) $duracao_minutos = 30;
+                $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : 'pets');
+                $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
 
                 $query = "INSERT INTO Servicos 
-                          (nome_servico, valor_sugerido, item_lista_servico, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, iss_retido, descricao_nfse_padrao, descricao_fiscal) 
+                          (nome_servico, valor_sugerido, item_lista_servico, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, iss_retido, descricao_nfse_padrao, descricao_fiscal, disponivel_clinica, disponivel_banho, duracao_minutos, icone_servico, imagem_url) 
                           VALUES 
-                          ('$nome_servico', '$valor_sugerido', '$item_lista_servico', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$iss_retido', '$descricao_nfse_padrao', '$descricao_fiscal')";
+                          ('$nome_servico', '$valor_sugerido', '$item_lista_servico', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$iss_retido', '$descricao_nfse_padrao', '$descricao_fiscal', '$disponivel_clinica', '$disponivel_banho', '$duracao_minutos', '$icone_servico', '$imagem_url')";
 
                 $result = DBExecute($link, $query);
 
@@ -1284,6 +1295,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
+                // Módulos e Banho e Tosa
+                $disponivel_clinica = isset($_POST['disponivel_clinica']) ? 1 : 0;
+                $disponivel_banho = isset($_POST['disponivel_banho']) ? 1 : 0;
+                $duracao_minutos = (int) ($_POST['duracao_minutos'] ?? 30);
+                if ($duracao_minutos <= 0) $duracao_minutos = 30;
+                $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : 'pets');
+                $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
+
                 $query = "UPDATE Servicos SET 
                             nome_servico = '$nome_servico', 
                             valor_sugerido = '$valor_sugerido',
@@ -1294,7 +1313,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             aliquota_iss = '$aliquota_iss',
                             iss_retido = '$iss_retido',
                             descricao_nfse_padrao = '$descricao_nfse_padrao',
-                            descricao_fiscal = '$descricao_fiscal'
+                            descricao_fiscal = '$descricao_fiscal',
+                            disponivel_clinica = '$disponivel_clinica',
+                            disponivel_banho = '$disponivel_banho',
+                            duracao_minutos = '$duracao_minutos',
+                            icone_servico = '$icone_servico',
+                            imagem_url = '$imagem_url'
                           WHERE id_servico = '$id_servico'";
                 $result = DBExecute($link, $query);
 
@@ -4258,6 +4282,450 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 GmailHelper::sendEmail($fatura['email_cliente'], $subject, $htmlBody, $attachments);
                 $response['success'] = true;
                 $response['message'] = "Fatura enviada por e-mail com sucesso para " . htmlspecialchars($fatura['email_cliente']) . "!";
+            } catch (Exception $e) {
+                $response['message'] = "Falha ao enviar e-mail: " . $e->getMessage();
+            }
+            break;
+
+        // ==========================================
+        // MÓDULO BANHO E TOSA: PACOTES & CONSUMO
+        // ==========================================
+
+        case 'save_pacote':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+
+            $id_pacote = $_POST['id_pacote'] ?? null;
+            $nome_pacote = trim($_POST['nome_pacote'] ?? '');
+            $descricao = trim($_POST['descricao'] ?? '');
+            $valor_total = (float) ($_POST['valor_total'] ?? 0);
+            $is_recorrente = isset($_POST['is_recorrente']) ? 1 : 0;
+            $intervalo_dias = (int) ($_POST['intervalo_dias_recorrencia'] ?? 30);
+            if ($intervalo_dias <= 0) $intervalo_dias = 30;
+            $icone = mysqli_real_escape_string($link, !empty($_POST['icone']) ? $_POST['icone'] : 'card_giftcard');
+            $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
+
+            $itens_servico = $_POST['itens_servico'] ?? [];
+            $itens_quantidade = $_POST['itens_quantidade'] ?? [];
+
+            if (empty($nome_pacote) || $valor_total <= 0) {
+                $response['message'] = "Nome do pacote e valor total válido são obrigatórios.";
+                break;
+            }
+
+            if (empty($itens_servico) || !is_array($itens_servico)) {
+                $response['message'] = "Adicione ao menos um serviço ao pacote.";
+                break;
+            }
+
+            $nome_safe = mysqli_real_escape_string($link, $nome_pacote);
+            $desc_safe = mysqli_real_escape_string($link, $descricao);
+
+            if ($id_pacote) {
+                $id_pacote_safe = (int)$id_pacote;
+                $query = "UPDATE Pacotes SET 
+                            nome_pacote = '$nome_safe',
+                            descricao = '$desc_safe',
+                            valor_total = $valor_total,
+                            is_recorrente = $is_recorrente,
+                            intervalo_dias_recorrencia = $intervalo_dias,
+                            icone = '$icone',
+                            imagem_url = '$imagem_url'
+                          WHERE id_pacote = $id_pacote_safe";
+                $res = DBExecute($link, $query);
+            } else {
+                $query = "INSERT INTO Pacotes (nome_pacote, descricao, valor_total, is_recorrente, intervalo_dias_recorrencia, icone, imagem_url, ativo) 
+                          VALUES ('$nome_safe', '$desc_safe', $valor_total, $is_recorrente, $intervalo_dias, '$icone', '$imagem_url', 1)";
+                $res = DBExecute($link, $query);
+                $id_pacote_safe = mysqli_insert_id($link);
+            }
+
+            if ($res && $id_pacote_safe) {
+                // Delete old items and insert updated ones
+                DBExecute($link, "DELETE FROM PacoteItens WHERE id_pacote = $id_pacote_safe");
+
+                for ($i = 0; $i < count($itens_servico); $i++) {
+                    $id_srv = (int) $itens_servico[$i];
+                    $qtd = (int) ($itens_quantidade[$i] ?? 1);
+                    if ($id_srv > 0 && $qtd > 0) {
+                        DBExecute($link, "INSERT INTO PacoteItens (id_pacote, id_servico, quantidade) VALUES ($id_pacote_safe, $id_srv, $qtd)");
+                    }
+                }
+
+                $response['success'] = true;
+                $response['message'] = $id_pacote ? "Pacote atualizado com sucesso!" : "Pacote cadastrado com sucesso!";
+            } else {
+                $response['message'] = "Erro ao salvar pacote: " . mysqli_error($link);
+            }
+            break;
+
+        case 'delete_pacote':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+            $id_pacote = (int) ($_POST['id_pacote'] ?? 0);
+            if ($id_pacote > 0) {
+                DBExecute($link, "UPDATE Pacotes SET ativo = 0 WHERE id_pacote = $id_pacote");
+                $response['success'] = true;
+                $response['message'] = "Pacote inativado com sucesso!";
+            } else {
+                $response['message'] = "ID do pacote inválido.";
+            }
+            break;
+
+        case 'vincular_cliente_pacote':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+            $id_cliente = (int) ($_POST['id_cliente'] ?? 0);
+            $id_pacote = (int) ($_POST['id_pacote'] ?? 0);
+
+            if ($id_cliente <= 0 || $id_pacote <= 0) {
+                $response['message'] = "Selecione o cliente e o pacote.";
+                break;
+            }
+
+            // Get Pacote
+            $resP = DBExecute($link, "SELECT * FROM Pacotes WHERE id_pacote = $id_pacote AND ativo = 1");
+            if (!$resP || mysqli_num_rows($resP) == 0) {
+                $response['message'] = "Pacote não encontrado ou inativo.";
+                break;
+            }
+            $pacote = mysqli_fetch_assoc($resP);
+
+            // Fetch Items
+            $resIt = DBExecute($link, "SELECT * FROM PacoteItens WHERE id_pacote = $id_pacote");
+            $items = [];
+            while ($it = mysqli_fetch_assoc($resIt)) {
+                $items[] = $it;
+            }
+
+            if (empty($items)) {
+                $response['message'] = "Este pacote não possui serviços configurados.";
+                break;
+            }
+
+            // 1. If recorrente, create in Recorrencias table
+            $id_recorrencia_val = "NULL";
+            if ($pacote['is_recorrente'] == 1) {
+                $primeiro_servico_id = (int)$items[0]['id_servico'];
+                $valor_rec = (float)$pacote['valor_total'];
+                $intervalo = (int)$pacote['intervalo_dias_recorrencia'];
+                $data_inicio = date('Y-m-d');
+                $obs_rec = mysqli_real_escape_string($link, "Pacote: " . $pacote['nome_pacote']);
+
+                $qRec = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, data_inicio_cobranca, observacoes) 
+                         VALUES ($id_cliente, $primeiro_servico_id, 1, $valor_rec, 'dias', $intervalo, '$data_inicio', '$obs_rec')";
+                if (DBExecute($link, $qRec)) {
+                    $id_recorrencia_val = mysqli_insert_id($link);
+                }
+            }
+
+            // 2. Insert into ClientePacotes
+            $qCP = "INSERT INTO ClientePacotes (id_cliente, id_pacote, id_recorrencia, status) 
+                    VALUES ($id_cliente, $id_pacote, $id_recorrencia_val, 'ativo')";
+            if (DBExecute($link, $qCP)) {
+                $id_cliente_pacote = mysqli_insert_id($link);
+
+                // 3. Populate ClientePacoteSaldos
+                foreach ($items as $it) {
+                    $id_srv = (int)$it['id_servico'];
+                    $qtd = (int)$it['quantidade'];
+                    DBExecute($link, "INSERT INTO ClientePacoteSaldos (id_cliente_pacote, id_servico, qtd_total, qtd_utilizada) 
+                                      VALUES ($id_cliente_pacote, $id_srv, $qtd, 0)");
+                }
+
+                $response['success'] = true;
+                $response['message'] = "Pacote vinculado ao cliente com sucesso! Saldos de serviços liberados.";
+            } else {
+                $response['message'] = "Erro ao vincular pacote: " . mysqli_error($link);
+            }
+            break;
+
+        case 'get_cliente_pacotes_saldo':
+            $id_cliente = (int) ($_REQUEST['id_cliente'] ?? 0);
+            $id_servico = (int) ($_REQUEST['id_servico'] ?? 0);
+
+            if ($id_cliente <= 0) {
+                $response['message'] = "Cliente não informado.";
+                break;
+            }
+
+            $whereServ = $id_servico > 0 ? "AND cps.id_servico = $id_servico" : "";
+
+            $query = "SELECT cps.*, cp.id_pacote, p.nome_pacote, s.nome_servico, s.duracao_minutos,
+                      (cps.qtd_total - cps.qtd_utilizada) as saldo_restante
+                      FROM ClientePacoteSaldos cps
+                      JOIN ClientePacotes cp ON cps.id_cliente_pacote = cp.id_cliente_pacote
+                      JOIN Pacotes p ON cp.id_pacote = p.id_pacote
+                      JOIN Servicos s ON cps.id_servico = s.id_servico
+                      WHERE cp.id_cliente = $id_cliente 
+                        AND cp.status = 'ativo'
+                        AND (cps.qtd_total - cps.qtd_utilizada) > 0
+                        $whereServ
+                      ORDER BY cp.data_aquisicao ASC";
+
+            $res = DBExecute($link, $query);
+            $saldos = [];
+            if ($res) {
+                while ($r = mysqli_fetch_assoc($res)) {
+                    $saldos[] = $r;
+                }
+            }
+
+            $response['success'] = true;
+            $response['saldos'] = $saldos;
+            break;
+
+        case 'consumir_pacote_servico':
+            $id_cliente_pacote = (int) ($_POST['id_cliente_pacote'] ?? 0);
+            $id_servico = (int) ($_POST['id_servico'] ?? 0);
+            $id_pet = (int) ($_POST['id_pet'] ?? 0);
+            $id_agendamento = !empty($_POST['id_agendamento']) ? (int)$_POST['id_agendamento'] : "NULL";
+            $observacao = mysqli_real_escape_string($link, $_POST['observacao'] ?? 'Consumo pelo Banho e Tosa');
+
+            if ($id_cliente_pacote <= 0 || $id_servico <= 0 || $id_pet <= 0) {
+                $response['message'] = "Dados de consumo incompletos.";
+                break;
+            }
+
+            // Check saldo
+            $qCheck = "SELECT id_saldo, qtd_total, qtd_utilizada 
+                       FROM ClientePacoteSaldos 
+                       WHERE id_cliente_pacote = $id_cliente_pacote AND id_servico = $id_servico";
+            $resCheck = DBExecute($link, $qCheck);
+            if ($resCheck && $saldo = mysqli_fetch_assoc($resCheck)) {
+                if ($saldo['qtd_utilizada'] >= $saldo['qtd_total']) {
+                    $response['message'] = "Saldo deste serviço no pacote já está esgotado.";
+                    break;
+                }
+
+                // Increment qtd_utilizada
+                $newUtil = $saldo['qtd_utilizada'] + 1;
+                $id_saldo = (int)$saldo['id_saldo'];
+                DBExecute($link, "UPDATE ClientePacoteSaldos SET qtd_utilizada = $newUtil WHERE id_saldo = $id_saldo");
+
+                // Log consumo
+                DBExecute($link, "INSERT INTO ClientePacoteConsumo (id_cliente_pacote, id_servico, id_pet, id_agendamento, observacao) 
+                                  VALUES ($id_cliente_pacote, $id_servico, $id_pet, $id_agendamento, '$observacao')");
+
+                // Check if all items in package are finished
+                $qAll = "SELECT COUNT(*) as total_itens, 
+                         SUM(CASE WHEN qtd_utilizada >= qtd_total THEN 1 ELSE 0 END) as itens_esgotados
+                         FROM ClientePacoteSaldos WHERE id_cliente_pacote = $id_cliente_pacote";
+                $resAll = DBExecute($link, $qAll);
+                if ($resAll && $rAll = mysqli_fetch_assoc($resAll)) {
+                    if ($rAll['total_itens'] == $rAll['itens_esgotados']) {
+                        DBExecute($link, "UPDATE ClientePacotes SET status = 'esgotado' WHERE id_cliente_pacote = $id_cliente_pacote");
+                    }
+                }
+
+                $response['success'] = true;
+                $response['message'] = "Crédito do pacote consumido com sucesso!";
+            } else {
+                $response['message'] = "Saldo não localizado para este pacote e serviço.";
+            }
+            break;
+
+        case 'get_banho_producao_fila':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+
+            $query = "SELECT f.*, p.nome as nome_pet, p.porte, p.tipo_pelagem, p.preferencias_banho,
+                             c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor,
+                             v.nome as nome_colaborador,
+                             DATE_FORMAT(f.horario_entrada, '%H:%i') as horario_entrada_fmt,
+                             (SELECT COUNT(*) FROM BanhoCheckinFotos bcf WHERE bcf.id_fila = f.id_fila) as total_fotos
+                      FROM BanhoProducaoFila f
+                      JOIN Pets p ON f.id_pet = p.id_pet
+                      JOIN Clientes c ON p.id_cliente = c.id_cliente
+                      LEFT JOIN Veterinarios v ON f.id_colaborador = v.id_vet
+                      WHERE f.etapa != 'finalizado'
+                      ORDER BY f.horario_entrada ASC";
+
+            $res = DBExecute($link, $query);
+            $fila = [];
+            if ($res) {
+                while ($r = mysqli_fetch_assoc($res)) {
+                    $fila[] = $r;
+                }
+            }
+
+            $response['success'] = true;
+            $response['fila'] = $fila;
+            break;
+
+        case 'criar_checkin_banho':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+
+            $id_pet = (int) ($_POST['id_pet'] ?? 0);
+            $id_colaborador = !empty($_POST['id_colaborador']) ? (int)$_POST['id_colaborador'] : "NULL";
+            $observacoes = mysqli_real_escape_string($link, $_POST['observacoes_estetica'] ?? '');
+
+            if ($id_pet <= 0) {
+                $response['message'] = "Selecione o pet para dar entrada.";
+                break;
+            }
+
+            $query = "INSERT INTO BanhoProducaoFila (id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica) 
+                      VALUES ($id_pet, $id_colaborador, 'aguardando', NOW(), '$observacoes')";
+            if (DBExecute($link, $query)) {
+                $id_fila = mysqli_insert_id($link);
+
+                // Handle Checkin Fotos upload
+                if (isset($_FILES['fotos_checkin']) && !empty($_FILES['fotos_checkin']['name'][0])) {
+                    $uploadDir = __DIR__ . '/uploads/banho_fotos/';
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+
+                    $totalFiles = count($_FILES['fotos_checkin']['name']);
+                    for ($i = 0; $i < $totalFiles; $i++) {
+                        if ($_FILES['fotos_checkin']['error'][$i] === UPLOAD_ERR_OK) {
+                            $tmpName = $_FILES['fotos_checkin']['tmp_name'][$i];
+                            $origName = $_FILES['fotos_checkin']['name'][$i];
+                            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+                            if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                                $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
+                                $destPath = $uploadDir . $newFileName;
+                                if (move_uploaded_file($tmpName, $destPath)) {
+                                    $relPath = 'uploads/banho_fotos/' . $newFileName;
+                                    DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPath')");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                $response['success'] = true;
+                $response['message'] = "Check-in realizado com sucesso! Pet inserido na esteira.";
+            } else {
+                $response['message'] = "Erro ao dar entrada na fila: " . mysqli_error($link);
+            }
+            break;
+
+        case 'update_etapa_banho':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+
+            $id_fila = (int) ($_POST['id_fila'] ?? 0);
+            $nova_etapa = mysqli_real_escape_string($link, $_POST['nova_etapa'] ?? '');
+            $etapas_validas = ['aguardando', 'em_banho', 'secagem', 'tosa_finalizacao', 'pronto', 'finalizado'];
+
+            if ($id_fila <= 0 || !in_array($nova_etapa, $etapas_validas)) {
+                $response['message'] = "Parâmetros inválidos para alteração de etapa.";
+                break;
+            }
+
+            $saida_sql = ($nova_etapa === 'finalizado') ? ", horario_saida = NOW()" : "";
+            $query = "UPDATE BanhoProducaoFila SET etapa = '$nova_etapa' $saida_sql WHERE id_fila = $id_fila";
+
+            if (DBExecute($link, $query)) {
+                $response['success'] = true;
+                $response['message'] = "Etapa atualizada com sucesso!";
+            } else {
+                $response['message'] = "Erro ao atualizar etapa: " . mysqli_error($link);
+            }
+            break;
+
+        case 'get_fotos_banho_checkin':
+            $id_fila = (int) ($_REQUEST['id_fila'] ?? 0);
+            if ($id_fila <= 0) {
+                $response['message'] = "ID da fila não informado.";
+                break;
+            }
+
+            $res = DBExecute($link, "SELECT * FROM BanhoCheckinFotos WHERE id_fila = $id_fila ORDER BY id_foto ASC");
+            $fotos = [];
+            if ($res) {
+                while ($f = mysqli_fetch_assoc($res)) {
+                    $fotos[] = $f;
+                }
+            }
+
+            $response['success'] = true;
+            $response['fotos'] = $fotos;
+            break;
+
+        case 'notificar_tutor_pronto_email':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+
+            $id_fila = (int) ($_POST['id_fila'] ?? 0);
+            if ($id_fila <= 0) {
+                $response['message'] = "ID da esteira inválido.";
+                break;
+            }
+
+            $qFila = "SELECT f.*, p.nome as nome_pet, c.nome as nome_tutor, c.email as email_tutor 
+                      FROM BanhoProducaoFila f
+                      JOIN Pets p ON f.id_pet = p.id_pet
+                      JOIN Clientes c ON p.id_cliente = c.id_cliente
+                      WHERE f.id_fila = $id_fila";
+            $resF = DBExecute($link, $qFila);
+            if (!$resF || mysqli_num_rows($resF) == 0) {
+                $response['message'] = "Registro não encontrado.";
+                break;
+            }
+
+            $filaData = mysqli_fetch_assoc($resF);
+            if (empty($filaData['email_tutor'])) {
+                $response['message'] = "O tutor não possui e-mail cadastrado.";
+                break;
+            }
+
+            // Fetch Emissor Name
+            $empresa = "Clínica & Estética DinoVet";
+            $resEmp = DBExecute($link, "SELECT nome_fantasia, razao_social FROM ConfiguracoesEmissor WHERE id_config = 1");
+            if ($resEmp && $cfg = mysqli_fetch_assoc($resEmp)) {
+                $empresa = $cfg['nome_fantasia'] ?: ($cfg['razao_social'] ?: $empresa);
+            }
+
+            require_once __DIR__ . '/helpers/GmailHelper.php';
+
+            $subject = "🐾 Seu pet " . $filaData['nome_pet'] . " já está pronto e cheiroso!";
+            $htmlBody = '
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; padding: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                    <div style="display: inline-block; background: #ccfbf1; color: #0d9488; font-size: 32px; padding: 15px; border-radius: 50%;">🐾</div>
+                    <h2 style="color: #0f172a; margin: 15px 0 5px 0; font-size: 24px;">' . htmlspecialchars($filaData['nome_pet']) . ' está pronto!</h2>
+                    <p style="color: #64748b; font-size: 14px; margin: 0;">' . htmlspecialchars($empresa) . '</p>
+                </div>
+
+                <p style="color: #334155; font-size: 15px; line-height: 1.6;">
+                    Olá, <strong>' . htmlspecialchars($filaData['nome_tutor']) . '</strong>!
+                </p>
+                <p style="color: #334155; font-size: 15px; line-height: 1.6;">
+                    Temos ótimas notícias! O atendimento de banho e estética do seu pet <strong>' . htmlspecialchars($filaData['nome_pet']) . '</strong> foi finalizado com muito carinho pela nossa equipe. Ele já está limpinho, cheiroso e pronto para ir para casa!
+                </p>
+
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 15px; margin: 25px 0; text-align: center;">
+                    <p style="color: #0d9488; font-weight: bold; margin: 0; font-size: 16px;">📍 Você já pode vir buscá-lo na nossa recepção.</p>
+                </div>
+
+                <p style="color: #94a3b8; font-size: 12px; text-align: center; margin-top: 30px; border-top: 1px solid #f1f5f9; padding-top: 15px;">
+                    Atendimento prestado por ' . htmlspecialchars($empresa) . '. Agradecemos a confiança!
+                </p>
+            </div>';
+
+            try {
+                GmailHelper::sendEmail($filaData['email_tutor'], $subject, $htmlBody);
+                $response['success'] = true;
+                $response['message'] = "E-mail de notificação enviado com sucesso para " . htmlspecialchars($filaData['email_tutor']) . "!";
             } catch (Exception $e) {
                 $response['message'] = "Falha ao enviar e-mail: " . $e->getMessage();
             }

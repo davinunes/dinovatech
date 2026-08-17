@@ -76,7 +76,9 @@ if ($link) {
                     <table class="w-full text-left border-collapse">
                         <thead>
                             <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
-                                <th class="p-4 font-medium">Nome do Serviço</th>
+                                <th class="p-4 font-medium">Serviço</th>
+                                <th class="p-4 font-medium">Módulos</th>
+                                <th class="p-4 font-medium">Duração</th>
                                 <th class="p-4 font-medium">Valor Sugerido</th>
                                 <th class="p-4 font-medium text-right">Ações</th>
                             </tr>
@@ -85,12 +87,46 @@ if ($link) {
                             <?php if (!empty($servicos)): ?>
                                 <?php foreach ($servicos as $servico): ?>
                                     <tr class="border-b border-gray-50 hover:bg-gray-50 transition">
-                                        <td class="p-4 font-medium text-gray-900">
-                                            <?= htmlspecialchars($servico['nome_servico']) ?></td>
-                                        <td class="p-4">R$ <?= number_format($servico['valor_sugerido'], 2, ',', '.') ?></td>
+                                        <td class="p-4 font-medium text-gray-900 flex items-center gap-3">
+                                            <div class="w-9 h-9 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center flex-shrink-0">
+                                                <span class="material-icons text-lg"><?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?></span>
+                                            </div>
+                                            <div>
+                                                <div class="font-semibold text-gray-900"><?= htmlspecialchars($servico['nome_servico']) ?></div>
+                                                <?php if (!empty($servico['descricao_fiscal'])): ?>
+                                                    <div class="text-xs text-gray-400">NFS-e: <?= htmlspecialchars($servico['descricao_fiscal']) ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td class="p-4">
+                                            <div class="flex flex-wrap gap-1">
+                                                <?php if (!empty($servico['disponivel_clinica'])): ?>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                                        <span class="material-icons text-[12px] mr-1">local_hospital</span> Clínica
+                                                    </span>
+                                                <?php endif; ?>
+                                                <?php if (!empty($servico['disponivel_banho'])): ?>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                                                        <span class="material-icons text-[12px] mr-1">shower</span> Banho & Tosa
+                                                    </span>
+                                                <?php endif; ?>
+                                                <?php if (empty($servico['disponivel_clinica']) && empty($servico['disponivel_banho'])): ?>
+                                                    <span class="text-xs text-gray-400">Geral</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 text-gray-600">
+                                            <span class="inline-flex items-center gap-1">
+                                                <span class="material-icons text-sm text-gray-400">schedule</span>
+                                                <?= (int)($servico['duracao_minutos'] ?? 30) ?> min
+                                            </span>
+                                        </td>
+                                        <td class="p-4 font-semibold text-gray-800">
+                                            R$ <?= number_format($servico['valor_sugerido'], 2, ',', '.') ?>
+                                        </td>
                                         <td class="p-4 text-right">
                                             <a href="servico_form.php?id=<?= $servico['id_servico'] ?>"
-                                                class="text-gray-500 hover:text-gray-700 font-medium text-sm flex items-center justify-end">
+                                                class="text-gray-500 hover:text-cyan-600 font-medium text-sm inline-flex items-center justify-end">
                                                 <span class="material-icons text-base mr-1">edit</span> Editar
                                             </a>
                                         </td>
@@ -98,7 +134,7 @@ if ($link) {
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="3" class="p-8 text-center text-gray-500">Nenhum serviço encontrado.</td>
+                                    <td colspan="5" class="p-8 text-center text-gray-500">Nenhum serviço encontrado.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -111,17 +147,39 @@ if ($link) {
                 <?php if (!empty($servicos)): ?>
                     <?php foreach ($servicos as $servico): ?>
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="font-bold text-gray-900"><?= htmlspecialchars($servico['nome_servico']) ?></h3>
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-10 h-10 rounded-lg bg-cyan-50 text-cyan-700 flex items-center justify-center flex-shrink-0">
+                                    <span class="material-icons text-xl"><?= htmlspecialchars($servico['icone_servico'] ?? 'pets') ?></span>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="font-bold text-gray-900 leading-snug"><?= htmlspecialchars($servico['nome_servico']) ?></h3>
+                                    <span class="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                        <span class="material-icons text-[13px]">schedule</span> <?= (int)($servico['duracao_minutos'] ?? 30) ?> min
+                                    </span>
+                                </div>
                             </div>
-                            <div class="text-gray-600 mb-4">
-                                <span class="text-xs uppercase tracking-wide text-gray-400 block mb-1">Valor Sugerido</span>
-                                <span class="text-lg font-medium text-gray-800">R$
+                            
+                            <div class="flex flex-wrap gap-1 mb-3">
+                                <?php if (!empty($servico['disponivel_clinica'])): ?>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                        Clínica
+                                    </span>
+                                <?php endif; ?>
+                                <?php if (!empty($servico['disponivel_banho'])): ?>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-teal-50 text-teal-700 border border-teal-200">
+                                        Banho & Tosa
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="text-gray-600 mb-4 flex justify-between items-baseline pt-2 border-t border-gray-50">
+                                <span class="text-xs uppercase tracking-wide text-gray-400 block">Valor Sugerido</span>
+                                <span class="text-lg font-bold text-cyan-700">R$
                                     <?= number_format($servico['valor_sugerido'], 2, ',', '.') ?></span>
                             </div>
-                            <div class="pt-3 border-t border-gray-50 flex justify-end">
+                            <div class="pt-2 border-t border-gray-50 flex justify-end">
                                 <a href="servico_form.php?id=<?= $servico['id_servico'] ?>"
-                                    class="w-full text-center bg-gray-50 hover:bg-gray-100 text-gray-700 py-2 rounded-lg text-sm font-medium transition-colors">
+                                    class="w-full text-center bg-gray-50 hover:bg-cyan-50 text-gray-700 hover:text-cyan-700 py-2 rounded-lg text-sm font-medium transition-colors">
                                     Editar Serviço
                                 </a>
                             </div>

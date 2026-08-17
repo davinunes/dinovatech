@@ -52,6 +52,26 @@ if (AppHelper::isVetMode()) {
             $vacinasProximas[] = $row;
         }
     }
+
+    // --- Banho & Tosa (Esteira e Pacotes Ativos) ---
+    $banhoFilaAtivos = [];
+    $resBanho = DBExecute($linkDB, "
+        SELECT f.id_fila, f.etapa, f.horario_entrada, p.nome as pet_nome, p.porte, c.nome as tutor_nome, v.nome as colab_nome 
+        FROM BanhoProducaoFila f
+        JOIN Pets p ON f.id_pet = p.id_pet
+        JOIN Clientes c ON p.id_cliente = c.id_cliente
+        LEFT JOIN Veterinarios v ON f.id_colaborador = v.id_vet
+        WHERE f.etapa != 'finalizado'
+        ORDER BY f.horario_entrada ASC LIMIT 6
+    ");
+    if ($resBanho) {
+        while ($bRow = mysqli_fetch_assoc($resBanho)) {
+            $banhoFilaAtivos[] = $bRow;
+        }
+    }
+
+    $resPacotesAtivosCount = DBExecute($linkDB, "SELECT COUNT(*) as total FROM ClientePacotes WHERE status = 'ativo'");
+    $totalPacotesAtivos = ($resPacotesAtivosCount && $rPA = mysqli_fetch_assoc($resPacotesAtivosCount)) ? (int)$rPA['total'] : 0;
 }
 
 DBClose($linkDB);
@@ -219,6 +239,77 @@ DBClose($linkDB);
             </div>
 
             <?php if (AppHelper::isVetMode()): ?>
+                <!-- Banho & Tosa: Esteira e Pacotes Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- Card Esteira de Banho -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-teal-100 overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-teal-100 bg-gradient-to-r from-teal-50 to-white flex justify-between items-center">
+                            <div class="flex items-center">
+                                <span class="material-icons text-teal-600 mr-2">view_kanban</span>
+                                <div>
+                                    <h3 class="font-semibold text-teal-900">Esteira de Banho & Tosa (Ao Vivo)</h3>
+                                    <p class="text-[11px] text-teal-700">Pets atualmente na linha de produção hoje.</p>
+                                </div>
+                            </div>
+                            <a href="modules/Vet/banho_producao.php"
+                                class="text-xs font-semibold text-teal-700 hover:text-teal-900 bg-teal-100 hover:bg-teal-200 px-3 py-1.5 rounded-lg flex items-center gap-1 transition">
+                                Ver Linha Completa <span class="material-icons text-xs">arrow_forward</span>
+                            </a>
+                        </div>
+                        <div class="p-4 flex-1">
+                            <?php if (empty($banhoFilaAtivos)): ?>
+                                <p class="text-gray-400 text-sm italic text-center py-4">Nenhum pet na esteira no momento.</p>
+                            <?php else: ?>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <?php foreach ($banhoFilaAtivos as $b):
+                                        $etapaBadge = 'bg-amber-100 text-amber-800';
+                                        $etapaNome = '1. Recepção';
+                                        if ($b['etapa'] === 'em_banho') { $etapaBadge = 'bg-cyan-100 text-cyan-800'; $etapaNome = '2. Em Banho'; }
+                                        elseif ($b['etapa'] === 'secagem') { $etapaBadge = 'bg-blue-100 text-blue-800'; $etapaNome = '3. Secagem'; }
+                                        elseif ($b['etapa'] === 'tosa_finalizacao') { $etapaBadge = 'bg-purple-100 text-purple-800'; $etapaNome = '4. Tosa'; }
+                                        elseif ($b['etapa'] === 'pronto') { $etapaBadge = 'bg-emerald-100 text-emerald-800 font-bold'; $etapaNome = '5. Pronto! 🐾'; }
+                                    ?>
+                                        <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-sm text-gray-800"><?= htmlspecialchars($b['pet_nome']) ?></span>
+                                                    <span class="text-[10px] bg-white px-1.5 py-0.5 rounded border border-gray-200 text-gray-500 font-semibold">Porte <?= $b['porte'] ?></span>
+                                                </div>
+                                                <span class="text-xs text-gray-500 block">Tutor: <?= htmlspecialchars($b['tutor_nome']) ?></span>
+                                            </div>
+                                            <span class="px-2 py-1 rounded text-xs <?= $etapaBadge ?>"><?= $etapaNome ?></span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <!-- Card Pacotes Ativos Widget -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+                                    <span class="material-icons text-xl">card_giftcard</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-base">Pacotes & Combos</h3>
+                                    <p class="text-xs text-gray-500">Planos de estética ativos</p>
+                                </div>
+                            </div>
+                            <div class="bg-amber-50/60 rounded-xl p-4 border border-amber-100 mb-4">
+                                <span class="text-xs text-amber-800 font-medium block">Total de Tutores com Pacote:</span>
+                                <span class="text-3xl font-extrabold text-amber-900"><?= $totalPacotesAtivos ?></span>
+                                <span class="text-[11px] text-amber-700 block mt-1">Créditos disponíveis para consumo na agenda e esteira.</span>
+                            </div>
+                        </div>
+                        <a href="modules/Vet/pacotes.php"
+                            class="w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2.5 rounded-xl text-center transition flex items-center justify-center gap-1">
+                            <span class="material-icons text-sm">settings</span> Gerenciar Pacotes & Saldos
+                        </a>
+                    </div>
+                </div>
+
                 <!-- Atendimentos Recentes Section -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col mb-8">
                     <div class="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-gradient-to-r from-teal-50/50 to-white">

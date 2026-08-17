@@ -99,6 +99,28 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 
         <?php if (AppHelper::isVetMode()): ?>
             <div class="pt-4 pb-2">
+                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Estética & Banho</p>
+            </div>
+
+            <a href="<?= $basePath ?>modules/Vet/banho_producao.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'banho_producao.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3 text-teal-400">view_kanban</span>
+                <span class="font-medium">Linha de Produção (TV)</span>
+            </a>
+
+            <a href="<?= $basePath ?>modules/Vet/banho_agenda.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'banho_agenda.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3 text-cyan-400">calendar_today</span>
+                <span class="font-medium">Agenda Banho/Tosa</span>
+            </a>
+
+            <a href="<?= $basePath ?>modules/Vet/pacotes.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'pacotes.php' || $currentPage == 'pacote_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3 text-amber-400">card_giftcard</span>
+                <span class="font-medium">Pacotes & Combos</span>
+            </a>
+
+            <div class="pt-4 pb-2">
                 <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Clínico</p>
             </div>
 
