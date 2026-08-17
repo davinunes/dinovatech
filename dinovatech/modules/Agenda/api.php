@@ -112,22 +112,43 @@ switch ($action) {
             $where .= " AND (A.tipo_agenda = 'clinica' OR A.tipo_agenda IS NULL)";
         }
 
-        $query = "SELECT A.*, V.nome as nome_vet, C.nome as nome_cliente, P.nome as nome_pet, S.nome_servico 
+        $query = "SELECT A.*, V.nome as nome_vet, C.nome as nome_cliente, P.nome as nome_pet, S.nome_servico,
+                         f.etapa as esteira_etapa, f.id_fila
                   FROM Agendamentos A
                   LEFT JOIN Veterinarios V ON A.id_vet = V.id_vet
                   LEFT JOIN Clientes C ON A.id_cliente = C.id_cliente
                   LEFT JOIN Pets P ON A.id_pet = P.id_pet
                   LEFT JOIN Servicos S ON A.id_servico = S.id_servico
+                  LEFT JOIN BanhoProducaoFila f ON A.id_agendamento = f.id_agendamento
                   $where";
 
         $result = DBExecute($link, $query);
         $events = [];
         while ($row = mysqli_fetch_assoc($result)) {
             $color = '#3788d8'; // Default Blue
+            $prefixEtapa = '';
+
             if ($row['tipo_agenda'] === 'banho_tosa') {
-                $color = '#0d9488'; // Teal for Banho & Tosa
+                $color = '#0d9488'; // Teal
+                if ($row['esteira_etapa'] === 'aguardando') {
+                    $prefixEtapa = '⏳ [Fila] ';
+                    $color = '#d97706';
+                } elseif ($row['esteira_etapa'] === 'em_banho') {
+                    $prefixEtapa = '🛁 [Banho] ';
+                    $color = '#0891b2';
+                } elseif ($row['esteira_etapa'] === 'secagem') {
+                    $prefixEtapa = '💨 [Secagem] ';
+                    $color = '#2563eb';
+                } elseif ($row['esteira_etapa'] === 'tosa_finalizacao') {
+                    $prefixEtapa = '✂️ [Tosa] ';
+                    $color = '#9333ea';
+                } elseif ($row['esteira_etapa'] === 'pronto') {
+                    $prefixEtapa = '🐾 [Pronto] ';
+                    $color = '#059669';
+                }
             }
-            if ($row['status'] == 'Realizado')
+
+            if ($row['status'] == 'Realizado' || $row['status'] == 'Concluído')
                 $color = '#10b981'; // Green
             if ($row['status'] == 'Cancelado')
                 $color = '#ef4444'; // Red
@@ -136,7 +157,7 @@ switch ($action) {
 
             $events[] = [
                 'id' => $row['id_agendamento'],
-                'title' => $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
+                'title' => $prefixEtapa . $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
                 'start' => str_replace(' ', 'T', $row['data_inicio']),
                 'end' => str_replace(' ', 'T', $row['data_fim']),
                 'color' => $color,
@@ -148,6 +169,8 @@ switch ($action) {
                     'id_servico' => $row['id_servico'],
                     'id_cliente_pacote' => $row['id_cliente_pacote'],
                     'tipo_agenda' => $row['tipo_agenda'],
+                    'esteira_etapa' => $row['esteira_etapa'],
+                    'id_fila' => $row['id_fila'],
                     'status' => $row['status']
                 ]
             ];

@@ -4758,14 +4758,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 break;
             }
 
+            // 1. AUTO-SYNC: Banhos agendados para hoje/abertos são inseridos automaticamente na esteira de produção
+            $qAutoSync = "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica)
+                          SELECT a.id_agendamento, a.id_pet, a.id_vet, 'aguardando', a.data_inicio, a.descricao
+                          FROM Agendamentos a
+                          WHERE a.tipo_agenda = 'banho_tosa'
+                            AND a.status NOT IN ('Cancelado', 'Concluído')
+                            AND DATE(a.data_inicio) <= CURDATE()
+                            AND a.id_pet IS NOT NULL
+                            AND NOT EXISTS (
+                              SELECT 1 FROM BanhoProducaoFila f WHERE f.id_agendamento = a.id_agendamento
+                            )";
+            DBExecute($link, $qAutoSync);
+
+            // 2. Buscar fila ativa com dados ricos do Pet, Tutor, Serviço e Pacote
             $query = "SELECT f.*, p.nome as nome_pet, p.porte, p.tipo_pelagem, p.preferencias_banho,
-                             c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor,
+                             c.id_cliente, c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor,
                              v.nome as nome_colaborador,
+                             s.nome_servico, s.duracao_minutos,
+                             pac.nome_pacote,
+                             a.status as status_agendamento,
                              DATE_FORMAT(f.horario_entrada, '%H:%i') as horario_entrada_fmt,
                              (SELECT COUNT(*) FROM BanhoCheckinFotos bcf WHERE bcf.id_fila = f.id_fila) as total_fotos
                       FROM BanhoProducaoFila f
                       JOIN Pets p ON f.id_pet = p.id_pet
                       JOIN Clientes c ON p.id_cliente = c.id_cliente
+                      LEFT JOIN Agendamentos a ON f.id_agendamento = a.id_agendamento
+                      LEFT JOIN Servicos s ON a.id_servico = s.id_servico
+                      LEFT JOIN ClientePacotes cp ON a.id_cliente_pacote = cp.id_cliente_pacote
+                      LEFT JOIN Pacotes pac ON cp.id_pacote = pac.id_pacote
                       LEFT JOIN Veterinarios v ON f.id_colaborador = v.id_vet
                       WHERE f.etapa != 'finalizado'
                       ORDER BY f.horario_entrada ASC";
@@ -4789,20 +4810,112 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
 
             $id_pet = (int) ($_POST['id_pet'] ?? 0);
-            $id_colaborador = !empty($_POST['id_colaborador']) ? (int)$_POST['id_colaborador'] : "NULL";
+            $id_servico = (int) ($_POST['id_servico'] ?? 0);
+            $id_colaborador = !empty($_POST['id_colaborador']) ? (int)$_POST['id_colaborador'] : null;
+            $id_colaborador_sql = $id_colaborador ? $id_colaborador : "NULL";
             $observacoes = mysqli_real_escape_string($link, $_POST['observacoes_estetica'] ?? '');
+            $usar_saldo = isset($_POST['usar_saldo_pacote']) && $_POST['usar_saldo_pacote'] == 1;
 
             if ($id_pet <= 0) {
                 $response['message'] = "Selecione o pet para dar entrada.";
                 break;
             }
 
-            $query = "INSERT INTO BanhoProducaoFila (id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica) 
-                      VALUES ($id_pet, $id_colaborador, 'aguardando', NOW(), '$observacoes')";
-            if (DBExecute($link, $query)) {
+            // Buscar dados do pet e tutor
+            $qPetInfo = "SELECT p.*, c.id_cliente, c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor 
+                         FROM Pets p 
+                         JOIN Clientes c ON p.id_cliente = c.id_cliente 
+                         WHERE p.id_pet = $id_pet";
+            $resPetInfo = DBExecute($link, $qPetInfo);
+            if (!$resPetInfo || mysqli_num_rows($resPetInfo) == 0) {
+                $response['message'] = "Pet não encontrado.";
+                break;
+            }
+            $petInfo = mysqli_fetch_assoc($resPetInfo);
+            $id_cliente = (int)$petInfo['id_cliente'];
+
+            // Obter serviço padrão se não informado
+            if ($id_servico <= 0) {
+                $qDefServ = "SELECT id_servico, nome_servico, duracao_minutos FROM Servicos WHERE disponivel_banho = 1 ORDER BY id_servico ASC LIMIT 1";
+                $rDefServ = DBExecute($link, $qDefServ);
+                if ($rDefServ && $rowDef = mysqli_fetch_assoc($rDefServ)) {
+                    $id_servico = (int)$rowDef['id_servico'];
+                    $nomeServico = $rowDef['nome_servico'];
+                    $duracaoBase = (int)$rowDef['duracao_minutos'];
+                } else {
+                    $nomeServico = 'Banho & Tosa';
+                    $duracaoBase = 30;
+                }
+            } else {
+                $rServ = DBExecute($link, "SELECT nome_servico, duracao_minutos FROM Servicos WHERE id_servico = $id_servico");
+                $rowS = mysqli_fetch_assoc($rServ);
+                $nomeServico = $rowS['nome_servico'] ?? 'Banho & Tosa';
+                $duracaoBase = (int)($rowS['duracao_minutos'] ?? 30);
+            }
+
+            // Cálculo da duração inteligente
+            $porte = $petInfo['porte'] ?: 'P';
+            $pelagem = $petInfo['tipo_pelagem'] ?: 'Curto';
+            $mult = 1.0;
+            if ($porte === 'M') $mult = 1.2;
+            if ($porte === 'G') $mult = 1.5;
+            if ($porte === 'GG') $mult = 2.0;
+
+            $duracaoFinal = (int) round($duracaoBase * $mult);
+            if ($pelagem === 'Longo' || $pelagem === 'Dupla Pelagem') {
+                $duracaoFinal += 15;
+            }
+
+            $dtInicio = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+            $dtFim = clone $dtInicio;
+            $dtFim->modify("+{$duracaoFinal} minutes");
+            $startStr = $dtInicio->format('Y-m-d H:i:s');
+            $endStr = $dtFim->format('Y-m-d H:i:s');
+
+            // 1. Verificar e abater saldo de pacote do tutor
+            $id_cliente_pacote_val = "NULL";
+            if ($usar_saldo && $id_servico > 0) {
+                $qPac = "SELECT cp.id_cliente_pacote, cps.id_saldo, cps.qtd_total, cps.qtd_utilizada 
+                         FROM ClientePacotes cp 
+                         JOIN ClientePacoteSaldos cps ON cp.id_cliente_pacote = cps.id_cliente_pacote 
+                         WHERE cp.id_cliente = $id_cliente 
+                           AND cp.status = 'ativo' 
+                           AND cps.id_servico = $id_servico 
+                           AND (cps.qtd_total - cps.qtd_utilizada) > 0 
+                         ORDER BY cp.data_aquisicao ASC LIMIT 1";
+                $rPac = DBExecute($link, $qPac);
+                if ($rPac && $pacRow = mysqli_fetch_assoc($rPac)) {
+                    $id_cliente_pacote_val = (int)$pacRow['id_cliente_pacote'];
+                    $newUtil = $pacRow['qtd_utilizada'] + 1;
+                    $idSaldo = (int)$pacRow['id_saldo'];
+                    DBExecute($link, "UPDATE ClientePacoteSaldos SET qtd_utilizada = $newUtil WHERE id_saldo = $idSaldo");
+                }
+            }
+
+            // 2. CRIAR O ITEM AUTOMATICAMENTE NA AGENDA
+            $titulo = mysqli_real_escape_string($link, "Banho/Tosa: " . $petInfo['nome'] . " (" . $nomeServico . ")");
+            $queryAgend = "INSERT INTO Agendamentos (id_cliente, id_pet, id_vet, id_servico, id_cliente_pacote, tipo_agenda, titulo, descricao, data_inicio, data_fim, status) 
+                           VALUES ($id_cliente, $id_pet, $id_colaborador_sql, $id_servico, $id_cliente_pacote_val, 'banho_tosa', '$titulo', '$observacoes', '$startStr', '$endStr', 'Em Andamento')";
+            
+            $id_agendamento_val = "NULL";
+            if (DBExecute($link, $queryAgend)) {
+                $id_agendamento_val = mysqli_insert_id($link);
+
+                // Log de consumo se utilizou pacote
+                if ($id_cliente_pacote_val !== "NULL") {
+                    DBExecute($link, "INSERT INTO ClientePacoteConsumo (id_cliente_pacote, id_servico, id_pet, id_agendamento, observacao) 
+                                      VALUES ($id_cliente_pacote_val, $id_servico, $id_pet, $id_agendamento_val, 'Check-in na Esteira')");
+                }
+            }
+
+            // 3. INSERIR NA ESTEIRA DE PRODUÇÃO VINCULADO AO AGENDAMENTO
+            $queryFila = "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica) 
+                          VALUES ($id_agendamento_val, $id_pet, $id_colaborador_sql, 'aguardando', NOW(), '$observacoes')";
+
+            if (DBExecute($link, $queryFila)) {
                 $id_fila = mysqli_insert_id($link);
 
-                // Handle Checkin Fotos upload
+                // Upload das fotos de check-in
                 if (isset($_FILES['fotos_checkin']) && !empty($_FILES['fotos_checkin']['name'][0])) {
                     $uploadDir = __DIR__ . '/uploads/banho_fotos/';
                     if (!is_dir($uploadDir)) {
@@ -4829,7 +4942,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
 
                 $response['success'] = true;
-                $response['message'] = "Check-in realizado com sucesso! Pet inserido na esteira.";
+                $response['message'] = "Check-in realizado com sucesso! Pet inserido na esteira e agendamento gerado.";
             } else {
                 $response['message'] = "Erro ao dar entrada na fila: " . mysqli_error($link);
             }
@@ -4850,10 +4963,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 break;
             }
 
+            // Buscar dados atuais da fila
+            $resF = DBExecute($link, "SELECT * FROM BanhoProducaoFila WHERE id_fila = $id_fila");
+            if (!$resF || mysqli_num_rows($resF) == 0) {
+                $response['message'] = "Registro da fila não encontrado.";
+                break;
+            }
+            $filaItem = mysqli_fetch_assoc($resF);
+            $id_agendamento = (int)($filaItem['id_agendamento'] ?? 0);
+
             $saida_sql = ($nova_etapa === 'finalizado') ? ", horario_saida = NOW()" : "";
             $query = "UPDATE BanhoProducaoFila SET etapa = '$nova_etapa' $saida_sql WHERE id_fila = $id_fila";
 
             if (DBExecute($link, $query)) {
+                // Sincronizar status do Agendamento vinculado
+                if ($id_agendamento > 0) {
+                    if (in_array($nova_etapa, ['em_banho', 'secagem', 'tosa_finalizacao'])) {
+                        DBExecute($link, "UPDATE Agendamentos SET status = 'Em Andamento' WHERE id_agendamento = $id_agendamento");
+                    } elseif ($nova_etapa === 'pronto') {
+                        DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado' WHERE id_agendamento = $id_agendamento");
+                    } elseif ($nova_etapa === 'finalizado') {
+                        DBExecute($link, "UPDATE Agendamentos SET status = 'Concluído' WHERE id_agendamento = $id_agendamento");
+                    }
+                }
+
                 $response['success'] = true;
                 $response['message'] = "Etapa atualizada com sucesso!";
             } else {

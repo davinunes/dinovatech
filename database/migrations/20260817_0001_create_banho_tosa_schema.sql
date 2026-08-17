@@ -217,10 +217,11 @@ CREATE TABLE IF NOT EXISTS `BanhoProducaoFila` (
   `id_agendamento` INT DEFAULT NULL,
   `id_pet` INT NOT NULL,
   `id_colaborador` INT DEFAULT NULL,
-  `etapa` ENUM('aguardando', 'em_banho', 'secagem_tosa', 'pronto', 'entregue') NOT NULL DEFAULT 'aguardando',
+  `etapa` VARCHAR(50) NOT NULL DEFAULT 'aguardando',
   `horario_entrada` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `horario_inicio` DATETIME DEFAULT NULL,
   `horario_fim` DATETIME DEFAULT NULL,
+  `horario_saida` DATETIME DEFAULT NULL,
   `observacoes_estetica` TEXT DEFAULT NULL,
   `ordem` INT DEFAULT '0',
   PRIMARY KEY (`id_fila`),
@@ -232,9 +233,13 @@ CREATE TABLE IF NOT EXISTS `BanhoProducaoFila` (
   CONSTRAINT `BanhoProducaoFila_ibfk_3` FOREIGN KEY (`id_colaborador`) REFERENCES `Veterinarios` (`id_vet`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Ajuste preventivo caso a tabela já tenha sido criada anteriormente com ENUM
+ALTER TABLE BanhoProducaoFila MODIFY COLUMN etapa VARCHAR(50) NOT NULL DEFAULT 'aguardando';
+
 CREATE TABLE IF NOT EXISTS `BanhoCheckinFotos` (
   `id_foto` INT NOT NULL AUTO_INCREMENT,
   `id_fila` INT NOT NULL,
+  `id_pet` INT DEFAULT NULL,
   `foto_url` VARCHAR(255) NOT NULL,
   `descricao` VARCHAR(255) DEFAULT NULL,
   `criado_em` DATETIME DEFAULT CURRENT_TIMESTAMP,

@@ -209,6 +209,21 @@ DBClose($link);
                     </select>
                 </div>
 
+                <!-- Banner de Status na Esteira de Produção -->
+                <div id="boxStatusEsteira" class="hidden bg-slate-900 text-white rounded-xl p-3 text-xs flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <span class="material-icons text-teal-400 text-base">view_kanban</span>
+                        <div>
+                            <span class="text-gray-400 block text-[10px] uppercase font-bold tracking-wider">Status na Linha de Produção</span>
+                            <span id="textoStatusEsteira" class="font-extrabold text-sm text-teal-300"></span>
+                        </div>
+                    </div>
+                    <a href="banho_producao.php" class="bg-teal-600 hover:bg-teal-700 text-white text-xs px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
+                        <span>Ver Esteira</span>
+                        <span class="material-icons text-xs">arrow_forward</span>
+                    </a>
+                </div>
+
                 <!-- Saldo de Pacote do Cliente (Detecção Inteligente) -->
                 <div id="boxSaldoPacote" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
                     <div class="flex items-center justify-between mb-1">
@@ -482,7 +497,7 @@ DBClose($link);
             $('#agendamento_id').val('');
             $('#modalTitle').text('Agendar Banho / Tosa');
             $('#btnExcluirAgendamento').addClass('hidden');
-            $('#boxPreferenciasPet, #boxSaldoPacote, #modalMessage').addClass('hidden');
+            $('#boxPreferenciasPet, #boxSaldoPacote, #boxStatusEsteira, #modalMessage').addClass('hidden');
 
             if (dateStr) {
                 let startStr = dateStr;
@@ -515,6 +530,22 @@ DBClose($link);
             $('#modal_id_cliente').val(props.id_cliente || '').trigger('change');
             $('#modal_id_pet').val(props.id_pet || '').trigger('change');
             $('#modal_id_servico').val(props.id_servico || '').trigger('change');
+
+            // Renderizar status na esteira se existir
+            if (props.esteira_etapa) {
+                const mapEtapas = {
+                    aguardando: '⏳ 1. Recepção / Aguardando',
+                    em_banho: '🛁 2. Em Banho & Hidratação',
+                    secagem: '💨 3. Secagem & Soprador',
+                    tosa_finalizacao: '✂️ 4. Tosa / Finalização',
+                    pronto: '🐾 5. Pronto para Retirada',
+                    finalizado: '✅ Entregue ao Tutor'
+                };
+                $('#textoStatusEsteira').text(mapEtapas[props.esteira_etapa] || props.esteira_etapa);
+                $('#boxStatusEsteira').removeClass('hidden');
+            } else {
+                $('#boxStatusEsteira').addClass('hidden');
+            }
 
             const pad = (n) => n < 10 ? '0' + n : n;
             if (event.start) {

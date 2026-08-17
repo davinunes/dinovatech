@@ -32,7 +32,7 @@ if ($resColab) {
 
 // Fetch Pets for direct check-in
 $pets = [];
-$resPets = DBExecute($link, "SELECT p.id_pet, p.nome, p.porte, p.tipo_pelagem, p.preferencias_banho, c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor 
+$resPets = DBExecute($link, "SELECT p.id_pet, p.nome, p.id_cliente, p.porte, p.tipo_pelagem, p.preferencias_banho, c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor 
                              FROM Pets p 
                              JOIN Clientes c ON p.id_cliente = c.id_cliente 
                              WHERE c.ativo = 1 
@@ -40,6 +40,15 @@ $resPets = DBExecute($link, "SELECT p.id_pet, p.nome, p.porte, p.tipo_pelagem, p
 if ($resPets) {
     while ($p = mysqli_fetch_assoc($resPets)) {
         $pets[] = $p;
+    }
+}
+
+// Fetch Services available for Banho e Tosa
+$servicos_banho = [];
+$resServ = DBExecute($link, "SELECT id_servico, nome_servico, duracao_minutos, valor_sugerido FROM Servicos WHERE disponivel_banho = 1 OR (disponivel_clinica = 0 AND disponivel_banho = 0) ORDER BY nome_servico ASC");
+if ($resServ) {
+    while ($s = mysqli_fetch_assoc($resServ)) {
+        $servicos_banho[] = $s;
     }
 }
 
@@ -223,6 +232,7 @@ DBClose($link);
                         <option value="">Buscar pet por nome ou tutor...</option>
                         <?php foreach ($pets as $p): ?>
                             <option value="<?= $p['id_pet'] ?>"
+                                data-cliente="<?= $p['id_cliente'] ?>"
                                 data-porte="<?= $p['porte'] ?>"
                                 data-pelagem="<?= $p['tipo_pelagem'] ?>"
                                 data-preferencias="<?= htmlspecialchars($p['preferencias_banho'] ?? '') ?>"
@@ -239,6 +249,32 @@ DBClose($link);
                         <span class="material-icons text-sm">warning</span> Preferências / Alertas Cadastrados:
                     </span>
                     <p id="checkinTextoPrefs" class="font-medium"></p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Serviço Desejado *</label>
+                    <select name="id_servico" id="checkin_id_servico" class="w-full border-gray-300 rounded-lg p-2.5 border text-sm" required>
+                        <option value="">Selecione o serviço...</option>
+                        <?php foreach ($servicos_banho as $sb): ?>
+                            <option value="<?= $sb['id_servico'] ?>">
+                                <?= htmlspecialchars($sb['nome_servico']) ?> (<?= $sb['duracao_minutos'] ?>min • R$ <?= number_format($sb['valor_sugerido'], 2, ',', '.') ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <!-- Package Credit Auto-detection -->
+                <div id="checkinSaldoPacoteContainer" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-900">
+                    <div class="flex items-center gap-1 font-bold text-amber-800 mb-1">
+                        <span class="material-icons text-sm text-amber-600">card_giftcard</span>
+                        <span>Crédito de Pacote Ativo para este Tutor!</span>
+                    </div>
+                    <p id="checkinSaldoPacoteTexto" class="text-amber-800 mb-2 font-medium"></p>
+                    <label class="flex items-center space-x-2 cursor-pointer font-bold text-amber-950">
+                        <input type="checkbox" name="usar_saldo_pacote" id="checkin_usar_saldo_pacote" value="1" checked
+                            class="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-300 rounded">
+                        <span>Abater 1 crédito do pacote do cliente</span>
+                    </label>
                 </div>
 
                 <div>
@@ -276,7 +312,7 @@ DBClose($link);
                     <button type="button" onclick="closeCheckinModal()"
                         class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Cancelar</button>
                     <button type="submit"
-                        class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold shadow transition">Dar Entrada na Fila</button>
+                        class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold shadow transition">Dar Entrada & Criar Agendamento</button>
                 </div>
             </form>
         </div>
@@ -312,15 +348,8 @@ DBClose($link);
             // Auto polling every 15 seconds
             pollTimer = setInterval(carregarEsteira, 15000);
 
-            $('#checkin_id_pet').on('change', function () {
-                const opt = $(this).find('option:selected');
-                const prefs = opt.data('preferencias');
-                if (prefs && prefs.trim() !== '') {
-                    $('#checkinTextoPrefs').text(prefs);
-                    $('#checkinPreferenciasAlert').removeClass('hidden');
-                } else {
-                    $('#checkinPreferenciasAlert').addClass('hidden');
-                }
+            $('#checkin_id_pet, #checkin_id_servico').on('change', function () {
+                verificarPreferenciasESaldoPacote();
             });
 
             $('#formCheckin').on('submit', function (e) {
@@ -343,19 +372,53 @@ DBClose($link);
                             carregarEsteira();
                         } else {
                             $('#checkinMessage').removeClass('hidden text-green-600').addClass('text-red-600').text(res.message);
-                            btn.prop('disabled', false).text('Dar Entrada na Fila');
+                            btn.prop('disabled', false).text('Dar Entrada & Criar Agendamento');
                         }
                     },
                     error: function () {
                         alert('Erro de conexão ao criar check-in.');
-                        btn.prop('disabled', false).text('Dar Entrada na Fila');
+                        btn.prop('disabled', false).text('Dar Entrada & Criar Agendamento');
                     }
                 });
             });
         });
 
+        function verificarPreferenciasESaldoPacote() {
+            const opt = $('#checkin_id_pet').find('option:selected');
+            const prefs = opt.data('preferencias');
+            const idCliente = opt.data('cliente');
+            const idServico = $('#checkin_id_servico').val();
+
+            if (prefs && prefs.trim() !== '') {
+                $('#checkinTextoPrefs').text(prefs);
+                $('#checkinPreferenciasAlert').removeClass('hidden');
+            } else {
+                $('#checkinPreferenciasAlert').addClass('hidden');
+            }
+
+            if (idCliente && idServico) {
+                $.post('../../app.php', {
+                    action: 'get_cliente_pacotes_saldo',
+                    id_cliente: idCliente,
+                    id_servico: idServico
+                }, function (res) {
+                    if (res.success && res.saldos && res.saldos.length > 0) {
+                        const s = res.saldos[0];
+                        $('#checkinSaldoPacoteTexto').text(`O tutor possui ${s.saldo_restante} crédito(s) de "${s.nome_servico}" no pacote "${s.nome_pacote}".`);
+                        $('#checkinSaldoPacoteContainer').removeClass('hidden');
+                        $('#checkin_usar_saldo_pacote').prop('checked', true);
+                    } else {
+                        $('#checkinSaldoPacoteContainer').addClass('hidden');
+                        $('#checkin_usar_saldo_pacote').prop('checked', false);
+                    }
+                }, 'json');
+            } else {
+                $('#checkinSaldoPacoteContainer').addClass('hidden');
+            }
+        }
+
         function carregarEsteira() {
-            $.getJSON('../../app.php', { action: 'get_banho_producao_fila' }, function (res) {
+            $.post('../../app.php', { action: 'get_banho_producao_fila' }, function (res) {
                 if (!res.success) return;
 
                 // Clear columns
@@ -377,7 +440,7 @@ DBClose($link);
                 Object.keys(counts).forEach(k => {
                     $(`#count_${k}`).text(counts[k]);
                 });
-            });
+            }, 'json');
         }
 
         function renderCard(item) {
@@ -390,6 +453,12 @@ DBClose($link);
             }
             if (item.tipo_pelagem) {
                 badgesHtml += `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">${item.tipo_pelagem}</span> `;
+            }
+            if (item.nome_servico) {
+                badgesHtml += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-100 text-teal-800">${item.nome_servico}</span> `;
+            }
+            if (item.nome_pacote) {
+                badgesHtml += `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800">🎁 ${item.nome_pacote}</span> `;
             }
 
             let alertPrefsHtml = '';
