@@ -34,7 +34,7 @@ if ($link) {
 <html lang="pt-BR">
 
 <head>
-    <title>Veterinários - DinoVet</title>
+    <title><?= AppHelper::isVetMode() ? "Veterinários e Colaboradores" : "Colaboradores" ?> - <?= htmlspecialchars(AppHelper::getCompanyName()) ?></title>
     <?php include '../../components/layout_head.php'; ?>
 </head>
 
@@ -47,9 +47,11 @@ if ($link) {
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-800">
-                        Colaboradores
+                        <?= AppHelper::isVetMode() ? "Veterinários e Colaboradores" : "Colaboradores" ?>
                     </h2>
-                    <p class="text-gray-500">Gerencie a equipe: veterinários, banhistas, esteticistas e equipe administrativa.</p>
+                    <p class="text-gray-500">
+                        <?= AppHelper::isVetMode() ? "Gerencie a equipe: veterinários, banhistas, esteticistas e equipe administrativa." : "Gerencie a equipe e colaboradores da empresa." ?>
+                    </p>
                 </div>
                 <a href="veterinario_form.php"
                     class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors shadow">
@@ -65,7 +67,7 @@ if ($link) {
                             <span class="material-icons">search</span>
                         </span>
                         <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
-                            placeholder="Buscar colaborador por nome, função ou CRMV..."
+                            placeholder="<?= AppHelper::isVetMode() ? 'Buscar colaborador por nome, função ou CRMV...' : 'Buscar colaborador por nome ou função...' ?>"
                             class="w-full py-2 pl-10 pr-4 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-cyan-500 focus:bg-white focus:ring-0">
                     </div>
                 </form>
@@ -79,10 +81,13 @@ if ($link) {
             <?php else: ?>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <?php foreach ($veterinarios as $vet): 
-                        $f = $vet['funcao'] ?? 'veterinario';
-                        $fLabel = '🩺 Veterinário(a)';
-                        $fBg = 'bg-cyan-50 text-cyan-700 border-cyan-200';
-                        if ($f === 'banhista_tosador') {
+                        $f = $vet['funcao'] ?? (AppHelper::isVetMode() ? 'veterinario' : 'geral');
+                        $fLabel = '👥 Geral';
+                        $fBg = 'bg-gray-50 text-gray-700 border-gray-200';
+                        if ($f === 'veterinario') {
+                            $fLabel = '🩺 Veterinário(a)';
+                            $fBg = 'bg-cyan-50 text-cyan-700 border-cyan-200';
+                        } elseif ($f === 'banhista_tosador') {
                             $fLabel = '🛁 Banhista & Tosador';
                             $fBg = 'bg-teal-50 text-teal-700 border-teal-200';
                         } elseif ($f === 'administrativo') {
@@ -91,9 +96,15 @@ if ($link) {
                         } elseif ($f === 'auxiliar') {
                             $fLabel = '🐾 Auxiliar Vet';
                             $fBg = 'bg-blue-50 text-blue-700 border-blue-200';
-                        } elseif ($f === 'geral') {
-                            $fLabel = '👥 Geral';
-                            $fBg = 'bg-gray-50 text-gray-700 border-gray-200';
+                        } elseif ($f === 'atendente') {
+                            $fLabel = '💼 Atendimento';
+                            $fBg = 'bg-indigo-50 text-indigo-700 border-indigo-200';
+                        } elseif ($f === 'tecnico') {
+                            $fLabel = '🛠️ Técnico';
+                            $fBg = 'bg-amber-50 text-amber-700 border-amber-200';
+                        } elseif ($f === 'gerente') {
+                            $fLabel = '👔 Gestão / Gerente';
+                            $fBg = 'bg-emerald-50 text-emerald-700 border-emerald-200';
                         }
                     ?>
                         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition flex flex-col justify-between">
@@ -107,7 +118,7 @@ if ($link) {
                                             <h3 class="font-bold text-gray-900 leading-tight">
                                                 <?= htmlspecialchars($vet['nome']) ?>
                                             </h3>
-                                            <?php if (!empty($vet['crmv'])): ?>
+                                            <?php if (AppHelper::isVetMode() && !empty($vet['crmv'])): ?>
                                                 <p class="text-xs text-gray-500 mt-0.5">CRMV: <?= htmlspecialchars($vet['crmv']) ?>/<?= htmlspecialchars($vet['uf_crmv']) ?></p>
                                             <?php endif; ?>
                                         </div>
@@ -117,18 +128,20 @@ if ($link) {
                                     </span>
                                 </div>
 
-                                <div class="flex flex-wrap gap-1.5 mb-3">
-                                    <?php if (!empty($vet['realiza_banho'])): ?>
-                                        <span class="text-[10px] bg-teal-100 text-teal-800 font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                                            <span class="material-icons text-[11px]">shower</span> Banho & Tosa
-                                        </span>
-                                    <?php endif; ?>
-                                    <?php if (!empty($vet['realiza_clinica'])): ?>
-                                        <span class="text-[10px] bg-cyan-100 text-cyan-800 font-semibold px-2 py-0.5 rounded flex items-center gap-1">
-                                            <span class="material-icons text-[11px]">medical_services</span> Clínico
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
+                                <?php if (AppHelper::isVetMode()): ?>
+                                    <div class="flex flex-wrap gap-1.5 mb-3">
+                                        <?php if (!empty($vet['realiza_banho'])): ?>
+                                            <span class="text-[10px] bg-teal-100 text-teal-800 font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                                                <span class="material-icons text-[11px]">shower</span> Banho & Tosa
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if (!empty($vet['realiza_clinica'])): ?>
+                                            <span class="text-[10px] bg-cyan-100 text-cyan-800 font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                                                <span class="material-icons text-[11px]">medical_services</span> Clínico
+                                            </span>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endif; ?>
 
                                 <div class="space-y-1.5 text-xs text-gray-600 border-t border-gray-50 pt-3">
                                     <?php if ($vet['telefone']): ?>

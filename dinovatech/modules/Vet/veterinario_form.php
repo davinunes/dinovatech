@@ -51,19 +51,20 @@ if ($rConf && mysqli_num_rows($rConf) > 0) {
 
 // Handle POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $isVetMode = AppHelper::isVetMode();
     $nome = $_POST['nome'] ?? '';
-    $funcao = $_POST['funcao'] ?? 'veterinario';
-    $realiza_banho = isset($_POST['realiza_banho']) ? 1 : 0;
-    $realiza_clinica = isset($_POST['realiza_clinica']) ? 1 : 0;
-    $crmv = $_POST['crmv'] ?? '';
-    $uf_crmv = $_POST['uf_crmv'] ?? '';
+    $funcao = $_POST['funcao'] ?? ($isVetMode ? 'veterinario' : 'geral');
+    $realiza_banho = ($isVetMode && isset($_POST['realiza_banho'])) ? 1 : 0;
+    $realiza_clinica = ($isVetMode && isset($_POST['realiza_clinica'])) ? 1 : 0;
+    $crmv = $isVetMode ? ($_POST['crmv'] ?? '') : '';
+    $uf_crmv = $isVetMode ? ($_POST['uf_crmv'] ?? '') : '';
     $telefone = $_POST['telefone'] ?? '';
     $email = $_POST['email'] ?? '';
     $google_calendar_id = $_POST['google_calendar_id'] ?? '';
     $data_nascimento = $_POST['data_nascimento'] ?? '';
 
     // Se for função veterinário no modo vet, CRMV é obrigatório
-    if ($funcao === 'veterinario' && AppHelper::isVetMode() && empty($crmv)) {
+    if ($funcao === 'veterinario' && $isVetMode && empty($crmv)) {
         $erro = "CRMV é obrigatório para a função Veterinário.";
     } elseif (empty($nome)) {
         $erro = "O nome do colaborador é obrigatório.";
@@ -185,7 +186,7 @@ DBClose($link);
 
 <head>
     <title>
-        <?= $is_edit ? "Editar" : "Novo" ?> Colaborador - DinoVet
+        <?= $is_edit ? "Editar" : "Novo" ?> <?= AppHelper::isVetMode() ? "Colaborador / Veterinário" : "Colaborador" ?> - <?= htmlspecialchars(AppHelper::getCompanyName()) ?>
     </title>
     <?php include '../../components/layout_head.php'; ?>
 </head>
@@ -203,7 +204,7 @@ DBClose($link);
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100">
                         <h2 class="text-2xl font-bold text-gray-800">
-                            <?= $is_edit ? "Editar" : "Novo" ?> Colaborador
+                            <?= $is_edit ? "Editar" : "Novo" ?> <?= AppHelper::isVetMode() ? "Colaborador / Veterinário" : "Colaborador" ?>
                         </h2>
                     </div>
 
@@ -224,16 +225,29 @@ DBClose($link);
                         <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
                             <div>
                                 <label class="block text-gray-700 font-medium mb-1">Função Principal / Cargo *</label>
-                                <?php $currentFuncao = $vet['funcao'] ?? (AppHelper::isVetMode() ? 'veterinario' : 'geral'); ?>
+                                <?php 
+                                $isVetMode = AppHelper::isVetMode();
+                                $defaultFuncao = $isVetMode ? 'veterinario' : 'geral';
+                                $currentFuncao = $vet['funcao'] ?? $defaultFuncao; 
+                                ?>
                                 <select name="funcao" id="colabFuncao" class="w-full border-gray-300 rounded-lg p-3 border bg-white font-medium" required onchange="onFuncaoChange(this.value)">
-                                    <option value="veterinario" <?= $currentFuncao === 'veterinario' ? 'selected' : '' ?>>🩺 Veterinário(a)</option>
-                                    <option value="banhista_tosador" <?= $currentFuncao === 'banhista_tosador' ? 'selected' : '' ?>>🛁 Banhista & Tosador(a) / Estética</option>
-                                    <option value="administrativo" <?= $currentFuncao === 'administrativo' ? 'selected' : '' ?>>📋 Recepção / Administrativo</option>
-                                    <option value="auxiliar" <?= $currentFuncao === 'auxiliar' ? 'selected' : '' ?>>🐾 Auxiliar Veterinário</option>
-                                    <option value="geral" <?= $currentFuncao === 'geral' ? 'selected' : '' ?>>👥 Geral / Multidisciplinar</option>
+                                    <?php if ($isVetMode): ?>
+                                        <option value="veterinario" <?= $currentFuncao === 'veterinario' ? 'selected' : '' ?>>🩺 Veterinário(a)</option>
+                                        <option value="banhista_tosador" <?= $currentFuncao === 'banhista_tosador' ? 'selected' : '' ?>>🛁 Banhista & Tosador(a) / Estética</option>
+                                        <option value="auxiliar" <?= $currentFuncao === 'auxiliar' ? 'selected' : '' ?>>🐾 Auxiliar Veterinário</option>
+                                        <option value="administrativo" <?= $currentFuncao === 'administrativo' ? 'selected' : '' ?>>📋 Recepção / Administrativo</option>
+                                        <option value="geral" <?= $currentFuncao === 'geral' ? 'selected' : '' ?>>👥 Geral / Multidisciplinar</option>
+                                    <?php else: ?>
+                                        <option value="administrativo" <?= $currentFuncao === 'administrativo' ? 'selected' : '' ?>>📋 Recepção / Administrativo</option>
+                                        <option value="atendente" <?= $currentFuncao === 'atendente' ? 'selected' : '' ?>>💼 Atendimento / Comercial</option>
+                                        <option value="tecnico" <?= $currentFuncao === 'tecnico' ? 'selected' : '' ?>>🛠️ Técnico / Operacional</option>
+                                        <option value="gerente" <?= $currentFuncao === 'gerente' ? 'selected' : '' ?>>👔 Gestão / Gerência</option>
+                                        <option value="geral" <?= ($currentFuncao === 'geral' || $currentFuncao === 'veterinario') ? 'selected' : '' ?>>👥 Geral / Colaborador</option>
+                                    <?php endif; ?>
                                 </select>
                             </div>
 
+                            <?php if ($isVetMode): ?>
                             <div>
                                 <span class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Habilitação nos Módulos e Agendas</span>
                                 <div class="space-y-2">
@@ -251,12 +265,14 @@ DBClose($link);
                                     </label>
                                 </div>
                             </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="border mt-4 mb-4 p-5 rounded-xl bg-white shadow-sm border-gray-100">
                             <h3 class="text-lg font-semibold text-gray-800 mb-1">Assinatura Digital</h3>
-                            <p class="text-sm text-gray-500 mb-4">A assinatura aparecerá nos atestados, receitas e
-                                receituários.</p>
+                            <p class="text-sm text-gray-500 mb-4">
+                                <?= AppHelper::isVetMode() ? "A assinatura aparecerá nos atestados, receitas e receituários." : "A assinatura aparecerá em relatórios, ordens e documentos emitidos." ?>
+                            </p>
 
                             <?php if (!empty($vet['url_assinatura'])): ?>
                                 <div
@@ -332,6 +348,7 @@ DBClose($link);
                             </div>
                         </div>
 
+                        <?php if (AppHelper::isVetMode()): ?>
                         <div id="crmvContainer" class="<?= ($currentFuncao !== 'veterinario' && $currentFuncao !== 'geral') ? 'hidden' : '' ?>">
                             <div class="grid grid-cols-3 gap-4">
                                 <div class="col-span-2">
@@ -348,6 +365,7 @@ DBClose($link);
                             </div>
                             <span class="text-[11px] text-gray-400 mt-1 block">Obrigatório para veterinários com atuação clínica.</span>
                         </div>
+                        <?php endif; ?>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -391,7 +409,7 @@ DBClose($link);
                                                 class="select-all bg-white px-2 py-1 rounded border border-blue-200 text-xs font-mono block w-fit"><?= $googleEmailHint ?></code>
                                         </div>
                                         <li>Marque a permissão: <strong>"Fazer alterações nos eventos"</strong>
-                                            (Importante!).</li>
+                                             (Importante!).</li>
                                         <li>Role até "Integrar agenda" e copie o <strong>ID da agenda</strong>.</li>
                                         <li>Cole o ID no campo acima e salve aqui no sistema.</li>
                                     </ol>
@@ -419,7 +437,12 @@ DBClose($link);
     <!-- Signature Pad JS -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script>
+        const isVetMode = <?= AppHelper::isVetMode() ? 'true' : 'false' ?>;
+
         function onFuncaoChange(funcao) {
+            if (!isVetMode) {
+                return;
+            }
             if (funcao === 'banhista_tosador') {
                 $('#chkRealizaBanho').prop('checked', true);
                 $('#chkRealizaClinica').prop('checked', false);

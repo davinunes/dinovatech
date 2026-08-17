@@ -112,10 +112,12 @@ DBClose($link);
                 <div class="flex gap-4">
                     <button type="button" id="btnDelete" onclick="deleteEvent()"
                         class="text-red-500 hover:text-red-700 font-medium hidden">Excluir</button>
-                    <a href="#" id="btnStartConsultation"
-                        class="text-green-600 hover:text-green-800 font-medium hidden flex items-center">
-                        <span class="material-icons text-sm mr-1">medical_services</span> Iniciar Atendimento
-                    </a>
+                    <?php if (AppHelper::isVetMode()): ?>
+                        <a href="#" id="btnStartConsultation"
+                            class="text-green-600 hover:text-green-800 font-medium hidden flex items-center">
+                            <span class="material-icons text-sm mr-1">medical_services</span> Iniciar Atendimento
+                        </a>
+                    <?php endif; ?>
                 </div>
                 <div class="flex justify-end gap-2 w-full">
                     <button type="button" onclick="closeEventModal()"
