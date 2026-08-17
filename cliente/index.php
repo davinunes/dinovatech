@@ -1555,6 +1555,10 @@ $is_vet = AppHelper::isVetMode();
                             `;
                         });
 
+                        const petInfo = p.pet_vinculado 
+                            ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700 border border-teal-200">🐾 Exclusivo para ${escapeHtml(p.nome_pet_vinculado)}</span>`
+                            : `<span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600">Compartilhado entre todos os pets</span>`;
+
                         containerPac.append(`
                             <div class="bg-gray-50 rounded-2xl p-5 border border-gray-200/80 shadow-sm flex flex-col justify-between">
                                 <div>
@@ -1569,9 +1573,18 @@ $is_vet = AppHelper::isVetMode();
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="mb-3">
+                                        ${petInfo}
+                                    </div>
                                     <div class="space-y-3 pt-3 border-t border-gray-200">
                                         ${saldosHtml}
                                     </div>
+                                </div>
+                                <div class="pt-4 border-t border-gray-200 mt-4 flex justify-end">
+                                    <button type="button" onclick="abrirModalExtratoCliente(${p.id_cliente_pacote})"
+                                        class="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-sm">
+                                        <span class="material-icons text-xs">receipt_long</span> Ver Extrato Completo
+                                    </button>
                                 </div>
                             </div>
                         `);
@@ -1587,6 +1600,89 @@ $is_vet = AppHelper::isVetMode();
                 }
             }
 
+            window.abrirModalExtratoCliente = function(idContrato) {
+                $('#extratoClienteConteudo').html('<div class="text-center py-8 text-gray-400">Carregando extrato...</div>');
+                $('#modalExtratoPacoteCliente').removeClass('hidden');
+
+                $.getJSON('../dinovatech/app.php', { action: 'get_extrato_pacote', id_cliente_pacote: idContrato }, function(res) {
+                    if (!res.success) {
+                        $('#extratoClienteConteudo').html(`<div class="p-4 bg-red-50 text-red-600 rounded-lg text-xs">${res.message}</div>`);
+                        return;
+                    }
+
+                    const p = res.pacote;
+                    const petBadge = p.nome_pet_exclusivo 
+                        ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800">🐾 Exclusivo para: ${p.nome_pet_exclusivo}</span>`
+                        : `<span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Compartilhado entre todos os pets</span>`;
+
+                    let saldosHtml = '';
+                    res.saldos.forEach(s => {
+                        const pct = Math.round((s.qtd_utilizada / s.qtd_total) * 100);
+                        saldosHtml += `
+                            <div class="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="font-bold text-gray-800">${s.nome_servico}</span>
+                                    <span class="font-bold text-teal-700">${s.saldo_restante} restante(s) (${s.qtd_utilizada}/${s.qtd_total})</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-teal-600 h-2 rounded-full" style="width: ${pct}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    let consumosHtml = '';
+                    if (res.consumos && res.consumos.length > 0) {
+                        consumosHtml = `
+                            <div class="space-y-2">
+                                ${res.consumos.map(c => `
+                                    <div class="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100 shadow-sm text-xs">
+                                        <div class="flex items-center gap-2.5">
+                                            <span class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">✓</span>
+                                            <div>
+                                                <span class="font-bold text-gray-800 block">${c.nome_servico} • Pet: ${c.nome_pet}</span>
+                                                <span class="text-[11px] text-gray-500">${c.observacao || 'Utilizado'}</span>
+                                            </div>
+                                        </div>
+                                        <span class="font-mono text-gray-400 font-medium">${c.data_consumo_fmt}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    } else {
+                        consumosHtml = `<p class="text-xs text-gray-400 italic bg-gray-50 p-4 rounded-xl text-center">Nenhuma utilização registrada ainda neste pacote.</p>`;
+                    }
+
+                    $('#extratoClienteConteudo').html(`
+                        <div class="bg-gradient-to-br from-teal-900 to-slate-900 text-white rounded-2xl p-5 shadow-lg">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <span class="text-teal-300 font-bold text-xs uppercase tracking-wider block">Meu Pacote</span>
+                                    <h4 class="text-xl font-extrabold">${p.nome_pacote}</h4>
+                                </div>
+                                <span class="text-sm font-extrabold text-teal-300">R$ ${parseFloat(p.valor_total).toFixed(2).replace('.', ',')}</span>
+                            </div>
+                            <div class="flex items-center justify-between pt-3 border-t border-teal-800 text-xs">
+                                <span class="text-teal-200">Adquirido em: ${p.data_aquisicao_fmt}</span>
+                                ${petBadge}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Créditos de Serviços Restantes</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                ${saldosHtml}
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Histórico de Banhos / Utilizações</h4>
+                            ${consumosHtml}
+                        </div>
+                    `);
+                });
+            };
+
             window.abrirModalAgendarBanhoCliente = function () {
                 if (!globalDashboardData) return;
                 const pets = globalDashboardData.pets || [];
@@ -1600,22 +1696,16 @@ $is_vet = AppHelper::isVetMode();
                 });
 
                 // Populate Services
-                const selectServ = $('#modalAgendarServico');
-                selectServ.empty().append('<option value="">Selecione o serviço desejado...</option>');
+                const selectSrv = $('#modalAgendarServico');
+                selectSrv.empty().append('<option value="">Selecione o serviço...</option>');
                 servicos.forEach(s => {
-                    selectServ.append(`<option value="${s.id_servico}" data-duracao="${s.duracao_minutos}" data-preco="${s.valor_sugerido}">
-                        ${escapeHtml(s.nome_servico)} (R$ ${parseFloat(s.valor_sugerido).toFixed(2).replace('.', ',')} • ${s.duracao_minutos}min)
-                    </option>`);
+                    selectSrv.append(`<option value="${s.id_servico}" data-duracao="${s.duracao_minutos}">${escapeHtml(s.nome_servico)} (${s.duracao_minutos}m)</option>`);
                 });
 
-                // Set default tomorrow at 09:00
-                const am = new Date();
-                am.setDate(am.getDate() + 1);
-                const pad = (n) => n < 10 ? '0' + n : n;
-                const dtDef = `${am.getFullYear()}-${pad(am.getMonth() + 1)}-${pad(am.getDate())}T09:00`;
-                $('#modalAgendarDataInicio').val(dtDef);
-
-                $('#modalAgendarMsg, #boxAgendarSaldoBadge').addClass('hidden');
+                // Clear & Show
+                $('#formAgendarBanhoCliente')[0].reset();
+                $('#boxAgendarSaldoBadge').addClass('hidden');
+                $('#modalAgendarMsg').addClass('hidden').text('');
                 $('#modalAgendarBanho').removeClass('hidden');
             };
 
@@ -1623,77 +1713,81 @@ $is_vet = AppHelper::isVetMode();
                 $('#modalAgendarBanho').addClass('hidden');
             };
 
-            // Detect package credit on service change in client modal
-            $(document).on('change', '#modalAgendarServico', function () {
-                const idServico = $(this).val();
-                if (!idServico || !globalDashboardData) {
-                    $('#boxAgendarSaldoBadge').addClass('hidden');
-                    return;
-                }
+            // Detect package credit when pet or service changes
+            $('#modalAgendarPet, #modalAgendarServico').on('change', function () {
+                const idPet = $('#modalAgendarPet').val();
+                const idSrv = $('#modalAgendarServico').val();
 
-                const pacotes = globalDashboardData.pacotes || [];
-                let temSaldo = false;
-                let pacoteNome = '';
-
-                pacotes.forEach(p => {
-                    (p.saldos || []).forEach(sal => {
-                        if (sal.id_servico == idServico && parseInt(sal.saldo_restante) > 0) {
-                            temSaldo = true;
-                            pacoteNome = p.nome_pacote;
+                if (idPet && idSrv) {
+                    $.getJSON('../dinovatech/app.php', {
+                        action: 'get_cliente_pacotes_saldo',
+                        id_cliente: globalDashboardData.cliente.id_cliente,
+                        id_servico: idSrv,
+                        id_pet: idPet
+                    }, function (res) {
+                        if (res.success && res.saldos && res.saldos.length > 0) {
+                            const sal = res.saldos[0];
+                            $('#textoAgendarSaldoBadge').text(`Você possui saldo ativo no pacote "${sal.nome_pacote}" (${sal.saldo_restante} banho(s) restante(s)).`);
+                            $('#boxAgendarSaldoBadge').removeClass('hidden');
+                            $('#modalAgendarUsarSaldo').prop('checked', true);
+                        } else {
+                            $('#boxAgendarSaldoBadge').addClass('hidden');
                         }
                     });
-                });
-
-                if (temSaldo) {
-                    $('#boxAgendarSaldoBadge').removeClass('hidden');
-                    $('#textoAgendarSaldoBadge').text(`Você possui créditos inclusos no ${pacoteNome}!`);
-                    $('#modalAgendarUsarSaldo').prop('checked', true);
                 } else {
                     $('#boxAgendarSaldoBadge').addClass('hidden');
-                    $('#modalAgendarUsarSaldo').prop('checked', false);
                 }
             });
 
-            // Submit booking
             $('#formAgendarBanhoCliente').on('submit', function (e) {
                 e.preventDefault();
                 const btn = $(this).find('button[type="submit"]');
-                btn.prop('disabled', true).text('Confirmando...');
+                btn.prop('disabled', true).text('Agendando...');
 
                 $.ajax({
                     url: '../dinovatech/app.php',
                     type: 'POST',
+                    data: {
+                        action: 'criar_checkin_banho',
+                        id_pet: $('#modalAgendarPet').val(),
+                        id_servico: $('#modalAgendarServico').val(),
+                        data_inicio: $('#modalAgendarDataInicio').val(),
+                        observacoes: $('#modalAgendarObservacoes').val(),
+                        usar_saldo_pacote: $('#modalAgendarUsarSaldo').is(':checked') ? 1 : 0
+                    },
                     dataType: 'json',
-                    data: $(this).serialize() + '&action=cliente_agendar_banho',
                     success: function (res) {
+                        btn.prop('disabled', false).text('Confirmar Agendamento');
                         const msg = $('#modalAgendarMsg');
                         msg.removeClass('hidden text-green-600 text-red-600');
                         if (res.success) {
-                            msg.addClass('text-green-600').text(res.message);
+                            msg.addClass('text-green-600').text('Agendamento realizado com sucesso!');
                             setTimeout(() => {
                                 fecharModalAgendarBanhoCliente();
-                                loadClienteDashboard();
-                            }, 1500);
+                                carregarDashboard();
+                            }, 1200);
                         } else {
-                            msg.addClass('text-red-600').text(res.message);
-                            btn.prop('disabled', false).text('Confirmar Agendamento');
+                            msg.addClass('text-red-600').text(res.message || 'Erro ao agendar.');
                         }
                     },
                     error: function () {
-                        alert('Erro de conexão ao agendar.');
                         btn.prop('disabled', false).text('Confirmar Agendamento');
+                        alert('Erro de conexão com o servidor.');
                     }
                 });
             });
 
-            function formatCurrency(value) {
-                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+            function formatCurrency(val) {
+                return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
             }
 
-            function formatDate(dateString) {
-                if (!dateString) return '-';
-                const [year, month, day] = dateString.split('-');
-                return `${day}/${month}/${year}`;
+            function formatDate(dtStr) {
+                if (!dtStr) return '-';
+                const parts = dtStr.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+                }
+                return dtStr;
             }
 
             function formatDateTime(dtStr) {
@@ -1715,6 +1809,25 @@ $is_vet = AppHelper::isVetMode();
             }
         });
     </script>
+
+    <!-- Modal Extrato do Pacote (Portal do Tutor) -->
+    <div id="modalExtratoPacoteCliente" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-teal-600">receipt_long</span>
+                    <h3 class="text-lg font-bold text-gray-800">Extrato do seu Pacote</h3>
+                </div>
+                <button type="button" onclick="$('#modalExtratoPacoteCliente').addClass('hidden')" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <div id="extratoClienteConteudo" class="space-y-5">
+                <!-- Dynamic Statement Content -->
+            </div>
+        </div>
+    </div>
 
     <!-- Modal Agendar Banho / Tosa (Portal do Tutor) -->
     <div id="modalAgendarBanho" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">

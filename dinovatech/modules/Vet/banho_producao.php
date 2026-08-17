@@ -502,6 +502,8 @@ DBClose($link);
             $.post('../../app.php', { action: 'get_banho_producao_fila' }, function (res) {
                 if (!res.success) return;
 
+                window.gmailConfigurado = res.gmail_configurado || false;
+
                 // Clear columns
                 $('#col_aguardando, #col_em_banho, #col_secagem, #col_tosa_finalizacao, #col_pronto').empty();
                 $('#count_aguardando, #count_em_banho, #count_secagem, #count_tosa_finalizacao, #count_pronto').text('0');
@@ -592,15 +594,20 @@ DBClose($link);
                 const msgZap = encodeURIComponent(`Olá, ${item.nome_tutor}! Seu pet ${item.nome_pet} acabou de ficar pronto, limpinho e super cheiroso aqui no Banho e Tosa! 🐾 Você já pode vir buscá-lo.`);
                 const linkZap = telRaw ? `https://api.whatsapp.com/send?phone=55${telRaw}&text=${msgZap}` : '#';
 
+                const temEmailBtn = window.gmailConfigurado;
+                const gridCols = temEmailBtn ? 'grid-cols-2' : 'grid-cols-1';
+
                 actionsHtml = `
                     <div class="space-y-1.5">
-                        <div class="grid grid-cols-2 gap-1.5">
+                        <div class="grid ${gridCols} gap-1.5">
                             <a href="${linkZap}" target="_blank" class="py-1.5 px-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition ${!telRaw ? 'opacity-50 pointer-events-none' : ''}">
                                 <span>WhatsApp</span>
                             </a>
-                            <button onclick="notificarEmailTutor(${idFila})" class="py-1.5 px-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition">
-                                <span class="material-icons text-xs">email</span> E-mail
-                            </button>
+                            ${temEmailBtn ? `
+                                <button onclick="notificarEmailTutor(${idFila})" class="py-1.5 px-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-[11px] font-semibold flex items-center justify-center gap-1 transition">
+                                    <span class="material-icons text-xs">email</span> E-mail
+                                </button>
+                            ` : ''}
                         </div>
                         <button onclick="moverEtapa(${idFila}, 'finalizado')" class="w-full py-1.5 px-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition">
                             <span class="material-icons text-xs">check_circle</span> Entregue ao Tutor

@@ -2462,9 +2462,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             // 4.6. Pacotes e Saldos de Banho & Tosa do Cliente
             $clientePacotes = [];
-            $qPacotes = "SELECT cp.*, p.nome_pacote, p.valor_total, p.is_recorrente, p.icone, p.imagem_url 
+            $qPacotes = "SELECT cp.*, p.nome_pacote, p.valor_total, p.is_recorrente, p.icone, p.imagem_url,
+                                pt.nome as nome_pet_vinculado, cp.id_pet as pet_vinculado
                          FROM ClientePacotes cp 
                          JOIN Pacotes p ON cp.id_pacote = p.id_pacote 
+                         LEFT JOIN Pets pt ON cp.id_pet = pt.id_pet
                          WHERE cp.id_cliente = '$id_cliente_safe' AND cp.status = 'ativo' 
                          ORDER BY cp.data_aquisicao DESC";
             $rPacotes = DBExecute($link, $qPacotes);
@@ -4620,6 +4622,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             $id_cliente = (int) ($_POST['id_cliente'] ?? 0);
             $id_pacote = (int) ($_POST['id_pacote'] ?? 0);
+            $id_pet = !empty($_POST['id_pet']) ? (int)$_POST['id_pet'] : null;
+            $id_pet_val = $id_pet ? $id_pet : "NULL";
 
             if ($id_cliente <= 0 || $id_pacote <= 0) {
                 $response['message'] = "Selecione o cliente e o pacote.";
@@ -4662,9 +4666,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
             }
 
-            // 2. Insert into ClientePacotes
-            $qCP = "INSERT INTO ClientePacotes (id_cliente, id_pacote, id_recorrencia, status) 
-                    VALUES ($id_cliente, $id_pacote, $id_recorrencia_val, 'ativo')";
+            // 2. Insert into ClientePacotes com id_pet opcional
+            $qCP = "INSERT INTO ClientePacotes (id_cliente, id_pacote, id_pet, id_recorrencia, status) 
+                    VALUES ($id_cliente, $id_pacote, $id_pet_val, $id_recorrencia_val, 'ativo')";
             if (DBExecute($link, $qCP)) {
                 $id_cliente_pacote = mysqli_insert_id($link);
 
@@ -4683,9 +4687,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'get_pets_by_cliente':
+            $id_cliente = (int) ($_REQUEST['id_cliente'] ?? 0);
+            if ($id_cliente <= 0) {
+                $response['message'] = "Cliente não informado.";
+                break;
+            }
+
+            $resPets = DBExecute($link, "SELECT id_pet, nome, porte, tipo_pelagem FROM Pets WHERE id_cliente = $id_cliente ORDER BY nome ASC");
+            $pets = [];
+            if ($resPets) {
+                while ($p = mysqli_fetch_assoc($resPets)) {
+                    $pets[] = $p;
+                }
+            }
+
+            $response['success'] = true;
+            $response['pets'] = $pets;
+            break;
+
         case 'get_cliente_pacotes_saldo':
             $id_cliente = (int) ($_REQUEST['id_cliente'] ?? 0);
             $id_servico = (int) ($_REQUEST['id_servico'] ?? 0);
+            $id_pet = (int) ($_REQUEST['id_pet'] ?? 0);
 
             if ($id_cliente <= 0) {
                 $response['message'] = "Cliente não informado.";
@@ -4693,8 +4717,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
 
             $whereServ = $id_servico > 0 ? "AND cps.id_servico = $id_servico" : "";
+            $wherePet = $id_pet > 0 ? "AND (cp.id_pet IS NULL OR cp.id_pet = $id_pet)" : "";
 
-            $query = "SELECT cps.*, cp.id_pacote, p.nome_pacote, s.nome_servico, s.duracao_minutos,
+            $query = "SELECT cps.*, cp.id_pacote, cp.id_pet as pet_vinculado, p.nome_pacote, s.nome_servico, s.duracao_minutos,
                       (cps.qtd_total - cps.qtd_utilizada) as saldo_restante
                       FROM ClientePacoteSaldos cps
                       JOIN ClientePacotes cp ON cps.id_cliente_pacote = cp.id_cliente_pacote
@@ -4704,6 +4729,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         AND cp.status = 'ativo'
                         AND (cps.qtd_total - cps.qtd_utilizada) > 0
                         $whereServ
+                        $wherePet
                       ORDER BY cp.data_aquisicao ASC";
 
             $res = DBExecute($link, $query);
@@ -4716,6 +4742,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             $response['success'] = true;
             $response['saldos'] = $saldos;
+            break;
+
+        case 'get_extrato_pacote':
+            $id_cliente_pacote = (int) ($_REQUEST['id_cliente_pacote'] ?? 0);
+            if ($id_cliente_pacote <= 0) {
+                $response['message'] = "ID do contrato de pacote não informado.";
+                break;
+            }
+
+            // Pacote info
+            $qP = "SELECT cp.*, p.nome_pacote, p.valor_total, p.is_recorrente, p.intervalo_dias_recorrencia, p.icone,
+                          c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor,
+                          pt.nome as nome_pet_exclusivo,
+                          DATE_FORMAT(cp.data_aquisicao, '%d/%m/%Y %H:%i') as data_aquisicao_fmt
+                   FROM ClientePacotes cp
+                   JOIN Pacotes p ON cp.id_pacote = p.id_pacote
+                   JOIN Clientes c ON cp.id_cliente = c.id_cliente
+                   LEFT JOIN Pets pt ON cp.id_pet = pt.id_pet
+                   WHERE cp.id_cliente_pacote = $id_cliente_pacote";
+            $resP = DBExecute($link, $qP);
+            if (!$resP || mysqli_num_rows($resP) == 0) {
+                $response['message'] = "Contrato de pacote não localizado.";
+                break;
+            }
+            $pacote = mysqli_fetch_assoc($resP);
+
+            // Saldos
+            $qSaldos = "SELECT cps.*, s.nome_servico, s.duracao_minutos, s.icone_servico,
+                               (cps.qtd_total - cps.qtd_utilizada) as saldo_restante
+                        FROM ClientePacoteSaldos cps
+                        JOIN Servicos s ON cps.id_servico = s.id_servico
+                        WHERE cps.id_cliente_pacote = $id_cliente_pacote";
+            $resS = DBExecute($link, $qSaldos);
+            $saldos = [];
+            if ($resS) {
+                while ($s = mysqli_fetch_assoc($resS)) {
+                    $saldos[] = $s;
+                }
+            }
+
+            // Histórico de Utilizações
+            $qCons = "SELECT cpc.*, s.nome_servico, pt.nome as nome_pet,
+                             DATE_FORMAT(cpc.data_consumo, '%d/%m/%Y %H:%i') as data_consumo_fmt
+                      FROM ClientePacoteConsumo cpc
+                      JOIN Servicos s ON cpc.id_servico = s.id_servico
+                      JOIN Pets pt ON cpc.id_pet = pt.id_pet
+                      WHERE cpc.id_cliente_pacote = $id_cliente_pacote
+                      ORDER BY cpc.data_consumo DESC";
+            $resC = DBExecute($link, $qCons);
+            $consumos = [];
+            if ($resC) {
+                while ($c = mysqli_fetch_assoc($resC)) {
+                    $consumos[] = $c;
+                }
+            }
+
+            $response['success'] = true;
+            $response['pacote'] = $pacote;
+            $response['saldos'] = $saldos;
+            $response['consumos'] = $consumos;
             break;
 
         case 'consumir_pacote_servico':
@@ -4774,6 +4860,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 break;
             }
 
+            // 0. Verificar se Gmail está configurado para envio de e-mails
+            $resCfgE = DBExecute($link, "SELECT google_oauth_token, google_oauth_email FROM ConfiguracoesEmissor LIMIT 1");
+            $gmailConfigurado = false;
+            if ($resCfgE && $rowCfgE = mysqli_fetch_assoc($resCfgE)) {
+                $gmailConfigurado = !empty($rowCfgE['google_oauth_token']) || !empty($rowCfgE['google_oauth_email']);
+            }
+
             // 1. AUTO-SYNC: Apenas banhos agendados para HOJE entram automaticamente na coluna de espera da esteira
             $qAutoSync = "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica)
                           SELECT a.id_agendamento, a.id_pet, a.id_vet, 'aguardando', a.data_inicio, a.descricao
@@ -4825,6 +4918,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
 
             $response['success'] = true;
+            $response['gmail_configurado'] = $gmailConfigurado;
             $response['fila'] = $fila;
             break;
 
