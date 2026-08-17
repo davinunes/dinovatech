@@ -1,5 +1,9 @@
 <?php
 
+if (!ini_get('date.timezone') || date_default_timezone_get() === 'UTC') {
+    date_default_timezone_set('America/Sao_Paulo');
+}
+
 define('DB_HOSTNAME', getenv('DB_HOSTNAME') ?: 'xxx');
 define('DB_DATABASE', getenv('DB_DATABASE') ?: 'xxx');
 define('DB_USERNAME', getenv('DB_USERNAME') ?: 'xxx');
@@ -16,6 +20,10 @@ function DBConnect()
                 return false;
         }
         mysqli_set_charset($link, DB_CHARSET); // Não use die() aqui
+        
+        // Garante que todas as funções de data/hora do MySQL (NOW, CURDATE, etc.) operem no Horário de Brasília (GMT-3)
+        @mysqli_query($link, "SET time_zone = '-03:00'");
+
         return $link;
 }
 
