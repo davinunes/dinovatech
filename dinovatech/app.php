@@ -5327,6 +5327,119 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'get_horarios_disponiveis_banho':
+            $data = mysqli_real_escape_string($link, $_REQUEST['data'] ?? date('Y-m-d'));
+            $id_servico = (int) ($_REQUEST['id_servico'] ?? 0);
+            $id_pet = (int) ($_REQUEST['id_pet'] ?? 0);
+
+            if (empty($data)) {
+                $response['message'] = "Data não informada.";
+                break;
+            }
+
+            // 1. Duração base do serviço
+            $duracao_base = 40;
+            if ($id_servico > 0) {
+                $resS = DBExecute($link, "SELECT duracao_minutos FROM Servicos WHERE id_servico = $id_servico");
+                if ($resS && $s = mysqli_fetch_assoc($resS)) {
+                    $duracao_base = (int)$s['duracao_minutos'] ?: 40;
+                }
+            }
+
+            // 2. Multiplicador de porte e pelagem do pet
+            $multiplicador = 1.0;
+            if ($id_pet > 0) {
+                $resP = DBExecute($link, "SELECT porte, tipo_pelagem FROM Pets WHERE id_pet = $id_pet");
+                if ($resP && $pet = mysqli_fetch_assoc($resP)) {
+                    $porte = strtoupper($pet['porte'] ?? 'P');
+                    if ($porte === 'M') $multiplicador = 1.2;
+                    else if ($porte === 'G') $multiplicador = 1.5;
+                    else if ($porte === 'GG') $multiplicador = 1.8;
+
+                    $pelagem = strtolower($pet['tipo_pelagem'] ?? '');
+                    if (strpos($pelagem, 'long') !== false || strpos($pelagem, 'dupl') !== false) {
+                        $multiplicador += 0.2;
+                    }
+                }
+            }
+
+            $duracao_estimada = (int) ceil($duracao_base * $multiplicador);
+
+            // 3. Capacidade de atendimento simultâneo por horário
+            $capacidade_simultanea = 2;
+            $resVets = DBExecute($link, "SELECT COUNT(*) as total FROM Veterinarios WHERE ativo = 1");
+            if ($resVets && $rV = mysqli_fetch_assoc($resVets)) {
+                $capacidade_simultanea = max(2, (int)$rV['total']);
+            }
+
+            // 4. Buscar agendamentos existentes no dia
+            $qAgend = "SELECT data_inicio, data_fim 
+                       FROM Agendamentos 
+                       WHERE tipo_agenda = 'banho_tosa' 
+                         AND status NOT IN ('Cancelado') 
+                         AND DATE(data_inicio) = '$data'";
+            $resAgend = DBExecute($link, $qAgend);
+            $agendamentosDia = [];
+            if ($resAgend) {
+                while ($ag = mysqli_fetch_assoc($resAgend)) {
+                    $agendamentosDia[] = [
+                        'inicio' => strtotime($ag['data_inicio']),
+                        'fim' => strtotime($ag['data_fim'] ?: date('Y-m-d H:i:s', strtotime($ag['data_inicio'] . ' + 45 minutes')))
+                    ];
+                }
+            }
+
+            // 5. Gerar grade de horários (08:00 às 17:30)
+            $slots = [];
+            $horariosGrade = [
+                '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+                '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30'
+            ];
+
+            $agoraTimestamp = time();
+            $isHoje = ($data === date('Y-m-d'));
+
+            foreach ($horariosGrade as $hora) {
+                $slotInicioTimestamp = strtotime("$data $hora:00");
+                $slotFimTimestamp = $slotInicioTimestamp + ($duracao_estimada * 60);
+
+                // Se for hoje e o horário já passou
+                if ($isHoje && $slotInicioTimestamp <= $agoraTimestamp + (15 * 60)) {
+                    $slots[] = [
+                        'hora' => $hora,
+                        'disponivel' => false,
+                        'vagas' => 0,
+                        'motivo' => 'Horário já passou'
+                    ];
+                    continue;
+                }
+
+                // Contar sobreposições de agendamentos
+                $ocupados = 0;
+                foreach ($agendamentosDia as $ag) {
+                    // Se houver intersecção entre [slotInicio, slotFim) e [agInicio, agFim)
+                    if ($slotInicioTimestamp < $ag['fim'] && $slotFimTimestamp > $ag['inicio']) {
+                        $ocupados++;
+                    }
+                }
+
+                $vagasRestantes = max(0, $capacidade_simultanea - $ocupados);
+                $disponivel = $vagasRestantes > 0;
+
+                $slots[] = [
+                    'hora' => $hora,
+                    'disponivel' => $disponivel,
+                    'vagas' => $vagasRestantes,
+                    'motivo' => $disponivel ? 'Disponível' : 'Lotado'
+                ];
+            }
+
+            $response['success'] = true;
+            $response['data'] = $data;
+            $response['duracao_estimada'] = $duracao_estimada;
+            $response['slots'] = $slots;
+            break;
+
     }
 } else {
     $response['message'] = "Requisição inválida ou ação não informada.";

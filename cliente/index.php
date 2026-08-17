@@ -194,6 +194,25 @@ $is_vet = AppHelper::isVetMode();
                         </div>
                     </div>
 
+                    <?php if ($is_vet): ?>
+                        <!-- Banner Agendamento Online Banho & Tosa -->
+                        <div class="mb-8 bg-gradient-to-r from-teal-800 to-cyan-900 text-white rounded-2xl p-5 md:p-6 shadow-md border border-teal-600/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="p-3 bg-white/10 rounded-2xl">
+                                    <span class="material-icons text-3xl text-teal-300">shower</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-extrabold">Agendamento de Banho & Tosa Online</h3>
+                                    <p class="text-xs text-teal-100 mt-0.5">Selecione seu pet, veja os horários disponíveis em tempo real na esteira e solicite o agendamento!</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="abrirModalAgendarBanhoCliente()"
+                                class="bg-white text-teal-900 hover:bg-teal-50 font-bold px-6 py-2.5 rounded-xl shadow transition flex items-center gap-2 text-sm whitespace-nowrap">
+                                <span class="material-icons text-teal-700">calendar_month</span> Solicitar Agendamento
+                            </button>
+                        </div>
+                    <?php endif; ?>
+
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                         
                         <!-- Próximos Agendamentos -->
@@ -203,6 +222,12 @@ $is_vet = AppHelper::isVetMode();
                                     <span class="material-icons text-blue-600">calendar_month</span>
                                     <h3 class="font-bold text-gray-800">Próximos Agendamentos</h3>
                                 </div>
+                                <?php if ($is_vet): ?>
+                                    <button type="button" onclick="abrirModalAgendarBanhoCliente()"
+                                        class="text-xs font-bold text-teal-700 hover:text-teal-900 bg-teal-50 hover:bg-teal-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                                        <span class="material-icons text-xs">add</span> Novo Agendamento
+                                    </button>
+                                <?php endif; ?>
                             </div>
                             <div class="p-4 flex-1">
                                 <div id="dashListaAgendamentos" class="space-y-3">
@@ -1699,26 +1724,121 @@ $is_vet = AppHelper::isVetMode();
                 const selectSrv = $('#modalAgendarServico');
                 selectSrv.empty().append('<option value="">Selecione o serviço...</option>');
                 servicos.forEach(s => {
-                    selectSrv.append(`<option value="${s.id_servico}" data-duracao="${s.duracao_minutos}">${escapeHtml(s.nome_servico)} (${s.duracao_minutos}m)</option>`);
+                    selectSrv.append(`<option value="${s.id_servico}">${escapeHtml(s.nome_servico)} (${s.duracao_minutos}m)</option>`);
                 });
 
-                // Clear & Show
-                $('#formAgendarBanhoCliente')[0].reset();
-                $('#boxAgendarSaldoBadge').addClass('hidden');
-                $('#modalAgendarMsg').addClass('hidden').text('');
+                // Set Default Date: Tomorrow
+                const am = new Date();
+                am.setDate(am.getDate() + 1);
+                const pad = (n) => n < 10 ? '0' + n : n;
+                const dtDef = `${am.getFullYear()}-${pad(am.getMonth() + 1)}-${pad(am.getDate())}`;
+                const dtHoje = new Date().toISOString().split('T')[0];
+                $('#modalAgendarDataDia').attr('min', dtHoje).val(dtDef);
+
+                $('#modalAgendarHoraSelecionada').val('');
+                $('#btnConfirmarAgendamento').prop('disabled', true);
+                $('#boxAgendarSaldoBadge, #modalAgendarMsg').addClass('hidden');
+                $('#modalAgendarObservacoes').val('');
                 $('#modalAgendarBanho').removeClass('hidden');
+
+                if (pets.length === 1) {
+                    selectPet.val(pets[0].id_pet).trigger('change');
+                } else {
+                    carregarSlotsDisponiveis();
+                }
             };
 
             window.fecharModalAgendarBanhoCliente = function () {
                 $('#modalAgendarBanho').addClass('hidden');
             };
 
-            // Detect package credit when pet or service changes
-            $('#modalAgendarPet, #modalAgendarServico').on('change', function () {
+            function carregarSlotsDisponiveis() {
+                const idPet = $('#modalAgendarPet').val();
+                const idSrv = $('#modalAgendarServico').val();
+                const dataDia = $('#modalAgendarDataDia').val();
+                const container = $('#containerSlotsHorarios');
+                const labelDur = $('#labelDuracaoEstimada');
+
+                $('#modalAgendarHoraSelecionada').val('');
+                $('#btnConfirmarAgendamento').prop('disabled', true);
+
+                if (!dataDia) {
+                    container.html('<p class="text-xs text-gray-400 italic">Selecione uma data para consultar os horários.</p>');
+                    labelDur.text('');
+                    return;
+                }
+
+                container.html('<div class="flex items-center justify-center gap-2 text-xs text-teal-700 py-4"><span class="material-icons text-sm animate-spin">sync</span> Consultando horários disponíveis na esteira...</div>');
+
+                $.getJSON('../dinovatech/app.php', {
+                    action: 'get_horarios_disponiveis_banho',
+                    data: dataDia,
+                    id_servico: idSrv || 0,
+                    id_pet: idPet || 0
+                }, function (res) {
+                    if (!res.success) {
+                        container.html(`<p class="text-xs text-red-500">${res.message || 'Erro ao consultar horários.'}</p>`);
+                        return;
+                    }
+
+                    if (res.duracao_estimada) {
+                        labelDur.text(`⏱️ Duração estimada: ~${res.duracao_estimada} min`);
+                    } else {
+                        labelDur.text('');
+                    }
+
+                    const slots = res.slots || [];
+                    if (slots.length === 0) {
+                        container.html('<p class="text-xs text-gray-400 italic">Nenhum horário disponível para esta data.</p>');
+                        return;
+                    }
+
+                    let gridHtml = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 w-full">';
+                    let totalLivres = 0;
+
+                    slots.forEach(s => {
+                        if (s.disponivel) {
+                            totalLivres++;
+                            gridHtml += `
+                                <button type="button" onclick="selecionarSlotHorario('${s.hora}', this)"
+                                    class="slot-hora-btn py-2 px-2 rounded-xl text-xs font-bold border border-teal-200 bg-white hover:bg-teal-50 text-teal-900 transition flex flex-col items-center justify-center shadow-sm">
+                                    <span>${s.hora}</span>
+                                    <span class="text-[9px] text-teal-600 font-normal mt-0.5">${s.vagas} vaga(s)</span>
+                                </button>
+                            `;
+                        } else {
+                            gridHtml += `
+                                <div class="py-2 px-2 rounded-xl text-xs font-medium border border-gray-200 bg-gray-100 text-gray-400 flex flex-col items-center justify-center cursor-not-allowed opacity-60" title="${s.motivo}">
+                                    <span class="line-through">${s.hora}</span>
+                                    <span class="text-[9px] text-gray-400 mt-0.5">${s.motivo}</span>
+                                </div>
+                            `;
+                        }
+                    });
+
+                    gridHtml += '</div>';
+
+                    if (totalLivres === 0) {
+                        gridHtml += '<p class="text-xs text-amber-700 mt-2 font-medium text-center">Todos os horários para esta data estão ocupados na esteira. Por favor, selecione outro dia.</p>';
+                    }
+
+                    container.html(gridHtml);
+                });
+            }
+
+            window.selecionarSlotHorario = function (hora, btnEl) {
+                $('.slot-hora-btn').removeClass('bg-teal-600 text-white font-bold ring-2 ring-teal-400').addClass('bg-white text-teal-900');
+                $(btnEl).removeClass('bg-white text-teal-900').addClass('bg-teal-600 text-white font-bold ring-2 ring-teal-400');
+                $('#modalAgendarHoraSelecionada').val(hora);
+                $('#btnConfirmarAgendamento').prop('disabled', false);
+            };
+
+            // Detect package credit & reload slots when pet, service or date changes
+            $('#modalAgendarPet, #modalAgendarServico, #modalAgendarDataDia').on('change', function () {
                 const idPet = $('#modalAgendarPet').val();
                 const idSrv = $('#modalAgendarServico').val();
 
-                if (idPet && idSrv) {
+                if (idPet && idSrv && globalDashboardData) {
                     $.getJSON('../dinovatech/app.php', {
                         action: 'get_cliente_pacotes_saldo',
                         id_cliente: globalDashboardData.cliente.id_cliente,
@@ -1737,10 +1857,20 @@ $is_vet = AppHelper::isVetMode();
                 } else {
                     $('#boxAgendarSaldoBadge').addClass('hidden');
                 }
+
+                carregarSlotsDisponiveis();
             });
 
             $('#formAgendarBanhoCliente').on('submit', function (e) {
                 e.preventDefault();
+                const hora = $('#modalAgendarHoraSelecionada').val();
+                const dia = $('#modalAgendarDataDia').val();
+                if (!hora || !dia) {
+                    alert('Por favor, selecione um horário disponível na grade.');
+                    return;
+                }
+
+                const dataInicioCompleta = `${dia} ${hora}:00`;
                 const btn = $(this).find('button[type="submit"]');
                 btn.prop('disabled', true).text('Agendando...');
 
@@ -1751,7 +1881,7 @@ $is_vet = AppHelper::isVetMode();
                         action: 'criar_checkin_banho',
                         id_pet: $('#modalAgendarPet').val(),
                         id_servico: $('#modalAgendarServico').val(),
-                        data_inicio: $('#modalAgendarDataInicio').val(),
+                        data_inicio: dataInicioCompleta,
                         observacoes: $('#modalAgendarObservacoes').val(),
                         usar_saldo_pacote: $('#modalAgendarUsarSaldo').is(':checked') ? 1 : 0
                     },
@@ -1761,11 +1891,11 @@ $is_vet = AppHelper::isVetMode();
                         const msg = $('#modalAgendarMsg');
                         msg.removeClass('hidden text-green-600 text-red-600');
                         if (res.success) {
-                            msg.addClass('text-green-600').text('Agendamento realizado com sucesso!');
+                            msg.addClass('text-green-600').text('Agendamento realizado com sucesso! O pet foi reservado na agenda.');
                             setTimeout(() => {
                                 fecharModalAgendarBanhoCliente();
-                                carregarDashboard();
-                            }, 1200);
+                                window.location.reload();
+                            }, 1400);
                         } else {
                             msg.addClass('text-red-600').text(res.message || 'Erro ao agendar.');
                         }
@@ -1831,11 +1961,11 @@ $is_vet = AppHelper::isVetMode();
 
     <!-- Modal Agendar Banho / Tosa (Portal do Tutor) -->
     <div id="modalAgendarBanho" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center mb-4 border-b pb-3">
                 <div class="flex items-center gap-2">
                     <span class="material-icons text-teal-600">shower</span>
-                    <h3 class="text-lg font-bold text-gray-800">Agendar Banho & Tosa</h3>
+                    <h3 class="text-lg font-bold text-gray-800">Solicitar Agendamento de Banho & Tosa</h3>
                 </div>
                 <button type="button" onclick="fecharModalAgendarBanhoCliente()" class="text-gray-400 hover:text-gray-600">
                     <span class="material-icons">close</span>
@@ -1843,18 +1973,22 @@ $is_vet = AppHelper::isVetMode();
             </div>
 
             <form id="formAgendarBanhoCliente" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Escolha seu Pet *</label>
-                    <select name="id_pet" id="modalAgendarPet" class="w-full border-gray-300 rounded-xl p-3 border text-sm font-medium" required>
-                        <!-- Dynamic Pets -->
-                    </select>
-                </div>
+                <input type="hidden" name="hora_selecionada" id="modalAgendarHoraSelecionada" value="">
 
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Serviço Desejado *</label>
-                    <select name="id_servico" id="modalAgendarServico" class="w-full border-gray-300 rounded-xl p-3 border text-sm font-medium" required>
-                        <!-- Dynamic Services -->
-                    </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">1. Escolha seu Pet *</label>
+                        <select name="id_pet" id="modalAgendarPet" class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium" required>
+                            <!-- Dynamic Pets -->
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">2. Serviço Desejado *</label>
+                        <select name="id_servico" id="modalAgendarServico" class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium" required>
+                            <!-- Dynamic Services -->
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Package Credit Detected Badge -->
@@ -1870,17 +2004,30 @@ $is_vet = AppHelper::isVetMode();
                     </label>
                 </div>
 
+                <!-- Date Selection -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Data & Horário Preferencial *</label>
-                    <input type="datetime-local" name="data_inicio" id="modalAgendarDataInicio" required
-                        class="w-full border-gray-300 rounded-xl p-3 border text-sm">
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">3. Escolha o Dia *</label>
+                    <input type="date" name="data_dia" id="modalAgendarDataDia" required
+                        class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium">
+                </div>
+
+                <!-- Slots Container -->
+                <div>
+                    <div class="flex justify-between items-center mb-1.5">
+                        <label class="block text-xs font-bold text-gray-700 uppercase">4. Horários Disponíveis na Esteira *</label>
+                        <span id="labelDuracaoEstimada" class="text-[11px] font-semibold text-teal-700"></span>
+                    </div>
+
+                    <div id="containerSlotsHorarios" class="bg-gray-50 p-3.5 rounded-xl border border-gray-200 min-h-[90px] flex items-center justify-center">
+                        <p class="text-xs text-gray-400 italic">Selecione o pet, serviço e o dia para ver os horários livres.</p>
+                    </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Observações ou Preferências de Corte</label>
                     <textarea name="observacoes" id="modalAgendarObservacoes" rows="2"
                         placeholder="Ex: Não cortar unhas, tosa higiênica baixa, usar perfume suave..."
-                        class="w-full border-gray-300 rounded-xl p-3 border text-sm"></textarea>
+                        class="w-full border-gray-300 rounded-xl p-2.5 border text-sm"></textarea>
                 </div>
 
                 <div id="modalAgendarMsg" class="text-xs font-bold text-center hidden"></div>
@@ -1888,8 +2035,10 @@ $is_vet = AppHelper::isVetMode();
                 <div class="flex justify-end gap-2 pt-3 border-t">
                     <button type="button" onclick="fecharModalAgendarBanhoCliente()"
                         class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition">Cancelar</button>
-                    <button type="submit"
-                        class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold shadow-md transition">Confirmar Agendamento</button>
+                    <button type="submit" id="btnConfirmarAgendamento" disabled
+                        class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        Confirmar Agendamento
+                    </button>
                 </div>
             </form>
         </div>
