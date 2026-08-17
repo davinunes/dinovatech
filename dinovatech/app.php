@@ -2610,7 +2610,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $id_pet = (int)($_POST['id_pet'] ?? 0);
             $id_servico = (int)($_POST['id_servico'] ?? 0);
             $data_inicio = $_POST['data_inicio'] ?? '';
-            $observacoes = mysqli_real_escape_string($link, $_POST['observacoes'] ?? 'Agendado pelo Portal do Tutor');
+            $obsRaw = trim($_POST['observacoes'] ?? ($_POST['observacoes_estetica'] ?? ''));
+            $observacoes = mysqli_real_escape_string($link, $obsRaw);
             $usar_saldo = isset($_POST['usar_saldo_pacote']) && $_POST['usar_saldo_pacote'] == 1;
 
             if ($id_pet <= 0 || $id_servico <= 0 || empty($data_inicio)) {
@@ -2673,8 +2674,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
             }
 
+            $statusAgend = ($dtInicio->format('Y-m-d') > date('Y-m-d')) ? 'Agendado' : 'Em Andamento';
+
             $query = "INSERT INTO Agendamentos (id_cliente, id_pet, id_servico, id_cliente_pacote, tipo_agenda, titulo, descricao, data_inicio, data_fim, status) 
-                      VALUES ($id_cliente_safe, $id_pet, $id_servico, $id_cliente_pacote_val, 'banho_tosa', '$titulo', '$observacoes', '$startStr', '$endStr', 'Agendado')";
+                      VALUES ($id_cliente_safe, $id_pet, $id_servico, $id_cliente_pacote_val, 'banho_tosa', '$titulo', '$observacoes', '$startStr', '$endStr', '$statusAgend')";
             if (DBExecute($link, $query)) {
                 $newAgendId = mysqli_insert_id($link);
 
@@ -4883,7 +4886,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             DBExecute($link, $qAutoSync);
 
             // 2. Buscar esteira: exibe apenas os do dia em "aguardando" (ou qualquer pet que já tenha iniciado o atendimento)
-            $query = "SELECT f.*, p.nome as nome_pet, p.porte, p.tipo_pelagem, p.preferencias_banho,
+            $query = "SELECT f.*, 
+                             COALESCE(NULLIF(f.observacoes_estetica, ''), a.descricao, '') as observacoes_estetica,
+                             COALESCE(NULLIF(a.descricao, ''), f.observacoes_estetica, '') as observacoes_agendamento,
+                             p.nome as nome_pet, p.porte, p.tipo_pelagem, p.preferencias_banho,
                              c.id_cliente, c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor,
                              v.nome as nome_colaborador,
                              s.nome_servico, s.duracao_minutos,
@@ -4934,7 +4940,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $id_servico = (int) ($_POST['id_servico'] ?? 0);
             $id_colaborador = !empty($_POST['id_colaborador']) ? (int)$_POST['id_colaborador'] : null;
             $id_colaborador_sql = $id_colaborador ? $id_colaborador : "NULL";
-            $observacoes = mysqli_real_escape_string($link, $_POST['observacoes_estetica'] ?? '');
+            $obsRaw = trim($_POST['observacoes_estetica'] ?? ($_POST['observacoes'] ?? ($_POST['descricao'] ?? '')));
+            $observacoes = mysqli_real_escape_string($link, $obsRaw);
             $usar_saldo = isset($_POST['usar_saldo_pacote']) && $_POST['usar_saldo_pacote'] == 1;
 
             if ($id_pet <= 0) {
@@ -4987,11 +4994,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $duracaoFinal += 15;
             }
 
-            $dtInicio = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+            $dtInicioStr = $_POST['data_inicio'] ?? '';
+            if (!empty($dtInicioStr)) {
+                $dtInicio = new DateTime($dtInicioStr, new DateTimeZone('America/Sao_Paulo'));
+            } else {
+                $dtInicio = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+            }
             $dtFim = clone $dtInicio;
             $dtFim->modify("+{$duracaoFinal} minutes");
             $startStr = $dtInicio->format('Y-m-d H:i:s');
             $endStr = $dtFim->format('Y-m-d H:i:s');
+            $statusAgend = ($dtInicio->format('Y-m-d') > date('Y-m-d')) ? 'Agendado' : 'Em Andamento';
 
             // 1. Verificar e abater saldo de pacote do tutor
             $id_cliente_pacote_val = "NULL";
@@ -5016,7 +5029,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             // 2. CRIAR O ITEM AUTOMATICAMENTE NA AGENDA
             $titulo = mysqli_real_escape_string($link, "Banho/Tosa: " . $petInfo['nome'] . " (" . $nomeServico . ")");
             $queryAgend = "INSERT INTO Agendamentos (id_cliente, id_pet, id_vet, id_servico, id_cliente_pacote, tipo_agenda, titulo, descricao, data_inicio, data_fim, status) 
-                           VALUES ($id_cliente, $id_pet, $id_colaborador_sql, $id_servico, $id_cliente_pacote_val, 'banho_tosa', '$titulo', '$observacoes', '$startStr', '$endStr', 'Em Andamento')";
+                           VALUES ($id_cliente, $id_pet, $id_colaborador_sql, $id_servico, $id_cliente_pacote_val, 'banho_tosa', '$titulo', '$observacoes', '$startStr', '$endStr', '$statusAgend')";
             
             $id_agendamento_val = "NULL";
             if (DBExecute($link, $queryAgend)) {
@@ -5031,7 +5044,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             // 3. INSERIR NA ESTEIRA DE PRODUÇÃO VINCULADO AO AGENDAMENTO
             $queryFila = "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica) 
-                          VALUES ($id_agendamento_val, $id_pet, $id_colaborador_sql, 'aguardando', NOW(), '$observacoes')";
+                          VALUES ($id_agendamento_val, $id_pet, $id_colaborador_sql, 'aguardando', '$startStr', '$observacoes')";
 
             if (DBExecute($link, $queryFila)) {
                 $id_fila = mysqli_insert_id($link);

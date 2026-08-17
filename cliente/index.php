@@ -1878,7 +1878,7 @@ $is_vet = AppHelper::isVetMode();
                     url: '../dinovatech/app.php',
                     type: 'POST',
                     data: {
-                        action: 'criar_checkin_banho',
+                        action: 'cliente_agendar_banho',
                         id_pet: $('#modalAgendarPet').val(),
                         id_servico: $('#modalAgendarServico').val(),
                         data_inicio: dataInicioCompleta,

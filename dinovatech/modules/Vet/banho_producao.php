@@ -654,10 +654,14 @@ DBClose($link);
 
                     ${alertPrefsHtml}
 
-                    ${item.observacoes_estetica ? `
-                        <p class="text-[11px] text-gray-600 bg-gray-50 p-2 rounded-lg my-2 border border-gray-100 italic">
-                            "${item.observacoes_estetica}"
-                        </p>
+                    ${(item.observacoes_estetica || item.observacoes_agendamento) ? `
+                        <div class="my-2 p-2 bg-amber-50/90 rounded-lg border border-amber-200/80 text-[11px] text-amber-950 flex items-start gap-1.5 shadow-sm">
+                            <span class="material-icons text-amber-600 text-sm mt-0.5 flex-shrink-0">assignment</span>
+                            <div class="overflow-hidden">
+                                <span class="font-bold text-[10px] text-amber-800 uppercase tracking-wider block">Obs. do Tutor / Cortes:</span>
+                                <span class="text-[11px] leading-snug italic">"${escapeHtml(item.observacoes_estetica || item.observacoes_agendamento)}"</span>
+                            </div>
+                        </div>
                     ` : ''}
 
                     <div class="flex items-center justify-between pt-2 border-t border-gray-100 mb-2.5">
@@ -668,6 +672,16 @@ DBClose($link);
                     ${actionsHtml}
                 </div>
             `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         window.abrirModalEditarPorId = function (idFila) {
