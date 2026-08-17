@@ -145,19 +145,31 @@ if (!isset($_SESSION['usuario_id'])) {
                             </div>
 
                             <!-- Módulo Banho & Tosa (DinoVet) -->
-                            <div class="border-t border-gray-100 pt-4 mt-4">
-                                <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                            <div class="border-t border-gray-100 pt-4 mt-4 space-y-4">
+                                <h4 class="text-sm font-bold text-gray-700 flex items-center">
                                     <span class="material-icons mr-1.5 text-teal-600 text-sm">shower</span> Módulo de Estética & Banho (DinoVet)
                                 </h4>
-                                <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-3.5">
-                                    <label class="flex items-center space-x-3 cursor-pointer">
-                                        <input type="checkbox" name="banho_checkin_foto_ativo" id="banho_checkin_foto_ativo" value="1"
-                                            class="h-5 w-5 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
-                                        <div>
-                                            <span class="text-sm font-bold text-gray-800">Ativar Check-in Fotográfico na Recepção</span>
-                                            <p class="text-xs text-gray-500 mt-0.5">Permite à equipe anexar fotos de nós, avarias ou ferimentos pré-existentes na esteira de produção do banho e tosa.</p>
-                                        </div>
-                                    </label>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Vagas / Atendimentos Simultâneos por Horário *</label>
+                                        <input type="number" name="banho_capacidade_simultanea" id="banho_capacidade_simultanea" min="1" max="50" value="2" required
+                                            class="w-full rounded-lg border-gray-300 focus:border-teal-500 focus:ring-teal-500 font-bold text-base p-2.5">
+                                        <p class="text-[11px] text-gray-500 mt-1.5 leading-relaxed">
+                                            Define quantos pets podem ser agendados simultaneamente no mesmo slot de horário (baseado no espaço físico, banheiras e mesas de tosa disponíveis).
+                                        </p>
+                                    </div>
+
+                                    <div class="bg-teal-50/70 border border-teal-200 rounded-xl p-4 flex items-center">
+                                        <label class="flex items-start space-x-3 cursor-pointer">
+                                            <input type="checkbox" name="banho_checkin_foto_ativo" id="banho_checkin_foto_ativo" value="1"
+                                                class="h-5 w-5 text-teal-600 focus:ring-teal-500 border-gray-300 rounded mt-0.5">
+                                            <div>
+                                                <span class="text-sm font-bold text-gray-800">Check-in Fotográfico na Recepção</span>
+                                                <p class="text-xs text-gray-500 mt-0.5">Permite à equipe anexar fotos de nós, avarias ou ferimentos pré-existentes na esteira de produção do banho e tosa.</p>
+                                            </div>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -863,6 +875,12 @@ if (!isset($_SESSION['usuario_id'])) {
 
                     if (d.banho_checkin_foto_ativo == 1) {
                         $('#banho_checkin_foto_ativo').prop('checked', true);
+                    }
+
+                    if (d.banho_capacidade_simultanea) {
+                        $('#banho_capacidade_simultanea').val(d.banho_capacidade_simultanea);
+                    } else {
+                        $('#banho_capacidade_simultanea').val(2);
                     }
 
                     // Google JSON Status

@@ -795,6 +795,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
 
                 $banho_checkin_foto_ativo = isset($_POST['banho_checkin_foto_ativo']) ? 1 : 0;
+                $banho_capacidade_simultanea = isset($_POST['banho_capacidade_simultanea']) ? max(1, (int)$_POST['banho_capacidade_simultanea']) : 2;
 
                 if (!empty($id_config)) {
                     // Update
@@ -811,6 +812,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 landing_page_theme='$landing_page_theme',
                                 landing_page_path='$landing_page_path',
                                 banho_checkin_foto_ativo='$banho_checkin_foto_ativo',
+                                banho_capacidade_simultanea='$banho_capacidade_simultanea',
                                 api_inter_client_id='$api_inter_client_id', 
                                 api_inter_chave_pix='$api_inter_chave_pix',
                                 api_inter_conta_corrente='$api_inter_conta_corrente',
@@ -854,7 +856,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
                                endereco, numero, complemento, bairro, cep, uf, telefone, logo_url,
-                               landing_page_theme, landing_page_path, banho_checkin_foto_ativo,
+                               landing_page_theme, landing_page_path, banho_checkin_foto_ativo, banho_capacidade_simultanea,
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
                                api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
@@ -5365,11 +5367,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             $duracao_estimada = (int) ceil($duracao_base * $multiplicador);
 
-            // 3. Capacidade de atendimento simultâneo por horário
+            // 3. Capacidade de atendimento simultâneo por horário (Configurada nas preferências do módulo)
             $capacidade_simultanea = 2;
-            $resVets = DBExecute($link, "SELECT COUNT(*) as total FROM Veterinarios WHERE ativo = 1");
-            if ($resVets && $rV = mysqli_fetch_assoc($resVets)) {
-                $capacidade_simultanea = max(2, (int)$rV['total']);
+            $resCfg = DBExecute($link, "SELECT banho_capacidade_simultanea FROM ConfiguracoesEmissor WHERE id_config = 1");
+            if ($resCfg && $cfgB = mysqli_fetch_assoc($resCfg)) {
+                $cap = (int)($cfgB['banho_capacidade_simultanea'] ?? 0);
+                if ($cap > 0) {
+                    $capacidade_simultanea = $cap;
+                }
             }
 
             // 4. Buscar agendamentos existentes no dia

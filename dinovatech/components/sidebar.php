@@ -92,9 +92,8 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 
         <a href="<?= $basePath ?>modules/Vet/veterinarios.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span
-                class="material-icons text-xl mr-3"><?= AppHelper::isVetMode() ? 'medical_services' : 'badge' ?></span>
-            <span class="font-medium"><?= AppHelper::isVetMode() ? 'Veterinários' : 'Colaboradores' ?></span>
+            <span class="material-icons text-xl mr-3">badge</span>
+            <span class="font-medium">Colaboradores</span>
         </a>
 
         <?php if (AppHelper::isVetMode()): ?>

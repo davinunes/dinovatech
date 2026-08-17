@@ -47,16 +47,13 @@ if ($link) {
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
                     <h2 class="text-3xl font-bold text-gray-800">
-                        <?= AppHelper::isVetMode() ? 'Corpo Clínico' : 'Colaboradores' ?>
+                        Colaboradores
                     </h2>
-                    <p class="text-gray-500">Gerencie os
-                        <?= AppHelper::isVetMode() ? 'veterinários' : 'colaboradores' ?> cadastrados.
-                    </p>
+                    <p class="text-gray-500">Gerencie a equipe: veterinários, banhistas, esteticistas e equipe administrativa.</p>
                 </div>
                 <a href="veterinario_form.php"
-                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors">
-                    <span class="material-icons mr-2">add</span> Novo
-                    <?= AppHelper::isVetMode() ? 'Veterinário' : 'Colaborador' ?>
+                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors shadow">
+                    <span class="material-icons mr-2">add</span> Novo Colaborador
                 </a>
             </div>
 
@@ -68,7 +65,7 @@ if ($link) {
                             <span class="material-icons">search</span>
                         </span>
                         <input type="text" name="search" value="<?= htmlspecialchars($search) ?>"
-                            placeholder="Buscar <?= AppHelper::isVetMode() ? 'Veterinário (Nome ou CRMV)' : 'Colaborador' ?>..."
+                            placeholder="Buscar colaborador por nome, função ou CRMV..."
                             class="w-full py-2 pl-10 pr-4 text-gray-700 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-cyan-500 focus:bg-white focus:ring-0">
                     </div>
                 </form>
@@ -77,49 +74,82 @@ if ($link) {
             <!-- List -->
             <?php if (empty($veterinarios)): ?>
                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 text-center text-gray-500">
-                    Nenhum <?= AppHelper::isVetMode() ? 'veterinário' : 'colaborador' ?> cadastrado.
+                    Nenhum colaborador cadastrado.
                 </div>
             <?php else: ?>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <?php foreach ($veterinarios as $vet): ?>
-                        <div
-                            class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                    <?php foreach ($veterinarios as $vet): 
+                        $f = $vet['funcao'] ?? 'veterinario';
+                        $fLabel = '🩺 Veterinário(a)';
+                        $fBg = 'bg-cyan-50 text-cyan-700 border-cyan-200';
+                        if ($f === 'banhista_tosador') {
+                            $fLabel = '🛁 Banhista & Tosador';
+                            $fBg = 'bg-teal-50 text-teal-700 border-teal-200';
+                        } elseif ($f === 'administrativo') {
+                            $fLabel = '📋 Recepção / Admin';
+                            $fBg = 'bg-purple-50 text-purple-700 border-purple-200';
+                        } elseif ($f === 'auxiliar') {
+                            $fLabel = '🐾 Auxiliar Vet';
+                            $fBg = 'bg-blue-50 text-blue-700 border-blue-200';
+                        } elseif ($f === 'geral') {
+                            $fLabel = '👥 Geral';
+                            $fBg = 'bg-gray-50 text-gray-700 border-gray-200';
+                        }
+                    ?>
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition flex flex-col justify-between">
                             <div class="p-6">
-                                <div class="flex items-center space-x-4">
-                                    <div
-                                        class="h-12 w-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600 font-bold text-xl">
-                                        <?= strtoupper(substr($vet['nome'], 0, 1)) ?>
+                                <div class="flex items-start justify-between gap-2 mb-3">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="h-11 w-11 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-700 font-bold text-lg">
+                                            <?= strtoupper(substr($vet['nome'], 0, 1)) ?>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-gray-900 leading-tight">
+                                                <?= htmlspecialchars($vet['nome']) ?>
+                                            </h3>
+                                            <?php if (!empty($vet['crmv'])): ?>
+                                                <p class="text-xs text-gray-500 mt-0.5">CRMV: <?= htmlspecialchars($vet['crmv']) ?>/<?= htmlspecialchars($vet['uf_crmv']) ?></p>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <h3 class="font-bold text-gray-900">
-                                            <?= htmlspecialchars($vet['nome']) ?>
-                                        </h3>
-                                        <?php if (AppHelper::isVetMode()): ?>
-                                            <p class="text-sm text-gray-500">CRMV:
-                                                <?= htmlspecialchars($vet['crmv']) ?> /
-                                                <?= htmlspecialchars($vet['uf_crmv']) ?>
-                                            </p>
-                                        <?php endif; ?>
-                                    </div>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border <?= $fBg ?> whitespace-nowrap">
+                                        <?= $fLabel ?>
+                                    </span>
                                 </div>
-                                <div class="mt-4 space-y-2 text-sm text-gray-600">
+
+                                <div class="flex flex-wrap gap-1.5 mb-3">
+                                    <?php if (!empty($vet['realiza_banho'])): ?>
+                                        <span class="text-[10px] bg-teal-100 text-teal-800 font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                                            <span class="material-icons text-[11px]">shower</span> Banho & Tosa
+                                        </span>
+                                    <?php endif; ?>
+                                    <?php if (!empty($vet['realiza_clinica'])): ?>
+                                        <span class="text-[10px] bg-cyan-100 text-cyan-800 font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+                                            <span class="material-icons text-[11px]">medical_services</span> Clínico
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+
+                                <div class="space-y-1.5 text-xs text-gray-600 border-t border-gray-50 pt-3">
                                     <?php if ($vet['telefone']): ?>
                                         <div class="flex items-center">
-                                            <span class="material-icons text-gray-400 text-base mr-2">phone</span>
+                                            <span class="material-icons text-gray-400 text-sm mr-2">phone</span>
                                             <?= htmlspecialchars($vet['telefone']) ?>
                                         </div>
                                     <?php endif; ?>
                                     <?php if ($vet['email']): ?>
                                         <div class="flex items-center">
-                                            <span class="material-icons text-gray-400 text-base mr-2">email</span>
+                                            <span class="material-icons text-gray-400 text-sm mr-2">email</span>
                                             <?= htmlspecialchars($vet['email']) ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
+                            <div class="bg-gray-50 px-6 py-2.5 border-t border-gray-100 flex justify-end">
                                 <a href="veterinario_form.php?id=<?= $vet['id_vet'] ?>"
-                                    class="text-cyan-600 hover:text-cyan-800 font-medium text-sm">Editar</a>
+                                    class="text-cyan-600 hover:text-cyan-800 font-semibold text-xs flex items-center gap-1">
+                                    <span class="material-icons text-xs">edit</span> Editar
+                                </a>
                             </div>
                         </div>
                     <?php endforeach; ?>

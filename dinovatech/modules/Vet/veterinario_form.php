@@ -52,6 +52,9 @@ if ($rConf && mysqli_num_rows($rConf) > 0) {
 // Handle POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome = $_POST['nome'] ?? '';
+    $funcao = $_POST['funcao'] ?? 'veterinario';
+    $realiza_banho = isset($_POST['realiza_banho']) ? 1 : 0;
+    $realiza_clinica = isset($_POST['realiza_clinica']) ? 1 : 0;
     $crmv = $_POST['crmv'] ?? '';
     $uf_crmv = $_POST['uf_crmv'] ?? '';
     $telefone = $_POST['telefone'] ?? '';
@@ -59,16 +62,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $google_calendar_id = $_POST['google_calendar_id'] ?? '';
     $data_nascimento = $_POST['data_nascimento'] ?? '';
 
-    // Auto-fill CRMV/UF if not Vet Mode (Modularity)
-    if (!AppHelper::isVetMode()) {
-        $crmv = $crmv ?: '-';
-        $uf_crmv = $uf_crmv ?: 'XX';
-    }
-
-    if (empty($nome) || empty($crmv) || empty($uf_crmv)) {
-        $erro = "Nome, CRMV e UF são obrigatórios.";
+    // Se for função veterinário no modo vet, CRMV é obrigatório
+    if ($funcao === 'veterinario' && AppHelper::isVetMode() && empty($crmv)) {
+        $erro = "CRMV é obrigatório para a função Veterinário.";
+    } elseif (empty($nome)) {
+        $erro = "O nome do colaborador é obrigatório.";
     } else {
         $nome = mysqli_real_escape_string($link, $nome);
+        $funcao = mysqli_real_escape_string($link, $funcao);
         $crmv = mysqli_real_escape_string($link, $crmv);
         $uf_crmv = mysqli_real_escape_string($link, $uf_crmv);
         $telefone = mysqli_real_escape_string($link, $telefone);
@@ -163,9 +164,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data_nascimento_val = empty($data_nascimento) ? 'NULL' : "'" . mysqli_real_escape_string($link, $data_nascimento) . "'";
 
             if ($is_edit) {
-                $query = "UPDATE Veterinarios SET nome='$nome', crmv='$crmv', uf_crmv='$uf_crmv', telefone='$telefone', email='$email', google_calendar_id='$google_calendar_id', url_assinatura='$url_assinatura_safe', data_nascimento=$data_nascimento_val WHERE id_vet = " . (int) $id_vet;
+                $query = "UPDATE Veterinarios SET nome='$nome', funcao='$funcao', realiza_banho=$realiza_banho, realiza_clinica=$realiza_clinica, crmv='$crmv', uf_crmv='$uf_crmv', telefone='$telefone', email='$email', google_calendar_id='$google_calendar_id', url_assinatura='$url_assinatura_safe', data_nascimento=$data_nascimento_val WHERE id_vet = " . (int) $id_vet;
             } else {
-                $query = "INSERT INTO Veterinarios (nome, crmv, uf_crmv, telefone, email, google_calendar_id, url_assinatura, data_nascimento) VALUES ('$nome', '$crmv', '$uf_crmv', '$telefone', '$email', '$google_calendar_id', '$url_assinatura_safe', $data_nascimento_val)";
+                $query = "INSERT INTO Veterinarios (nome, funcao, realiza_banho, realiza_clinica, crmv, uf_crmv, telefone, email, google_calendar_id, url_assinatura, data_nascimento) VALUES ('$nome', '$funcao', $realiza_banho, $realiza_clinica, '$crmv', '$uf_crmv', '$telefone', '$email', '$google_calendar_id', '$url_assinatura_safe', $data_nascimento_val)";
             }
 
             if (DBExecute($link, $query)) {
@@ -184,8 +185,7 @@ DBClose($link);
 
 <head>
     <title>
-        <?= $is_edit ? "Editar" : "Novo" ?>
-        <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?> - DinoVet
+        <?= $is_edit ? "Editar" : "Novo" ?> Colaborador - DinoVet
     </title>
     <?php include '../../components/layout_head.php'; ?>
 </head>
@@ -203,8 +203,7 @@ DBClose($link);
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100">
                         <h2 class="text-2xl font-bold text-gray-800">
-                            <?= $is_edit ? "Editar" : "Novo" ?>
-                            <?= AppHelper::isVetMode() ? "Veterinário" : "Colaborador" ?>
+                            <?= $is_edit ? "Editar" : "Novo" ?> Colaborador
                         </h2>
                     </div>
 
@@ -219,6 +218,39 @@ DBClose($link);
                             <label class="block text-gray-700 font-medium mb-1">Nome Completo *</label>
                             <input type="text" name="nome" value="<?= htmlspecialchars($vet['nome'] ?? '') ?>" required
                                 class="w-full border-gray-300 rounded-lg p-3 border">
+                        </div>
+
+                        <!-- Função / Cargo & Áreas de Atuação -->
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+                            <div>
+                                <label class="block text-gray-700 font-medium mb-1">Função Principal / Cargo *</label>
+                                <?php $currentFuncao = $vet['funcao'] ?? (AppHelper::isVetMode() ? 'veterinario' : 'geral'); ?>
+                                <select name="funcao" id="colabFuncao" class="w-full border-gray-300 rounded-lg p-3 border bg-white font-medium" required onchange="onFuncaoChange(this.value)">
+                                    <option value="veterinario" <?= $currentFuncao === 'veterinario' ? 'selected' : '' ?>>🩺 Veterinário(a)</option>
+                                    <option value="banhista_tosador" <?= $currentFuncao === 'banhista_tosador' ? 'selected' : '' ?>>🛁 Banhista & Tosador(a) / Estética</option>
+                                    <option value="administrativo" <?= $currentFuncao === 'administrativo' ? 'selected' : '' ?>>📋 Recepção / Administrativo</option>
+                                    <option value="auxiliar" <?= $currentFuncao === 'auxiliar' ? 'selected' : '' ?>>🐾 Auxiliar Veterinário</option>
+                                    <option value="geral" <?= $currentFuncao === 'geral' ? 'selected' : '' ?>>👥 Geral / Multidisciplinar</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <span class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Habilitação nos Módulos e Agendas</span>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="realiza_banho" id="chkRealizaBanho" value="1"
+                                            <?= ($vet['realiza_banho'] ?? ($currentFuncao === 'banhista_tosador' ? 1 : 0)) ? 'checked' : '' ?>
+                                            class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
+                                        <span class="text-sm font-semibold text-gray-800">🛁 Atua em Banho & Tosa (Conta vagas na Esteira & Agenda de Estética)</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" name="realiza_clinica" id="chkRealizaClinica" value="1"
+                                            <?= ($vet['realiza_clinica'] ?? ($currentFuncao === 'veterinario' ? 1 : 0)) ? 'checked' : '' ?>
+                                            class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
+                                        <span class="text-sm font-semibold text-gray-800">🩺 Atua em Atendimento Clínico (Agenda de Consultas & Prontuários)</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="border mt-4 mb-4 p-5 rounded-xl bg-white shadow-sm border-gray-100">
@@ -300,21 +332,22 @@ DBClose($link);
                             </div>
                         </div>
 
-                        <?php if (AppHelper::isVetMode()): ?>
+                        <div id="crmvContainer" class="<?= ($currentFuncao !== 'veterinario' && $currentFuncao !== 'geral') ? 'hidden' : '' ?>">
                             <div class="grid grid-cols-3 gap-4">
                                 <div class="col-span-2">
-                                    <label class="block text-gray-700 font-medium mb-1">CRMV *</label>
-                                    <input type="text" name="crmv" value="<?= htmlspecialchars($vet['crmv'] ?? '') ?>"
-                                        required class="w-full border-gray-300 rounded-lg p-3 border">
+                                    <label class="block text-gray-700 font-medium mb-1">CRMV</label>
+                                    <input type="text" name="crmv" id="inputCrmv" value="<?= htmlspecialchars($vet['crmv'] ?? '') ?>"
+                                        placeholder="00000" class="w-full border-gray-300 rounded-lg p-3 border">
                                 </div>
                                 <div>
-                                    <label class="block text-gray-700 font-medium mb-1">UF *</label>
-                                    <input type="text" name="uf_crmv"
-                                        value="<?= htmlspecialchars($vet['uf_crmv'] ?? 'SP') ?>" maxlength="2" required
+                                    <label class="block text-gray-700 font-medium mb-1">UF CRMV</label>
+                                    <input type="text" name="uf_crmv" id="inputUfCrmv"
+                                        value="<?= htmlspecialchars($vet['uf_crmv'] ?? 'SP') ?>" maxlength="2"
                                         class="w-full border-gray-300 rounded-lg p-3 border uppercase">
                                 </div>
                             </div>
-                        <?php endif; ?>
+                            <span class="text-[11px] text-gray-400 mt-1 block">Obrigatório para veterinários com atuação clínica.</span>
+                        </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -386,6 +419,27 @@ DBClose($link);
     <!-- Signature Pad JS -->
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script>
+        function onFuncaoChange(funcao) {
+            if (funcao === 'banhista_tosador') {
+                $('#chkRealizaBanho').prop('checked', true);
+                $('#chkRealizaClinica').prop('checked', false);
+                $('#crmvContainer').addClass('hidden');
+                $('#inputCrmv, #inputUfCrmv').prop('required', false);
+            } else if (funcao === 'veterinario') {
+                $('#chkRealizaBanho').prop('checked', false);
+                $('#chkRealizaClinica').prop('checked', true);
+                $('#crmvContainer').removeClass('hidden');
+                $('#inputCrmv, #inputUfCrmv').prop('required', true);
+            } else if (funcao === 'administrativo') {
+                $('#chkRealizaBanho').prop('checked', false);
+                $('#chkRealizaClinica').prop('checked', false);
+                $('#crmvContainer').addClass('hidden');
+                $('#inputCrmv, #inputUfCrmv').prop('required', false);
+            } else {
+                $('#crmvContainer').removeClass('hidden');
+                $('#inputCrmv, #inputUfCrmv').prop('required', false);
+            }
+        }
         let signaturePad = null;
         let isDrawingMode = false;
 
