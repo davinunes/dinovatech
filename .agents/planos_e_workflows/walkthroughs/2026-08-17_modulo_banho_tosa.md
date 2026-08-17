@@ -1,19 +1,14 @@
-# Walkthrough - Módulo de Banho & Tosa: Gestão de Cards Avulsos na Esteira
+# Walkthrough - Módulo de Banho & Tosa: Renomeação para Esteira & Filtro Diário
 
 Data: 2026-08-17
 Status: Concluído e Atualizado
 
-## 1. Migração Incremental para Correção do Banco
-- Criada a migração incremental `database/migrations/20260817_0002_fix_banho_etapa_and_sync.sql` para aplicar a alteração de `etapa` para `VARCHAR(50)` e garantir as colunas `horario_saida` e `id_agendamento` em bases já existentes.
-- Atualizada a resolução de caminhos em `app.php` e `scripts/migrate.php`.
+## 1. Renomeação do Menu
+- O item do menu na barra lateral (`sidebar.php`) e os botões de atalho em `banho_agenda.php` foram renomeados de "Linha de Produção (TV)" para **"Esteira"**.
 
-## 2. Gestão de Cards na Esteira / Linha de Produção (`banho_producao.php`)
-- **Cards Avulsos (Check-in direto)**:
-  - **Botão Editar (Ícone de Lápis)**: Abre o modal `modalEditarCheckin` permitindo alterar o colaborador/banhista responsável, o serviço desejado, observações/cortes e anexar mais fotos de vistoria.
-  - **Botão Excluir (Ícone de Lixeira)**:
-    - Exibe confirmação amigável.
-    - Se a entrada tiver consumido crédito de algum pacote/combo do cliente, **restitui automaticamente o saldo** no pacote (`ClientePacoteSaldos.qtd_utilizada - 1`) e reativa o pacote se estava esgotado.
-    - Remove o agendamento gerado e as fotos, limpando o card da esteira em tempo real.
-- **Cards Originários da Agenda**:
-  - Exibem o botão de calendário `[📅 Agenda]` direcionando para a edição completa na agenda (`banho_agenda.php`).
-  - Podem ser removidos da esteira via botão de lixeira caso o atendimento tenha sido cancelado.
+## 2. Exibição Inteligente dos Agendamentos do Dia
+- **Auto-Sync Restrito ao Dia Atual**: O mecanismo automático de sincronização agora insere na esteira apenas agendamentos de Banho & Tosa cuja data de início seja **hoje** (`DATE(data_inicio) = CURDATE()`).
+- **Filtro de Visualização da Esteira**:
+  - Cards na coluna *"1. Recepção / Aguardando"* só são exibidos se forem agendados para a data de hoje ou check-ins avulsos do dia.
+  - Agendamentos futuros permanecem na Agenda e só entrarão na fila de espera no seu respectivo dia.
+  - Caso algum pet de agendamento futuro chegue com antecedência e o atendente avance o atendimento para *"Em Banho"*, *"Secagem"*, etc. (`etapa != 'aguardando'`), ele será exibido normalmente na esteira.

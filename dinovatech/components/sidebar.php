@@ -105,7 +105,7 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             <a href="<?= $basePath ?>modules/Vet/banho_producao.php"
                 class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'banho_producao.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
                 <span class="material-icons text-xl mr-3 text-teal-400">view_kanban</span>
-                <span class="font-medium">Linha de Produção (TV)</span>
+                <span class="font-medium">Esteira</span>
             </a>
 
             <a href="<?= $basePath ?>modules/Vet/banho_agenda.php"

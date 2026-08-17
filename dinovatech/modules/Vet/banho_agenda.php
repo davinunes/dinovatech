@@ -112,7 +112,7 @@ DBClose($link);
                 <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                     <a href="banho_producao.php" 
                         class="bg-slate-800 hover:bg-slate-900 text-white font-medium py-2 px-4 rounded-lg flex items-center transition shadow-sm text-sm">
-                        <span class="material-icons text-sm mr-1.5 text-teal-400">view_kanban</span> Fila / Linha de Produção
+                        <span class="material-icons text-sm mr-1.5 text-teal-400">view_kanban</span> Esteira
                     </a>
 
                     <button type="button" onclick="novoAgendamentoBanho()"

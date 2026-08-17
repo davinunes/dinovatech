@@ -4774,26 +4774,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 break;
             }
 
-            // 1. AUTO-SYNC: Banhos agendados para hoje/abertos são inseridos automaticamente na esteira de produção
+            // 1. AUTO-SYNC: Apenas banhos agendados para HOJE entram automaticamente na coluna de espera da esteira
             $qAutoSync = "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica)
                           SELECT a.id_agendamento, a.id_pet, a.id_vet, 'aguardando', a.data_inicio, a.descricao
                           FROM Agendamentos a
                           WHERE a.tipo_agenda = 'banho_tosa'
                             AND a.status NOT IN ('Cancelado', 'Concluído')
-                            AND DATE(a.data_inicio) <= CURDATE()
+                            AND DATE(a.data_inicio) = CURDATE()
                             AND a.id_pet IS NOT NULL
                             AND NOT EXISTS (
                               SELECT 1 FROM BanhoProducaoFila f WHERE f.id_agendamento = a.id_agendamento
                             )";
             DBExecute($link, $qAutoSync);
 
-            // 2. Buscar fila ativa com dados ricos do Pet, Tutor, Serviço e Pacote
+            // 2. Buscar esteira: exibe apenas os do dia em "aguardando" (ou qualquer pet que já tenha iniciado o atendimento)
             $query = "SELECT f.*, p.nome as nome_pet, p.porte, p.tipo_pelagem, p.preferencias_banho,
                              c.id_cliente, c.nome as nome_tutor, c.telefone as telefone_tutor, c.email as email_tutor,
                              v.nome as nome_colaborador,
                              s.nome_servico, s.duracao_minutos,
                              pac.nome_pacote,
                              a.status as status_agendamento,
+                             CASE 
+                               WHEN a.id_agendamento IS NULL OR (a.data_inicio IS NOT NULL AND a.titulo LIKE 'Banho/Tosa: %') THEN 1 
+                               ELSE 0 
+                             END as is_avulso,
                              DATE_FORMAT(f.horario_entrada, '%H:%i') as horario_entrada_fmt,
                              (SELECT COUNT(*) FROM BanhoCheckinFotos bcf WHERE bcf.id_fila = f.id_fila) as total_fotos
                       FROM BanhoProducaoFila f
@@ -4805,6 +4809,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                       LEFT JOIN Pacotes pac ON cp.id_pacote = pac.id_pacote
                       LEFT JOIN Veterinarios v ON f.id_colaborador = v.id_vet
                       WHERE f.etapa != 'finalizado'
+                        AND (
+                          f.etapa != 'aguardando'
+                          OR DATE(f.horario_entrada) = CURDATE()
+                          OR (a.data_inicio IS NOT NULL AND DATE(a.data_inicio) = CURDATE())
+                        )
                       ORDER BY f.horario_entrada ASC";
 
             $res = DBExecute($link, $query);
