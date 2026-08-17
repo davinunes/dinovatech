@@ -15,3 +15,8 @@ Status: Concluído e Atualizado
   - Exibe o cabeçalho **"Obs. do Tutor / Cortes:"** com ícone de anotação;
   - Renderiza o texto com `escapeHtml()` e estilo destacado;
   - Carrega a observação também na modal de edição rápida da esteira.
+
+## 3. Persistência do Toggle do Módulo Fiscal
+- Criada a migração [20260817_0006_add_modulo_fiscal_ativo_to_config.sql](file:///e:/DEV/dinovatech/database/migrations/20260817_0006_add_modulo_fiscal_ativo_to_config.sql) para a coluna `modulo_fiscal_ativo` em `ConfiguracoesEmissor`.
+- Atualizado o formulário e script JS em [config_fiscal.php](file:///e:/DEV/dinovatech/dinovatech/config_fiscal.php) para enviar `modulo_fiscal_ativo` no POST e renderizar o estado salvo do banco.
+- Atualizado [app.php](file:///e:/DEV/dinovatech/dinovatech/app.php) na ação `save_config_fiscal` para persistir o status e flexibilizar a exigência de Inscrição Municipal caso o módulo fiscal esteja desativado.

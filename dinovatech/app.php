@@ -510,6 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $codigo_municipio = $_POST['codigo_municipio'] ?? '';
             $regime_tributario = $_POST['regime_tributario'] ?? 'simples';
             $optante_simples = isset($_POST['optante_simples']) ? 1 : 0;
+            $modulo_fiscal_ativo = isset($_POST['modulo_fiscal_ativo']) ? 1 : 0;
             $permitir_cadastro_sem_cpf = isset($_POST['permitir_cadastro_sem_cpf']) ? 1 : 0;
             $ambiente_padrao = $_POST['ambiente_padrao'] ?? 'homologacao';
             $serie_rps = $_POST['serie_rps'] ?? '8';
@@ -520,8 +521,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $landing_page_theme = $_POST['landing_page_theme'] ?? 'default';
             $landing_page_path = $_POST['landing_page_path'] ?? '';
 
-            if (empty($razao_social) || empty($cnpj) || empty($inscricao_municipal)) {
-                $response['message'] = "Razão Social, CNPJ e Inscrição Municipal são obrigatórios.";
+            if (empty($razao_social) || empty($cnpj) || ($modulo_fiscal_ativo == 1 && empty($inscricao_municipal))) {
+                $response['message'] = "Razão Social, CNPJ e Inscrição Municipal são obrigatórios para emissão fiscal.";
             } else {
                 $razao_social = mysqli_real_escape_string($link, $razao_social);
                 $nome_fantasia = mysqli_real_escape_string($link, $nome_fantasia);
@@ -803,6 +804,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 razao_social='$razao_social', nome_fantasia='$nome_fantasia', cnpj='$cnpj', 
                                 inscricao_municipal='$inscricao_municipal', inscricao_estadual='$inscricao_estadual', codigo_municipio='$codigo_municipio',
                                 regime_tributario='$regime_tributario', optante_simples='$optante_simples',
+                                modulo_fiscal_ativo='$modulo_fiscal_ativo',
                                 permitir_cadastro_sem_cpf='$permitir_cadastro_sem_cpf',
                                 ambiente_padrao='$ambiente_padrao', serie_rps='$serie_rps', 
                                 ultimo_rps_homologacao='$ultimo_rps_homologacao', ultimo_rps_producao='$ultimo_rps_producao',
@@ -846,13 +848,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                     // For Insert, we use the variables directly (checked empty above)
                     $api_inter_cert_val = !empty($api_inter_cert_path) ? "'$api_inter_cert_path'" : "NULL";
-                    $api_inter_key_path = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
+                    $api_inter_key_val = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
                     $api_inter_ca_val = !empty($api_inter_ca_path) ? "'$api_inter_ca_path'" : "NULL";
                     $logo_val = !empty($logo_url_update) ? "'" . mysqli_real_escape_string($link, $logo_url_update) . "'" : "NULL";
 
                     $query = "INSERT INTO ConfiguracoesEmissor 
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, inscricao_estadual, codigo_municipio, 
-                               regime_tributario, optante_simples, permitir_cadastro_sem_cpf, ambiente_padrao, serie_rps, 
+                               regime_tributario, optante_simples, modulo_fiscal_ativo, permitir_cadastro_sem_cpf, ambiente_padrao, serie_rps, 
                                ultimo_rps_homologacao, ultimo_rps_producao, 
                                caminho_certificado, senha_certificado,
                                endereco, numero, complemento, bairro, cep, uf, telefone, logo_url,
@@ -864,11 +866,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                google_oauth_client_id, google_oauth_client_secret, email_fatura_template_id)
                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
-                               '$regime_tributario', '$optante_simples', '$permitir_cadastro_sem_cpf', '$ambiente_padrao', '$serie_rps', 
-                               '$ultimo_rps_homologacao', '$ultimo_rps_producao',
+                               '$regime_tributario', '$optante_simples', '$modulo_fiscal_ativo', '$permitir_cadastro_sem_cpf', '$ambiente_padrao', '$serie_rps', 
+                               '$ultimo_rps_homologacao', '$ultimo_rps_producao', 
                                '$caminho_certificado', $senha_val,
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$telefone', $logo_val,
-                               '$landing_page_theme', '$landing_page_path', '$banho_checkin_foto_ativo',
+                               '$landing_page_theme', '$landing_page_path', '$banho_checkin_foto_ativo', '$banho_capacidade_simultanea',
                                '$api_inter_client_id', $inter_secret_val,
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
                                $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,

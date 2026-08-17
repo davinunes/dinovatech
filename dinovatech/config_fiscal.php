@@ -186,7 +186,7 @@ if (!isset($_SESSION['usuario_id'])) {
                                 
                                 <!-- Toggle de Ativação Fiscal -->
                                 <label class="flex items-center space-x-2 cursor-pointer bg-indigo-50 border border-indigo-200 px-3.5 py-2 rounded-xl">
-                                    <input type="checkbox" id="toggle_modulo_fiscal" onchange="toggleCardFiscal()"
+                                    <input type="checkbox" name="modulo_fiscal_ativo" id="toggle_modulo_fiscal" value="1" onchange="toggleCardFiscal()"
                                         class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
                                     <span class="text-xs font-bold text-indigo-900">Ativar Módulo Fiscal (NFS-e)</span>
                                 </label>
@@ -957,9 +957,10 @@ if (!isset($_SESSION['usuario_id'])) {
                     }
 
                     // Toggle Fiscal Module Card Visibility
-                    if (d.inscricao_municipal || d.caminho_certificado || (d.serie_rps && d.serie_rps != '')) {
-                        $('#toggle_modulo_fiscal').prop('checked', true);
-                    }
+                    const isFiscalAtivo = (d.modulo_fiscal_ativo !== undefined && d.modulo_fiscal_ativo !== null) 
+                        ? (parseInt(d.modulo_fiscal_ativo) === 1) 
+                        : (!!d.caminho_certificado || !!d.inscricao_municipal);
+                    $('#toggle_modulo_fiscal').prop('checked', isFiscalAtivo);
                     toggleCardFiscal();
                 }
             }, 'json');
