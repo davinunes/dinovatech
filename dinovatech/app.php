@@ -5010,6 +5010,129 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'editar_checkin_banho':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+
+            $id_fila = (int) ($_POST['id_fila'] ?? 0);
+            $id_servico = (int) ($_POST['id_servico'] ?? 0);
+            $id_colaborador = !empty($_POST['id_colaborador']) ? (int)$_POST['id_colaborador'] : null;
+            $id_colaborador_sql = $id_colaborador ? $id_colaborador : "NULL";
+            $observacoes = mysqli_real_escape_string($link, $_POST['observacoes_estetica'] ?? '');
+
+            if ($id_fila <= 0) {
+                $response['message'] = "ID da fila não informado.";
+                break;
+            }
+
+            // Buscar registro atual
+            $resF = DBExecute($link, "SELECT * FROM BanhoProducaoFila WHERE id_fila = $id_fila");
+            if (!$resF || mysqli_num_rows($resF) == 0) {
+                $response['message'] = "Registro não encontrado.";
+                break;
+            }
+            $filaItem = mysqli_fetch_assoc($resF);
+            $id_agendamento = (int)($filaItem['id_agendamento'] ?? 0);
+            $id_pet = (int)$filaItem['id_pet'];
+
+            // Atualizar BanhoProducaoFila
+            DBExecute($link, "UPDATE BanhoProducaoFila SET id_colaborador = $id_colaborador_sql, observacoes_estetica = '$observacoes' WHERE id_fila = $id_fila");
+
+            // Atualizar Agendamento vinculado
+            if ($id_agendamento > 0) {
+                $updServ = $id_servico > 0 ? "id_servico = $id_servico," : "";
+                DBExecute($link, "UPDATE Agendamentos SET $updServ id_vet = $id_colaborador_sql, descricao = '$observacoes' WHERE id_agendamento = $id_agendamento");
+            }
+
+            // Upload de novas fotos se enviadas
+            if (isset($_FILES['fotos_checkin']) && !empty($_FILES['fotos_checkin']['name'][0])) {
+                $uploadDir = __DIR__ . '/uploads/banho_fotos/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $totalFiles = count($_FILES['fotos_checkin']['name']);
+                for ($i = 0; $i < $totalFiles; $i++) {
+                    if ($_FILES['fotos_checkin']['error'][$i] === UPLOAD_ERR_OK) {
+                        $tmpName = $_FILES['fotos_checkin']['tmp_name'][$i];
+                        $origName = $_FILES['fotos_checkin']['name'][$i];
+                        $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                            $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
+                            $destPath = $uploadDir . $newFileName;
+                            if (move_uploaded_file($tmpName, $destPath)) {
+                                $relPath = 'uploads/banho_fotos/' . $newFileName;
+                                DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPath')");
+                            }
+                        }
+                    }
+                }
+            }
+
+            $response['success'] = true;
+            $response['message'] = "Registro de banho atualizado com sucesso!";
+            break;
+
+        case 'excluir_checkin_banho':
+            if (!AppHelper::isVetMode()) {
+                $response['message'] = "Acesso exclusivo ao Modo Vet.";
+                break;
+            }
+
+            $id_fila = (int) ($_POST['id_fila'] ?? 0);
+            if ($id_fila <= 0) {
+                $response['message'] = "ID da fila não informado.";
+                break;
+            }
+
+            $resF = DBExecute($link, "SELECT * FROM BanhoProducaoFila WHERE id_fila = $id_fila");
+            if (!$resF || mysqli_num_rows($resF) == 0) {
+                $response['message'] = "Registro não encontrado.";
+                break;
+            }
+            $filaItem = mysqli_fetch_assoc($resF);
+            $id_agendamento = (int)($filaItem['id_agendamento'] ?? 0);
+
+            // 1. Se consumiu crédito de pacote, devolver o crédito
+            if ($id_agendamento > 0) {
+                $resCons = DBExecute($link, "SELECT * FROM ClientePacoteConsumo WHERE id_agendamento = $id_agendamento");
+                if ($resCons && $cons = mysqli_fetch_assoc($resCons)) {
+                    $id_cp = (int)$cons['id_cliente_pacote'];
+                    $id_srv = (int)$cons['id_servico'];
+                    // Restituir saldo
+                    DBExecute($link, "UPDATE ClientePacoteSaldos SET qtd_utilizada = GREATEST(0, qtd_utilizada - 1) WHERE id_cliente_pacote = $id_cp AND id_servico = $id_srv");
+                    // Reativar pacote se estava esgotado
+                    DBExecute($link, "UPDATE ClientePacotes SET status = 'ativo' WHERE id_cliente_pacote = $id_cp");
+                    // Deletar log de consumo
+                    DBExecute($link, "DELETE FROM ClientePacoteConsumo WHERE id_agendamento = $id_agendamento");
+                }
+
+                // Deletar o agendamento
+                DBExecute($link, "DELETE FROM Agendamentos WHERE id_agendamento = $id_agendamento");
+            }
+
+            // 2. Deletar fotos associadas
+            $resFotos = DBExecute($link, "SELECT foto_url FROM BanhoCheckinFotos WHERE id_fila = $id_fila");
+            if ($resFotos) {
+                while ($fot = mysqli_fetch_assoc($resFotos)) {
+                    $filePath = __DIR__ . '/' . $fot['foto_url'];
+                    if (file_exists($filePath)) {
+                        @unlink($filePath);
+                    }
+                }
+            }
+            DBExecute($link, "DELETE FROM BanhoCheckinFotos WHERE id_fila = $id_fila");
+
+            // 3. Deletar da Fila
+            DBExecute($link, "DELETE FROM BanhoProducaoFila WHERE id_fila = $id_fila");
+
+            $response['success'] = true;
+            $response['message'] = "Pet removido da esteira e saldo restituído com sucesso!";
+            break;
+
         case 'get_fotos_banho_checkin':
             $id_fila = (int) ($_REQUEST['id_fila'] ?? 0);
             if ($id_fila <= 0) {

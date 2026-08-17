@@ -1,23 +1,19 @@
-# Walkthrough - Integração Bidirecional: Agenda, Esteira (Kanban) e Consumo de Pacotes
+# Walkthrough - Módulo de Banho & Tosa: Gestão de Cards Avulsos na Esteira
 
 Data: 2026-08-17
 Status: Concluído e Atualizado
 
-## 1. Correção do Erro de Truncamento na Coluna 'etapa'
-- **Problema**: `Data truncated for column 'etapa' at row 1` ao movimentar cards para `secagem`, `tosa_finalizacao` ou `finalizado` devido ao tipo `ENUM` restrito no MySQL.
-- **Solução**: Ajustada a definição no script de migração `database/migrations/20260817_0001_create_banho_tosa_schema.sql` para `VARCHAR(50) NOT NULL DEFAULT 'aguardando'` com comando preventivo `ALTER TABLE BanhoProducaoFila MODIFY COLUMN etapa VARCHAR(50) NOT NULL DEFAULT 'aguardando';`.
+## 1. Migração Incremental para Correção do Banco
+- Criada a migração incremental `database/migrations/20260817_0002_fix_banho_etapa_and_sync.sql` para aplicar a alteração de `etapa` para `VARCHAR(50)` e garantir as colunas `horario_saida` e `id_agendamento` em bases já existentes.
+- Atualizada a resolução de caminhos em `app.php` e `scripts/migrate.php`.
 
-## 2. Integração Bidirecional entre Agenda e Esteira (Kanban)
-- **Banhos Agendados entram na Esteira**: Ao consultar a esteira (`get_banho_producao_fila`), qualquer agendamento de Banho & Tosa do dia que ainda não esteja na esteira é inserido automaticamente na coluna **"1. Recepção / Aguardando"**.
-- **Entrada Direta na Esteira (Walk-in) gera Agendamento**:
-  - O modal de check-in em `banho_producao.php` agora permite selecionar o serviço desejado.
-  - Detecta automaticamente se o tutor possui créditos de pacote para aquele serviço e marca a opção de abatimento.
-  - Ao salvar o check-in, o sistema calcula a duração estimada (com multiplicador de porte e pelagem), cria o registro em `Agendamentos` (`tipo_agenda = 'banho_tosa'`, `status = 'Em Andamento'`) e insere na esteira já vinculado.
-- **Sincronização de Status**:
-  - Mover para `em_banho`, `secagem`, `tosa_finalizacao` atualiza `Agendamentos.status = 'Em Andamento'`.
-  - Mover para `pronto` atualiza `Agendamentos.status = 'Realizado'`.
-  - Mover para `finalizado` (Entregue) atualiza `Agendamentos.status = 'Concluído'` e preenche `horario_saida = NOW()`.
-
-## 3. Indicadores Visuais na Agenda (`banho_agenda.php` & `api.php`)
-- Eventos de banho no calendário exibem prefixos dinâmicos do status da produção: `⏳ [Fila]`, `🛁 [Banho]`, `💨 [Secagem]`, `✂️ [Tosa]`, `🐾 [Pronto]`, `✅ [Concluído]`.
-- Ao abrir o agendamento no modal da agenda, é exibido um card com a etapa atual da esteira e um botão direto **"Ver Esteira"**.
+## 2. Gestão de Cards na Esteira / Linha de Produção (`banho_producao.php`)
+- **Cards Avulsos (Check-in direto)**:
+  - **Botão Editar (Ícone de Lápis)**: Abre o modal `modalEditarCheckin` permitindo alterar o colaborador/banhista responsável, o serviço desejado, observações/cortes e anexar mais fotos de vistoria.
+  - **Botão Excluir (Ícone de Lixeira)**:
+    - Exibe confirmação amigável.
+    - Se a entrada tiver consumido crédito de algum pacote/combo do cliente, **restitui automaticamente o saldo** no pacote (`ClientePacoteSaldos.qtd_utilizada - 1`) e reativa o pacote se estava esgotado.
+    - Remove o agendamento gerado e as fotos, limpando o card da esteira em tempo real.
+- **Cards Originários da Agenda**:
+  - Exibem o botão de calendário `[📅 Agenda]` direcionando para a edição completa na agenda (`banho_agenda.php`).
+  - Podem ser removidos da esteira via botão de lixeira caso o atendimento tenha sido cancelado.

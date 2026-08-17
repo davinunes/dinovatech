@@ -318,6 +318,85 @@ DBClose($link);
         </div>
     </div>
 
+    <!-- Modal Editar Recepção / Item Avulso -->
+    <div id="modalEditarCheckin" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-teal-600">edit_note</span>
+                    <h3 class="text-lg font-bold text-gray-800" id="modalEditarTitulo">Editar Entrada do Pet</h3>
+                </div>
+                <button type="button" onclick="closeEditarModal()" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <form id="formEditarCheckin" enctype="multipart/form-data" class="space-y-4">
+                <input type="hidden" name="action" value="editar_checkin_banho">
+                <input type="hidden" name="id_fila" id="edit_id_fila">
+
+                <div class="bg-teal-50 border border-teal-200 rounded-xl p-3">
+                    <span class="block text-xs font-semibold text-teal-800 uppercase">Pet em Atendimento</span>
+                    <span id="edit_nome_pet" class="text-base font-extrabold text-teal-950"></span>
+                    <span id="edit_nome_tutor" class="block text-xs text-teal-700 font-medium"></span>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Serviço de Banho/Tosa *</label>
+                    <select name="id_servico" id="edit_id_servico" class="w-full border-gray-300 rounded-lg p-2.5 border text-sm" required>
+                        <?php foreach ($servicos_banho as $sb): ?>
+                            <option value="<?= $sb['id_servico'] ?>">
+                                <?= htmlspecialchars($sb['nome_servico']) ?> (<?= $sb['duracao_minutos'] ?>min • R$ <?= number_format($sb['valor_sugerido'], 2, ',', '.') ?>)
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Colaborador / Banhista Responsável</label>
+                    <select name="id_colaborador" id="edit_id_colaborador" class="w-full border-gray-300 rounded-lg p-2.5 border text-sm">
+                        <option value="">Qualquer colaborador disponível</option>
+                        <?php foreach ($colaboradores as $c): ?>
+                            <option value="<?= $c['id_vet'] ?>"><?= htmlspecialchars($c['nome']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-700 uppercase mb-1">Observações da Recepção / Cortes</label>
+                    <textarea name="observacoes_estetica" id="edit_observacoes" rows="2"
+                        placeholder="Ex: Tosa higiênica nas patinhas, tosar orelhas na máquina 4..."
+                        class="w-full border-gray-300 rounded-lg p-2.5 border text-sm"></textarea>
+                </div>
+
+                <?php if ($checkin_foto_ativo): ?>
+                    <!-- Anexar Mais Fotos -->
+                    <div class="bg-teal-50 border border-teal-200 rounded-xl p-4">
+                        <label class="block text-xs font-bold text-teal-900 uppercase mb-1 flex items-center gap-1">
+                            <span class="material-icons text-sm text-teal-600">add_a_photo</span> Anexar Mais Fotos de Vistoria (Opcional)
+                        </label>
+                        <input type="file" name="fotos_checkin[]" multiple accept="image/*"
+                            class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-teal-600 file:text-white hover:file:bg-teal-700">
+                    </div>
+                <?php endif; ?>
+
+                <div id="editMessage" class="text-xs font-medium text-center hidden"></div>
+
+                <div class="flex justify-between gap-2 pt-3 border-t">
+                    <button type="button" id="btnExcluirFilaModal" class="px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-semibold transition flex items-center gap-1">
+                        <span class="material-icons text-sm">delete</span> Excluir da Fila
+                    </button>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeEditarModal()"
+                            class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200">Cancelar</button>
+                        <button type="submit"
+                            class="px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-semibold shadow transition">Salvar Alterações</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Visualizar Fotos do Pet -->
     <div id="modalFotos" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl">
@@ -417,6 +496,8 @@ DBClose($link);
             }
         }
 
+        let filaItemsMap = {};
+
         function carregarEsteira() {
             $.post('../../app.php', { action: 'get_banho_producao_fila' }, function (res) {
                 if (!res.success) return;
@@ -426,8 +507,10 @@ DBClose($link);
                 $('#count_aguardando, #count_em_banho, #count_secagem, #count_tosa_finalizacao, #count_pronto').text('0');
 
                 const counts = { aguardando: 0, em_banho: 0, secagem: 0, tosa_finalizacao: 0, pronto: 0 };
+                filaItemsMap = {};
 
                 res.fila.forEach(item => {
+                    filaItemsMap[item.id_fila] = item;
                     const etapa = item.etapa;
                     if (counts[etapa] !== undefined) {
                         counts[etapa]++;
@@ -533,12 +616,29 @@ DBClose($link);
                             <h4 class="font-extrabold text-sm text-gray-900 leading-tight">${item.nome_pet}</h4>
                             <span class="text-xs text-gray-500">${item.nome_tutor}</span>
                         </div>
-                        ${hasFotos ? `
-                            <button onclick="abrirFotosModal(${idFila}, '${item.nome_pet}')" title="Ver fotos de vistoria"
-                                class="p-1 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 transition">
-                                <span class="material-icons text-sm">photo_camera</span>
+                        <div class="flex items-center gap-1">
+                            ${hasFotos ? `
+                                <button onclick="abrirFotosModal(${idFila}, '${item.nome_pet}')" title="Ver fotos de vistoria"
+                                    class="p-1 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-100 transition">
+                                    <span class="material-icons text-sm">photo_camera</span>
+                                </button>
+                            ` : ''}
+                            ${item.is_avulso == 1 || !item.id_agendamento ? `
+                                <button onclick="abrirModalEditarPorId(${idFila})" title="Editar Entrada Avulsa"
+                                    class="p-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                                    <span class="material-icons text-sm">edit</span>
+                                </button>
+                            ` : `
+                                <a href="banho_agenda.php" title="Agendamento da Agenda (Editar via Agenda)"
+                                    class="p-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition">
+                                    <span class="material-icons text-sm">calendar_month</span>
+                                </a>
+                            `}
+                            <button onclick="excluirItemFila(${idFila}, '${item.nome_pet}')" title="Remover da Esteira"
+                                class="p-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition">
+                                <span class="material-icons text-sm">delete</span>
                             </button>
-                        ` : ''}
+                        </div>
                     </div>
 
                     <div class="flex flex-wrap gap-1 mb-2">
@@ -562,6 +662,75 @@ DBClose($link);
                 </div>
             `;
         }
+
+        window.abrirModalEditarPorId = function (idFila) {
+            const item = filaItemsMap[idFila];
+            if (!item) return;
+
+            $('#edit_id_fila').val(item.id_fila);
+            $('#edit_nome_pet').text(item.nome_pet);
+            $('#edit_nome_tutor').text('Tutor: ' + item.nome_tutor);
+            if (item.id_servico) $('#edit_id_servico').val(item.id_servico);
+            $('#edit_id_colaborador').val(item.id_colaborador || '');
+            $('#edit_observacoes').val(item.observacoes_estetica || '');
+            $('#editMessage').addClass('hidden');
+
+            $('#btnExcluirFilaModal').off('click').on('click', function () {
+                excluirItemFila(item.id_fila, item.nome_pet);
+            });
+
+            $('#modalEditarCheckin').removeClass('hidden');
+        };
+
+        window.closeEditarModal = function () {
+            $('#modalEditarCheckin').addClass('hidden');
+        };
+
+        window.excluirItemFila = function (idFila, nomePet) {
+            if (confirm(`Tem certeza que deseja remover ${nomePet} da esteira de produção? Caso tenha consumido crédito de pacote, o crédito será restituído.`)) {
+                $.post('../../app.php', {
+                    action: 'excluir_checkin_banho',
+                    id_fila: idFila
+                }, function (res) {
+                    if (res.success) {
+                        closeEditarModal();
+                        carregarEsteira();
+                    } else {
+                        alert(res.message || 'Erro ao remover pet da esteira.');
+                    }
+                }, 'json');
+            }
+        };
+
+        $('#formEditarCheckin').on('submit', function (e) {
+            e.preventDefault();
+            const btn = $(this).find('button[type="submit"]');
+            btn.prop('disabled', true).text('Salvando...');
+
+            const formData = new FormData(this);
+
+            $.ajax({
+                url: '../../app.php',
+                type: 'POST',
+                data: formData,
+                contentType: false,
+                processData: false,
+                dataType: 'json',
+                success: function (res) {
+                    btn.prop('disabled', false).text('Salvar Alterações');
+                    if (res.success) {
+                        closeEditarModal();
+                        carregarEsteira();
+                    } else {
+                        $('#editMessage').removeClass('hidden text-green-600').addClass('text-red-600').text(res.message);
+                    }
+                },
+                error: function () {
+                    btn.prop('disabled', false).text('Salvar Alterações');
+                    alert('Erro ao salvar alterações.');
+                }
+            });
+        });
 
         function moverEtapa(idFila, novaEtapa) {
             $.post('../../app.php', {
