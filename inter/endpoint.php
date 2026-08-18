@@ -290,6 +290,54 @@ try {
             echo json_encode(['success' => true, 'data' => ['status' => $pixStatus->status], 'audit' => $pixStatus]);
             break;
 
+        case 'consultar_extrato_completo':
+            $dataInicio = $_GET['dataInicio'] ?? $requestBody['dataInicio'] ?? null;
+            $dataFim = $_GET['dataFim'] ?? $requestBody['dataFim'] ?? null;
+
+            if (!$dataInicio || !$dataFim) {
+                throw new Exception("Parâmetros dataInicio e dataFim (YYYY-MM-DD) são obrigatórios.");
+            }
+
+            $params = [
+                'dataInicio' => $dataInicio,
+                'dataFim' => $dataFim
+            ];
+
+            // Parâmetros opcionais de paginação tradicional
+            if (isset($_GET['pagina'])) $params['pagina'] = (int)$_GET['pagina'];
+            if (isset($_GET['tamanhoPagina'])) $params['tamanhoPagina'] = (int)$_GET['tamanhoPagina'];
+            if (isset($_GET['tipoOperacao'])) $params['tipoOperacao'] = $_GET['tipoOperacao'];
+            if (isset($_GET['tipoTransacao'])) $params['tipoTransacao'] = $_GET['tipoTransacao'];
+
+            // Parâmetros opcionais de paginação por scroll
+            if (isset($_GET['scrollEnabled'])) $params['scrollEnabled'] = filter_var($_GET['scrollEnabled'], FILTER_VALIDATE_BOOLEAN);
+            if (isset($_GET['scrollId'])) $params['scrollId'] = $_GET['scrollId'];
+
+            $extrato = consultarExtratoCompleto($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $params);
+            echo json_encode(['success' => true, 'data' => $extrato]);
+            break;
+
+        case 'exportar_extrato_pdf':
+            $dataInicio = $_GET['dataInicio'] ?? $requestBody['dataInicio'] ?? null;
+            $dataFim = $_GET['dataFim'] ?? $requestBody['dataFim'] ?? null;
+
+            if (!$dataInicio || !$dataFim) {
+                throw new Exception("Parâmetros dataInicio e dataFim (YYYY-MM-DD) são obrigatórios.");
+            }
+
+            $pdfResponse = exportarExtratoPdf($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $dataInicio, $dataFim);
+
+            // Se solicitado download direto via GET
+            if (isset($_GET['download']) && $_GET['download'] == '1') {
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: attachment; filename="extrato_inter_' . $dataInicio . '_' . $dataFim . '.pdf"');
+                echo $pdfResponse;
+                exit;
+            }
+
+            echo json_encode(['success' => true, 'data' => base64_encode($pdfResponse)]);
+            break;
+
         default:
             throw new Exception("Ação inválida ou não especificada.");
     }

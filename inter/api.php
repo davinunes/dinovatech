@@ -236,3 +236,121 @@ function consultarListaPixRecebidos($config, $sslCert, $sslKey, $caInfo, $bearer
 
     return json_decode($response);
 }
+
+/**
+ * Consulta extrato enriquecido/completo com detalhes de transações por período (máx 90 dias).
+ * Suporta paginação tradicional e paginação por scroll. Requer certificados e escopo extrato.read.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param array $params Parâmetros (dataInicio, dataFim, pagina, tamanhoPagina, scrollEnabled, scrollId, tipoOperacao, tipoTransacao)
+ * @return object Resposta decodificada em JSON da API do Inter
+ */
+function consultarExtratoCompleto($config, $sslCert, $sslKey, $caInfo, $bearerToken, $params = [])
+{
+    $bankingBase = $config['url_banking_base'] ?? str_replace('/pix/v2', '/banking/v2', $config['url_pix_base']);
+    $url = $bankingBase . '/extrato/completo';
+
+    if (!empty($params)) {
+        $queryParams = [];
+        foreach ($params as $key => $val) {
+            if ($val !== null && $val !== '') {
+                if (is_bool($val)) {
+                    $val = $val ? 'true' : 'false';
+                }
+                $queryParams[$key] = $val;
+            }
+        }
+        if (!empty($queryParams)) {
+            $url .= '?' . http_build_query($queryParams);
+        }
+    }
+
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    if (!empty($config['conta_corrente'])) {
+        $headers[] = 'x-inter-conta-corrente: ' . $config['conta_corrente'];
+    }
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on consult full statement: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on consult full statement: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
+ * Exporta extrato bancário em formato PDF por período. Requer certificados e escopo extrato.read.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $dataInicio Data de início (YYYY-MM-DD)
+ * @param string $dataFim Data de fim (YYYY-MM-DD)
+ * @return string Conteúdo binário ou resposta do PDF retornado pelo Banco Inter
+ */
+function exportarExtratoPdf($config, $sslCert, $sslKey, $caInfo, $bearerToken, $dataInicio, $dataFim)
+{
+    $bankingBase = $config['url_banking_base'] ?? str_replace('/pix/v2', '/banking/v2', $config['url_pix_base']);
+    $url = $bankingBase . '/extrato/exportar?' . http_build_query([
+        'dataInicio' => $dataInicio,
+        'dataFim' => $dataFim
+    ]);
+
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    if (!empty($config['conta_corrente'])) {
+        $headers[] = 'x-inter-conta-corrente: ' . $config['conta_corrente'];
+    }
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on export statement PDF: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on export statement PDF: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return $response;
+}

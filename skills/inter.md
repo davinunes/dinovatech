@@ -30,6 +30,15 @@ Generates a dynamic QRCode (Pix Copia e Cola).
 Checks the status of a specific PIX by `txid`.
 - Returns: Status (`CONCLUIDA`, `ATIVA`, `EXPIRADA`, etc.) and E2E ID if paid.
 
+### `consultarExtratoCompleto(...)`
+Fetches the enriched/complete banking statement (`/banking/v2/extrato/completo`) within a date range (max 90 days).
+- Supports traditional pagination (`pagina`, `tamanhoPagina`, `tipoOperacao`, `tipoTransacao`) and high-volume scroll pagination (`scrollEnabled`, `scrollId`).
+- Requires scope: `extrato.read`.
+
+### `exportarExtratoPdf(...)`
+Exports the banking statement in PDF format (`/banking/v2/extrato/exportar`) for a given period.
+- Requires scope: `extrato.read`.
+
 ## Logic Flow
 1. **Frontend**: Calls `endpoint.php?action=obter_ou_criar_pix_pagamento`.
 2. **Backend**:
