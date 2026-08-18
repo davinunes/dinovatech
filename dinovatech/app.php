@@ -579,50 +579,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     }
                 }
 
-                // --- FILE UPLOAD (PFX) ---
-                $pfxContent = null;
-                $pfxPathForValidation = null;
+                // --- FILE UPLOAD (PFX - BASE64) ---
+                $pfxContentForValidation = null;
+                $certificado_pfx_base64 = '';
+                $pfx_sql_part = "";
 
                 if (isset($_FILES['arquivo_pfx']) && $_FILES['arquivo_pfx']['error'] === UPLOAD_ERR_OK) {
-                    $uploadDir = dirname(__DIR__) . '/certificado/';
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0755, true);
-                    }
-
-                    // Sanitiza nome do arquivo
                     $ext = pathinfo($_FILES['arquivo_pfx']['name'], PATHINFO_EXTENSION);
                     if (strtolower($ext) !== 'pfx') {
                         $response['message'] = "Erro: Apenas arquivos .pfx são permitidos.";
                         break;
                     }
 
-                    $newFileName = 'certificado_' . time() . '.pfx'; // Nome único para evitar conflito
-                    $destPath = $uploadDir . $newFileName;
-
-                    if (move_uploaded_file($_FILES['arquivo_pfx']['tmp_name'], $destPath)) {
-                        // Salva caminho relativo para o DB
-                        $caminho_certificado = 'certificado/' . $newFileName;
-                        $pfxPathForValidation = $destPath;
-                    } else {
-                        $response['message'] = "Erro ao mover arquivo de certificado. Verifique permissões da pasta 'certificado'.";
+                    $pfxContent = file_get_contents($_FILES['arquivo_pfx']['tmp_name']);
+                    if ($pfxContent === false || strlen($pfxContent) === 0) {
+                        $response['message'] = "Erro: O arquivo .pfx enviado está vazio.";
                         break;
                     }
-                } elseif (!empty($caminho_certificado)) {
-                    // Se não houve upload novo, valida o existente com a nova senha (se fornecida)
-                    $pfxPathForValidation = dirname(__DIR__) . '/' . $caminho_certificado;
+
+                    $certificado_pfx_base64 = base64_encode($pfxContent);
+                    $pfxContentForValidation = $pfxContent;
+                    $pfxBase64Safe = mysqli_real_escape_string($link, $certificado_pfx_base64);
+                    $pfx_sql_part = ", certificado_pfx_base64 = '$pfxBase64Safe'";
+                } elseif (!empty($id_config) && !empty($senha_certificado)) {
+                    // Se não houve upload novo mas foi enviada nova senha, busca o PFX existente do banco para validar
+                    $qPfx = "SELECT certificado_pfx_base64, caminho_certificado FROM ConfiguracoesEmissor WHERE id_config = '$id_config' LIMIT 1";
+                    $rPfx = DBExecute($link, $qPfx);
+                    if ($rPfx && $rowPfx = mysqli_fetch_assoc($rPfx)) {
+                        if (!empty($rowPfx['certificado_pfx_base64'])) {
+                            $pfxContentForValidation = base64_decode($rowPfx['certificado_pfx_base64']);
+                        } elseif (!empty($rowPfx['caminho_certificado'])) {
+                            $pfxPath = dirname(__DIR__) . '/' . $rowPfx['caminho_certificado'];
+                            if (file_exists($pfxPath)) {
+                                $pfxContentForValidation = file_get_contents($pfxPath);
+                            }
+                        }
+                    }
                 }
 
                 // --- VALIDATE CERTIFICATE ---
-                // Só valida se tivermos o arquivo E a senha (se a senha não foi enviada, assume que não mudou, mas pra validação "nova" precisaria dela...
-                // Na lógica atual, o front envia a senha se ela for digitada. Se for edição sem troca de senha, o front pode não enviar.
-                // Mas se houve upload, a senha É obrigatória se o pfx exigir.
-
-                if ($pfxPathForValidation && file_exists($pfxPathForValidation) && !empty($senha_certificado)) {
-                    $pfxContent = file_get_contents($pfxPathForValidation);
+                if ($pfxContentForValidation && !empty($senha_certificado)) {
                     $certs = [];
-                    if (!openssl_pkcs12_read($pfxContent, $certs, $senha_certificado)) {
+                    if (!openssl_pkcs12_read($pfxContentForValidation, $certs, $senha_certificado)) {
                         $response['message'] = "Erro de validação do Certificado: Senha incorreta ou arquivo inválido.";
-                        // Se falhou e foi um upload novo, talvez devêssemos apagar o arquivo? Por enquanto mantemos.
                         break;
                     }
                 }
@@ -705,59 +704,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 $google_oauth_client_id = mysqli_real_escape_string($link, $_POST['google_oauth_client_id'] ?? '');
                 $google_oauth_client_secret_raw = $_POST['google_oauth_client_secret'] ?? '';
-                $email_fatura_template_id = $_POST['email_fatura_template_id'] ?? '';
-                $email_fatura_template_id_val = empty($email_fatura_template_id) ? "NULL" : (int) $email_fatura_template_id;
 
-                // Segredos (Encrypt)
-                $api_inter_client_secret_raw = $_POST['api_inter_client_secret'] ?? '';
+                $email_fatura_template_id = !empty($_POST['email_fatura_template_id']) ? (int)$_POST['email_fatura_template_id'] : 'NULL';
+                $email_fatura_template_id_val = ($email_fatura_template_id === 'NULL') ? 'NULL' : $email_fatura_template_id;
 
-                // Address - Config Fiscal
-                $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
-                $numero = mysqli_real_escape_string($link, $_POST['numero'] ?? '');
-                $complemento = mysqli_real_escape_string($link, $_POST['complemento'] ?? '');
-                $bairro = mysqli_real_escape_string($link, $_POST['bairro'] ?? '');
-                $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
-                $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
-
-                // Senha Certificado
+                // Encrypt Passwords if provided
                 $senha_sql_part = "";
                 if (!empty($senha_certificado)) {
-                    // Criptografar antes de salvar
-                    try {
-                        $senha_encrypted = EncryptionHelper::encrypt($senha_certificado);
-                        $senha_sql_part = ", senha_certificado = '$senha_encrypted'";
-                    } catch (Exception $e) {
-                        $response['message'] = "Erro ao criptografar senha certificado: " . $e->getMessage();
-                        break;
-                    }
+                    $enc = EncryptionHelper::encrypt($senha_certificado);
+                    $senha_sql_part = ", senha_certificado = '$enc'";
                 }
 
-                // API Inter Secret
                 $inter_secret_sql_part = "";
                 if (!empty($api_inter_client_secret_raw)) {
                     $enc = EncryptionHelper::encrypt($api_inter_client_secret_raw);
                     $inter_secret_sql_part = ", api_inter_client_secret = '$enc'";
                 }
 
-                // API Oracle Password
                 $oracle_pass_sql_part = "";
                 if (!empty($api_oracle_password_raw)) {
                     $enc = EncryptionHelper::encrypt($api_oracle_password_raw);
                     $oracle_pass_sql_part = ", api_oracle_password = '$enc'";
                 }
 
-                // Google OAuth Client Secret
                 $google_secret_sql_part = "";
                 if (!empty($google_oauth_client_secret_raw)) {
                     $enc = EncryptionHelper::encrypt($google_oauth_client_secret_raw);
                     $google_secret_sql_part = ", google_oauth_client_secret = '$enc'";
                 }
 
-                // Google Service Account JSON
+                // Handle Google JSON Upload
                 $google_json_sql_part = "";
                 if (isset($_FILES['arquivo_google_json']) && $_FILES['arquivo_google_json']['error'] === UPLOAD_ERR_OK) {
                     $jsonContent = file_get_contents($_FILES['arquivo_google_json']['tmp_name']);
-                    // Basic validation
                     if (json_decode($jsonContent)) {
                         $enc = EncryptionHelper::encrypt($jsonContent);
                         $google_json_sql_part = ", google_service_account_json = '$enc'";
@@ -802,6 +781,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 google_oauth_client_id='$google_oauth_client_id',
                                 email_fatura_template_id=$email_fatura_template_id_val
                                 $senha_sql_part
+                                $pfx_sql_part
                                 $inter_secret_sql_part
                                 $oracle_pass_sql_part
                                 $google_json_sql_part
@@ -812,6 +792,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 } else {
                     // Insert
                     $senha_val = empty($senha_certificado) ? "NULL" : "'" . EncryptionHelper::encrypt($senha_certificado) . "'";
+                    $pfx_base64_val = !empty($certificado_pfx_base64) ? "'" . mysqli_real_escape_string($link, $certificado_pfx_base64) . "'" : "NULL";
                     $inter_secret_val = empty($api_inter_client_secret_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_inter_client_secret_raw) . "'";
                     $oracle_pass_val = empty($api_oracle_password_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($api_oracle_password_raw) . "'";
                     $google_oauth_secret_val = empty($google_oauth_client_secret_raw) ? "NULL" : "'" . EncryptionHelper::encrypt($google_oauth_client_secret_raw) . "'";
@@ -835,7 +816,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                               (razao_social, nome_fantasia, cnpj, inscricao_municipal, inscricao_estadual, codigo_municipio, 
                                regime_tributario, optante_simples, modulo_fiscal_ativo, permitir_cadastro_sem_cpf, ambiente_padrao, serie_rps, 
                                ultimo_rps_homologacao, ultimo_rps_producao, 
-                               caminho_certificado, senha_certificado,
+                               caminho_certificado, certificado_pfx_base64, senha_certificado,
                                endereco, numero, complemento, bairro, cep, uf, telefone, logo_url,
                                landing_page_theme, landing_page_path, banho_checkin_foto_ativo, banho_capacidade_simultanea,
                                api_inter_client_id, api_inter_client_secret, 
@@ -847,7 +828,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$modulo_fiscal_ativo', '$permitir_cadastro_sem_cpf', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao', 
-                               '$caminho_certificado', $senha_val,
+                               '$caminho_certificado', $pfx_base64_val, $senha_val,
                                '$endereco', '$numero', '$complemento', '$bairro', '$cep', '$uf', '$telefone', $logo_val,
                                '$landing_page_theme', '$landing_page_path', '$banho_checkin_foto_ativo', '$banho_capacidade_simultanea',
                                '$api_inter_client_id', $inter_secret_val,
@@ -876,14 +857,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 // --- VALIDATE CERTIFICATE ON LOAD ---
                 $certStatus = ['valid' => false, 'message' => 'Nenhum certificado configurado.', 'days_remaining' => 0];
 
-                if (!empty($row['caminho_certificado']) && !empty($row['senha_certificado'])) {
-                    $pfxPath = dirname(__DIR__) . '/' . $row['caminho_certificado'];
-                    if (file_exists($pfxPath)) {
+                $hasPfx = !empty($row['certificado_pfx_base64']) || !empty($row['caminho_certificado']);
+                if ($hasPfx && !empty($row['senha_certificado'])) {
+                    $pfxContent = null;
+                    if (!empty($row['certificado_pfx_base64'])) {
+                        $pfxContent = base64_decode($row['certificado_pfx_base64']);
+                    } elseif (!empty($row['caminho_certificado'])) {
+                        $pfxPath = dirname(__DIR__) . '/' . $row['caminho_certificado'];
+                        if (file_exists($pfxPath)) {
+                            $pfxContent = file_get_contents($pfxPath);
+                        }
+                    }
+
+                    if ($pfxContent) {
                         try {
                             $certPass = EncryptionHelper::decrypt($row['senha_certificado']);
 
                             if ($certPass) {
-                                $pfxContent = file_get_contents($pfxPath);
                                 $certs = [];
                                 if (openssl_pkcs12_read($pfxContent, $certs, $certPass)) {
                                     $data = openssl_x509_parse($certs['cert']);
@@ -908,6 +898,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     }
                 }
                 $row['cert_validation'] = $certStatus;
+                $row['has_certificado_pfx'] = $hasPfx;
 
                 // Flags de presença dos certificados Inter
                 $row['has_inter_crt'] = !empty($row['api_inter_cert_base64']) || (!empty($row['api_inter_cert_path']) && file_exists(dirname(__DIR__) . '/' . $row['api_inter_cert_path']));
@@ -916,6 +907,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 // Não retorna senhas nem chaves privadas/base64 por segurança
                 unset($row['senha_certificado']);
+                unset($row['certificado_pfx_base64']);
                 unset($row['api_inter_client_secret']);
                 unset($row['api_inter_cert_base64']);
                 unset($row['api_inter_key_base64']);
@@ -3022,7 +3014,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 break;
             }
 
-            if (empty($config['caminho_certificado'])) {
+            $hasCert = !empty($config['certificado_pfx_base64']) || !empty($config['caminho_certificado']);
+            if (!$hasCert) {
                 $response['message'] = "Certificado não configurado";
                 break;
             }
@@ -3069,22 +3062,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $xmlData = buildGerarNfseXml($inputApi);
 
             // 6. Load Cert
-            $pfxPath = $config['caminho_certificado'];
-            $finalPfxPath = null;
-            if (file_exists($pfxPath)) {
-                $finalPfxPath = $pfxPath;
-            } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
-                $finalPfxPath = __DIR__ . '/' . $pfxPath;
-            } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
-                $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+            $pfxContent = null;
+            if (!empty($config['certificado_pfx_base64'])) {
+                $pfxContent = base64_decode($config['certificado_pfx_base64']);
+            } elseif (!empty($config['caminho_certificado'])) {
+                $pfxPath = $config['caminho_certificado'];
+                $finalPfxPath = null;
+                if (file_exists($pfxPath)) {
+                    $finalPfxPath = $pfxPath;
+                } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/' . $pfxPath;
+                } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+                }
+                if ($finalPfxPath) {
+                    $pfxContent = file_get_contents($finalPfxPath);
+                }
             }
 
-            if (!$finalPfxPath) {
-                $response['message'] = "Arquivo PFX não encontrado. Verifique caminho: " . $pfxPath;
+            if (!$pfxContent) {
+                $response['message'] = "Arquivo do Certificado PFX não encontrado.";
                 break;
             }
 
-            $pfxContent = file_get_contents($finalPfxPath);
             $certs = [];
             if (!openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado'])) {
                 $response['message'] = "Senha do certificado incorreta ou PFX inválido.";
@@ -3268,22 +3268,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
             $config = mysqli_fetch_assoc($resConf);
 
-            $pfxPath = $config['caminho_certificado'];
-            $finalPfxPath = null;
-            if (file_exists($pfxPath)) {
-                $finalPfxPath = $pfxPath;
-            } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
-                $finalPfxPath = __DIR__ . '/' . $pfxPath;
-            } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
-                $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+            $pfxContent = null;
+            if (!empty($config['certificado_pfx_base64'])) {
+                $pfxContent = base64_decode($config['certificado_pfx_base64']);
+            } elseif (!empty($config['caminho_certificado'])) {
+                $pfxPath = $config['caminho_certificado'];
+                $finalPfxPath = null;
+                if (file_exists($pfxPath)) {
+                    $finalPfxPath = $pfxPath;
+                } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/' . $pfxPath;
+                } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+                }
+                if ($finalPfxPath) {
+                    $pfxContent = file_get_contents($finalPfxPath);
+                }
             }
 
-            if (!$finalPfxPath) {
+            if (!$pfxContent) {
                 $response['message'] = "Certificado não encontrado.";
                 break;
             }
 
-            $pfxContent = file_get_contents($finalPfxPath);
             $certs = [];
 
             // Decrypt Password

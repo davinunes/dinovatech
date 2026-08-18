@@ -863,9 +863,11 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     if (d.api_oracle_user) $('#api_oracle_user').val(d.api_oracle_user);
                     if (d.api_oracle_url) $('#api_oracle_url').val(d.api_oracle_url);
 
-                    if (d.caminho_certificado) {
-                        $('#caminho_certificado_display').text(d.caminho_certificado);
-                        $('#caminho_certificado').val(d.caminho_certificado);
+                    if (d.has_certificado_pfx || d.caminho_certificado) {
+                        $('#caminho_certificado_display').html('<span class="text-green-600 font-medium">Salvo no banco de dados</span>');
+                        if (d.caminho_certificado) {
+                            $('#caminho_certificado').val(d.caminho_certificado);
+                        }
 
                         // Validate Status
                         const statusBadge = $('#cert_status_badge');
@@ -882,6 +884,8 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                                    ${d.cert_validation.message}`);
                             }
                         }
+                    } else {
+                        $('#caminho_certificado_display').text('Nenhum salvo');
                     }
 
                     if (d.optante_simples == 1) {
