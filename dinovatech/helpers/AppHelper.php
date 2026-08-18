@@ -14,6 +14,55 @@ class AppHelper
         return $env === 'true' || $env === '1';
     }
 
+    public static function checkRememberLogin()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['usuario_id']) && !empty($_COOKIE['dinovatech_remember'])) {
+            $parts = explode(':', $_COOKIE['dinovatech_remember'], 2);
+            if (count($parts) === 2) {
+                $userId = (int) $parts[0];
+                $tokenHash = $parts[1];
+
+                $dbPath = dirname(__DIR__) . '/database.php';
+                if (!file_exists($dbPath)) {
+                    $dbPath = dirname(__DIR__, 2) . '/database.php';
+                }
+                if (file_exists($dbPath)) {
+                    require_once $dbPath;
+                }
+
+                $configPath = dirname(__DIR__) . '/config.php';
+                if (file_exists($configPath)) {
+                    require_once $configPath;
+                }
+
+                $link = DBConnect();
+                if ($link) {
+                    $userIdSafe = mysqli_real_escape_string($link, $userId);
+                    $res = DBExecute($link, "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios WHERE id_usuario = '$userIdSafe' LIMIT 1");
+                    if ($res && mysqli_num_rows($res) === 1) {
+                        $user = mysqli_fetch_assoc($res);
+                        $masterKey = defined('APP_MASTER_KEY') && !empty(APP_MASTER_KEY) ? APP_MASTER_KEY : 'dinovatech_secret_key';
+                        $expectedHash = hash_hmac('sha256', $user['id_usuario'] . $user['email'], $masterKey);
+                        if (hash_equals($expectedHash, $tokenHash)) {
+                            $_SESSION['usuario_id'] = $user['id_usuario'];
+                            $_SESSION['usuario_nome'] = $user['nome'];
+                            $_SESSION['usuario_email'] = $user['email'];
+                            $_SESSION['nivel_acesso'] = $user['nivel_acesso'];
+                            DBClose($link);
+                            return true;
+                        }
+                    }
+                    DBClose($link);
+                }
+            }
+        }
+        return isset($_SESSION['usuario_id']);
+    }
+
     public static function getCompanyName()
     {
         $dbPath = dirname(__DIR__) . '/database.php';

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'dinovatech/helpers/AppHelper.php';
+AppHelper::checkRememberLogin();
 $empresaNome = AppHelper::getCompanyName();
 
 // Dynamic Landing Page Router

@@ -31,7 +31,7 @@ if (!isset($_SESSION['usuario_id']) && !empty($_COOKIE['dinovatech_remember'])) 
 
 // Se o usuário já estiver logado, redireciona para o painel
 if (isset($_SESSION['usuario_id'])) {
-    header("Location: index.php");
+    header("Location: dashboard.php");
     exit();
 }
 

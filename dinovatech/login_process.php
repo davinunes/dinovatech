@@ -52,7 +52,7 @@ if ($result && mysqli_num_rows($result) === 1) {
         }
 
         DBClose($link);
-        header('Location: clientes.php'); // Redireciona para o painel principal (Clientes)
+        header('Location: dashboard.php'); // Redireciona para o painel principal (Dashboard)
         exit();
     }
 }
