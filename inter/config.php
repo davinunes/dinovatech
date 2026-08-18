@@ -42,9 +42,59 @@ if ($dbConfig && !empty($dbConfig['api_inter_client_secret'])) {
     }
 }
 
-$certFile = $dbConfig['api_inter_cert_path'] ? __DIR__ . '/../' . $dbConfig['api_inter_cert_path'] : '';
-$keyFile = $dbConfig['api_inter_key_path'] ? __DIR__ . '/../' . $dbConfig['api_inter_key_path'] : '';
-$caFile = $dbConfig['api_inter_ca_path'] ? __DIR__ . '/../' . $dbConfig['api_inter_ca_path'] : '';
+if (!function_exists('inter_get_temp_cert_file')) {
+    /**
+     * Cria arquivo temporário seguro a partir de Base64 e registra para exclusão automática no shutdown
+     */
+    function inter_get_temp_cert_file($base64Data, $prefix = 'inter_') {
+        if (empty($base64Data)) {
+            return '';
+        }
+        $decoded = base64_decode($base64Data, true);
+        if ($decoded === false || strlen($decoded) === 0) {
+            return '';
+        }
+        $tempPath = tempnam(sys_get_temp_dir(), $prefix);
+        if ($tempPath === false) {
+            return '';
+        }
+        file_put_contents($tempPath, $decoded);
+        @chmod($tempPath, 0600);
+        
+        // Garante a remoção do arquivo temporário quando a requisição terminar
+        register_shutdown_function(function () use ($tempPath) {
+            if (file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
+        });
+        
+        return $tempPath;
+    }
+}
+
+// Carrega Certificado (.crt) - Prioriza Base64 do banco, fallback para path legado
+$certFile = '';
+if (!empty($dbConfig['api_inter_cert_base64'])) {
+    $certFile = inter_get_temp_cert_file($dbConfig['api_inter_cert_base64'], 'inter_crt_');
+} elseif (!empty($dbConfig['api_inter_cert_path']) && file_exists(__DIR__ . '/../' . $dbConfig['api_inter_cert_path'])) {
+    $certFile = __DIR__ . '/../' . $dbConfig['api_inter_cert_path'];
+}
+
+// Carrega Chave Privada (.key) - Prioriza Base64 do banco, fallback para path legado
+$keyFile = '';
+if (!empty($dbConfig['api_inter_key_base64'])) {
+    $keyFile = inter_get_temp_cert_file($dbConfig['api_inter_key_base64'], 'inter_key_');
+} elseif (!empty($dbConfig['api_inter_key_path']) && file_exists(__DIR__ . '/../' . $dbConfig['api_inter_key_path'])) {
+    $keyFile = __DIR__ . '/../' . $dbConfig['api_inter_key_path'];
+}
+
+// Carrega Cadeia CA (.crt) - Prioriza Base64 do banco, fallback para path legado
+$caFile = '';
+if (!empty($dbConfig['api_inter_ca_base64'])) {
+    $caFile = inter_get_temp_cert_file($dbConfig['api_inter_ca_base64'], 'inter_ca_');
+} elseif (!empty($dbConfig['api_inter_ca_path']) && file_exists(__DIR__ . '/../' . $dbConfig['api_inter_ca_path'])) {
+    $caFile = __DIR__ . '/../' . $dbConfig['api_inter_ca_path'];
+}
 
 // Array de configuração
 $configuracoes = [

@@ -7,7 +7,7 @@ This integration handles PIX payments (generation, status check, and cancellatio
 - **Certificates**: 
     - Requires a `.crt` (cert) and `.key` (private key) pair.
     - Also requires the Inter CA chain (`ca.crt`).
-    - Stored in `certificado/inter/` (managed via `config_fiscal.php`).
+    - Stored securely in Base64 within `ConfiguracoesEmissor` table (`api_inter_cert_base64`, `api_inter_key_base64`, `api_inter_ca_base64`), managed via `config_fiscal.php`. Temporary files are created in `/tmp` during cURL calls and cleared immediately on script shutdown.
 - **Credentials**:
     - `Client ID` and `Client Secret` are stored in `ConfiguracoesEmissor`.
     - `Client Secret` is encrypted in the database.

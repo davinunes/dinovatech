@@ -842,14 +842,22 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     if (d.api_inter_chave_pix) $('#api_inter_chave_pix').val(d.api_inter_chave_pix);
                     if (d.api_inter_conta_corrente) $('#api_inter_conta_corrente').val(d.api_inter_conta_corrente);
 
-                    if (d.api_inter_cert_path) {
-                        $('#caminho_inter_crt_display').text(d.api_inter_cert_path);
+                    if (d.has_inter_crt || d.api_inter_cert_path) {
+                        $('#caminho_inter_crt_display').html('<span class="text-green-600 font-medium">Salvo no banco de dados</span>');
+                    } else {
+                        $('#caminho_inter_crt_display').text('Nenhum salvo');
                     }
-                    if (d.api_inter_key_path) {
-                        $('#caminho_inter_key_display').text(d.api_inter_key_path);
+
+                    if (d.has_inter_key || d.api_inter_key_path) {
+                        $('#caminho_inter_key_display').html('<span class="text-green-600 font-medium">Salva no banco de dados</span>');
+                    } else {
+                        $('#caminho_inter_key_display').text('Nenhum salvo');
                     }
-                    if (d.api_inter_ca_path) {
-                        $('#caminho_inter_ca_display').text(d.api_inter_ca_path);
+
+                    if (d.has_inter_ca || d.api_inter_ca_path) {
+                        $('#caminho_inter_ca_display').html('<span class="text-green-600 font-medium">Salva no banco de dados</span>');
+                    } else {
+                        $('#caminho_inter_ca_display').text('Nenhum salvo');
                     }
 
                     if (d.api_oracle_user) $('#api_oracle_user').val(d.api_oracle_user);

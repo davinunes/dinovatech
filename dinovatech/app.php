@@ -629,90 +629,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 $caminho_certificado = mysqli_real_escape_string($link, $caminho_certificado);
 
-                // --- INTER CERTIFICATES UPLOAD ---
-                $api_inter_cert_path = ''; // Will update if new file uploaded
-                $api_inter_key_path = '';
+                // --- INTER CERTIFICATES UPLOAD (BASE64) ---
+                $api_inter_cert_base64 = '';
+                $api_inter_key_base64 = '';
+                $api_inter_ca_base64 = '';
 
                 // Handle CRT upload
                 if (isset($_FILES['arquivo_inter_crt']) && $_FILES['arquivo_inter_crt']['error'] === UPLOAD_ERR_OK) {
-                    $uploadInterDir = dirname(__DIR__) . '/certificado/inter/';
-                    if (!is_dir($uploadInterDir)) {
-                        mkdir($uploadInterDir, 0755, true);
-                    }
                     $ext = pathinfo($_FILES['arquivo_inter_crt']['name'], PATHINFO_EXTENSION);
                     if (strtolower($ext) !== 'crt') {
                         $response['message'] = "Erro: Arquivo do certificado Inter deve ser .crt";
                         break;
                     }
-                    $newFileName = 'inter_' . time() . '.crt';
-                    $destPath = $uploadInterDir . $newFileName;
-                    if (move_uploaded_file($_FILES['arquivo_inter_crt']['tmp_name'], $destPath)) {
-                        $api_inter_cert_path = 'certificado/inter/' . $newFileName;
-                    } else {
-                        $response['message'] = "Erro ao salvar arquivo .crt do Inter.";
+                    $content = file_get_contents($_FILES['arquivo_inter_crt']['tmp_name']);
+                    if ($content === false || strlen($content) === 0) {
+                        $response['message'] = "Erro: Arquivo .crt do Inter está vazio.";
                         break;
                     }
+                    $api_inter_cert_base64 = base64_encode($content);
                 }
 
                 // Handle KEY upload
                 if (isset($_FILES['arquivo_inter_key']) && $_FILES['arquivo_inter_key']['error'] === UPLOAD_ERR_OK) {
-                    $uploadInterDir = dirname(__DIR__) . '/certificado/inter/';
-                    if (!is_dir($uploadInterDir)) {
-                        mkdir($uploadInterDir, 0755, true);
-                    }
                     $ext = pathinfo($_FILES['arquivo_inter_key']['name'], PATHINFO_EXTENSION);
                     if (strtolower($ext) !== 'key') {
                         $response['message'] = "Erro: Arquivo de chave Inter deve ser .key";
                         break;
                     }
-                    $newFileName = 'inter_' . time() . '.key';
-                    $destPath = $uploadInterDir . $newFileName;
-                    if (move_uploaded_file($_FILES['arquivo_inter_key']['tmp_name'], $destPath)) {
-                        $api_inter_key_path = 'certificado/inter/' . $newFileName;
-                    } else {
-                        $response['message'] = "Erro ao salvar arquivo .key do Inter.";
+                    $content = file_get_contents($_FILES['arquivo_inter_key']['tmp_name']);
+                    if ($content === false || strlen($content) === 0) {
+                        $response['message'] = "Erro: Arquivo .key do Inter está vazio.";
                         break;
                     }
+                    $api_inter_key_base64 = base64_encode($content);
                 }
 
                 // Handle CA upload
-                $api_inter_ca_path = '';
                 if (isset($_FILES['arquivo_inter_ca']) && $_FILES['arquivo_inter_ca']['error'] === UPLOAD_ERR_OK) {
-                    $uploadInterDir = dirname(__DIR__) . '/certificado/inter/';
-                    // dir created above if needed
-                    if (!is_dir($uploadInterDir)) {
-                        mkdir($uploadInterDir, 0755, true);
-                    }
-
                     $ext = pathinfo($_FILES['arquivo_inter_ca']['name'], PATHINFO_EXTENSION);
-                    // Allow .crt for CA too
                     if (strtolower($ext) !== 'crt') {
                         $response['message'] = "Erro: Arquivo CA do Inter deve ser .crt";
                         break;
                     }
-                    $newFileName = 'ca_' . time() . '.crt';
-                    $destPath = $uploadInterDir . $newFileName;
-                    if (move_uploaded_file($_FILES['arquivo_inter_ca']['tmp_name'], $destPath)) {
-                        $api_inter_ca_path = 'certificado/inter/' . $newFileName;
-                    } else {
-                        $response['message'] = "Erro ao salvar arquivo CA do Inter.";
+                    $content = file_get_contents($_FILES['arquivo_inter_ca']['tmp_name']);
+                    if ($content === false || strlen($content) === 0) {
+                        $response['message'] = "Erro: Arquivo CA do Inter está vazio.";
                         break;
                     }
+                    $api_inter_ca_base64 = base64_encode($content);
                 }
 
                 // Prepared DB updates for Inter Files
                 $inter_files_sql_part = "";
-                if (!empty($api_inter_cert_path)) {
-                    $api_inter_cert_path = mysqli_real_escape_string($link, $api_inter_cert_path);
-                    $inter_files_sql_part .= ", api_inter_cert_path = '$api_inter_cert_path'";
+                if (!empty($api_inter_cert_base64)) {
+                    $api_inter_cert_base64_safe = mysqli_real_escape_string($link, $api_inter_cert_base64);
+                    $inter_files_sql_part .= ", api_inter_cert_base64 = '$api_inter_cert_base64_safe'";
                 }
-                if (!empty($api_inter_key_path)) {
-                    $api_inter_key_path = mysqli_real_escape_string($link, $api_inter_key_path);
-                    $inter_files_sql_part .= ", api_inter_key_path = '$api_inter_key_path'";
+                if (!empty($api_inter_key_base64)) {
+                    $api_inter_key_base64_safe = mysqli_real_escape_string($link, $api_inter_key_base64);
+                    $inter_files_sql_part .= ", api_inter_key_base64 = '$api_inter_key_base64_safe'";
                 }
-                if (!empty($api_inter_ca_path)) {
-                    $api_inter_ca_path = mysqli_real_escape_string($link, $api_inter_ca_path);
-                    $inter_files_sql_part .= ", api_inter_ca_path = '$api_inter_ca_path'";
+                if (!empty($api_inter_ca_base64)) {
+                    $api_inter_ca_base64_safe = mysqli_real_escape_string($link, $api_inter_ca_base64);
+                    $inter_files_sql_part .= ", api_inter_ca_base64 = '$api_inter_ca_base64_safe'";
                 }
 
                 // Novos Campos de Integração
@@ -847,9 +826,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     }
 
                     // For Insert, we use the variables directly (checked empty above)
-                    $api_inter_cert_val = !empty($api_inter_cert_path) ? "'$api_inter_cert_path'" : "NULL";
-                    $api_inter_key_val = !empty($api_inter_key_path) ? "'$api_inter_key_path'" : "NULL";
-                    $api_inter_ca_val = !empty($api_inter_ca_path) ? "'$api_inter_ca_path'" : "NULL";
+                    $api_inter_cert_val = !empty($api_inter_cert_base64) ? "'" . mysqli_real_escape_string($link, $api_inter_cert_base64) . "'" : "NULL";
+                    $api_inter_key_val = !empty($api_inter_key_base64) ? "'" . mysqli_real_escape_string($link, $api_inter_key_base64) . "'" : "NULL";
+                    $api_inter_ca_val = !empty($api_inter_ca_base64) ? "'" . mysqli_real_escape_string($link, $api_inter_ca_base64) . "'" : "NULL";
                     $logo_val = !empty($logo_url_update) ? "'" . mysqli_real_escape_string($link, $logo_url_update) . "'" : "NULL";
 
                     $query = "INSERT INTO ConfiguracoesEmissor 
@@ -861,7 +840,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                landing_page_theme, landing_page_path, banho_checkin_foto_ativo, banho_capacidade_simultanea,
                                api_inter_client_id, api_inter_client_secret, 
                                api_inter_chave_pix, api_inter_conta_corrente,
-                               api_inter_cert_path, api_inter_key_path, api_inter_ca_path,
+                               api_inter_cert_base64, api_inter_key_base64, api_inter_ca_base64,
                                api_oracle_user, api_oracle_password, api_oracle_url, google_service_account_json,
                                google_oauth_client_id, google_oauth_client_secret, email_fatura_template_id)
                               VALUES 
@@ -930,10 +909,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
                 $row['cert_validation'] = $certStatus;
 
-                                // Não retorna senha por segurança, ou retorna mascarado? 
-                // Melhor não retornar a senha para o front.
+                // Flags de presença dos certificados Inter
+                $row['has_inter_crt'] = !empty($row['api_inter_cert_base64']) || (!empty($row['api_inter_cert_path']) && file_exists(dirname(__DIR__) . '/' . $row['api_inter_cert_path']));
+                $row['has_inter_key'] = !empty($row['api_inter_key_base64']) || (!empty($row['api_inter_key_path']) && file_exists(dirname(__DIR__) . '/' . $row['api_inter_key_path']));
+                $row['has_inter_ca'] = !empty($row['api_inter_ca_base64']) || (!empty($row['api_inter_ca_path']) && file_exists(dirname(__DIR__) . '/' . $row['api_inter_ca_path']));
+
+                // Não retorna senhas nem chaves privadas/base64 por segurança
                 unset($row['senha_certificado']);
                 unset($row['api_inter_client_secret']);
+                unset($row['api_inter_cert_base64']);
+                unset($row['api_inter_key_base64']);
+                unset($row['api_inter_ca_base64']);
                 unset($row['api_oracle_password']);
                 unset($row['google_oauth_client_secret']);
                 unset($row['google_oauth_refresh_token']);
