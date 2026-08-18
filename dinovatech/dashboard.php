@@ -124,6 +124,14 @@ DBClose($linkDB);
                         <button id="btnFiltrar"
                             class="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700 transition">Filtrar</button>
                     </div>
+                    <div>
+                        <button id="btnExtratoInter" type="button"
+                            class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center shadow-sm transition gap-1.5"
+                            title="Consultar Extrato Banco Inter do mês selecionado">
+                            <span class="material-icons text-base">account_balance</span>
+                            <span>Extrato Inter</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -404,6 +412,115 @@ DBClose($linkDB);
                     <!-- Mobile Cards -->
                     <div id="listaFaturasRecentesCards" class="md:hidden space-y-4 p-4 bg-gray-50">
                         <div class="text-center text-gray-500 py-4">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL EXTRATO BANCO INTER -->
+            <div id="modalExtratoInter" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-fade-in border border-gray-100">
+                    <!-- Modal Header -->
+                    <div class="px-6 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-white bg-opacity-20 rounded-lg">
+                                <span class="material-icons text-2xl">account_balance</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold">Extrato Banco Inter</h3>
+                                <p class="text-xs text-orange-100" id="extratoPeriodoInfo">Período: -</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="btnExportarPdfExtrato" type="button" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1 shadow-sm">
+                                <span class="material-icons text-sm">picture_as_pdf</span>
+                                <span>Exportar PDF</span>
+                            </button>
+                            <button type="button" onclick="fecharModalExtratoInter()" class="text-white hover:text-orange-200 p-1 rounded-lg transition">
+                                <span class="material-icons text-2xl">close</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Modal Body -->
+                    <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                        <!-- Cards de Resumo -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+                                <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg">
+                                    <span class="material-icons text-xl">arrow_downward</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Entradas / Créditos</p>
+                                    <h4 class="text-lg font-bold text-emerald-900" id="extratoTotalEntradas">R$ 0,00</h4>
+                                </div>
+                            </div>
+                            <div class="bg-rose-50 border border-rose-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+                                <div class="p-2.5 bg-rose-100 text-rose-600 rounded-lg">
+                                    <span class="material-icons text-xl">arrow_upward</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Saídas / Débitos</p>
+                                    <h4 class="text-lg font-bold text-rose-900" id="extratoTotalSaidas">R$ 0,00</h4>
+                                </div>
+                            </div>
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+                                <div class="p-2.5 bg-slate-200 text-slate-700 rounded-lg">
+                                    <span class="material-icons text-xl">receipt_long</span>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Transações</p>
+                                    <h4 class="text-lg font-bold text-slate-800" id="extratoTotalTransacoes">0</h4>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtro de busca rápida na tabela do extrato -->
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="relative flex-1 max-w-xs">
+                                <span class="material-icons absolute left-3 top-2.5 text-gray-400 text-sm">search</span>
+                                <input type="text" id="filtroTextoExtrato" placeholder="Buscar no extrato..."
+                                    class="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                            </div>
+                            <span class="text-xs text-gray-400 italic">Extrato Completo do Banco Inter (Banking v2)</span>
+                        </div>
+
+                        <!-- Estado Loading -->
+                        <div id="extratoLoading" class="hidden py-12 flex flex-col items-center justify-center space-y-3">
+                            <div class="w-10 h-10 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin"></div>
+                            <p class="text-sm font-medium text-gray-600">Consultando extrato na API do Banco Inter...</p>
+                        </div>
+
+                        <!-- Estado Erro -->
+                        <div id="extratoErro" class="hidden p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-3">
+                            <span class="material-icons text-red-500 mt-0.5">error_outline</span>
+                            <div id="extratoErroMsg">Erro ao consultar extrato.</div>
+                        </div>
+
+                        <!-- Tabela de Transações -->
+                        <div id="extratoTabelaContainer" class="overflow-x-auto border border-gray-200 rounded-xl">
+                            <table class="min-w-full divide-y divide-gray-200 text-xs">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Data</th>
+                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Tipo</th>
+                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Título / Descrição</th>
+                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Pagador / Detalhes</th>
+                                        <th class="px-4 py-3 text-right font-semibold text-gray-600">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="extratoListaTransacoes" class="divide-y divide-gray-100 bg-white">
+                                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma consulta realizada.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Modal Footer -->
+                    <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                        <span>API Banco Inter • Banking v2</span>
+                        <button type="button" onclick="fecharModalExtratoInter()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition">
+                            Fechar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -782,6 +899,169 @@ DBClose($linkDB);
             // Filter Button
             $('#btnFiltrar').click(function () {
                 loadDashboard();
+            });
+
+            // ==========================================
+            // LOGICA MODAL EXTRATO BANCO INTER
+            // ==========================================
+            let extratoTransacoesCache = [];
+            let extratoDatasAtuais = { dataInicio: '', dataFim: '' };
+
+            window.fecharModalExtratoInter = function () {
+                $('#modalExtratoInter').addClass('hidden');
+            };
+
+            $('#btnExtratoInter').click(function () {
+                abrirExtratoInter();
+            });
+
+            function abrirExtratoInter() {
+                const mesVal = $('#filtroMes').val() || '<?= date("Y-m") ?>';
+                const parts = mesVal.split('-');
+                const ano = parseInt(parts[0]);
+                const mes = parseInt(parts[1]);
+
+                const ultimoDia = new Date(ano, mes, 0).getDate();
+                const dataInicio = `${mesVal}-01`;
+                const dataFim = `${mesVal}-${String(ultimoDia).padStart(2, '0')}`;
+
+                extratoDatasAtuais = { dataInicio, dataFim };
+
+                const dataInicioBr = `01/${String(mes).padStart(2, '0')}/${ano}`;
+                const dataFimBr = `${String(ultimoDia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`;
+                $('#extratoPeriodoInfo').text(`Período: ${dataInicioBr} até ${dataFimBr}`);
+
+                $('#modalExtratoInter').removeClass('hidden');
+                $('#extratoLoading').removeClass('hidden');
+                $('#extratoErro').addClass('hidden');
+                $('#extratoTabelaContainer').addClass('hidden');
+                $('#extratoListaTransacoes').empty();
+                $('#filtroTextoExtrato').val('');
+
+                $.ajax({
+                    url: '../inter/endpoint.php',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        action: 'consultar_extrato_completo',
+                        dataInicio: dataInicio,
+                        dataFim: dataFim,
+                        tamanhoPagina: 500
+                    },
+                    success: function (res) {
+                        $('#extratoLoading').addClass('hidden');
+                        if (res.success && res.data) {
+                            extratoTransacoesCache = res.data.transacoes || [];
+                            renderizarExtratoTransacoes(extratoTransacoesCache);
+                            $('#extratoTabelaContainer').removeClass('hidden');
+                        } else {
+                            $('#extratoErroMsg').text(res.message || 'Erro ao carregar transações do Inter.');
+                            $('#extratoErro').removeClass('hidden');
+                        }
+                    },
+                    error: function (xhr) {
+                        $('#extratoLoading').addClass('hidden');
+                        let msg = 'Erro de comunicação ao consultar o extrato no Banco Inter.';
+                        if (xhr.responseText) {
+                            try {
+                                const parsed = JSON.parse(xhr.responseText);
+                                if (parsed && parsed.message) msg = parsed.message;
+                            } catch (e) {}
+                        }
+                        $('#extratoErroMsg').text(msg);
+                        $('#extratoErro').removeClass('hidden');
+                    }
+                });
+            }
+
+            function renderizarExtratoTransacoes(transacoes) {
+                let totalEntradas = 0;
+                let totalSaidas = 0;
+                let html = '';
+
+                const filtro = $('#filtroTextoExtrato').val().toLowerCase().trim();
+
+                const filtradas = transacoes.filter(t => {
+                    if (!filtro) return true;
+                    const titulo = (t.titulo || '').toLowerCase();
+                    const desc = (t.descricao || '').toLowerCase();
+                    const tipo = (t.tipoTransacao || '').toLowerCase();
+                    const nomePagador = (t.detalhes?.nomePagador || '').toLowerCase();
+                    const txId = (t.detalhes?.txId || '').toLowerCase();
+                    const doc = (t.numeroDocumento || '').toLowerCase();
+                    return titulo.includes(filtro) || desc.includes(filtro) || tipo.includes(filtro) || nomePagador.includes(filtro) || txId.includes(filtro) || doc.includes(filtro);
+                });
+
+                transacoes.forEach(t => {
+                    const valor = parseFloat(t.valor) || 0;
+                    if (t.tipoOperacao === 'C') {
+                        totalEntradas += valor;
+                    } else if (t.tipoOperacao === 'D') {
+                        totalSaidas += valor;
+                    }
+                });
+
+                $('#extratoTotalEntradas').text(formatCurrency(totalEntradas));
+                $('#extratoTotalSaidas').text(formatCurrency(totalSaidas));
+                $('#extratoTotalTransacoes').text(transacoes.length);
+
+                if (filtradas.length > 0) {
+                    filtradas.forEach(t => {
+                        const valor = parseFloat(t.valor) || 0;
+                        const isCredito = (t.tipoOperacao === 'C');
+                        const valorClass = isCredito ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
+                        const valorSinal = isCredito ? '+ ' : '- ';
+                        const badgeOp = isCredito 
+                            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">Crédito</span>'
+                            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">Débito</span>';
+
+                        const dataFormatada = t.dataTransacao ? formatDate(t.dataTransacao) : (t.dataInclusao ? t.dataInclusao.substring(0, 10) : '-');
+                        const detalhes = t.detalhes || {};
+
+                        html += `
+                            <tr class="hover:bg-orange-50/50 transition">
+                                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                                    <div class="font-medium text-gray-800">${dataFormatada}</div>
+                                    <div class="text-[10px] text-gray-400">${t.dataInclusao ? t.dataInclusao.substring(11, 19) : ''}</div>
+                                </td>
+                                <td class="px-4 py-3 whitespace-nowrap">
+                                    <div class="flex flex-col items-start gap-1">
+                                        <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono font-semibold text-[10px]">${escapeHtml(t.tipoTransacao || 'OUTRO')}</span>
+                                        ${badgeOp}
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div class="font-semibold text-gray-900">${escapeHtml(t.titulo || 'Transação')}</div>
+                                    <div class="text-gray-500 truncate max-w-xs">${escapeHtml(t.descricao || '-')}</div>
+                                    ${t.numeroDocumento ? `<div class="text-[10px] text-gray-400 font-mono">Doc: ${escapeHtml(t.numeroDocumento)}</div>` : ''}
+                                </td>
+                                <td class="px-4 py-3">
+                                    ${detalhes.nomePagador ? `<div class="font-medium text-gray-800">${escapeHtml(detalhes.nomePagador)}</div>` : ''}
+                                    ${detalhes.cpfCnpjPagador ? `<div class="text-[10px] text-gray-500 font-mono">Doc: ${escapeHtml(detalhes.cpfCnpjPagador)}</div>` : ''}
+                                    ${detalhes.txId ? `<div class="text-[10px] text-orange-700 font-mono truncate max-w-xs" title="${escapeHtml(detalhes.txId)}">txId: ${escapeHtml(detalhes.txId)}</div>` : ''}
+                                    ${detalhes.descricaoPix ? `<div class="text-[10px] text-gray-500 italic truncate max-w-xs">${escapeHtml(detalhes.descricaoPix)}</div>` : ''}
+                                </td>
+                                <td class="px-4 py-3 text-right whitespace-nowrap">
+                                    <span class="${valorClass}">${valorSinal}${formatCurrency(valor)}</span>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    html = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma transação encontrada no período.</td></tr>`;
+                }
+
+                $('#extratoListaTransacoes').html(html);
+            }
+
+            $('#filtroTextoExtrato').on('input', function () {
+                renderizarExtratoTransacoes(extratoTransacoesCache);
+            });
+
+            $('#btnExportarPdfExtrato').click(function () {
+                if (extratoDatasAtuais.dataInicio && extratoDatasAtuais.dataFim) {
+                    window.open(`../inter/endpoint.php?action=exportar_extrato_pdf&dataInicio=${extratoDatasAtuais.dataInicio}&dataFim=${extratoDatasAtuais.dataFim}&download=1`, '_blank');
+                }
             });
         });
     </script>

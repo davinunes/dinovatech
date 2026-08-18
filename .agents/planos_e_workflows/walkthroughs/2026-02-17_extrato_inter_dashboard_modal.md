@@ -1,0 +1,29 @@
+# Walkthrough: Botão e Modal de Extrato do Banco Inter na Dashboard
+
+Adicionamos na [dashboard.php](file:///e:/DEV/dinovatech/dinovatech/dashboard.php) o botão **Extrato Inter** no cabeçalho de filtros, permitindo visualizar em um modal todas as transações bancárias do mês selecionado com totais consolidados e opção de download do PDF oficial.
+
+---
+
+## 🛠️ O que foi adicionado
+
+### 1. Botão no Cabeçalho de Filtros
+- Botão laranja estilizado (**Extrato Inter**) ao lado do botão *Filtrar*.
+- Lê automaticamente o mês selecionado no filtro (`#filtroMes`) e monta o período de 1º dia até o último dia daquele mês.
+
+### 2. Modal Completo de Extrato
+- **Header:** Período formatado (*ex: 01/08/2026 até 31/08/2026*), botão de fechar e botão **Exportar PDF**.
+- **Cards de Resumo no topo:**
+  - 🟢 **Entradas / Créditos** (Soma total dos valores com `tipoOperacao = 'C'`)
+  - 🔴 **Saídas / Débitos** (Soma total dos valores com `tipoOperacao = 'D'`)
+  - ⚪ **Total de Transações**
+- **Busca Rápida:** Campo de busca em tempo real para filtrar transações por nome do pagador, título, tipo de transação (PIX, TED, Boleto, etc.), documento ou `txId`.
+- **Tabela de Transações Enriquecida:**
+  - Data e hora da inclusão
+  - Tipo de transação com badges coloridos (Crédito / Débito)
+  - Título, descrição e número de documento
+  - Detalhes do pagador (Nome, CPF/CNPJ, TxID, Descrição Pix)
+  - Valor formatado em moeda brasileira (R$)
+
+### 3. Integração com o Backend
+- Chamada AJAX para `../inter/endpoint.php?action=consultar_extrato_completo`.
+- Exportação em PDF disparando download do arquivo com `../inter/endpoint.php?action=exportar_extrato_pdf&download=1`.
