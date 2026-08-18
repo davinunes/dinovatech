@@ -758,6 +758,16 @@ DBClose($linkDB);
                 return `${day}/${month}/${year}`;
             }
 
+            function escapeHtml(text) {
+                if (!text) return '';
+                return String(text)
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
             // Atendimentos Recentes (Modo Clínico)
             <?php if (AppHelper::isVetMode()): ?>
             window.loadAtendimentosRecentes = function(page = 1) {
@@ -878,16 +888,6 @@ DBClose($linkDB);
                 const datePart = parts[0] ? formatDate(parts[0]) : '-';
                 const timePart = parts[1] ? parts[1].substring(0, 5) : '';
                 return timePart ? `${datePart} às ${timePart}` : datePart;
-            }
-
-            function escapeHtml(text) {
-                if (!text) return '';
-                return text
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
             }
 
             loadAtendimentosRecentes(1);
