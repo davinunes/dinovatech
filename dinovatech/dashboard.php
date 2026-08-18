@@ -75,6 +75,19 @@ if (AppHelper::isVetMode()) {
     $totalPacotesAtivos = ($resPacotesAtivosCount && $rPA = mysqli_fetch_assoc($resPacotesAtivosCount)) ? (int)$rPA['total'] : 0;
 }
 
+// --- Verifica se a integração com Banco Inter está configurada ---
+$interConfigurado = false;
+$resConfigInter = DBExecute($linkDB, "SELECT api_inter_client_id, api_inter_client_secret, api_inter_cert_base64, api_inter_cert_path FROM ConfiguracoesEmissor LIMIT 1");
+if ($resConfigInter && $rowInter = mysqli_fetch_assoc($resConfigInter)) {
+    $hasClientId = !empty($rowInter['api_inter_client_id']);
+    $hasSecret = !empty($rowInter['api_inter_client_secret']);
+    $hasCert = !empty($rowInter['api_inter_cert_base64']) || (!empty($rowInter['api_inter_cert_path']) && file_exists(__DIR__ . '/../' . $rowInter['api_inter_cert_path']));
+    
+    if ($hasClientId && $hasSecret && $hasCert) {
+        $interConfigurado = true;
+    }
+}
+
 DBClose($linkDB);
 ?>
 <!DOCTYPE html>
@@ -124,6 +137,7 @@ DBClose($linkDB);
                         <button id="btnFiltrar"
                             class="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700 transition">Filtrar</button>
                     </div>
+                    <?php if ($interConfigurado): ?>
                     <div>
                         <button id="btnExtratoInter" type="button"
                             class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded text-sm font-medium flex items-center shadow-sm transition gap-1.5"
@@ -132,6 +146,7 @@ DBClose($linkDB);
                             <span>Extrato Inter</span>
                         </button>
                     </div>
+                    <?php endif; ?>
                 </div>
             </div>
 

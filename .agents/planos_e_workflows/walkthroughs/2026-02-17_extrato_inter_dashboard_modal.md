@@ -8,7 +8,8 @@ Adicionamos na [dashboard.php](file:///e:/DEV/dinovatech/dinovatech/dashboard.ph
 
 ### 1. Botão no Cabeçalho de Filtros
 - Botão laranja estilizado (**Extrato Inter**) ao lado do botão *Filtrar*.
-- Lê automaticamente o mês selecionado no filtro (`#filtroMes`) e monta o período de 1º dia até o último dia daquele mês.
+- **Exibição Condicional:** O botão só é renderizado caso a integração com o Banco Inter esteja de fato configurada no banco de dados (`api_inter_client_id`, `api_inter_client_secret` e certificado cadastrado).
+- Lê automaticamente o mês selecionado no filtro (`#filtroMes`) e monta o período de 1º dia até a data atual (ou último dia para meses anteriores).
 
 ### 2. Modal Completo de Extrato
 - **Header:** Período formatado (*ex: 01/08/2026 até 31/08/2026*), botão de fechar e botão **Exportar PDF**.
