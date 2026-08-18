@@ -327,15 +327,33 @@ try {
 
             $pdfResponse = exportarExtratoPdf($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $dataInicio, $dataFim);
 
+            // A API do Inter retorna JSON contendo {"pdf": "base64..."}
+            $rawPdf = null;
+            $decodedJson = json_decode($pdfResponse, true);
+
+            if (is_array($decodedJson) && !empty($decodedJson['pdf'])) {
+                $rawPdf = base64_decode($decodedJson['pdf']);
+            } elseif (is_string($pdfResponse) && strpos($pdfResponse, '%PDF') === 0) {
+                $rawPdf = $pdfResponse;
+            } else {
+                $checkB64 = base64_decode($pdfResponse, true);
+                if ($checkB64 && strpos($checkB64, '%PDF') !== false) {
+                    $rawPdf = $checkB64;
+                } else {
+                    $rawPdf = $pdfResponse;
+                }
+            }
+
             // Se solicitado download direto via GET
             if (isset($_GET['download']) && $_GET['download'] == '1') {
                 header('Content-Type: application/pdf');
                 header('Content-Disposition: attachment; filename="extrato_inter_' . $dataInicio . '_' . $dataFim . '.pdf"');
-                echo $pdfResponse;
+                header('Content-Length: ' . strlen($rawPdf));
+                echo $rawPdf;
                 exit;
             }
 
-            echo json_encode(['success' => true, 'data' => base64_encode($pdfResponse)]);
+            echo json_encode(['success' => true, 'data' => base64_encode($rawPdf)]);
             break;
 
         default:

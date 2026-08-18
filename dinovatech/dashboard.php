@@ -923,12 +923,20 @@ DBClose($linkDB);
 
                 const ultimoDia = new Date(ano, mes, 0).getDate();
                 const dataInicio = `${mesVal}-01`;
-                const dataFim = `${mesVal}-${String(ultimoDia).padStart(2, '0')}`;
+                let dataFim = `${mesVal}-${String(ultimoDia).padStart(2, '0')}`;
+
+                // Se o mês for o mês corrente, evita enviar data futura (ex: hoje é dia 17 e o mês tem 31)
+                const hoje = new Date();
+                const hojeStr = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0') + '-' + String(hoje.getDate()).padStart(2, '0');
+                const mesAtualStr = hojeStr.substring(0, 7);
+                if (mesVal === mesAtualStr && dataFim > hojeStr) {
+                    dataFim = hojeStr;
+                }
 
                 extratoDatasAtuais = { dataInicio, dataFim };
 
-                const dataInicioBr = `01/${String(mes).padStart(2, '0')}/${ano}`;
-                const dataFimBr = `${String(ultimoDia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`;
+                const dataInicioBr = formatDate(dataInicio);
+                const dataFimBr = formatDate(dataFim);
                 $('#extratoPeriodoInfo').text(`Período: ${dataInicioBr} até ${dataFimBr}`);
 
                 $('#modalExtratoInter').removeClass('hidden');
@@ -946,12 +954,25 @@ DBClose($linkDB);
                         action: 'consultar_extrato_completo',
                         dataInicio: dataInicio,
                         dataFim: dataFim,
-                        tamanhoPagina: 500
+                        tamanhoPagina: 100
                     },
                     success: function (res) {
                         $('#extratoLoading').addClass('hidden');
                         if (res.success && res.data) {
-                            extratoTransacoesCache = res.data.transacoes || [];
+                            let transacoes = [];
+                            if (Array.isArray(res.data.transacoes)) {
+                                transacoes = res.data.transacoes;
+                            } else if (Array.isArray(res.data)) {
+                                transacoes = res.data;
+                            } else if (typeof res.data === 'string') {
+                                try {
+                                    const parsed = JSON.parse(res.data);
+                                    transacoes = parsed.transacoes || (Array.isArray(parsed) ? parsed : []);
+                                } catch (e) {
+                                    console.error('Erro ao interpretar JSON de transações:', e);
+                                }
+                            }
+                            extratoTransacoesCache = transacoes;
                             renderizarExtratoTransacoes(extratoTransacoesCache);
                             $('#extratoTabelaContainer').removeClass('hidden');
                         } else {
@@ -979,21 +1000,27 @@ DBClose($linkDB);
                 let totalSaidas = 0;
                 let html = '';
 
-                const filtro = $('#filtroTextoExtrato').val().toLowerCase().trim();
+                const filtro = ($('#filtroTextoExtrato').val() || '').toLowerCase().trim();
+
+                if (!Array.isArray(transacoes)) {
+                    transacoes = [];
+                }
 
                 const filtradas = transacoes.filter(t => {
                     if (!filtro) return true;
+                    const detalhes = t.detalhes || {};
                     const titulo = (t.titulo || '').toLowerCase();
                     const desc = (t.descricao || '').toLowerCase();
                     const tipo = (t.tipoTransacao || '').toLowerCase();
-                    const nomePagador = (t.detalhes?.nomePagador || '').toLowerCase();
-                    const txId = (t.detalhes?.txId || '').toLowerCase();
+                    const nomePagador = (detalhes.nomePagador || '').toLowerCase();
+                    const txId = (detalhes.txId || '').toLowerCase();
                     const doc = (t.numeroDocumento || '').toLowerCase();
-                    return titulo.includes(filtro) || desc.includes(filtro) || tipo.includes(filtro) || nomePagador.includes(filtro) || txId.includes(filtro) || doc.includes(filtro);
+                    const endToEndId = (detalhes.endToEndId || '').toLowerCase();
+                    return titulo.includes(filtro) || desc.includes(filtro) || tipo.includes(filtro) || nomePagador.includes(filtro) || txId.includes(filtro) || doc.includes(filtro) || endToEndId.includes(filtro);
                 });
 
                 transacoes.forEach(t => {
-                    const valor = parseFloat(t.valor) || 0;
+                    const valor = Math.abs(parseFloat(t.valor) || 0);
                     if (t.tipoOperacao === 'C') {
                         totalEntradas += valor;
                     } else if (t.tipoOperacao === 'D') {
@@ -1007,7 +1034,7 @@ DBClose($linkDB);
 
                 if (filtradas.length > 0) {
                     filtradas.forEach(t => {
-                        const valor = parseFloat(t.valor) || 0;
+                        const valor = Math.abs(parseFloat(t.valor) || 0);
                         const isCredito = (t.tipoOperacao === 'C');
                         const valorClass = isCredito ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
                         const valorSinal = isCredito ? '+ ' : '- ';
@@ -1015,14 +1042,15 @@ DBClose($linkDB);
                             ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">Crédito</span>'
                             : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">Débito</span>';
 
-                        const dataFormatada = t.dataTransacao ? formatDate(t.dataTransacao) : (t.dataInclusao ? t.dataInclusao.substring(0, 10) : '-');
+                        const dataFormatada = t.dataTransacao ? formatDate(t.dataTransacao) : (t.dataInclusao ? formatDate(t.dataInclusao.substring(0, 10)) : '-');
+                        const horaFormatada = t.dataInclusao && t.dataInclusao.length >= 19 ? t.dataInclusao.substring(11, 19) : '';
                         const detalhes = t.detalhes || {};
 
                         html += `
                             <tr class="hover:bg-orange-50/50 transition">
                                 <td class="px-4 py-3 whitespace-nowrap text-gray-600">
                                     <div class="font-medium text-gray-800">${dataFormatada}</div>
-                                    <div class="text-[10px] text-gray-400">${t.dataInclusao ? t.dataInclusao.substring(11, 19) : ''}</div>
+                                    ${horaFormatada ? `<div class="text-[10px] text-gray-400 font-mono">${horaFormatada}</div>` : ''}
                                 </td>
                                 <td class="px-4 py-3 whitespace-nowrap">
                                     <div class="flex flex-col items-start gap-1">
@@ -1032,7 +1060,7 @@ DBClose($linkDB);
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="font-semibold text-gray-900">${escapeHtml(t.titulo || 'Transação')}</div>
-                                    <div class="text-gray-500 truncate max-w-xs">${escapeHtml(t.descricao || '-')}</div>
+                                    <div class="text-gray-500 truncate max-w-xs" title="${escapeHtml(t.descricao || '')}">${escapeHtml(t.descricao || '-')}</div>
                                     ${t.numeroDocumento ? `<div class="text-[10px] text-gray-400 font-mono">Doc: ${escapeHtml(t.numeroDocumento)}</div>` : ''}
                                 </td>
                                 <td class="px-4 py-3">
@@ -1048,7 +1076,7 @@ DBClose($linkDB);
                         `;
                     });
                 } else {
-                    html = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma transação encontrada no período.</td></tr>`;
+                    html = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma transação encontrada no período selecionado.</td></tr>`;
                 }
 
                 $('#extratoListaTransacoes').html(html);

@@ -26,4 +26,5 @@ Adicionamos na [dashboard.php](file:///e:/DEV/dinovatech/dinovatech/dashboard.ph
 
 ### 3. Integração com o Backend
 - Chamada AJAX para `../inter/endpoint.php?action=consultar_extrato_completo`.
-- Exportação em PDF disparando download do arquivo com `../inter/endpoint.php?action=exportar_extrato_pdf&download=1`.
+- Exportação em PDF com extração e decodificação automática do campo `pdf` em Base64 retornado pelo Inter no endpoint `../inter/endpoint.php?action=exportar_extrato_pdf&download=1`.
+- Tratamento de data final (`dataFim`) no mês corrente para não ultrapassar a data atual, evitando rejeições da API do Inter.
