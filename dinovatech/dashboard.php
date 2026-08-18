@@ -6,7 +6,8 @@ if (!isset($_SESSION['usuario_id'])) {
 }
 
 require_once '../database.php';
-require_once 'helpers/AppHelper.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers/AppHelper.php';
 $linkDB = DBConnect();
 
 // --- Lembretes de Aniversário (Próximos 30 dias) ---

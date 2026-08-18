@@ -5,7 +5,8 @@ if (!isset($_SESSION['usuario_id'])) {
     exit();
 }
 include "../database.php";
-include "helpers/AppHelper.php";
+require_once __DIR__ . "/config.php";
+require_once __DIR__ . "/helpers/AppHelper.php";
 include "components/layout_head.php";
 
 $id_cliente = $_GET['id'] ?? null;

@@ -5,6 +5,9 @@ if (!isset($_SESSION['usuario_id'])) {
     header("Location: login.php");
     exit();
 }
+require_once __DIR__ . '/../database.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helpers/AppHelper.php';
 // Carrega dados iniciais via PHP para preencher o form, ou faz via AJAX no load.
 // Como app.php é JSON, melhor fazer via AJAX no load para consistência.
 ?>
