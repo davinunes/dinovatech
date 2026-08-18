@@ -1038,8 +1038,17 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                             alert(response.message);
                         }
                     },
-                    error: function () {
-                        alert('Erro ao salvar configurações.');
+                    error: function (xhr) {
+                        var msg = 'Erro ao salvar configurações.';
+                        if (xhr.responseText) {
+                            try {
+                                var res = JSON.parse(xhr.responseText);
+                                if (res && res.message) msg = res.message;
+                            } catch (e) {
+                                console.error("Resposta do servidor não-JSON:", xhr.responseText);
+                            }
+                        }
+                        alert(msg);
                     }
                 });
             });

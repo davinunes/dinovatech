@@ -536,6 +536,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $ultimo_rps_homologacao = (int) $ultimo_rps_homologacao;
                 $ultimo_rps_producao = (int) $ultimo_rps_producao;
                 $telefone = mysqli_real_escape_string($link, $_POST['telefone'] ?? '');
+                $endereco = mysqli_real_escape_string($link, $_POST['endereco'] ?? '');
+                $numero = mysqli_real_escape_string($link, $_POST['numero'] ?? '');
+                $complemento = mysqli_real_escape_string($link, $_POST['complemento'] ?? '');
+                $bairro = mysqli_real_escape_string($link, $_POST['bairro'] ?? '');
+                $cep = mysqli_real_escape_string($link, $_POST['cep'] ?? '');
+                $uf = mysqli_real_escape_string($link, $_POST['uf'] ?? '');
                 $landing_page_theme = mysqli_real_escape_string($link, $landing_page_theme);
                 $landing_page_path = mysqli_real_escape_string($link, $landing_page_path);
 
