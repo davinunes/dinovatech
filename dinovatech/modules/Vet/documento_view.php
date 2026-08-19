@@ -81,6 +81,22 @@ if ($cliente_logado && !$usuario_logado && $doc['id_cliente'] != $_SESSION['clie
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
+        .document-container img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .document-container img[src*="logo"],
+        .document-container img[src*="Logo"],
+        .document-container img[alt*="logo"],
+        .document-container img[alt*="Logo"],
+        .document-container .logo-img {
+            max-height: 75px !important;
+            max-width: 240px !important;
+            width: auto !important;
+            object-fit: contain !important;
+        }
+
         @page {
             size: A4;
             margin: 10mm;

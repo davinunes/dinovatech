@@ -137,7 +137,7 @@ DBClose($link);
         <header class="border-b-2 border-cyan-800 pb-4 mb-4 flex items-center justify-between">
             <div>
                 <?php if (!empty($empresa['logo_url'])): ?>
-                    <img src="../../<?= $empresa['logo_url'] ?>" alt="Logo" class="h-20 object-contain">
+                    <img src="../../<?= $empresa['logo_url'] ?>" alt="Logo" class="h-20 object-contain" style="max-height: 75px; max-width: 220px; width: auto; object-fit: contain;">
                 <?php else: ?>
                     <h1 class="text-3xl font-bold text-cyan-800 tracking-tight">
                         <?= htmlspecialchars($empresa['razao_social'] ?? 'Clínica Veterinária') ?>
@@ -236,7 +236,7 @@ DBClose($link);
             <div class="mb-8">
                 <?php if (!empty($receita['url_assinatura'])): ?>
                     <div class="flex justify-center mb-1">
-                        <img src="<?= $receita['url_assinatura'] ?>" alt="Assinatura" class="h-20 object-contain">
+                        <img src="<?= $receita['url_assinatura'] ?>" alt="Assinatura" class="h-20 object-contain" style="max-height: 70px; max-width: 220px; width: auto; object-fit: contain;">
                     </div>
                 <?php else: ?>
                     <div class="w-64 border-b border-black mx-auto mb-2"></div>

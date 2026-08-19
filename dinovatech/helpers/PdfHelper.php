@@ -92,7 +92,33 @@ class PdfHelper
                 $imageData = base64_encode(file_get_contents($filePath));
                 $dataUri = "data:{$mime};base64,{$imageData}";
 
-                return "<img {$prefix}src=\"{$dataUri}\"{$suffix}>";
+                $fullTag = "<img {$prefix}src=\"{$dataUri}\"{$suffix}>";
+
+                // Se houver atributos width ou height definidos na tag HTML (ex: do TinyMCE),
+                // injeta-os explicitamente no style="" para que o WeasyPrint aplique com prioridade máxima CSS.
+                $widthMatch = [];
+                $heightMatch = [];
+                preg_match('/\bwidth=["\']?(\d+)(?:px)?["\']?/i', $fullTag, $widthMatch);
+                preg_match('/\bheight=["\']?(\d+)(?:px)?["\']?/i', $heightMatch);
+
+                $extraCss = '';
+                if (!empty($widthMatch[1])) {
+                    $extraCss .= "width: {$widthMatch[1]}px !important; max-width: {$widthMatch[1]}px !important; ";
+                }
+                if (!empty($heightMatch[1])) {
+                    $extraCss .= "height: {$heightMatch[1]}px !important; max-height: {$heightMatch[1]}px !important; ";
+                }
+
+                if (!empty($extraCss)) {
+                    if (preg_match('/style=["\'](.*?)["\']/i', $fullTag, $styleMatch)) {
+                        $newStyle = rtrim(trim($styleMatch[1]), ';') . '; ' . $extraCss;
+                        $fullTag = preg_replace('/style=["\'](.*?)["\']/i', "style=\"{$newStyle}\"", $fullTag);
+                    } else {
+                        $fullTag = str_replace('<img ', "<img style=\"{$extraCss}\" ", $fullTag);
+                    }
+                }
+
+                return $fullTag;
             }
 
             return $matches[0];
@@ -114,6 +140,53 @@ class PdfHelper
         // 2. Garantir metadados e charset UTF-8 se não estiverem presentes
         if (stripos($processedHtml, '<meta charset') === false && stripos($processedHtml, '<head>') !== false) {
             $processedHtml = str_ireplace('<head>', '<head><meta charset="UTF-8">', $processedHtml);
+        }
+
+        // 3. Injetar regras CSS padrão de PDF (controle de imagens, logos, assinaturas e paginação)
+        $pdfResetCss = '
+        <style>
+            @page {
+                size: A4;
+                margin: 12mm 15mm;
+            }
+            img {
+                max-width: 100%;
+                height: auto;
+            }
+            img[src*="logo"], img[src*="Logo"], img[alt*="logo"], img[alt*="Logo"], .logo-img {
+                max-height: 75px !important;
+                max-width: 240px !important;
+                height: auto !important;
+                object-fit: contain !important;
+            }
+            img[src*="assinatura"], img[alt*="assinatura"], img[alt*="Assinatura"] {
+                max-height: 70px !important;
+                max-width: 220px !important;
+                height: auto !important;
+                object-fit: contain !important;
+            }
+            .h-20 {
+                height: 75px !important;
+                max-height: 75px !important;
+            }
+            .h-16 {
+                height: 60px !important;
+                max-height: 60px !important;
+            }
+            .h-24 {
+                height: 90px !important;
+                max-height: 90px !important;
+            }
+            .object-contain {
+                object-fit: contain !important;
+            }
+        </style>
+        ';
+
+        if (stripos($processedHtml, '</head>') !== false) {
+            $processedHtml = str_ireplace('</head>', $pdfResetCss . '</head>', $processedHtml);
+        } else {
+            $processedHtml = $pdfResetCss . $processedHtml;
         }
 
         $candidateUrls = self::getCandidateUrls();
