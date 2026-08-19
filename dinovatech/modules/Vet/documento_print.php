@@ -287,6 +287,7 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($modelo['titulo']) ?></title>
     <style>
         body {

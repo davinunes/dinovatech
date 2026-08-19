@@ -64,6 +64,7 @@ DBClose($link);
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receita Veterinária - #
         <?= $id_receita ?>
     </title>
@@ -85,15 +86,32 @@ DBClose($link);
 
         .print-container {
             background: white;
-            width: 210mm;
+            width: 100%;
+            max-width: 210mm;
             min-height: 297mm;
-            margin: 20px auto;
+            margin: 75px auto 30px;
             padding: 20mm;
             position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            border-radius: 8px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .print-container {
+                width: calc(100% - 24px) !important;
+                max-width: 100% !important;
+                margin: 70px auto 20px !important;
+                padding: 16px !important;
+                min-height: auto !important;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06) !important;
+                border-radius: 16px !important;
+            }
+            .grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
         }
 
         /* Layout & Flexbox */
@@ -209,17 +227,22 @@ DBClose($link);
 <body>
 
 <?php if (!isset($_GET['pdf']) || $_GET['pdf'] != '1'): ?>
-    <div class="no-print fixed top-4 right-4 flex gap-2">
+    <div class="no-print fixed top-3 right-3 sm:top-4 sm:right-4 z-[9999] flex items-center gap-2 bg-white/95 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl shadow-xl border border-gray-200">
         <a href="?id=<?= $id_receita ?>&pdf=1" target="_blank"
-            class="bg-emerald-600 text-white px-4 py-2 rounded shadow flex items-center hover:bg-emerald-700">
-            <span class="material-icons mr-2">picture_as_pdf</span> Baixar PDF
+            class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1 shadow-sm transition">
+            <span class="material-icons text-sm sm:text-base">picture_as_pdf</span> 
+            <span class="hidden sm:inline">Baixar PDF</span>
+            <span class="sm:hidden">PDF</span>
         </a>
         <button onclick="window.print()"
-            class="bg-cyan-600 text-white px-4 py-2 rounded shadow flex items-center hover:bg-cyan-700">
-            <span class="material-icons mr-2">print</span> Imprimir
+            class="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1 shadow-sm transition">
+            <span class="material-icons text-sm sm:text-base">print</span> 
+            <span class="hidden sm:inline">Imprimir</span>
+            <span class="sm:hidden">Imprimir</span>
         </button>
-        <button onclick="window.close()" class="bg-gray-500 text-white px-4 py-2 rounded shadow hover:bg-gray-600">
-            Fechar
+        <button onclick="window.close()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-1">
+            <span class="material-icons text-sm sm:text-base">close</span>
+            <span class="hidden sm:inline">Fechar</span>
         </button>
     </div>
 <?php endif; ?>
