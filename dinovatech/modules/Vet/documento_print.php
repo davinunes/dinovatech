@@ -14,6 +14,11 @@ if (!file_exists($pathConfig) || !file_exists($pathDB)) {
 
 require_once $pathConfig;
 require_once $pathHelper;
+require_once __DIR__ . '/../../helpers/PdfHelper.php';
+
+if (isset($_REQUEST['pdf']) && $_REQUEST['pdf'] == '1') {
+    ob_start();
+}
 
 $usuario_logado = isset($_SESSION['usuario_id']);
 $cliente_logado = isset($_SESSION['cliente_id']);
@@ -339,19 +344,42 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
             }
         }
 
-        .btn-print {
+        .btn-action-group {
             position: fixed;
             top: 20px;
             right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 9999;
+        }
+
+        .btn-pdf {
+            background: #059669;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: inline-flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .btn-pdf:hover {
+            background: #047857;
+        }
+
+        .btn-print {
             background: #0891b2;
             color: white;
-            padding: 10px 20px;
+            padding: 10px 18px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            z-index: 9999;
+            font-size: 14px;
         }
 
         .btn-print:hover {
@@ -361,15 +389,30 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
 </head>
 
 <body>
-    <button onclick="window.print()" class="btn-print no-print">Imprimir / Salvar PDF</button>
+    <div class="btn-action-group no-print">
+        <a href="<?= htmlspecialchars($_SERVER['REQUEST_URI'] . (strpos($_SERVER['REQUEST_URI'], '?') !== false ? '&' : '?') . 'pdf=1') ?>" target="_blank" class="btn-pdf">
+            Baixar PDF
+        </a>
+        <button onclick="window.print()" class="btn-print">Imprimir</button>
+    </div>
+
     <div class="document-container">
         <?= $conteudo_final ?>
     </div>
+
+<?php if (!isset($_REQUEST['pdf']) || $_REQUEST['pdf'] != '1'): ?>
     <script>
         window.onload = function () {
             setTimeout(function () { window.print(); }, 500);
         }
     </script>
+<?php else: ?>
+<?php
+    $htmlContent = ob_get_clean();
+    $filename = "documento_" . date('Ymd_His') . ".pdf";
+    PdfHelper::streamPdf($htmlContent, $filename, true);
+?>
+<?php endif; ?>
 </body>
 
 </html>

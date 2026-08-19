@@ -9,7 +9,12 @@ if (!$usuario_logado && !$cliente_logado) {
 
 require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers/AppHelper.php';
+require_once __DIR__ . '/../../helpers/PdfHelper.php';
 include "../../../database.php";
+
+if (isset($_GET['pdf']) && $_GET['pdf'] == '1') {
+    ob_start();
+}
 
 $id_receita = $_GET['id'] ?? null;
 if (!$id_receita)
@@ -113,6 +118,10 @@ DBClose($link);
 <body>
 
     <div class="no-print fixed top-4 right-4 flex gap-2">
+        <a href="?id=<?= $id_receita ?>&pdf=1" target="_blank"
+            class="bg-emerald-600 text-white px-4 py-2 rounded shadow flex items-center hover:bg-emerald-700">
+            <span class="material-icons mr-2">picture_as_pdf</span> Baixar PDF
+        </a>
         <button onclick="window.print()"
             class="bg-cyan-600 text-white px-4 py-2 rounded shadow flex items-center hover:bg-cyan-700">
             <span class="material-icons mr-2">print</span> Imprimir
@@ -245,7 +254,13 @@ DBClose($link);
         </footer>
 
     </div>
-
+<?php
+if (isset($_GET['pdf']) && $_GET['pdf'] == '1') {
+    $htmlContent = ob_get_clean();
+    $filename = "receita_" . str_pad($id_receita, 5, '0', STR_PAD_LEFT) . ".pdf";
+    PdfHelper::streamPdf($htmlContent, $filename, true);
+}
+?>
 </body>
 
 </html>
