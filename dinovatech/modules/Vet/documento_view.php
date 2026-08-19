@@ -167,12 +167,14 @@ if ($cliente_logado && !$usuario_logado && $doc['id_cliente'] != $_SESSION['clie
 </head>
 
 <body>
+<?php if (!isset($_REQUEST['pdf']) || $_REQUEST['pdf'] != '1'): ?>
     <div class="btn-action-group no-print">
         <a href="<?= htmlspecialchars($_SERVER['REQUEST_URI'] . (strpos($_SERVER['REQUEST_URI'], '?') !== false ? '&' : '?') . 'pdf=1') ?>" target="_blank" class="btn-pdf">
             Baixar PDF
         </a>
         <button onclick="window.print()" class="btn-print">Imprimir</button>
     </div>
+<?php endif; ?>
 
     <div class="document-container">
         <?= $doc['conteudo_html'] ?>

@@ -259,6 +259,17 @@ class PdfHelper
             .h-16 { height: 60px !important; max-height: 60px !important; }
             .h-24 { height: 90px !important; max-height: 90px !important; }
             .object-contain { object-fit: contain !important; }
+
+            /* Ocultar elementos exclusivos de tela (botões, links de impressão) */
+            .no-print, .no-pdf, .btn-action-group, .btn-print, .btn-pdf, header.no-print, div.no-print {
+                display: none !important;
+                visibility: hidden !important;
+                height: 0 !important;
+                width: 0 !important;
+                overflow: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
         </style>
         ';
 

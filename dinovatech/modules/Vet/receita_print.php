@@ -208,6 +208,7 @@ DBClose($link);
 
 <body>
 
+<?php if (!isset($_GET['pdf']) || $_GET['pdf'] != '1'): ?>
     <div class="no-print fixed top-4 right-4 flex gap-2">
         <a href="?id=<?= $id_receita ?>&pdf=1" target="_blank"
             class="bg-emerald-600 text-white px-4 py-2 rounded shadow flex items-center hover:bg-emerald-700">
@@ -221,6 +222,7 @@ DBClose($link);
             Fechar
         </button>
     </div>
+<?php endif; ?>
 
     <div class="print-container flex flex-col justify-between">
 

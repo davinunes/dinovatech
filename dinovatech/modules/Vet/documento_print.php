@@ -388,13 +388,14 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
     </style>
 </head>
 
-<body>
+<?php if (!isset($_REQUEST['pdf']) || $_REQUEST['pdf'] != '1'): ?>
     <div class="btn-action-group no-print">
         <a href="<?= htmlspecialchars($_SERVER['REQUEST_URI'] . (strpos($_SERVER['REQUEST_URI'], '?') !== false ? '&' : '?') . 'pdf=1') ?>" target="_blank" class="btn-pdf">
             Baixar PDF
         </a>
         <button onclick="window.print()" class="btn-print">Imprimir</button>
     </div>
+<?php endif; ?>
 
     <div class="document-container">
         <?= $conteudo_final ?>
