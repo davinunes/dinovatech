@@ -142,12 +142,20 @@ class PdfHelper
             $processedHtml = str_ireplace('<head>', '<head><meta charset="UTF-8">', $processedHtml);
         }
 
-        // 3. Injetar regras CSS padrão de PDF (controle de imagens, logos, assinaturas e paginação)
+        // 3. Injetar regras CSS padrão de PDF (controle de imagens, logos, assinaturas, paginação e utilitários)
         $pdfResetCss = '
         <style>
             @page {
                 size: A4;
-                margin: 12mm 15mm;
+                margin: 10mm;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                color: #1f2937;
+                line-height: 1.5;
             }
             img {
                 max-width: 100%;
@@ -165,21 +173,92 @@ class PdfHelper
                 height: auto !important;
                 object-fit: contain !important;
             }
-            .h-20 {
-                height: 75px !important;
-                max-height: 75px !important;
-            }
-            .h-16 {
-                height: 60px !important;
-                max-height: 60px !important;
-            }
-            .h-24 {
-                height: 90px !important;
-                max-height: 90px !important;
-            }
-            .object-contain {
-                object-fit: contain !important;
-            }
+
+            /* Utilitários Flexbox, Grid e Layout */
+            .flex { display: flex !important; }
+            .flex-col { flex-direction: column !important; }
+            .justify-between { justify-content: space-between !important; }
+            .justify-center { justify-content: center !important; }
+            .items-center { align-items: center !important; }
+            .items-baseline { align-items: baseline !important; }
+            .flex-1 { flex: 1 !important; }
+            .grid { display: grid !important; }
+            .grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+            .gap-4 { gap: 16px !important; }
+            .gap-2 { gap: 8px !important; }
+
+            /* Tipografia */
+            .text-xs { font-size: 11px !important; }
+            .text-sm { font-size: 13px !important; }
+            .text-base { font-size: 14px !important; }
+            .text-lg { font-size: 17px !important; }
+            .text-xl { font-size: 20px !important; }
+            .text-2xl { font-size: 24px !important; }
+            .text-3xl { font-size: 26px !important; }
+            .font-bold { font-weight: bold !important; }
+            .font-medium { font-weight: 500 !important; }
+            .uppercase { text-transform: uppercase !important; }
+            .tracking-widest { letter-spacing: 0.1em !important; }
+            .tracking-tight { letter-spacing: -0.025em !important; }
+            .tracking-wide { letter-spacing: 0.05em !important; }
+            .leading-snug { line-height: 1.375 !important; }
+            .italic { font-style: italic !important; }
+            .text-right { text-align: right !important; }
+            .text-center { text-align: center !important; }
+            .block { display: block !important; }
+
+            /* Cores e Fundos */
+            .text-cyan-800 { color: #155e75 !important; }
+            .text-cyan-900 { color: #164e63 !important; }
+            .text-gray-800 { color: #1f2937 !important; }
+            .text-gray-700 { color: #374151 !important; }
+            .text-gray-600 { color: #4b5563 !important; }
+            .text-gray-500 { color: #6b7280 !important; }
+            .text-gray-400 { color: #9ca3af !important; }
+            .bg-gray-50 { background-color: #f9fafb !important; }
+            .bg-gray-100 { background-color: #f3f4f6 !important; }
+
+            /* Bordas e Espaçamentos */
+            .border { border: 1px solid #e5e7eb !important; }
+            .border-b { border-bottom: 1px solid #e5e7eb !important; }
+            .border-t { border-top: 1px solid #e5e7eb !important; }
+            .border-b-2 { border-bottom: 2px solid !important; }
+            .border-t-2 { border-top: 2px solid !important; }
+            .border-l-4 { border-left: 4px solid !important; }
+            .border-dashed { border-style: dashed !important; }
+            .border-cyan-800 { border-color: #155e75 !important; }
+            .border-cyan-200 { border-color: #a5f3fc !important; }
+            .border-gray-200 { border-color: #e5e7eb !important; }
+            .border-gray-300 { border-color: #d1d5db !important; }
+            .rounded-lg { border-radius: 8px !important; }
+            .rounded { border-radius: 4px !important; }
+            .p-4 { padding: 16px !important; }
+            .pb-4 { padding-bottom: 16px !important; }
+            .pb-2 { padding-bottom: 8px !important; }
+            .pb-1 { padding-bottom: 4px !important; }
+            .pt-4 { padding-top: 16px !important; }
+            .pt-8 { padding-top: 32px !important; }
+            .pl-4 { padding-left: 16px !important; }
+            .py-1 { padding-top: 4px !important; padding-bottom: 4px !important; }
+            .px-2 { padding-left: 8px !important; padding-right: 8px !important; }
+            .py-0.5 { padding-top: 2px !important; padding-bottom: 2px !important; }
+            .mb-4 { margin-bottom: 16px !important; }
+            .mb-2 { margin-bottom: 8px !important; }
+            .mb-1 { margin-bottom: 4px !important; }
+            .mb-0.5 { margin-bottom: 2px !important; }
+            .mb-8 { margin-bottom: 32px !important; }
+            .mt-12 { margin-top: 48px !important; }
+            .mt-4 { margin-top: 16px !important; }
+            .mt-2 { margin-top: 8px !important; }
+            .mt-1 { margin-top: 4px !important; }
+            .space-y-4 > * + * { margin-top: 16px !important; }
+            .w-64 { width: 16rem !important; }
+            .mx-auto { margin-left: auto !important; margin-right: auto !important; }
+            .border-black { border-color: #000 !important; }
+            .h-20 { height: 75px !important; max-height: 75px !important; }
+            .h-16 { height: 60px !important; max-height: 60px !important; }
+            .h-24 { height: 90px !important; max-height: 90px !important; }
+            .object-contain { object-fit: contain !important; }
         </style>
         ';
 

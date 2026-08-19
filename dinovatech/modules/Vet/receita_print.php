@@ -70,12 +70,118 @@ DBClose($link);
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @media print {
-            @page {
-                size: A4;
-                margin: 10mm;
-            }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        body {
+            font-family: 'Inter', Arial, sans-serif;
+            background: #f3f4f6;
+            color: #1f2937;
+            line-height: 1.5;
+        }
+
+        .print-container {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            padding: 20mm;
+            position: relative;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Layout & Flexbox */
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .justify-between { justify-content: space-between; }
+        .justify-center { justify-content: center; }
+        .items-center { align-items: center; }
+        .items-baseline { align-items: baseline; }
+        .flex-1 { flex: 1; }
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: 1fr 1fr; }
+        .gap-4 { gap: 16px; }
+
+        /* Typography */
+        .text-xs { font-size: 11px; }
+        .text-sm { font-size: 13px; }
+        .text-base { font-size: 14px; }
+        .text-lg { font-size: 17px; }
+        .text-xl { font-size: 20px; }
+        .text-3xl { font-size: 26px; }
+        .font-bold { font-weight: bold; }
+        .font-medium { font-weight: 500; }
+        .uppercase { text-transform: uppercase; }
+        .tracking-widest { letter-spacing: 0.1em; }
+        .tracking-tight { letter-spacing: -0.025em; }
+        .tracking-wide { letter-spacing: 0.05em; }
+        .leading-snug { line-height: 1.375; }
+        .italic { font-style: italic; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .block { display: block; }
+
+        /* Colors */
+        .text-cyan-800 { color: #155e75; }
+        .text-cyan-900 { color: #164e63; }
+        .text-gray-800 { color: #1f2937; }
+        .text-gray-700 { color: #374151; }
+        .text-gray-600 { color: #4b5563; }
+        .text-gray-500 { color: #6b7280; }
+        .text-gray-400 { color: #9ca3af; }
+        .bg-gray-50 { background-color: #f9fafb; }
+        .bg-gray-100 { background-color: #f3f4f6; }
+
+        /* Borders & Spacing */
+        .border { border: 1px solid #e5e7eb; }
+        .border-b { border-bottom: 1px solid #e5e7eb; }
+        .border-t { border-top: 1px solid #e5e7eb; }
+        .border-b-2 { border-bottom: 2px solid; }
+        .border-t-2 { border-top: 2px solid; }
+        .border-l-4 { border-left: 4px solid; }
+        .border-dashed { border-style: dashed; }
+        .border-cyan-800 { border-color: #155e75; }
+        .border-cyan-200 { border-color: #a5f3fc; }
+        .border-gray-200 { border-color: #e5e7eb; }
+        .border-gray-300 { border-color: #d1d5db; }
+        .rounded-lg { border-radius: 8px; }
+        .rounded { border-radius: 4px; }
+        .p-4 { padding: 16px; }
+        .pb-4 { padding-bottom: 16px; }
+        .pb-2 { padding-bottom: 8px; }
+        .pb-1 { padding-bottom: 4px; }
+        .pt-4 { padding-top: 16px; }
+        .pt-8 { padding-top: 32px; }
+        .pl-4 { padding-left: 16px; }
+        .py-1 { padding-top: 4px; padding-bottom: 4px; }
+        .px-2 { padding-left: 8px; padding-right: 8px; }
+        .py-0.5 { padding-top: 2px; padding-bottom: 2px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-1 { margin-bottom: 4px; }
+        .mb-0.5 { margin-bottom: 2px; }
+        .mb-8 { margin-bottom: 32px; }
+        .mt-12 { margin-top: 48px; }
+        .mt-4 { margin-top: 16px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-1 { margin-top: 4px; }
+        .space-y-4 > * + * { margin-top: 16px; }
+        .w-64 { width: 16rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .border-black { border-color: #000; }
+
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
+        @media print {
             .no-print {
                 display: none !important;
             }
@@ -96,21 +202,6 @@ DBClose($link);
                 min-height: auto !important;
                 height: auto !important;
             }
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #f3f4f6;
-        }
-
-        .print-container {
-            background: white;
-            width: 210mm;
-            min-height: 297mm;
-            margin: 20px auto;
-            padding: 20mm;
-            position: relative;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
