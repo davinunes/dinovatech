@@ -99,7 +99,7 @@ class PdfHelper
                 $widthMatch = [];
                 $heightMatch = [];
                 preg_match('/\bwidth=["\']?(\d+)(?:px)?["\']?/i', $fullTag, $widthMatch);
-                preg_match('/\bheight=["\']?(\d+)(?:px)?["\']?/i', $heightMatch);
+                preg_match('/\bheight=["\']?(\d+)(?:px)?["\']?/i', $fullTag, $heightMatch);
 
                 $extraCss = '';
                 if (!empty($widthMatch[1])) {
