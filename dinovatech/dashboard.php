@@ -432,23 +432,23 @@ DBClose($linkDB);
             </div>
 
             <!-- MODAL EXTRATO BANCO INTER -->
-            <div id="modalExtratoInter" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-fade-in border border-gray-100">
+            <div id="modalExtratoInter" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4">
+                <div class="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[94vh] flex flex-col overflow-hidden animate-fade-in border border-gray-100">
                     <!-- Modal Header -->
-                    <div class="px-6 py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-between shadow-sm">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-white bg-opacity-20 rounded-lg">
-                                <span class="material-icons text-2xl">account_balance</span>
+                    <div class="px-4 sm:px-6 py-3.5 sm:py-4 bg-gradient-to-r from-orange-500 to-amber-500 text-white flex items-center justify-between shadow-sm">
+                        <div class="flex items-center gap-2.5 sm:gap-3">
+                            <div class="p-2 bg-white bg-opacity-20 rounded-xl">
+                                <span class="material-icons text-xl sm:text-2xl">account_balance</span>
                             </div>
                             <div>
-                                <h3 class="text-lg font-bold">Extrato Banco Inter</h3>
-                                <p class="text-xs text-orange-100" id="extratoPeriodoInfo">Período: -</p>
+                                <h3 class="text-base sm:text-lg font-bold">Extrato Banco Inter</h3>
+                                <p class="text-[11px] sm:text-xs text-orange-100" id="extratoPeriodoInfo">Período: -</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button id="btnExportarPdfExtrato" type="button" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1 shadow-sm">
+                            <button id="btnExportarPdfExtrato" type="button" class="bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-xs px-2.5 sm:px-3 py-1.5 rounded-lg font-medium transition flex items-center gap-1 shadow-sm">
                                 <span class="material-icons text-sm">picture_as_pdf</span>
-                                <span>Exportar PDF</span>
+                                <span class="hidden sm:inline">Exportar PDF</span>
                             </button>
                             <button type="button" onclick="fecharModalExtratoInter()" class="text-white hover:text-orange-200 p-1 rounded-lg transition">
                                 <span class="material-icons text-2xl">close</span>
@@ -457,46 +457,46 @@ DBClose($linkDB);
                     </div>
 
                     <!-- Modal Body -->
-                    <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                    <div class="p-3 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-6">
                         <!-- Cards de Resumo -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
-                                <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-lg">
-                                    <span class="material-icons text-xl">arrow_downward</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-4">
+                            <div class="bg-emerald-50 border border-emerald-100 rounded-xl p-3 sm:p-4 flex items-center gap-3 shadow-sm">
+                                <div class="p-2.5 bg-emerald-100 text-emerald-600 rounded-xl">
+                                    <span class="material-icons text-lg sm:text-xl">arrow_downward</span>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Entradas / Créditos</p>
-                                    <h4 class="text-lg font-bold text-emerald-900" id="extratoTotalEntradas">R$ 0,00</h4>
+                                    <p class="text-[10px] sm:text-xs font-semibold text-emerald-600 uppercase tracking-wider">Entradas / Créditos</p>
+                                    <h4 class="text-base sm:text-lg font-bold text-emerald-900" id="extratoTotalEntradas">R$ 0,00</h4>
                                 </div>
                             </div>
-                            <div class="bg-rose-50 border border-rose-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
-                                <div class="p-2.5 bg-rose-100 text-rose-600 rounded-lg">
-                                    <span class="material-icons text-xl">arrow_upward</span>
+                            <div class="bg-rose-50 border border-rose-100 rounded-xl p-3 sm:p-4 flex items-center gap-3 shadow-sm">
+                                <div class="p-2.5 bg-rose-100 text-rose-600 rounded-xl">
+                                    <span class="material-icons text-lg sm:text-xl">arrow_upward</span>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Saídas / Débitos</p>
-                                    <h4 class="text-lg font-bold text-rose-900" id="extratoTotalSaidas">R$ 0,00</h4>
+                                    <p class="text-[10px] sm:text-xs font-semibold text-rose-600 uppercase tracking-wider">Saídas / Débitos</p>
+                                    <h4 class="text-base sm:text-lg font-bold text-rose-900" id="extratoTotalSaidas">R$ 0,00</h4>
                                 </div>
                             </div>
-                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center gap-3 shadow-sm">
-                                <div class="p-2.5 bg-slate-200 text-slate-700 rounded-lg">
-                                    <span class="material-icons text-xl">receipt_long</span>
+                            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 flex items-center gap-3 shadow-sm">
+                                <div class="p-2.5 bg-slate-200 text-slate-700 rounded-xl">
+                                    <span class="material-icons text-lg sm:text-xl">receipt_long</span>
                                 </div>
                                 <div>
-                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Transações</p>
-                                    <h4 class="text-lg font-bold text-slate-800" id="extratoTotalTransacoes">0</h4>
+                                    <p class="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Transações</p>
+                                    <h4 class="text-base sm:text-lg font-bold text-slate-800" id="extratoTotalTransacoes">0</h4>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Filtro de busca rápida na tabela do extrato -->
-                        <div class="flex items-center justify-between gap-3">
-                            <div class="relative flex-1 max-w-xs">
+                        <!-- Filtro de busca rápida no extrato -->
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                            <div class="relative flex-1 sm:max-w-xs w-full">
                                 <span class="material-icons absolute left-3 top-2.5 text-gray-400 text-sm">search</span>
                                 <input type="text" id="filtroTextoExtrato" placeholder="Buscar no extrato..."
-                                    class="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                    class="w-full pl-9 pr-3 py-2 text-xs border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 shadow-sm">
                             </div>
-                            <span class="text-xs text-gray-400 italic">Extrato Completo do Banco Inter (Banking v2)</span>
+                            <span class="text-[11px] text-gray-400 italic">Extrato Oficial Banco Inter • Banking v2</span>
                         </div>
 
                         <!-- Estado Loading -->
@@ -511,27 +511,35 @@ DBClose($linkDB);
                             <div id="extratoErroMsg">Erro ao consultar extrato.</div>
                         </div>
 
-                        <!-- Tabela de Transações -->
-                        <div id="extratoTabelaContainer" class="overflow-x-auto border border-gray-200 rounded-xl">
-                            <table class="min-w-full divide-y divide-gray-200 text-xs">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Data</th>
-                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Tipo</th>
-                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Título / Descrição</th>
-                                        <th class="px-4 py-3 text-left font-semibold text-gray-600">Pagador / Detalhes</th>
-                                        <th class="px-4 py-3 text-right font-semibold text-gray-600">Valor</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="extratoListaTransacoes" class="divide-y divide-gray-100 bg-white">
-                                    <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma consulta realizada.</td></tr>
-                                </tbody>
-                            </table>
+                        <!-- Container de Transações (Desktop e Mobile) -->
+                        <div id="extratoTabelaContainer" class="hidden space-y-3">
+                            <!-- Visualização Desktop: Tabela de 100% largura sem scroll horizontal -->
+                            <div class="hidden md:block border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                <table class="w-full text-xs table-fixed divide-y divide-gray-200">
+                                    <thead class="bg-gray-50 text-gray-600">
+                                        <tr>
+                                            <th class="w-28 px-3 py-3 text-left font-semibold">Data / Hora</th>
+                                            <th class="w-28 px-3 py-3 text-left font-semibold">Tipo</th>
+                                            <th class="px-4 py-3 text-left font-semibold">Título / Descrição</th>
+                                            <th class="w-52 px-3 py-3 text-left font-semibold">Pagador / Detalhes</th>
+                                            <th class="w-32 px-4 py-3 text-right font-semibold">Valor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="extratoListaTransacoes" class="divide-y divide-gray-100 bg-white">
+                                        <!-- Dynamic Table Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Visualização Mobile: Feed de Cards Sem Rolagem Lateral -->
+                            <div id="extratoMobileListaTransacoes" class="md:hidden space-y-2.5">
+                                <!-- Dynamic Mobile Cards -->
+                            </div>
                         </div>
                     </div>
 
                     <!-- Modal Footer -->
-                    <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                    <div class="px-4 sm:px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                         <span>API Banco Inter • Banking v2</span>
                         <button type="button" onclick="fecharModalExtratoInter()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium transition">
                             Fechar
@@ -1013,7 +1021,8 @@ DBClose($linkDB);
             function renderizarExtratoTransacoes(transacoes) {
                 let totalEntradas = 0;
                 let totalSaidas = 0;
-                let html = '';
+                let tableHtml = '';
+                let mobileHtml = '';
 
                 const filtro = ($('#filtroTextoExtrato').val() || '').toLowerCase().trim();
 
@@ -1061,40 +1070,73 @@ DBClose($linkDB);
                         const horaFormatada = t.dataInclusao && t.dataInclusao.length >= 19 ? t.dataInclusao.substring(11, 19) : '';
                         const detalhes = t.detalhes || {};
 
-                        html += `
+                        // 1. Linha da Tabela Desktop
+                        tableHtml += `
                             <tr class="hover:bg-orange-50/50 transition">
-                                <td class="px-4 py-3 whitespace-nowrap text-gray-600">
+                                <td class="px-3 py-3 text-gray-600">
                                     <div class="font-medium text-gray-800">${dataFormatada}</div>
                                     ${horaFormatada ? `<div class="text-[10px] text-gray-400 font-mono">${horaFormatada}</div>` : ''}
                                 </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
+                                <td class="px-3 py-3">
                                     <div class="flex flex-col items-start gap-1">
-                                        <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono font-semibold text-[10px]">${escapeHtml(t.tipoTransacao || 'OUTRO')}</span>
+                                        <span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-mono font-semibold text-[10px] truncate max-w-full">${escapeHtml(t.tipoTransacao || 'OUTRO')}</span>
                                         ${badgeOp}
                                     </div>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <div class="font-semibold text-gray-900">${escapeHtml(t.titulo || 'Transação')}</div>
-                                    <div class="text-gray-500 truncate max-w-xs" title="${escapeHtml(t.descricao || '')}">${escapeHtml(t.descricao || '-')}</div>
-                                    ${t.numeroDocumento ? `<div class="text-[10px] text-gray-400 font-mono">Doc: ${escapeHtml(t.numeroDocumento)}</div>` : ''}
+                                    <div class="font-semibold text-gray-900 truncate" title="${escapeHtml(t.titulo || 'Transação')}">${escapeHtml(t.titulo || 'Transação')}</div>
+                                    <div class="text-gray-500 truncate" title="${escapeHtml(t.descricao || '')}">${escapeHtml(t.descricao || '-')}</div>
+                                    ${t.numeroDocumento ? `<div class="text-[10px] text-gray-400 font-mono truncate">Doc: ${escapeHtml(t.numeroDocumento)}</div>` : ''}
                                 </td>
-                                <td class="px-4 py-3">
-                                    ${detalhes.nomePagador ? `<div class="font-medium text-gray-800">${escapeHtml(detalhes.nomePagador)}</div>` : ''}
-                                    ${detalhes.cpfCnpjPagador ? `<div class="text-[10px] text-gray-500 font-mono">Doc: ${escapeHtml(detalhes.cpfCnpjPagador)}</div>` : ''}
-                                    ${detalhes.txId ? `<div class="text-[10px] text-orange-700 font-mono truncate max-w-xs" title="${escapeHtml(detalhes.txId)}">txId: ${escapeHtml(detalhes.txId)}</div>` : ''}
-                                    ${detalhes.descricaoPix ? `<div class="text-[10px] text-gray-500 italic truncate max-w-xs">${escapeHtml(detalhes.descricaoPix)}</div>` : ''}
+                                <td class="px-3 py-3">
+                                    ${detalhes.nomePagador ? `<div class="font-medium text-gray-800 truncate" title="${escapeHtml(detalhes.nomePagador)}">${escapeHtml(detalhes.nomePagador)}</div>` : ''}
+                                    ${detalhes.cpfCnpjPagador ? `<div class="text-[10px] text-gray-500 font-mono">${escapeHtml(detalhes.cpfCnpjPagador)}</div>` : ''}
+                                    ${detalhes.txId ? `<div class="text-[10px] text-orange-700 font-mono truncate" title="${escapeHtml(detalhes.txId)}">txId: ${escapeHtml(detalhes.txId)}</div>` : ''}
+                                    ${detalhes.descricaoPix ? `<div class="text-[10px] text-teal-700 italic truncate" title="${escapeHtml(detalhes.descricaoPix)}">${escapeHtml(detalhes.descricaoPix)}</div>` : ''}
                                 </td>
-                                <td class="px-4 py-3 text-right whitespace-nowrap">
-                                    <span class="${valorClass}">${valorSinal}${formatCurrency(valor)}</span>
+                                <td class="px-4 py-3 text-right">
+                                    <span class="${valorClass} text-sm">${valorSinal}${formatCurrency(valor)}</span>
                                 </td>
                             </tr>
                         `;
+
+                        // 2. Card para Mobile (Feed de Transações)
+                        mobileHtml += `
+                            <div class="bg-white border border-gray-200 rounded-xl p-3.5 shadow-sm space-y-2.5 hover:border-orange-200 transition">
+                                <div class="flex items-center justify-between gap-2 border-b border-gray-100 pb-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="px-2 py-0.5 rounded bg-gray-100 text-gray-700 font-mono font-bold text-[10px]">${escapeHtml(t.tipoTransacao || 'OUTRO')}</span>
+                                        ${badgeOp}
+                                    </div>
+                                    <div class="text-[11px] text-gray-500 font-medium flex items-center gap-1">
+                                        <span class="material-icons text-xs text-gray-400">schedule</span>
+                                        <span>${dataFormatada}</span>
+                                        ${horaFormatada ? `<span class="font-mono text-gray-400 text-[10px]">${horaFormatada}</span>` : ''}
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="space-y-0.5 flex-1 min-w-0">
+                                        <h5 class="font-bold text-gray-900 text-xs truncate" title="${escapeHtml(t.titulo || 'Transação')}">${escapeHtml(t.titulo || 'Transação')}</h5>
+                                        ${t.descricao ? `<p class="text-xs text-gray-600 truncate" title="${escapeHtml(t.descricao)}">${escapeHtml(t.descricao)}</p>` : ''}
+                                        ${detalhes.nomePagador ? `<p class="text-xs text-gray-700 font-medium truncate"><span class="text-gray-400 font-normal">Pagador:</span> ${escapeHtml(detalhes.nomePagador)}</p>` : ''}
+                                        ${detalhes.descricaoPix ? `<p class="text-[11px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-100 font-medium inline-block truncate max-w-full">Pix: ${escapeHtml(detalhes.descricaoPix)}</p>` : ''}
+                                    </div>
+                                    <div class="text-right shrink-0">
+                                        <span class="${valorClass} text-sm whitespace-nowrap block">${valorSinal}${formatCurrency(valor)}</span>
+                                        ${t.numeroDocumento ? `<span class="text-[9px] text-gray-400 font-mono block">Doc #${escapeHtml(t.numeroDocumento)}</span>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     });
                 } else {
-                    html = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma transação encontrada no período selecionado.</td></tr>`;
+                    tableHtml = `<tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Nenhuma transação encontrada no período selecionado.</td></tr>`;
+                    mobileHtml = `<div class="p-6 bg-gray-50 border border-gray-200 rounded-xl text-center text-xs text-gray-500">Nenhuma transação encontrada no período selecionado.</div>`;
                 }
 
-                $('#extratoListaTransacoes').html(html);
+                $('#extratoListaTransacoes').html(tableHtml);
+                $('#extratoMobileListaTransacoes').html(mobileHtml);
             }
 
             $('#filtroTextoExtrato').on('input', function () {

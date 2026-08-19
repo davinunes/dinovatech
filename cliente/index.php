@@ -24,6 +24,14 @@ $is_vet = AppHelper::isVetMode();
         body {
             font-family: 'Inter', sans-serif;
         }
+        /* Utilitários para rolagem horizontal suave no mobile sem barra cinza */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
 
@@ -31,14 +39,14 @@ $is_vet = AppHelper::isVetMode();
 
     <!-- Header -->
     <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-30">
-        <div class="container mx-auto px-4 h-16 flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-800 tracking-tight">
+        <div class="container mx-auto px-3 sm:px-4 h-14 sm:h-16 flex justify-between items-center">
+            <h1 class="text-lg sm:text-xl font-bold text-gray-800 tracking-tight">
                 <a href="../index.php">Área do <span class="text-cyan-600">Cliente</span></a>
             </h1>
             <?php if ($cliente_logado): ?>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-600 hidden md:inline">Olá, <strong><?= htmlspecialchars($nome_cliente) ?></strong></span>
-                    <button id="btnLogout" class="text-sm font-medium text-red-500 hover:text-red-700 flex items-center gap-1">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <span class="text-xs sm:text-sm text-gray-600 hidden md:inline">Olá, <strong><?= htmlspecialchars($nome_cliente) ?></strong></span>
+                    <button id="btnLogout" class="text-xs sm:text-sm font-semibold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
                         <span class="material-icons text-sm">logout</span> Sair
                     </button>
                 </div>
@@ -47,70 +55,70 @@ $is_vet = AppHelper::isVetMode();
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 container mx-auto px-4 py-8">
+    <main class="flex-1 container mx-auto px-3 sm:px-4 py-4 sm:py-8">
 
         <?php if (!$cliente_logado): ?>
             <!-- Login Section -->
-            <div id="loginSection" class="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100 mt-10">
-                <h2 class="text-2xl font-bold text-center text-gray-800 mb-2">Acesse suas Faturas e Dados</h2>
-                <p class="text-center text-gray-500 mb-8">Digite seu CPF ou CNPJ para continuar.</p>
+            <div id="loginSection" class="max-w-md mx-auto bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-gray-100 mt-6 sm:mt-10">
+                <h2 class="text-xl sm:text-2xl font-bold text-center text-gray-800 mb-2">Acesse suas Faturas e Dados</h2>
+                <p class="text-center text-xs sm:text-sm text-gray-500 mb-6 sm:mb-8">Digite seu CPF ou CNPJ para continuar.</p>
 
                 <form id="loginForm" class="space-y-4">
                     <div>
-                        <label for="cpfCnpjLogin" class="block text-sm font-medium text-gray-700 mb-1">CPF / CNPJ</label>
+                        <label for="cpfCnpjLogin" class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">CPF / CNPJ</label>
                         <input type="text" id="cpfCnpjLogin" name="cpf_cnpj" placeholder="000.000.000-00" required
-                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+                            class="w-full p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm">
                     </div>
 
                     <div class="flex items-center">
                         <input type="checkbox" id="rememberMe" name="remember_me"
                             class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
-                        <label for="rememberMe" class="ml-2 block text-sm text-gray-600">Lembrar meus dados</label>
+                        <label for="rememberMe" class="ml-2 block text-xs sm:text-sm text-gray-600">Lembrar meus dados</label>
                     </div>
 
                     <button type="submit"
-                        class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-lg transition-colors shadow-md flex items-center justify-center gap-2">
+                        class="w-full bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 rounded-xl transition-colors shadow-md flex items-center justify-center gap-2 text-sm sm:text-base">
                         <span class="material-icons text-sm">login</span> Entrar
                     </button>
                 </form>
-                <div id="loginMessage" class="mt-4 text-center text-sm font-medium"></div>
+                <div id="loginMessage" class="mt-4 text-center text-xs sm:text-sm font-medium"></div>
             </div>
         <?php else: ?>
             <!-- Dashboard Section -->
             <div id="dashboardSection">
 
-                <!-- Tabs -->
-                <div class="flex flex-wrap border-b border-gray-200 mb-6 bg-white rounded-t-xl px-2 pt-2 shadow-sm gap-1">
+                <!-- Tabs Deslizáveis sem quebra no mobile -->
+                <div class="flex flex-nowrap overflow-x-auto no-scrollbar border-b border-gray-200 mb-6 bg-white rounded-xl sm:rounded-t-xl px-2 pt-2 shadow-sm gap-1 scroll-smooth">
                     <button
-                        class="tab-btn px-5 py-3 font-medium text-cyan-600 border-b-2 border-cyan-600 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                        class="tab-btn shrink-0 whitespace-nowrap px-3.5 sm:px-5 py-2.5 sm:py-3 font-medium text-cyan-600 border-b-2 border-cyan-600 focus:outline-none transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                         data-target="dashboard">
-                        <span class="material-icons text-lg">dashboard</span> Visão Geral
+                        <span class="material-icons text-base sm:text-lg">dashboard</span> Visão Geral
                     </button>
                     <button
-                        class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                        class="tab-btn shrink-0 whitespace-nowrap px-3.5 sm:px-5 py-2.5 sm:py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                         data-target="abertas">
-                        <span class="material-icons text-lg">pending_actions</span> Faturas em Aberto
+                        <span class="material-icons text-base sm:text-lg">pending_actions</span> Faturas em Aberto
                     </button>
                     <button
-                        class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                        class="tab-btn shrink-0 whitespace-nowrap px-3.5 sm:px-5 py-2.5 sm:py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                         data-target="pagas">
-                        <span class="material-icons text-lg">receipt_long</span> Histórico / Pagas
+                        <span class="material-icons text-base sm:text-lg">receipt_long</span> Histórico / Pagas
                     </button>
                     <button
-                        class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                        class="tab-btn shrink-0 whitespace-nowrap px-3.5 sm:px-5 py-2.5 sm:py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                         data-target="meusdados">
-                        <span class="material-icons text-lg">person</span> Meus Dados
+                        <span class="material-icons text-base sm:text-lg">person</span> Meus Dados
                     </button>
                     <?php if ($is_vet): ?>
                         <button
-                            class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                            class="tab-btn shrink-0 whitespace-nowrap px-3.5 sm:px-5 py-2.5 sm:py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                             data-target="vacinas">
-                            <span class="material-icons text-lg text-teal-600">vaccines</span> Carteira de Vacinação
+                            <span class="material-icons text-base sm:text-lg text-teal-600">vaccines</span> Carteira de Vacinas
                         </button>
                         <button
-                            class="tab-btn px-5 py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-2 text-sm"
+                            class="tab-btn shrink-0 whitespace-nowrap px-3.5 sm:px-5 py-2.5 sm:py-3 font-medium text-gray-500 hover:text-gray-700 focus:outline-none transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
                             data-target="banhotosa">
-                            <span class="material-icons text-lg text-teal-600">shower</span> Banho & Tosa
+                            <span class="material-icons text-base sm:text-lg text-teal-600">shower</span> Banho & Tosa
                         </button>
                     <?php endif; ?>
                 </div>
@@ -118,70 +126,70 @@ $is_vet = AppHelper::isVetMode();
                 <!-- 1. DASHBOARD TAB -->
                 <div id="dashboard" class="tab-content">
                     
-                    <!-- KPI Cards Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                            <div class="p-3 rounded-full bg-yellow-100 text-yellow-600 mr-4">
-                                <span class="material-icons text-3xl">pending_actions</span>
+                    <!-- KPI Cards Grid (2 colunas no mobile, 4 no desktop) -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-6 mb-6 sm:mb-8">
+                        <div class="bg-white p-3.5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
+                            <div class="p-2 sm:p-3 rounded-xl bg-yellow-100 text-yellow-600 mr-2.5 sm:mr-4 shrink-0">
+                                <span class="material-icons text-2xl sm:text-3xl">pending_actions</span>
                             </div>
-                            <div>
-                                <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Faturas em Aberto</p>
-                                <h3 class="text-xl font-bold text-gray-800" id="dashTotalAberto">R$ 0,00</h3>
-                                <p class="text-xs text-gray-400" id="dashCountAberto">0 pendentes</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                            <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                                <span class="material-icons text-3xl">check_circle</span>
-                            </div>
-                            <div>
-                                <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Total Pago</p>
-                                <h3 class="text-xl font-bold text-gray-800" id="dashTotalPago">R$ 0,00</h3>
-                                <p class="text-xs text-gray-400" id="dashCountPago">0 liquidadas</p>
+                            <div class="min-w-0">
+                                <p class="text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider truncate">Faturas em Aberto</p>
+                                <h3 class="text-base sm:text-xl font-bold text-gray-800 truncate" id="dashTotalAberto">R$ 0,00</h3>
+                                <p class="text-[10px] sm:text-xs text-gray-400 truncate" id="dashCountAberto">0 pendentes</p>
                             </div>
                         </div>
 
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                            <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                                <span class="material-icons text-3xl">event</span>
+                        <div class="bg-white p-3.5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
+                            <div class="p-2 sm:p-3 rounded-xl bg-green-100 text-green-600 mr-2.5 sm:mr-4 shrink-0">
+                                <span class="material-icons text-2xl sm:text-3xl">check_circle</span>
                             </div>
-                            <div>
-                                <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Agendamentos</p>
-                                <h3 class="text-xl font-bold text-gray-800" id="dashCountAgendamentos">0</h3>
-                                <p class="text-xs text-gray-400">compromissos</p>
+                            <div class="min-w-0">
+                                <p class="text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider truncate">Total Pago</p>
+                                <h3 class="text-base sm:text-xl font-bold text-gray-800 truncate" id="dashTotalPago">R$ 0,00</h3>
+                                <p class="text-[10px] sm:text-xs text-gray-400 truncate" id="dashCountPago">0 liquidadas</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-3.5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
+                            <div class="p-2 sm:p-3 rounded-xl bg-blue-100 text-blue-600 mr-2.5 sm:mr-4 shrink-0">
+                                <span class="material-icons text-2xl sm:text-3xl">event</span>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider truncate">Agendamentos</p>
+                                <h3 class="text-base sm:text-xl font-bold text-gray-800 truncate" id="dashCountAgendamentos">0</h3>
+                                <p class="text-[10px] sm:text-xs text-gray-400 truncate">compromissos</p>
                             </div>
                         </div>
 
                         <?php if ($is_vet): ?>
-                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-teal-300 transition group" onclick="abrirModalMeusPets()">
-                                <div class="flex items-center">
-                                    <div class="p-3 rounded-full bg-teal-100 text-teal-600 mr-4 group-hover:bg-teal-600 group-hover:text-white transition">
-                                        <span class="material-icons text-3xl">pets</span>
+                            <div class="bg-white p-3.5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-teal-300 transition group" onclick="abrirModalMeusPets()">
+                                <div class="flex items-center min-w-0">
+                                    <div class="p-2 sm:p-3 rounded-xl bg-teal-100 text-teal-600 mr-2.5 sm:mr-4 group-hover:bg-teal-600 group-hover:text-white transition shrink-0">
+                                        <span class="material-icons text-2xl sm:text-3xl">pets</span>
                                     </div>
-                                    <div>
-                                        <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Meus Pets</p>
-                                        <h3 class="text-xl font-bold text-gray-800" id="dashCountPets">0</h3>
-                                        <p class="text-xs text-teal-600 font-semibold flex items-center gap-0.5 mt-0.5">Estatísticas & Peso <span class="material-icons text-xs">chevron_right</span></p>
+                                    <div class="min-w-0">
+                                        <p class="text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider truncate">Meus Pets</p>
+                                        <h3 class="text-base sm:text-xl font-bold text-gray-800 truncate" id="dashCountPets">0</h3>
+                                        <p class="text-[10px] sm:text-xs text-teal-600 font-semibold flex items-center gap-0.5 mt-0.5 truncate">Estatísticas & Peso <span class="material-icons text-xs">chevron_right</span></p>
                                     </div>
                                 </div>
                             </div>
                         <?php else: ?>
-                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                                <div class="p-3 rounded-full bg-cyan-100 text-cyan-600 mr-4">
-                                    <span class="material-icons text-3xl">account_circle</span>
+                            <div class="bg-white p-3.5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center">
+                                <div class="p-2 sm:p-3 rounded-xl bg-cyan-100 text-cyan-600 mr-2.5 sm:mr-4 shrink-0">
+                                    <span class="material-icons text-2xl sm:text-3xl">account_circle</span>
                                 </div>
-                                <div>
-                                    <p class="text-gray-500 text-xs font-medium uppercase tracking-wider">Perfil do Cliente</p>
-                                    <h3 class="text-sm font-bold text-gray-800 truncate max-w-[150px]" id="dashNomeCliente"><?= htmlspecialchars($nome_cliente) ?></h3>
-                                    <p class="text-xs text-cyan-600 font-medium">Cadastrado</p>
+                                <div class="min-w-0">
+                                    <p class="text-gray-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider truncate">Perfil do Cliente</p>
+                                    <h3 class="text-xs sm:text-sm font-bold text-gray-800 truncate" id="dashNomeCliente"><?= htmlspecialchars($nome_cliente) ?></h3>
+                                    <p class="text-[10px] sm:text-xs text-cyan-600 font-medium truncate">Cadastrado</p>
                                 </div>
                             </div>
                         <?php endif; ?>
                     </div>
 
                     <!-- Highlight: Próxima Fatura a Vencer -->
-                    <div id="dashProximaFaturaCard" class="hidden mb-8 bg-gradient-to-r from-cyan-600 to-blue-700 text-white rounded-xl shadow-md p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div id="dashProximaFaturaCard" class="hidden mb-6 sm:mb-8 bg-gradient-to-r from-cyan-600 to-blue-700 text-white rounded-2xl shadow-md p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
                         <div>
                             <span class="bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">Próximo Vencimento</span>
                             <h3 class="text-2xl font-bold" id="dashProximaFaturaValor">R$ 0,00</h3>
@@ -523,151 +531,141 @@ $is_vet = AppHelper::isVetMode();
     </main>
 
     <!-- Modal Detalhes do Atendimento Clínico -->
-    <div id="modalAtendimentoDetalhes" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <!-- Backdrop -->
-        <div id="modalAtendimentoBackdrop" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
+    <div id="modalAtendimentoDetalhes" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="relative rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 max-w-3xl w-full max-h-[94vh] flex flex-col overflow-hidden border border-gray-100 animate-fade-in">
+            
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-teal-700 to-cyan-800 p-4 sm:p-6 text-white flex justify-between items-start shrink-0 shadow-sm">
+                <div>
+                    <div class="flex items-center gap-1.5 sm:gap-2 mb-1">
+                        <span class="material-icons text-teal-200 text-sm sm:text-base">medical_services</span>
+                        <span class="text-[11px] sm:text-xs uppercase tracking-wider font-semibold text-teal-200" id="mAtendData">--/--/----</span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold" id="mAtendPetNome">Atendimento Clínico</h3>
+                    <p class="text-xs text-teal-100 mt-0.5" id="mAtendPetDetalhes">--</p>
+                </div>
+                <button type="button" id="btnCloseModalAtendimento" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 sm:p-2 rounded-xl transition">
+                    <span class="material-icons text-xl sm:text-2xl">close</span>
+                </button>
+            </div>
 
-        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-3xl border border-gray-100 w-full">
-                
-                <!-- Modal Header -->
-                <div class="bg-gradient-to-r from-teal-700 to-cyan-800 p-6 text-white flex justify-between items-start">
+            <!-- Modal Body -->
+            <div class="p-3.5 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1">
+
+                <!-- Info Vet -->
+                <div class="bg-teal-50/60 p-3.5 sm:p-4 rounded-xl border border-teal-100 flex flex-col sm:flex-row justify-between sm:items-center text-xs sm:text-sm gap-2">
                     <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="material-icons text-teal-200">medical_services</span>
-                            <span class="text-xs uppercase tracking-wider font-semibold text-teal-200" id="mAtendData">--/--/----</span>
-                        </div>
-                        <h3 class="text-2xl font-bold" id="mAtendPetNome">Atendimento Clínico</h3>
-                        <p class="text-xs text-teal-100 mt-1" id="mAtendPetDetalhes">--</p>
+                        <span class="text-[10px] sm:text-xs text-gray-500 font-medium uppercase block">Veterinário Responsável</span>
+                        <strong class="text-teal-900 text-sm sm:text-base" id="mAtendVetNome">--</strong>
                     </div>
-                    <button type="button" id="btnCloseModalAtendimento" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition">
-                        <span class="material-icons">close</span>
+                    <div class="text-xs text-teal-800 bg-teal-100/80 px-2.5 py-1 rounded-lg font-semibold w-fit" id="mAtendVetCrmv">
+                        CRMV: --
+                    </div>
+                </div>
+
+                <!-- Tabs de Conteúdo do Atendimento (Deslizáveis) -->
+                <div class="border-b border-gray-200 flex flex-nowrap overflow-x-auto no-scrollbar gap-2 sm:gap-4 text-xs sm:text-sm font-semibold pb-1 scroll-smooth">
+                    <button type="button" class="m-tab-btn active border-b-2 border-teal-600 text-teal-700 pb-2 flex items-center gap-1.5 shrink-0 whitespace-nowrap" data-mtarget="m-prontuario">
+                        <span class="material-icons text-sm sm:text-base">assignment</span> Prontuário Clínico
+                    </button>
+                    <button type="button" class="m-tab-btn text-gray-500 hover:text-gray-700 pb-2 flex items-center gap-1.5 shrink-0 whitespace-nowrap" data-mtarget="m-receitas">
+                        <span class="material-icons text-sm sm:text-base">receipt</span> Receitas (<span id="mCountReceitas">0</span>)
+                    </button>
+                    <button type="button" class="m-tab-btn text-gray-500 hover:text-gray-700 pb-2 flex items-center gap-1.5 shrink-0 whitespace-nowrap" data-mtarget="m-anexos">
+                        <span class="material-icons text-sm sm:text-base">attach_file</span> Exames & Anexos (<span id="mCountAnexos">0</span>)
                     </button>
                 </div>
 
-                <!-- Modal Body -->
-                <div class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                <!-- M-TAB 1: Prontuário -->
+                <div id="m-prontuario" class="m-tab-content space-y-3.5 sm:space-y-4">
+                    <div class="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-100">
+                        <h4 class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Motivo / Queixa Principal</h4>
+                        <p class="text-xs sm:text-sm text-gray-800 whitespace-pre-line leading-relaxed" id="mAtendQueixa">--</p>
+                    </div>
 
-                    <!-- Info Vet -->
-                    <div class="bg-teal-50/50 p-4 rounded-xl border border-teal-100 flex flex-col sm:flex-row justify-between sm:items-center text-sm gap-2">
-                        <div>
-                            <span class="text-xs text-gray-500 font-medium uppercase block">Veterinário Responsável</span>
-                            <strong class="text-teal-900 text-base" id="mAtendVetNome">--</strong>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                        <div class="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-100">
+                            <h4 class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Anamnese / Histórico</h4>
+                            <p class="text-xs sm:text-sm text-gray-800 whitespace-pre-line leading-relaxed" id="mAtendAnamnese">--</p>
                         </div>
-                        <div class="text-xs text-teal-800 bg-teal-100 px-3 py-1.5 rounded-lg font-semibold w-fit" id="mAtendVetCrmv">
-                            CRMV: --
+                        <div class="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-100">
+                            <h4 class="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Exame Físico</h4>
+                            <p class="text-xs sm:text-sm text-gray-800 whitespace-pre-line leading-relaxed" id="mAtendExameFisico">--</p>
                         </div>
                     </div>
 
-                    <!-- Tabs de Conteúdo do Atendimento -->
-                    <div class="border-b border-gray-200 flex gap-4 text-sm font-semibold">
-                        <button type="button" class="m-tab-btn active border-b-2 border-teal-600 text-teal-700 pb-2 flex items-center gap-1" data-mtarget="m-prontuario">
-                            <span class="material-icons text-base">assignment</span> Prontuário Clínico
-                        </button>
-                        <button type="button" class="m-tab-btn text-gray-500 hover:text-gray-700 pb-2 flex items-center gap-1" data-mtarget="m-receitas">
-                            <span class="material-icons text-base">receipt</span> Receitas (<span id="mCountReceitas">0</span>)
-                        </button>
-                        <button type="button" class="m-tab-btn text-gray-500 hover:text-gray-700 pb-2 flex items-center gap-1" data-mtarget="m-anexos">
-                            <span class="material-icons text-base">attach_file</span> Exames & Anexos (<span id="mCountAnexos">0</span>)
-                        </button>
+                    <div class="bg-amber-50/60 p-3.5 sm:p-4 rounded-xl border border-amber-200">
+                        <h4 class="text-[10px] sm:text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Diagnóstico</h4>
+                        <p class="text-xs sm:text-sm text-amber-950 font-medium whitespace-pre-line leading-relaxed" id="mAtendDiagnostico">--</p>
                     </div>
 
-                    <!-- M-TAB 1: Prontuário -->
-                    <div id="m-prontuario" class="m-tab-content space-y-4">
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Motivo / Queixa Principal</h4>
-                            <p class="text-sm text-gray-800 whitespace-pre-line" id="mAtendQueixa">--</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Anamnese / Histórico</h4>
-                                <p class="text-sm text-gray-800 whitespace-pre-line" id="mAtendAnamnese">--</p>
-                            </div>
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
-                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Exame Físico</h4>
-                                <p class="text-sm text-gray-800 whitespace-pre-line" id="mAtendExameFisico">--</p>
-                            </div>
-                        </div>
-
-                        <div class="bg-amber-50/60 p-4 rounded-lg border border-amber-200">
-                            <h4 class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-1">Diagnóstico</h4>
-                            <p class="text-sm text-amber-950 font-medium whitespace-pre-line" id="mAtendDiagnostico">--</p>
-                        </div>
-
-                        <div class="bg-emerald-50/60 p-4 rounded-lg border border-emerald-200">
-                            <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-1">Conduta & Tratamento Recomendado</h4>
-                            <p class="text-sm text-emerald-950 whitespace-pre-line" id="mAtendTratamento">--</p>
-                        </div>
+                    <div class="bg-emerald-50/60 p-3.5 sm:p-4 rounded-xl border border-emerald-200">
+                        <h4 class="text-[10px] sm:text-xs font-bold text-emerald-900 uppercase tracking-wider mb-1">Conduta & Tratamento Recomendado</h4>
+                        <p class="text-xs sm:text-sm text-emerald-950 whitespace-pre-line leading-relaxed" id="mAtendTratamento">--</p>
                     </div>
-
-                    <!-- M-TAB 2: Receitas Emitidas -->
-                    <div id="m-receitas" class="m-tab-content hidden space-y-4">
-                        <div id="mListaReceitas" class="space-y-4">
-                            <p class="text-center text-gray-500 py-4 text-sm">Carregando receitas...</p>
-                        </div>
-                    </div>
-
-                    <!-- M-TAB 3: Anexos e Exames -->
-                    <div id="m-anexos" class="m-tab-content hidden space-y-4">
-                        <div id="mListaAnexos" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <p class="col-span-full text-center text-gray-500 py-4 text-sm">Carregando anexos...</p>
-                        </div>
-                    </div>
-
                 </div>
 
-                <!-- Modal Footer -->
-                <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between items-center">
-                    <span class="text-xs text-gray-400" id="mAtendIdTag">ID Atendimento: #--</span>
-                    <button type="button" id="btnFecharModalBottom" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold transition">
-                        Fechar
-                    </button>
+                <!-- M-TAB 2: Receitas Emitidas -->
+                <div id="m-receitas" class="m-tab-content hidden space-y-3 sm:space-y-4">
+                    <div id="mListaReceitas" class="space-y-3">
+                        <p class="text-center text-gray-500 py-4 text-xs sm:text-sm">Carregando receitas...</p>
+                    </div>
+                </div>
+
+                <!-- M-TAB 3: Anexos e Exames -->
+                <div id="m-anexos" class="m-tab-content hidden space-y-3 sm:space-y-4">
+                    <div id="mListaAnexos" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
+                        <p class="col-span-full text-center text-gray-500 py-4 text-xs sm:text-sm">Carregando anexos...</p>
+                    </div>
                 </div>
 
             </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex justify-between items-center shrink-0">
+                <span class="text-[11px] sm:text-xs text-gray-400 font-mono" id="mAtendIdTag">ID: #--</span>
+                <button type="button" id="btnFecharModalBottom" class="px-4 sm:px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs sm:text-sm font-semibold transition">
+                    Fechar
+                </button>
+            </div>
+
         </div>
     </div>
 
     <!-- Modal Meus Pets - Saúde e Estatísticas -->
-    <div id="modalMeusPetsDetalhes" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <!-- Backdrop -->
-        <div id="modalMeusPetsBackdrop" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
-
-        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-            <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-4xl border border-gray-100 w-full">
-                
-                <!-- Modal Header -->
-                <div class="bg-gradient-to-r from-teal-800 to-cyan-900 p-6 text-white flex justify-between items-center">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2.5 bg-white/10 rounded-xl">
-                            <span class="material-icons text-3xl text-teal-200">pets</span>
-                        </div>
-                        <div>
-                            <h3 class="text-2xl font-bold">Meus Pets — Saúde & Estatísticas</h3>
-                            <p class="text-xs text-teal-100">Acompanhe a evolução do peso e o histórico médico dos seus pets.</p>
-                        </div>
+    <div id="modalMeusPetsDetalhes" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="relative rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 max-w-4xl w-full max-h-[94vh] flex flex-col overflow-hidden border border-gray-100 animate-fade-in">
+            
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-teal-800 to-cyan-900 p-4 sm:p-6 text-white flex justify-between items-center shrink-0 shadow-sm">
+                <div class="flex items-center gap-2.5 sm:gap-3">
+                    <div class="p-2 sm:p-2.5 bg-white/10 rounded-xl">
+                        <span class="material-icons text-2xl sm:text-3xl text-teal-200">pets</span>
                     </div>
-                    <button type="button" id="btnCloseModalPets" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition">
-                        <span class="material-icons">close</span>
-                    </button>
-                </div>
-
-                <!-- Modal Body -->
-                <div class="p-6 space-y-6 max-h-[80vh] overflow-y-auto bg-gray-50/50">
-                    <div id="mListaMeusPetsCards" class="space-y-6">
-                        <p class="text-center text-gray-500 py-8 text-sm">Carregando pets...</p>
+                    <div>
+                        <h3 class="text-lg sm:text-2xl font-bold">Meus Pets — Saúde & Histórico</h3>
+                        <p class="text-[11px] sm:text-xs text-teal-100">Evolução do peso e prontuário médico dos seus pets.</p>
                     </div>
                 </div>
-
-                <!-- Modal Footer -->
-                <div class="bg-white px-6 py-4 border-t border-gray-100 flex justify-end">
-                    <button type="button" id="btnFecharModalPetsBottom" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold transition">
-                        Fechar
-                    </button>
-                </div>
-
+                <button type="button" id="btnCloseModalPets" class="text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 sm:p-2 rounded-xl transition">
+                    <span class="material-icons text-xl sm:text-2xl">close</span>
+                </button>
             </div>
+
+            <!-- Modal Body -->
+            <div class="p-3 sm:p-6 space-y-4 sm:space-y-6 overflow-y-auto flex-1 bg-gray-50/50">
+                <div id="mListaMeusPetsCards" class="space-y-4 sm:space-y-6">
+                    <p class="text-center text-gray-500 py-8 text-xs sm:text-sm">Carregando pets...</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-white px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-100 flex justify-end shrink-0">
+                <button type="button" id="btnFecharModalPetsBottom" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl text-xs sm:text-sm font-semibold transition">
+                    Fechar
+                </button>
+            </div>
+
         </div>
     </div>
 
@@ -1966,51 +1964,58 @@ $is_vet = AppHelper::isVetMode();
     </script>
 
     <!-- Modal Extrato do Pacote (Portal do Tutor) -->
-    <div id="modalExtratoPacoteCliente" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 border-b pb-3">
+    <div id="modalExtratoPacoteCliente" class="fixed inset-0 z-50 hidden flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl overflow-y-auto max-h-[92vh] flex flex-col border border-gray-100 animate-fade-in">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
                 <div class="flex items-center gap-2">
-                    <span class="material-icons text-teal-600">receipt_long</span>
-                    <h3 class="text-lg font-bold text-gray-800">Extrato do seu Pacote</h3>
+                    <div class="p-2 bg-teal-100 text-teal-700 rounded-xl">
+                        <span class="material-icons text-xl">receipt_long</span>
+                    </div>
+                    <h3 class="text-base sm:text-lg font-bold text-gray-800">Extrato do seu Pacote</h3>
                 </div>
-                <button type="button" onclick="$('#modalExtratoPacoteCliente').addClass('hidden')" class="text-gray-400 hover:text-gray-600">
-                    <span class="material-icons">close</span>
+                <button type="button" onclick="$('#modalExtratoPacoteCliente').addClass('hidden')" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition">
+                    <span class="material-icons text-xl">close</span>
                 </button>
             </div>
 
-            <div id="extratoClienteConteudo" class="space-y-5">
+            <div id="extratoClienteConteudo" class="space-y-4 overflow-y-auto flex-1">
                 <!-- Dynamic Statement Content -->
             </div>
         </div>
     </div>
 
     <!-- Modal Agendar Banho / Tosa (Portal do Tutor) -->
-    <div id="modalAgendarBanho" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black bg-opacity-60 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div class="flex justify-between items-center mb-4 border-b pb-3">
+    <div id="modalAgendarBanho" class="fixed inset-0 z-50 hidden flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-4 sm:p-6 shadow-2xl overflow-y-auto max-h-[92vh] flex flex-col border border-gray-100 animate-fade-in">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-3">
                 <div class="flex items-center gap-2">
-                    <span class="material-icons text-teal-600">shower</span>
-                    <h3 class="text-lg font-bold text-gray-800">Solicitar Agendamento de Banho & Tosa</h3>
+                    <div class="p-2 bg-teal-100 text-teal-700 rounded-xl">
+                        <span class="material-icons text-xl">shower</span>
+                    </div>
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-gray-800">Agendar Banho & Tosa</h3>
+                        <p class="text-[11px] text-gray-500">Escolha o pet, serviço e o melhor horário</p>
+                    </div>
                 </div>
-                <button type="button" onclick="fecharModalAgendarBanhoCliente()" class="text-gray-400 hover:text-gray-600">
-                    <span class="material-icons">close</span>
+                <button type="button" onclick="fecharModalAgendarBanhoCliente()" class="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition">
+                    <span class="material-icons text-xl">close</span>
                 </button>
             </div>
 
-            <form id="formAgendarBanhoCliente" class="space-y-4">
+            <form id="formAgendarBanhoCliente" class="space-y-4 overflow-y-auto flex-1">
                 <input type="hidden" name="hora_selecionada" id="modalAgendarHoraSelecionada" value="">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">1. Escolha seu Pet *</label>
-                        <select name="id_pet" id="modalAgendarPet" class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium" required>
+                        <select name="id_pet" id="modalAgendarPet" class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500" required>
                             <!-- Dynamic Pets -->
                         </select>
                     </div>
 
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">2. Serviço Desejado *</label>
-                        <select name="id_servico" id="modalAgendarServico" class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium" required>
+                        <select name="id_servico" id="modalAgendarServico" class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500" required>
                             <!-- Dynamic Services -->
                         </select>
                     </div>
@@ -2033,17 +2038,17 @@ $is_vet = AppHelper::isVetMode();
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">3. Escolha o Dia *</label>
                     <input type="date" name="data_dia" id="modalAgendarDataDia" required
-                        class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium">
+                        class="w-full border-gray-300 rounded-xl p-2.5 border text-sm font-medium focus:ring-2 focus:ring-teal-500 focus:border-teal-500">
                 </div>
 
                 <!-- Slots Container -->
                 <div>
                     <div class="flex justify-between items-center mb-1.5">
-                        <label class="block text-xs font-bold text-gray-700 uppercase">4. Horários Disponíveis na Esteira *</label>
+                        <label class="block text-xs font-bold text-gray-700 uppercase">4. Horários Disponíveis *</label>
                         <span id="labelDuracaoEstimada" class="text-[11px] font-semibold text-teal-700"></span>
                     </div>
 
-                    <div id="containerSlotsHorarios" class="bg-gray-50 p-3.5 rounded-xl border border-gray-200 min-h-[90px] flex items-center justify-center">
+                    <div id="containerSlotsHorarios" class="bg-gray-50 p-3 sm:p-3.5 rounded-xl border border-gray-200 min-h-[90px] flex items-center justify-center">
                         <p class="text-xs text-gray-400 italic">Selecione o pet, serviço e o dia para ver os horários livres.</p>
                     </div>
                 </div>
@@ -2052,16 +2057,16 @@ $is_vet = AppHelper::isVetMode();
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Observações ou Preferências de Corte</label>
                     <textarea name="observacoes" id="modalAgendarObservacoes" rows="2"
                         placeholder="Ex: Não cortar unhas, tosa higiênica baixa, usar perfume suave..."
-                        class="w-full border-gray-300 rounded-xl p-2.5 border text-sm"></textarea>
+                        class="w-full border-gray-300 rounded-xl p-2.5 border text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500"></textarea>
                 </div>
 
                 <div id="modalAgendarMsg" class="text-xs font-bold text-center hidden"></div>
 
-                <div class="flex justify-end gap-2 pt-3 border-t">
+                <div class="flex justify-end gap-2 pt-3 border-t border-gray-100">
                     <button type="button" onclick="fecharModalAgendarBanhoCliente()"
-                        class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold hover:bg-gray-200 transition">Cancelar</button>
+                        class="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-xs sm:text-sm font-semibold hover:bg-gray-200 transition">Cancelar</button>
                     <button type="submit" id="btnConfirmarAgendamento" disabled
-                        class="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-sm font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        class="px-5 sm:px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
                         Confirmar Agendamento
                     </button>
                 </div>
