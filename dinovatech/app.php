@@ -2662,7 +2662,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
             }
 
-            $statusAgend = ($dtInicio->format('Y-m-d') > date('Y-m-d')) ? 'Agendado' : 'Em Andamento';
+            $statusAgend = 'Agendado';
 
             $query = "INSERT INTO Agendamentos (id_cliente, id_pet, id_servico, id_cliente_pacote, tipo_agenda, titulo, descricao, data_inicio, data_fim, status) 
                       VALUES ($id_cliente_safe, $id_pet, $id_servico, $id_cliente_pacote_val, 'banho_tosa', '$titulo', '$observacoes', '$startStr', '$endStr', '$statusAgend')";
@@ -5007,7 +5007,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $dtFim->modify("+{$duracaoFinal} minutes");
             $startStr = $dtInicio->format('Y-m-d H:i:s');
             $endStr = $dtFim->format('Y-m-d H:i:s');
-            $statusAgend = ($dtInicio->format('Y-m-d') > date('Y-m-d')) ? 'Agendado' : 'Em Andamento';
+            $statusAgend = 'Agendado';
 
             // 1. Verificar e abater saldo de pacote do tutor
             $id_cliente_pacote_val = "NULL";

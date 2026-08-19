@@ -1708,6 +1708,8 @@ $is_vet = AppHelper::isVetMode();
                 });
             };
 
+            let isOpeningModalBanho = false;
+
             window.abrirModalAgendarBanhoCliente = function () {
                 if (!globalDashboardData) return;
                 const pets = globalDashboardData.pets || [];
@@ -1727,13 +1729,11 @@ $is_vet = AppHelper::isVetMode();
                     selectSrv.append(`<option value="${s.id_servico}">${escapeHtml(s.nome_servico)} (${s.duracao_minutos}m)</option>`);
                 });
 
-                // Set Default Date: Tomorrow
-                const am = new Date();
-                am.setDate(am.getDate() + 1);
+                // Set Default Date: Hoje por padrão (fallback para amanhã se não houver horários livres hoje)
                 const pad = (n) => n < 10 ? '0' + n : n;
-                const dtDef = `${am.getFullYear()}-${pad(am.getMonth() + 1)}-${pad(am.getDate())}`;
-                const dtHoje = new Date().toISOString().split('T')[0];
-                $('#modalAgendarDataDia').attr('min', dtHoje).val(dtDef);
+                const now = new Date();
+                const dtHoje = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+                $('#modalAgendarDataDia').attr('min', dtHoje).val(dtHoje);
 
                 $('#modalAgendarHoraSelecionada').val('');
                 $('#btnConfirmarAgendamento').prop('disabled', true);
@@ -1741,10 +1741,11 @@ $is_vet = AppHelper::isVetMode();
                 $('#modalAgendarObservacoes').val('');
                 $('#modalAgendarBanho').removeClass('hidden');
 
+                isOpeningModalBanho = true;
                 if (pets.length === 1) {
                     selectPet.val(pets[0].id_pet).trigger('change');
                 } else {
-                    carregarSlotsDisponiveis();
+                    carregarSlotsDisponiveis(true);
                 }
             };
 
@@ -1752,7 +1753,7 @@ $is_vet = AppHelper::isVetMode();
                 $('#modalAgendarBanho').addClass('hidden');
             };
 
-            function carregarSlotsDisponiveis() {
+            function carregarSlotsDisponiveis(isAutoInitialCheck = false, wasRolledToTomorrow = false) {
                 const idPet = $('#modalAgendarPet').val();
                 const idSrv = $('#modalAgendarServico').val();
                 const dataDia = $('#modalAgendarDataDia').val();
@@ -1769,6 +1770,10 @@ $is_vet = AppHelper::isVetMode();
                 }
 
                 container.html('<div class="flex items-center justify-center gap-2 text-xs text-teal-700 py-4"><span class="material-icons text-sm animate-spin">sync</span> Consultando horários disponíveis na esteira...</div>');
+
+                const pad = (n) => n < 10 ? '0' + n : n;
+                const now = new Date();
+                const dtHoje = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
                 $.getJSON('../dinovatech/app.php', {
                     action: 'get_horarios_disponiveis_banho',
@@ -1788,17 +1793,30 @@ $is_vet = AppHelper::isVetMode();
                     }
 
                     const slots = res.slots || [];
+                    let totalLivres = 0;
+                    slots.forEach(s => {
+                        if (s.disponivel) totalLivres++;
+                    });
+
+                    // Se estiver checando automaticamente a data de hoje e não houver horários livres, avançar para amanhã
+                    if (isAutoInitialCheck && dataDia === dtHoje && totalLivres === 0) {
+                        const am = new Date();
+                        am.setDate(am.getDate() + 1);
+                        const dtAmanha = `${am.getFullYear()}-${pad(am.getMonth() + 1)}-${pad(am.getDate())}`;
+                        $('#modalAgendarDataDia').val(dtAmanha);
+                        carregarSlotsDisponiveis(false, true);
+                        return;
+                    }
+
                     if (slots.length === 0) {
                         container.html('<p class="text-xs text-gray-400 italic">Nenhum horário disponível para esta data.</p>');
                         return;
                     }
 
                     let gridHtml = '<div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 w-full">';
-                    let totalLivres = 0;
 
                     slots.forEach(s => {
                         if (s.disponivel) {
-                            totalLivres++;
                             gridHtml += `
                                 <button type="button" onclick="selecionarSlotHorario('${s.hora}', this)"
                                     class="slot-hora-btn py-2 px-2 rounded-xl text-xs font-bold border border-teal-200 bg-white hover:bg-teal-50 text-teal-900 transition flex flex-col items-center justify-center shadow-sm">
@@ -1822,7 +1840,12 @@ $is_vet = AppHelper::isVetMode();
                         gridHtml += '<p class="text-xs text-amber-700 mt-2 font-medium text-center">Todos os horários para esta data estão ocupados na esteira. Por favor, selecione outro dia.</p>';
                     }
 
-                    container.html(gridHtml);
+                    if (wasRolledToTomorrow) {
+                        const avisoHoje = '<div class="w-full bg-amber-50 border border-amber-200 text-amber-900 px-3 py-2 rounded-xl text-xs mb-3 flex items-center gap-1.5"><span class="material-icons text-amber-600 text-sm">schedule</span><span>Os horários de hoje já se esgotaram ou o expediente encerrou. Exibindo disponibilidade para <strong>amanhã</strong>.</span></div>';
+                        container.html(avisoHoje + gridHtml);
+                    } else {
+                        container.html(gridHtml);
+                    }
                 });
             }
 
@@ -1858,7 +1881,9 @@ $is_vet = AppHelper::isVetMode();
                     $('#boxAgendarSaldoBadge').addClass('hidden');
                 }
 
-                carregarSlotsDisponiveis();
+                const checkAuto = isOpeningModalBanho;
+                isOpeningModalBanho = false;
+                carregarSlotsDisponiveis(checkAuto);
             });
 
             $('#formAgendarBanhoCliente').on('submit', function (e) {
