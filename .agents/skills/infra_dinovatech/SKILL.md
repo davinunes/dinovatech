@@ -30,7 +30,18 @@ Este documento registra as especificações da infraestrutura remota do Dinovate
   - Por utilizar URL pré-autenticada genérica sem credenciais completas de IAM SDK, **não há API direta para exclusão física de objetos obsoletos** (ex: imagens antigas substituídas).
   - Políticas de retenção ou scripts de expiração devem ser considerados caso o bucket precise de limpeza periódica.
 
-## 4. Regras de Desenvolvimento e Compilação
+## 4. Serviço de Geração de PDFs (WeasyPrint REST)
+- **Mecanismo**: Microserviço sidecar Docker isolado para compilação server-side de documentos e receitas em PDF.
+- **Imagem & Container**: `weasyprint` (`ghcr.io/schweizerischebundesbahnen/weasyprint-service:latest`).
+- **Rede Docker**: Conectado diretamente à rede `php_dinovatech_financeiro_default` compartilhada com o container `homepage-php`.
+- **Comunicação**: O backend PHP interage via cURL HTTP através do endpoint `http://weasyprint:9080/convert/html` (encapsulado pela classe `dinovatech/helpers/PdfHelper.php`).
+- **Controle de Recursos (Proteção da VPS 1GB RAM)**:
+  - Limite rígido de memória definido em `350M` (reserva `80M`) no Compose.
+- **Tratamento de Imagens & CSS**:
+  - `PdfHelper.php` converte automaticamente caminhos locais de imagens para **Data URI Base64** antes do envio ao container, tornando o documento autocontido.
+  - Atributos legados de dimensões (`width`/`height` do editor TinyMCE) são normalizados em CSS inline (`!important`) para garantir proporções e fidelidade visual na impressão A4.
+
+## 5. Regras de Desenvolvimento e Compilação
 - Desenvolvemos e alteramos apenas o código localmente.
 - Não executar compiladores pesados ou dependências no host a menos que solicitado.
 - Scripts PHP e SQL devem manter compatibilidade com **PHP 7.4** e **MariaDB 10.x**.
