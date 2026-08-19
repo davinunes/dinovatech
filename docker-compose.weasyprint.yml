@@ -19,10 +19,9 @@ services:
     environment:
       # Configuração de timezone opcional
       - TZ=America/Sao_Paulo
-    # Caso sua stack do PHP utilize uma rede Docker compartilhada, descomente e ajuste:
-    # networks:
-    #   - dinovatech-net
+    networks:
+      - php_dinovatech_financeiro_default
 
-# networks:
-#   dinovatech-net:
-#     external: true
+networks:
+  php_dinovatech_financeiro_default:
+    external: true

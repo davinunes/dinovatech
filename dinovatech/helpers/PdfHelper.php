@@ -3,21 +3,37 @@
 class PdfHelper
 {
     /**
-     * Retorna a URL base do serviço WeasyPrint.
+     * Retorna a lista de URLs candidatas do serviço WeasyPrint para tentativa/fallback.
      */
-    public static function getServiceUrl()
+    public static function getCandidateUrls()
     {
+        $urls = [];
+
         if (defined('WEASYPRINT_URL') && !empty(WEASYPRINT_URL)) {
-            return WEASYPRINT_URL;
+            $urls[] = WEASYPRINT_URL;
         }
 
         $envUrl = getenv('WEASYPRINT_URL');
-        if (!empty($envUrl)) {
-            return $envUrl;
+        if (!empty($envUrl) && !in_array($envUrl, $urls)) {
+            $urls[] = $envUrl;
         }
 
-        // Padrão: nome do container docker interno na rede compartilhada
-        return 'http://weasyprint:9080/convert/html';
+        // Candidatos padrão em ambiente Docker
+        $defaults = [
+            'http://weasyprint:9080/convert/html',       // Mesmo network bridge (DNS por nome de container)
+            'http://172.17.0.1:9080/convert/html',      // Gateway padrão Docker host no Linux
+            'http://172.18.0.1:9080/convert/html',      // Gateway secundário Docker host
+            'http://host.docker.internal:9080/convert/html',
+            'http://localhost:9080/convert/html'
+        ];
+
+        foreach ($defaults as $d) {
+            if (!in_array($d, $urls)) {
+                $urls[] = $d;
+            }
+        }
+
+        return $urls;
     }
 
     /**
@@ -100,31 +116,35 @@ class PdfHelper
             $processedHtml = str_ireplace('<head>', '<head><meta charset="UTF-8">', $processedHtml);
         }
 
-        $serviceUrl = self::getServiceUrl();
+        $candidateUrls = self::getCandidateUrls();
+        $lastError = '';
 
-        // 3. Chamada cURL ao container WeasyPrint
-        $ch = curl_init($serviceUrl);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $processedHtml);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: text/html; charset=utf-8',
-            'Accept: application/pdf'
-        ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30); // Limite de 30 segundos
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        foreach ($candidateUrls as $url) {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $processedHtml);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: text/html; charset=utf-8',
+                'Accept: application/pdf'
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
 
-        $pdfBinary = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
+            $pdfBinary = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
 
-        if ($pdfBinary === false || $httpCode !== 200) {
-            error_log("Erro ao gerar PDF via WeasyPrint (HTTP {$httpCode}): " . $curlError);
-            return false;
+            if ($pdfBinary !== false && $httpCode === 200 && strlen($pdfBinary) > 100) {
+                return $pdfBinary;
+            }
+
+            $lastError = "URL '{$url}' (HTTP {$httpCode}): {$curlError}";
         }
 
-        return $pdfBinary;
+        error_log("Erro ao gerar PDF via WeasyPrint em todos os endpoints testados. Ultimo erro: " . $lastError);
+        return false;
     }
 
     /**
