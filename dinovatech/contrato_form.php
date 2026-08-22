@@ -199,7 +199,7 @@ DBClose($link);
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div>
                                         <label for="data_inicio_cobranca"
                                             class="block text-sm font-medium text-gray-700 mb-1">Data Início</label>
@@ -214,6 +214,15 @@ DBClose($link);
                                         <input type="date" id="data_fim_cobranca" name="data_fim_cobranca"
                                             value="<?= $contrato['data_fim_cobranca'] ?? '' ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div>
+                                        <label for="dia_vencimento"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Dia do Vencimento</label>
+                                        <input type="number" id="dia_vencimento" name="dia_vencimento" min="1" max="31"
+                                            placeholder="Ex: 10 (Padrão: dia de início)"
+                                            value="<?= $contrato['dia_vencimento'] ?? '' ?>"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
+                                            title="Dia do mês em que a fatura vencerá (1 a 31)">
                                     </div>
                                 </div>
 

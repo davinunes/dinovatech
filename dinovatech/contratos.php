@@ -74,11 +74,19 @@ foreach ($contratos as $c) {
                     <h2 class="text-3xl font-bold text-gray-800">Recorrência (Contratos)</h2>
                     <p class="text-gray-500">Gerencie assinaturas e cobranças frequentes.</p>
                 </div>
-                <a href="contrato_form.php"
-                    class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors">
-                    <span class="material-icons mr-2">add</span>
-                    Novo Contrato
-                </a>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="executarCronRecorrenciasManual()" id="btnGerarFaturasRec"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors shadow-sm"
+                        title="Processa e gera faturas para contratos ativos da competência atual">
+                        <span class="material-icons mr-1.5 text-sm">autorenew</span>
+                        Gerar Faturas do Mês
+                    </button>
+                    <a href="contrato_form.php"
+                        class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center transition-colors shadow-sm">
+                        <span class="material-icons mr-2">add</span>
+                        Novo Contrato
+                    </a>
+                </div>
             </div>
 
             <!-- Search -->
@@ -121,6 +129,7 @@ foreach ($contratos as $c) {
                                     <th class="p-4 font-medium">Serviço</th>
                                     <th class="p-4 font-medium">Valor</th>
                                     <th class="p-4 font-medium">Período</th>
+                                    <th class="p-4 font-medium">Vencimento</th>
                                     <th class="p-4 font-medium">Início</th>
                                     <th class="p-4 font-medium text-right">Ações</th>
                                 </tr>
@@ -128,6 +137,9 @@ foreach ($contratos as $c) {
                             <tbody class="text-gray-700 text-sm">
                                 <?php if (!empty($ativos)): ?>
                                     <?php foreach ($ativos as $contrato): ?>
+                                        <?php
+                                        $diaVenc = !empty($contrato['dia_vencimento']) ? (int) $contrato['dia_vencimento'] : (int) date('d', strtotime($contrato['data_inicio_cobranca']));
+                                        ?>
                                         <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0">
                                             <td class="p-4 font-medium text-gray-900">
                                                 <?= htmlspecialchars($contrato['nome_cliente']) ?>
@@ -137,6 +149,11 @@ foreach ($contratos as $c) {
                                                 <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?>
                                             </td>
                                             <td class="p-4 capitalize"><?= htmlspecialchars($contrato['tipo_periodo']) ?></td>
+                                            <td class="p-4 font-semibold text-cyan-700">
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-cyan-50 border border-cyan-200">
+                                                    Dia <?= $diaVenc ?>
+                                                </span>
+                                            </td>
                                             <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?>
                                             </td>
                                             <td class="p-4 text-right">
@@ -147,7 +164,7 @@ foreach ($contratos as $c) {
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="6" class="p-8 text-center text-gray-500">Nenhum contrato ativo
+                                        <td colspan="7" class="p-8 text-center text-gray-500">Nenhum contrato ativo
                                             encontrado.</td>
                                     </tr>
                                 <?php endif; ?>
@@ -299,6 +316,34 @@ foreach ($contratos as $c) {
                         btnExpirados.className = 'px-6 py-2 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors';
                         btnAtivos.className = 'px-6 py-2 text-gray-500 hover:text-gray-700 font-medium transition-colors';
                     }
+                }
+
+                function executarCronRecorrenciasManual() {
+                    const mesAtual = '<?= date('m/Y') ?>';
+                    if (!confirm(`Deseja processar e gerar as faturas de contratos para o mês vigente (${mesAtual}) agora?`)) {
+                        return;
+                    }
+
+                    const btn = $('#btnGerarFaturasRec');
+                    const originalHtml = btn.html();
+                    btn.prop('disabled', true).html('<span class="material-icons text-sm animate-spin mr-1.5">refresh</span> Gerando...');
+
+                    $.post('app.php', { action: 'executar_cron_recorrencias_manual', competencia: mesAtual }, function (res) {
+                        btn.prop('disabled', false).html(originalHtml);
+                        if (res.success) {
+                            let msg = res.message || 'Processamento concluído com sucesso!';
+                            if (res.faturas && res.faturas.length > 0) {
+                                msg += '\n\nFaturas Geradas:\n' + res.faturas.map(f => `• ${f.cliente_nome} (${f.servico_nome}) - R$ ${Number(f.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - Venc: ${f.vencimento}`).join('\n');
+                            }
+                            alert(msg);
+                            window.location.reload();
+                        } else {
+                            alert('Erro ao processar faturas: ' + (res.message || 'Erro desconhecido.'));
+                        }
+                    }, 'json').fail(function (xhr) {
+                        btn.prop('disabled', false).html(originalHtml);
+                        alert('Falha na comunicação com o servidor: ' + (xhr.responseText || 'Erro HTTP'));
+                    });
                 }
             </script>
 

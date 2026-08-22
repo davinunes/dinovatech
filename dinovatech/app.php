@@ -1685,13 +1685,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $descricao_personalizada = mysqli_real_escape_string($link, $_POST['descricao_personalizada'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
+                $dia_vencimento_input = $_POST['dia_vencimento'] ?? '';
+                $dia_vencimento = (!empty($dia_vencimento_input) && (int) $dia_vencimento_input >= 1 && (int) $dia_vencimento_input <= 31) ? (int) $dia_vencimento_input : "NULL";
+
                 // V2 Refinements
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
 
-                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada, descricao_fiscal, codigo_cnae, codigo_nbs, codigo_tributacao_municipio)
-                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada', '$descricao_fiscal', '$codigo_cnae', '$codigo_nbs', '$codigo_tributacao_municipio')";
+                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, dia_vencimento, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada, descricao_fiscal, codigo_cnae, codigo_nbs, codigo_tributacao_municipio)
+                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', $dia_vencimento, '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada', '$descricao_fiscal', '$codigo_cnae', '$codigo_nbs', '$codigo_tributacao_municipio')";
 
                 $result = DBExecute($link, $query);
 
@@ -1775,6 +1778,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $data_inicio_cobranca = mysqli_real_escape_string($link, $data_inicio_cobranca);
                 $data_fim_cobranca = $data_fim_cobranca ? "'" . mysqli_real_escape_string($link, $data_fim_cobranca) . "'" : "NULL";
 
+                $dia_vencimento_input = $_POST['dia_vencimento'] ?? '';
+                $dia_vencimento = (!empty($dia_vencimento_input) && (int) $dia_vencimento_input >= 1 && (int) $dia_vencimento_input <= 31) ? (int) $dia_vencimento_input : "NULL";
+
                 // Novos Campos Fiscais (Overrides) - Edição
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? '');
                 $aliquota_iss = !empty($_POST['aliquota_iss']) ? "'" . mysqli_real_escape_string($link, $_POST['aliquota_iss']) . "'" : "NULL";
@@ -1790,7 +1796,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 $query = "UPDATE Recorrencias 
                           SET id_cliente='$id_cliente', id_servico='$id_servico', quantidade='$quantidade', valor_sugerido_recorrencia='$valor_sugerido_recorrencia', 
-                              tipo_periodo='$tipo_periodo', intervalo='$intervalo', data_inicio_cobranca='$data_inicio_cobranca', data_fim_cobranca=$data_fim_cobranca,
+                              tipo_periodo='$tipo_periodo', intervalo='$intervalo', dia_vencimento=$dia_vencimento, data_inicio_cobranca='$data_inicio_cobranca', data_fim_cobranca=$data_fim_cobranca,
                               item_lista_servico='$item_lista_servico', aliquota_iss=$aliquota_iss, iss_retido=$iss_retido, descricao_personalizada='$descricao_personalizada', descricao_fiscal='$descricao_fiscal',
                               codigo_cnae='$codigo_cnae', codigo_nbs='$codigo_nbs', codigo_tributacao_municipio='$codigo_tributacao_municipio'
                           WHERE id_recorrencia='$id_recorrencia'";
@@ -1888,6 +1894,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             } else {
                 $response['message'] = "Erro ao buscar recorrências para incorporação: " . mysqli_error($link);
             }
+            break;
+
+        case 'executar_cron_recorrencias_manual':
+            require_once __DIR__ . '/helpers/CronRecorrenciasHelper.php';
+            $competencia = $_POST['competencia'] ?? date('m/Y');
+            $resCron = CronRecorrenciasHelper::processarRecorrencias($competencia, 'manual');
+            $response = $resCron;
             break;
 
         case 'registrar_pagamento':
@@ -3150,6 +3163,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 } else {
                     DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_homologacao=$nextRps WHERE id_config={$config['id_config']}");
                 }
+
+                // Atualiza data_emissao_nfse e possui_nfse na Fatura (com fallback resiliente)
+                $resFaturaNfse = @DBExecute($link, "UPDATE Faturas SET data_emissao_nfse = NOW(), possui_nfse = 1 WHERE id_fatura = '$id_fatura'");
+                if (!$resFaturaNfse) {
+                    @DBExecute($link, "UPDATE Faturas SET possui_nfse = 1 WHERE id_fatura = '$id_fatura'");
+                }
+
                 $response['success'] = true;
                 $response['message'] = "NFS-e Gerada com Sucesso! RPS $nextRps";
             } else {

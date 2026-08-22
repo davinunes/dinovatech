@@ -635,7 +635,13 @@ class ContaDevHelper
 
         // Determina a data real de emissão da Nota Fiscal (issuedAt)
         $issuedAt = null;
-        if (!empty($xmlContent)) {
+        if (!empty($fatura['data_emissao_nfse'])) {
+            $ts = strtotime($fatura['data_emissao_nfse']);
+            if ($ts !== false && $ts > 0) {
+                $issuedAt = date('Y-m-d', $ts);
+            }
+        }
+        if (empty($issuedAt) && !empty($xmlContent)) {
             if (preg_match('/<(?:DataEmissao|dhEmi|DataEmissaoRps|dtEmissao)>([^<]+)<\//i', $xmlContent, $m)) {
                 $ts = strtotime(trim($m[1]));
                 if ($ts !== false && $ts > 0) {
