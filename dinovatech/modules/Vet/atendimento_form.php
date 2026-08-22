@@ -164,6 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $descricao_evento = "Atendimento Realizado via Prontuário.\nPet: " . ($pet['nome'] ?? 'N/A') . "\nTutor: " . ($pet['nome_tutor'] ?? 'N/A') . "\nMotivo: " . ($motivo ?: 'Consulta');
 
             $google_event_id = null;
+            $google_event_id_cliente = null;
             $agendamento_row = null;
 
             if ($savedIdAgendamento) {
@@ -172,65 +173,89 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($resAg && mysqli_num_rows($resAg) > 0) {
                     $agendamento_row = mysqli_fetch_assoc($resAg);
                     $google_event_id = $agendamento_row['google_event_id'] ?? null;
+                    $google_event_id_cliente = $agendamento_row['google_event_id_cliente'] ?? null;
                 }
             }
 
+            $currentAgId = $savedIdAgendamento ? (int) $savedIdAgendamento : null;
+
+            // 2.1 Sync Profissional
             if ($hasGoogleCalendar) {
                 try {
-                    $google = new GoogleCalendarHelper($googleCalendarId);
-
-                    // Fetch Client Calendar ID / Email for attendees invite
-                    $attendees = [];
-                    $idClientePet = (int) ($pet['id_cliente'] ?? 0);
-                    if ($idClientePet > 0) {
-                        $resC = DBExecute($link, "SELECT email, google_calendar_id FROM Clientes WHERE id_cliente = $idClientePet");
-                        if ($resC && $rowC = mysqli_fetch_assoc($resC)) {
-                            $clientCalendarTarget = !empty($rowC['google_calendar_id']) ? $rowC['google_calendar_id'] : ($rowC['email'] ?? '');
-                            if (!empty($clientCalendarTarget)) {
-                                $attendees[] = ['email' => $clientCalendarTarget];
-                            }
-                        }
-                    }
+                    $google = new GoogleCalendarHelper($googleCalendarId, $currentAgId);
 
                     if (!empty($google_event_id)) {
-                        // Update existing Google Calendar event
-                        $google->updateEvent($google_event_id, [
+                        $upd = $google->updateEvent($google_event_id, [
                             'summary' => $titulo,
                             'description' => $descricao_evento,
                             'start' => $data_inicio_iso,
-                            'end' => $data_fim_iso,
-                            'attendees' => $attendees
+                            'end' => $data_fim_iso
                         ]);
+                        $google_event_id = $upd ?: $google_event_id;
                     } else {
-                        // Create new Google Calendar event
                         $gEventId = $google->createEvent([
                             'summary' => $titulo,
                             'description' => $descricao_evento,
                             'start' => $data_inicio_iso,
-                            'end' => $data_fim_iso,
-                            'attendees' => $attendees
+                            'end' => $data_fim_iso
                         ]);
                         if ($gEventId) {
                             $google_event_id = $gEventId;
                         }
                     }
                 } catch (Exception $e) {
-                    error_log("Erro Auto-Sync Google Calendar (Atendimento): " . $e->getMessage());
+                    error_log("Erro Auto-Sync Google Calendar Profissional (Atendimento): " . $e->getMessage());
+                }
+            }
+
+            // 2.2 Sync Cliente (se configurado com permissão)
+            $idClientePet = (int) ($pet['id_cliente'] ?? 0);
+            if ($idClientePet > 0 && class_exists('GoogleCalendarHelper')) {
+                $resC = DBExecute($link, "SELECT google_calendar_id FROM Clientes WHERE id_cliente = $idClientePet");
+                if ($resC && $rowC = mysqli_fetch_assoc($resC)) {
+                    if (!empty($rowC['google_calendar_id'])) {
+                        try {
+                            $googleCli = new GoogleCalendarHelper($rowC['google_calendar_id'], $currentAgId);
+                            if (!empty($google_event_id_cliente)) {
+                                $updC = $googleCli->updateEvent($google_event_id_cliente, [
+                                    'summary' => $titulo,
+                                    'description' => $descricao_evento,
+                                    'start' => $data_inicio_iso,
+                                    'end' => $data_fim_iso
+                                ]);
+                                $google_event_id_cliente = $updC ?: $google_event_id_cliente;
+                            } else {
+                                $gEventIdCli = $googleCli->createEvent([
+                                    'summary' => $titulo,
+                                    'description' => $descricao_evento,
+                                    'start' => $data_inicio_iso,
+                                    'end' => $data_fim_iso
+                                ]);
+                                if ($gEventIdCli) {
+                                    $google_event_id_cliente = $gEventIdCli;
+                                }
+                            }
+                        } catch (Exception $e) {
+                            error_log("Erro Auto-Sync Google Calendar Cliente (Atendimento): " . $e->getMessage());
+                        }
+                    }
                 }
             }
 
             // Update or Create Agendamentos DB record
             if ($agendamento_row) {
-                $gEvtUpdate = $google_event_id ? ", google_event_id = '" . mysqli_real_escape_string($link, $google_event_id) . "'" : "";
+                $gEvtUpdate = $google_event_id ? ", google_event_id = '" . mysqli_real_escape_string($link, $google_event_id) . "'" : ", google_event_id = NULL";
+                $gEvtCliUpdate = $google_event_id_cliente ? ", google_event_id_cliente = '" . mysqli_real_escape_string($link, $google_event_id_cliente) . "'" : ", google_event_id_cliente = NULL";
                 $titulo_safe = mysqli_real_escape_string($link, $titulo);
-                DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado', id_vet = $id_veterinario, data_inicio = '$data_safe:00', data_fim = '$end_time', titulo = '$titulo_safe' $gEvtUpdate WHERE id_agendamento = " . (int) $savedIdAgendamento);
+                DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado', id_vet = $id_veterinario, data_inicio = '$data_safe:00', data_fim = '$end_time', titulo = '$titulo_safe' $gEvtUpdate $gEvtCliUpdate WHERE id_agendamento = " . (int) $savedIdAgendamento);
             } else if ($hasGoogleCalendar || $forceSync) {
                 $id_tutor = (int) ($pet['id_cliente'] ?? 0);
                 $titulo_safe = mysqli_real_escape_string($link, $titulo);
                 $gEvtVal = $google_event_id ? "'" . mysqli_real_escape_string($link, $google_event_id) . "'" : "NULL";
+                $gEvtCliVal = $google_event_id_cliente ? "'" . mysqli_real_escape_string($link, $google_event_id_cliente) . "'" : "NULL";
 
-                $q_new_ag = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, data_inicio, data_fim, status, google_event_id)
-                             VALUES ($id_veterinario, $id_tutor, $id_pet, '$titulo_safe', '$data_safe:00', '$end_time', 'Realizado', $gEvtVal)";
+                $q_new_ag = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, data_inicio, data_fim, status, google_event_id, google_event_id_cliente)
+                             VALUES ($id_veterinario, $id_tutor, $id_pet, '$titulo_safe', '$data_safe:00', '$end_time', 'Realizado', $gEvtVal, $gEvtCliVal)";
                 if (DBExecute($link, $q_new_ag)) {
                     $new_ag_id = mysqli_insert_id($link);
                     DBExecute($link, "UPDATE Atendimentos SET id_agendamento = $new_ag_id WHERE id_atendimento = $savedIdAtendimento");
