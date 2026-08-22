@@ -20,6 +20,43 @@ $link = DBConnect();
 $action = $_REQUEST['action'] ?? '';
 
 /**
+ * Busca dados atuais do agendamento com segurança e tolerância a erros
+ */
+function getAgendamentoRowSafe($link, $id)
+{
+    $idSafe = (int) $id;
+    if ($idSafe <= 0)
+        return [];
+    $res = @DBExecute($link, "SELECT * FROM Agendamentos WHERE id_agendamento = $idSafe");
+    if ($res && mysqli_num_rows($res) > 0) {
+        return mysqli_fetch_assoc($res) ?: [];
+    }
+    return [];
+}
+
+/**
+ * Atualiza IDs de eventos Google com suporte resiliente caso a migration do cliente ainda não tenha rodado
+ */
+function updateGoogleEventIdsSafe($link, $idAgendamento, $gVetVal, $gCliVal)
+{
+    $idSafe = (int) $idAgendamento;
+    if ($idSafe <= 0)
+        return;
+
+    if ($gVetVal === "NULL" && $gCliVal === "NULL") {
+        return;
+    }
+
+    $sqlAmbos = "UPDATE Agendamentos SET google_event_id = $gVetVal, google_event_id_cliente = $gCliVal WHERE id_agendamento = $idSafe";
+    $res = @DBExecute($link, $sqlAmbos);
+    if (!$res) {
+        // Fallback caso a coluna google_event_id_cliente ainda não exista
+        $sqlVetOnly = "UPDATE Agendamentos SET google_event_id = $gVetVal WHERE id_agendamento = $idSafe";
+        @DBExecute($link, $sqlVetOnly);
+    }
+}
+
+/**
  * Sincronização direta multi-calendário no Google Agenda (Profissional e Cliente)
  */
 function syncGoogleCompleto($link, $id_vet, $idCliente, $agendamentoData, $id_agendamento = null, $currEventVet = null, $currEventCliente = null)
@@ -44,8 +81,8 @@ function syncGoogleCompleto($link, $id_vet, $idCliente, $agendamentoData, $id_ag
     if (!empty($id_vet)) {
         $id_vet_safe = mysqli_real_escape_string($link, $id_vet);
         $qVet = "SELECT google_calendar_id FROM Veterinarios WHERE id_vet = '$id_vet_safe'";
-        $resVet = DBExecute($link, $qVet);
-        if ($resVet && $vet = mysqli_fetch_assoc($resVet)) {
+        $resVet = @DBExecute($link, $qVet);
+        if ($resVet && mysqli_num_rows($resVet) > 0 && $vet = mysqli_fetch_assoc($resVet)) {
             if (!empty($vet['google_calendar_id'])) {
                 try {
                     $google = new GoogleCalendarHelper($vet['google_calendar_id'], $id_agendamento);
@@ -66,8 +103,8 @@ function syncGoogleCompleto($link, $id_vet, $idCliente, $agendamentoData, $id_ag
     if (!empty($idCliente)) {
         $id_cli_safe = (int) $idCliente;
         $qCli = "SELECT google_calendar_id FROM Clientes WHERE id_cliente = $id_cli_safe";
-        $resCli = DBExecute($link, $qCli);
-        if ($resCli && $cli = mysqli_fetch_assoc($resCli)) {
+        $resCli = @DBExecute($link, $qCli);
+        if ($resCli && mysqli_num_rows($resCli) > 0 && $cli = mysqli_fetch_assoc($resCli)) {
             if (!empty($cli['google_calendar_id'])) {
                 try {
                     $googleCli = new GoogleCalendarHelper($cli['google_calendar_id'], $id_agendamento);
@@ -99,8 +136,8 @@ function deleteGoogleCompleto($link, $id_vet, $idCliente, $currEventVet, $currEv
     // 1. Deletar do Profissional
     if (!empty($id_vet) && !empty($currEventVet)) {
         $id_vet_safe = mysqli_real_escape_string($link, $id_vet);
-        $resVet = DBExecute($link, "SELECT google_calendar_id FROM Veterinarios WHERE id_vet = '$id_vet_safe'");
-        if ($resVet && $vet = mysqli_fetch_assoc($resVet)) {
+        $resVet = @DBExecute($link, "SELECT google_calendar_id FROM Veterinarios WHERE id_vet = '$id_vet_safe'");
+        if ($resVet && mysqli_num_rows($resVet) > 0 && $vet = mysqli_fetch_assoc($resVet)) {
             if (!empty($vet['google_calendar_id'])) {
                 try {
                     $google = new GoogleCalendarHelper($vet['google_calendar_id'], $id_agendamento);
@@ -115,8 +152,8 @@ function deleteGoogleCompleto($link, $id_vet, $idCliente, $currEventVet, $currEv
     // 2. Deletar do Cliente
     if (!empty($idCliente) && !empty($currEventCliente)) {
         $id_cli_safe = (int) $idCliente;
-        $resCli = DBExecute($link, "SELECT google_calendar_id FROM Clientes WHERE id_cliente = $id_cli_safe");
-        if ($resCli && $cli = mysqli_fetch_assoc($resCli)) {
+        $resCli = @DBExecute($link, "SELECT google_calendar_id FROM Clientes WHERE id_cliente = $id_cli_safe");
+        if ($resCli && mysqli_num_rows($resCli) > 0 && $cli = mysqli_fetch_assoc($resCli)) {
             if (!empty($cli['google_calendar_id'])) {
                 try {
                     $googleCli = new GoogleCalendarHelper($cli['google_calendar_id'], $id_agendamento);
@@ -175,60 +212,62 @@ switch ($action) {
                   LEFT JOIN BanhoProducaoFila f ON A.id_agendamento = f.id_agendamento
                   $where";
 
-        $result = DBExecute($link, $query);
+        $result = @DBExecute($link, $query);
         $events = [];
-        while ($row = mysqli_fetch_assoc($result)) {
-            $color = '#3788d8'; // Default Blue
-            $prefixEtapa = '';
+        if ($result) {
+            while ($row = mysqli_fetch_assoc($result)) {
+                $color = '#3788d8'; // Default Blue
+                $prefixEtapa = '';
 
-            if ($row['tipo_agenda'] === 'banho_tosa') {
-                $color = '#0d9488'; // Teal
-                if ($row['esteira_etapa'] === 'aguardando') {
-                    $prefixEtapa = '⏳ [Fila] ';
-                    $color = '#d97706';
-                } elseif ($row['esteira_etapa'] === 'em_banho') {
-                    $prefixEtapa = '🛁 [Banho] ';
-                    $color = '#0891b2';
-                } elseif ($row['esteira_etapa'] === 'secagem') {
-                    $prefixEtapa = '💨 [Secagem] ';
-                    $color = '#2563eb';
-                } elseif ($row['esteira_etapa'] === 'tosa_finalizacao') {
-                    $prefixEtapa = '✂️ [Tosa] ';
-                    $color = '#9333ea';
-                } elseif ($row['esteira_etapa'] === 'pronto') {
-                    $prefixEtapa = '🐾 [Pronto] ';
-                    $color = '#059669';
+                if ($row['tipo_agenda'] === 'banho_tosa') {
+                    $color = '#0d9488'; // Teal
+                    if ($row['esteira_etapa'] === 'aguardando') {
+                        $prefixEtapa = '⏳ [Fila] ';
+                        $color = '#d97706';
+                    } elseif ($row['esteira_etapa'] === 'em_banho') {
+                        $prefixEtapa = '🛁 [Banho] ';
+                        $color = '#0891b2';
+                    } elseif ($row['esteira_etapa'] === 'secagem') {
+                        $prefixEtapa = '💨 [Secagem] ';
+                        $color = '#2563eb';
+                    } elseif ($row['esteira_etapa'] === 'tosa_finalizacao') {
+                        $prefixEtapa = '✂️ [Tosa] ';
+                        $color = '#9333ea';
+                    } elseif ($row['esteira_etapa'] === 'pronto') {
+                        $prefixEtapa = '🐾 [Pronto] ';
+                        $color = '#059669';
+                    }
                 }
+
+                if ($row['status'] == 'Realizado' || $row['status'] == 'Concluído')
+                    $color = '#10b981'; // Green
+                if ($row['status'] == 'Cancelado')
+                    $color = '#ef4444'; // Red
+                if ($row['status'] == 'Falta')
+                    $color = '#f59e0b'; // Orange
+
+                $events[] = [
+                    'id' => $row['id_agendamento'],
+                    'title' => $prefixEtapa . $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
+                    'start' => str_replace(' ', 'T', $row['data_inicio']),
+                    'end' => str_replace(' ', 'T', $row['data_fim']),
+                    'color' => $color,
+                    'extendedProps' => [
+                        'descricao' => $row['descricao'],
+                        'id_vet' => $row['id_vet'],
+                        'id_cliente' => $row['id_cliente'],
+                        'id_pet' => $row['id_pet'],
+                        'id_servico' => $row['id_servico'],
+                        'id_cliente_pacote' => $row['id_cliente_pacote'],
+                        'tipo_agenda' => $row['tipo_agenda'],
+                        'esteira_etapa' => $row['esteira_etapa'],
+                        'id_fila' => $row['id_fila'],
+                        'status' => $row['status'],
+                        'google_event_id' => $row['google_event_id'] ?? null,
+                        'google_event_id_cliente' => $row['google_event_id_cliente'] ?? null
+                    ]
+                ];
             }
-
-            if ($row['status'] == 'Realizado' || $row['status'] == 'Concluído')
-                $color = '#10b981'; // Green
-            if ($row['status'] == 'Cancelado')
-                $color = '#ef4444'; // Red
-            if ($row['status'] == 'Falta')
-                $color = '#f59e0b'; // Orange
-
-            $events[] = [
-                'id' => $row['id_agendamento'],
-                'title' => $prefixEtapa . $row['titulo'] . ($row['nome_cliente'] ? ' - ' . $row['nome_cliente'] : ''),
-                'start' => str_replace(' ', 'T', $row['data_inicio']),
-                'end' => str_replace(' ', 'T', $row['data_fim']),
-                'color' => $color,
-                'extendedProps' => [
-                    'descricao' => $row['descricao'],
-                    'id_vet' => $row['id_vet'],
-                    'id_cliente' => $row['id_cliente'],
-                    'id_pet' => $row['id_pet'],
-                    'id_servico' => $row['id_servico'],
-                    'id_cliente_pacote' => $row['id_cliente_pacote'],
-                    'tipo_agenda' => $row['tipo_agenda'],
-                    'esteira_etapa' => $row['esteira_etapa'],
-                    'id_fila' => $row['id_fila'],
-                    'status' => $row['status'],
-                    'google_event_id' => $row['google_event_id'] ?? null,
-                    'google_event_id_cliente' => $row['google_event_id_cliente'] ?? null
-                ]
-            ];
         }
 
         echo json_encode($events);
@@ -256,8 +295,8 @@ switch ($action) {
 
         if (empty($titulo)) {
             if ($tipo_agenda === 'banho_tosa' && $id_pet !== 'NULL') {
-                $resPet = DBExecute($link, "SELECT p.nome as pet_nome, s.nome_servico FROM Pets p LEFT JOIN Servicos s ON s.id_servico = $id_servico WHERE p.id_pet = $id_pet");
-                if ($resPet && $pRow = mysqli_fetch_assoc($resPet)) {
+                $resPet = @DBExecute($link, "SELECT p.nome as pet_nome, s.nome_servico FROM Pets p LEFT JOIN Servicos s ON s.id_servico = $id_servico WHERE p.id_pet = $id_pet");
+                if ($resPet && mysqli_num_rows($resPet) > 0 && $pRow = mysqli_fetch_assoc($resPet)) {
                     $titulo = "Banho/Tosa: " . $pRow['pet_nome'] . ($pRow['nome_servico'] ? " (" . $pRow['nome_servico'] . ")" : "");
                 } else {
                     $titulo = "Banho e Tosa";
@@ -282,19 +321,19 @@ switch ($action) {
                 if ($tipo_agenda === 'banho_tosa' && $id_pet !== 'NULL') {
                     $colabVal = $id_vet !== 'NULL' ? $id_vet : 'NULL';
                     $obsFila = $descricao;
-                    DBExecute($link, "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica) 
+                    @DBExecute($link, "INSERT INTO BanhoProducaoFila (id_agendamento, id_pet, id_colaborador, etapa, horario_entrada, observacoes_estetica) 
                                       VALUES ($newId, $id_pet, $colabVal, 'aguardando', NOW(), '$obsFila')");
                 }
 
                 // If using package balance, consume 1 credit
                 if ($usar_saldo_pacote && $id_cliente_pacote !== 'NULL' && $id_servico !== 'NULL' && $id_pet !== 'NULL') {
                     $qSaldo = "SELECT id_saldo, qtd_utilizada, qtd_total FROM ClientePacoteSaldos WHERE id_cliente_pacote = $id_cliente_pacote AND id_servico = $id_servico";
-                    $rSaldo = DBExecute($link, $qSaldo);
-                    if ($rSaldo && $sRow = mysqli_fetch_assoc($rSaldo)) {
+                    $rSaldo = @DBExecute($link, $qSaldo);
+                    if ($rSaldo && mysqli_num_rows($rSaldo) > 0 && $sRow = mysqli_fetch_assoc($rSaldo)) {
                         if ($sRow['qtd_utilizada'] < $sRow['qtd_total']) {
                             $nextUtil = $sRow['qtd_utilizada'] + 1;
-                            DBExecute($link, "UPDATE ClientePacoteSaldos SET qtd_utilizada = $nextUtil WHERE id_saldo = " . (int)$sRow['id_saldo']);
-                            DBExecute($link, "INSERT INTO ClientePacoteConsumo (id_cliente_pacote, id_servico, id_pet, id_agendamento, observacao) 
+                            @DBExecute($link, "UPDATE ClientePacoteSaldos SET qtd_utilizada = $nextUtil WHERE id_saldo = " . (int)$sRow['id_saldo']);
+                            @DBExecute($link, "INSERT INTO ClientePacoteConsumo (id_cliente_pacote, id_servico, id_pet, id_agendamento, observacao) 
                                               VALUES ($id_cliente_pacote, $id_servico, $id_pet, $newId, 'Agendado via Agenda Banho')");
                         }
                     }
@@ -311,9 +350,7 @@ switch ($action) {
                 $gVetVal = !empty($syncRes['event_id_vet']) ? "'" . mysqli_real_escape_string($link, $syncRes['event_id_vet']) . "'" : "NULL";
                 $gCliVal = !empty($syncRes['event_id_cliente']) ? "'" . mysqli_real_escape_string($link, $syncRes['event_id_cliente']) . "'" : "NULL";
 
-                if ($gVetVal !== "NULL" || $gCliVal !== "NULL") {
-                    DBExecute($link, "UPDATE Agendamentos SET google_event_id = $gVetVal, google_event_id_cliente = $gCliVal WHERE id_agendamento = $newId");
-                }
+                updateGoogleEventIdsSafe($link, $newId, $gVetVal, $gCliVal);
 
                 echo json_encode(['success' => true, 'id' => $newId]);
             } else {
@@ -322,7 +359,7 @@ switch ($action) {
         } else {
             // Update
             $idSafe = (int) $id;
-            $curr = mysqli_fetch_assoc(DBExecute($link, "SELECT google_event_id, google_event_id_cliente, id_vet, id_cliente FROM Agendamentos WHERE id_agendamento = $idSafe"));
+            $curr = getAgendamentoRowSafe($link, $idSafe);
             $currVetEvent = $curr['google_event_id'] ?? null;
             $currCliEvent = $curr['google_event_id_cliente'] ?? null;
 
@@ -351,7 +388,7 @@ switch ($action) {
                 $gVetVal = !empty($syncRes['event_id_vet']) ? "'" . mysqli_real_escape_string($link, $syncRes['event_id_vet']) . "'" : "NULL";
                 $gCliVal = !empty($syncRes['event_id_cliente']) ? "'" . mysqli_real_escape_string($link, $syncRes['event_id_cliente']) . "'" : "NULL";
 
-                DBExecute($link, "UPDATE Agendamentos SET google_event_id = $gVetVal, google_event_id_cliente = $gCliVal WHERE id_agendamento = $idSafe");
+                updateGoogleEventIdsSafe($link, $idSafe, $gVetVal, $gCliVal);
 
                 echo json_encode(['success' => true]);
             } else {
@@ -365,21 +402,20 @@ switch ($action) {
         $start = $_POST['start'] ?? '';
         $end = $_POST['end'] ?? '';
 
-        $qGet = "SELECT * FROM Agendamentos WHERE id_agendamento = $id";
-        $row = mysqli_fetch_assoc(DBExecute($link, $qGet));
+        $row = getAgendamentoRowSafe($link, $id);
 
-        if ($row) {
+        if (!empty($row)) {
             $query = "UPDATE Agendamentos SET data_inicio = '$start', data_fim = '$end' WHERE id_agendamento = $id";
             if (DBExecute($link, $query)) {
                 $startIso = (new DateTime($start, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s');
                 $endIso = (new DateTime($end, new DateTimeZone('America/Sao_Paulo')))->format('Y-m-d\TH:i:s');
 
-                syncGoogleCompleto($link, $row['id_vet'], $row['id_cliente'], [
-                    'titulo' => $row['titulo'],
-                    'descricao' => $row['descricao'],
+                syncGoogleCompleto($link, $row['id_vet'] ?? null, $row['id_cliente'] ?? null, [
+                    'titulo' => $row['titulo'] ?? '',
+                    'descricao' => $row['descricao'] ?? '',
                     'data_inicio' => $startIso,
                     'data_fim' => $endIso
-                ], $id, $row['google_event_id'], $row['google_event_id_cliente'] ?? null);
+                ], $id, $row['google_event_id'] ?? null, $row['google_event_id_cliente'] ?? null);
 
                 echo json_encode(['success' => true]);
             } else {
@@ -392,11 +428,11 @@ switch ($action) {
 
     case 'delete':
         $id = (int) ($_POST['id'] ?? 0);
-        $curr = mysqli_fetch_assoc(DBExecute($link, "SELECT id_vet, id_cliente, google_event_id, google_event_id_cliente FROM Agendamentos WHERE id_agendamento = $id"));
+        $curr = getAgendamentoRowSafe($link, $id);
 
         if (DBExecute($link, "DELETE FROM Agendamentos WHERE id_agendamento = $id")) {
-            if ($curr) {
-                deleteGoogleCompleto($link, $curr['id_vet'], $curr['id_cliente'], $curr['google_event_id'] ?? null, $curr['google_event_id_cliente'] ?? null, $id);
+            if (!empty($curr)) {
+                deleteGoogleCompleto($link, $curr['id_vet'] ?? null, $curr['id_cliente'] ?? null, $curr['google_event_id'] ?? null, $curr['google_event_id_cliente'] ?? null, $id);
             }
             echo json_encode(['success' => true]);
         } else {
@@ -423,7 +459,7 @@ switch ($action) {
 
         $resLogs = @DBExecute($link, "SELECT * FROM GoogleSyncLogs $where ORDER BY id_log DESC LIMIT $limit");
         $logs = [];
-        if ($resLogs) {
+        if ($resLogs && mysqli_num_rows($resLogs) > 0) {
             while ($l = mysqli_fetch_assoc($resLogs)) {
                 $logs[] = $l;
             }

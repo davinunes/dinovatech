@@ -247,7 +247,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $gEvtUpdate = $google_event_id ? ", google_event_id = '" . mysqli_real_escape_string($link, $google_event_id) . "'" : ", google_event_id = NULL";
                 $gEvtCliUpdate = $google_event_id_cliente ? ", google_event_id_cliente = '" . mysqli_real_escape_string($link, $google_event_id_cliente) . "'" : ", google_event_id_cliente = NULL";
                 $titulo_safe = mysqli_real_escape_string($link, $titulo);
-                DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado', id_vet = $id_veterinario, data_inicio = '$data_safe:00', data_fim = '$end_time', titulo = '$titulo_safe' $gEvtUpdate $gEvtCliUpdate WHERE id_agendamento = " . (int) $savedIdAgendamento);
+
+                $resUpd = @DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado', id_vet = $id_veterinario, data_inicio = '$data_safe:00', data_fim = '$end_time', titulo = '$titulo_safe' $gEvtUpdate $gEvtCliUpdate WHERE id_agendamento = " . (int) $savedIdAgendamento);
+                if (!$resUpd) {
+                    // Fallback sem a coluna de cliente
+                    @DBExecute($link, "UPDATE Agendamentos SET status = 'Realizado', id_vet = $id_veterinario, data_inicio = '$data_safe:00', data_fim = '$end_time', titulo = '$titulo_safe' $gEvtUpdate WHERE id_agendamento = " . (int) $savedIdAgendamento);
+                }
             } else if ($hasGoogleCalendar || $forceSync) {
                 $id_tutor = (int) ($pet['id_cliente'] ?? 0);
                 $titulo_safe = mysqli_real_escape_string($link, $titulo);
@@ -256,9 +261,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $q_new_ag = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, data_inicio, data_fim, status, google_event_id, google_event_id_cliente)
                              VALUES ($id_veterinario, $id_tutor, $id_pet, '$titulo_safe', '$data_safe:00', '$end_time', 'Realizado', $gEvtVal, $gEvtCliVal)";
-                if (DBExecute($link, $q_new_ag)) {
+                $resNewAg = @DBExecute($link, $q_new_ag);
+                if (!$resNewAg) {
+                    // Fallback sem a coluna de cliente
+                    $q_new_ag_fb = "INSERT INTO Agendamentos (id_vet, id_cliente, id_pet, titulo, data_inicio, data_fim, status, google_event_id)
+                                    VALUES ($id_veterinario, $id_tutor, $id_pet, '$titulo_safe', '$data_safe:00', '$end_time', 'Realizado', $gEvtVal)";
+                    $resNewAg = @DBExecute($link, $q_new_ag_fb);
+                }
+
+                if ($resNewAg) {
                     $new_ag_id = mysqli_insert_id($link);
-                    DBExecute($link, "UPDATE Atendimentos SET id_agendamento = $new_ag_id WHERE id_atendimento = $savedIdAtendimento");
+                    @DBExecute($link, "UPDATE Atendimentos SET id_agendamento = $new_ag_id WHERE id_atendimento = $savedIdAtendimento");
                 }
             }
         }
