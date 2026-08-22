@@ -25,6 +25,9 @@ class CronRecorrenciasHelper
             ];
         }
 
+        // Limpeza preventiva de eventuais faturas órfãs vazias criadas sem itens
+        @DBExecute($link, "DELETE FROM Faturas WHERE id_fatura NOT IN (SELECT DISTINCT id_fatura FROM ItensFatura) AND DATE(data_emissao) = CURDATE() AND status = 'Em Aberto' AND (valor_total_fatura = 0 OR valor_total_fatura IS NULL)");
+
         if (empty($mesAnoAlvo)) {
             $mesAnoAlvo = date('m/Y');
         }
@@ -41,7 +44,7 @@ class CronRecorrenciasHelper
 
         $dataEmissaoHoje = date('Y-m-d');
 
-        // Busca todas as recorrências ativas que ainda não geraram fatura nesta competência
+        // Busca todas as recorrências ativas que ainda não possuem flag preenchida para esta competência
         $query = "SELECT R.*, S.nome_servico, C.nome as nome_cliente 
                   FROM Recorrencias R
                   JOIN Servicos S ON R.id_servico = S.id_servico
@@ -54,6 +57,7 @@ class CronRecorrenciasHelper
         $result = DBExecute($link, $query);
 
         $faturasCriadas = [];
+        $faturasJaExistentesSincronizadas = 0;
         $erros = [];
         $totalValorGerado = 0.00;
         $totalFaturas = 0;
@@ -67,7 +71,29 @@ class CronRecorrenciasHelper
                 $vlrUnit = (float) ($rec['valor_sugerido_recorrencia'] ?? 0.00);
                 $vlrTotalFatura = $qtd * $vlrUnit;
 
-                // 1. Calcula o dia de vencimento
+                // 1. Dupla camada de proteção contra duplicidade:
+                // Checa se já existe fatura ativa neste mês/ano com este id_recorrencia vinculado
+                $qCheckExistente = "SELECT F.id_fatura 
+                                    FROM ItensFatura I
+                                    JOIN Faturas F ON I.id_fatura = F.id_fatura
+                                    WHERE I.id_recorrencia = $idRec
+                                      AND (
+                                        (MONTH(F.data_vencimento) = $mes AND YEAR(F.data_vencimento) = $ano)
+                                        OR (MONTH(F.data_emissao) = $mes AND YEAR(F.data_emissao) = $ano)
+                                      )
+                                      AND F.status != 'Cancelada'
+                                    LIMIT 1";
+                $resExistente = DBExecute($link, $qCheckExistente);
+
+                if ($resExistente && mysqli_num_rows($resExistente) > 0) {
+                    // Já existe fatura manual/anterior gerada neste mês para este contrato.
+                    // Atualiza a flag na recorrência para ficar consistente e não gera duplicada.
+                    DBExecute($link, "UPDATE Recorrencias SET ultima_fatura_gerada_mes_ano = '$mesAnoSafe' WHERE id_recorrencia = $idRec");
+                    $faturasJaExistentesSincronizadas++;
+                    continue;
+                }
+
+                // 2. Calcula o dia de vencimento
                 $diaVenc = !empty($rec['dia_vencimento']) ? (int) $rec['dia_vencimento'] : 0;
                 if ($diaVenc <= 0 || $diaVenc > 31) {
                     // Fallback para o dia da data de início de cobrança
@@ -81,7 +107,7 @@ class CronRecorrenciasHelper
 
                 $dataVencimento = sprintf('%04d-%02d-%02d', $ano, $mes, $diaVenc);
 
-                // 2. Cria a Fatura individual para o contrato
+                // 3. Cria a Fatura individual para o contrato
                 $qFatura = "INSERT INTO Faturas (id_cliente, data_emissao, data_vencimento, valor_total_fatura, status, possui_nfse, desconto_valor, desconto_tipo, permitir_pagamento_parcial)
                             VALUES ($idCliente, '$dataEmissaoHoje', '$dataVencimento', $vlrTotalFatura, 'Em Aberto', 0, '0.00', 'percentual', '0')";
 
@@ -89,29 +115,20 @@ class CronRecorrenciasHelper
                 if ($resFatura) {
                     $newFaturaId = mysqli_insert_id($link);
 
-                    // 3. Monta a tag/descrição do item
+                    // 4. Monta a tag/descrição do item
                     $tag = !empty($rec['descricao_personalizada'])
                         ? $rec['descricao_personalizada']
                         : "Mensalidade - " . $rec['nome_servico'] . " (" . $mesAnoSafe . ")";
                     $tagSafe = mysqli_real_escape_string($link, $tag);
 
-                    // Dados fiscais herdados da recorrência
-                    $descFiscalSafe = !empty($rec['descricao_fiscal']) ? "'" . mysqli_real_escape_string($link, $rec['descricao_fiscal']) . "'" : "NULL";
-                    $cnaeSafe = !empty($rec['codigo_cnae']) ? "'" . mysqli_real_escape_string($link, $rec['codigo_cnae']) . "'" : "NULL";
-                    $nbsSafe = !empty($rec['codigo_nbs']) ? "'" . mysqli_real_escape_string($link, $rec['codigo_nbs']) . "'" : "NULL";
-                    $itemListaSafe = !empty($rec['item_lista_servico']) ? "'" . mysqli_real_escape_string($link, $rec['item_lista_servico']) . "'" : "NULL";
-                    $tribMunSafe = !empty($rec['codigo_tributacao_municipio']) ? "'" . mysqli_real_escape_string($link, $rec['codigo_tributacao_municipio']) . "'" : "NULL";
-                    $aliqIssVal = !empty($rec['aliquota_iss']) ? (float) $rec['aliquota_iss'] : 0.00;
-                    $issRetVal = !empty($rec['iss_retido']) ? 1 : 0;
-
-                    // 4. Insere o item da fatura
-                    $qItem = "INSERT INTO ItensFatura (id_fatura, id_servico, quantidade, valor_unitario, tag, id_recorrencia, descricao_fiscal, codigo_cnae, codigo_nbs, item_lista_servico, codigo_tributacao_municipio, aliquota_iss, iss_retido)
-                              VALUES ($newFaturaId, $idServico, $qtd, $vlrUnit, '$tagSafe', $idRec, $descFiscalSafe, $cnaeSafe, $nbsSafe, $itemListaSafe, $tribMunSafe, $aliqIssVal, $issRetVal)";
+                    // 5. Insere o item na tabela ItensFatura
+                    $qItem = "INSERT INTO ItensFatura (id_fatura, id_servico, quantidade, valor_unitario, tag, id_recorrencia)
+                              VALUES ($newFaturaId, $idServico, $qtd, $vlrUnit, '$tagSafe', $idRec)";
 
                     $resItem = DBExecute($link, $qItem);
 
                     if ($resItem) {
-                        // 5. Atualiza a flag na recorrência para evitar duplicidade
+                        // 6. Atualiza a flag na recorrência para evitar duplicidade
                         DBExecute($link, "UPDATE Recorrencias SET ultima_fatura_gerada_mes_ano = '$mesAnoSafe' WHERE id_recorrencia = $idRec");
 
                         $totalFaturas++;
@@ -127,6 +144,8 @@ class CronRecorrenciasHelper
                             'vencimento' => $dataVencimento
                         ];
                     } else {
+                        // Se falhou ao inserir o item, remove a fatura criada para não deixar fatura vazia
+                        DBExecute($link, "DELETE FROM Faturas WHERE id_fatura = $newFaturaId");
                         $err = "Erro ao inserir item para Fatura ID $newFaturaId (Recorrência ID $idRec): " . mysqli_error($link);
                         error_log($err);
                         $erros[] = $err;
@@ -139,11 +158,12 @@ class CronRecorrenciasHelper
             }
         }
 
-        // 6. Grava log na tabela CronLogs
+        // 7. Grava log na tabela CronLogs
         $statusLog = count($erros) > 0 ? ($totalFaturas > 0 ? 'aviso' : 'erro') : 'sucesso';
         $detalhesJson = json_encode([
             'competencia' => $mesAnoSafe,
             'faturas_criadas' => $faturasCriadas,
+            'faturas_ja_existentes_sincronizadas' => $faturasJaExistentesSincronizadas,
             'erros' => $erros
         ], JSON_UNESCAPED_UNICODE);
 
@@ -155,16 +175,24 @@ class CronRecorrenciasHelper
 
         DBClose($link);
 
+        $msg = "";
+        if ($totalFaturas > 0) {
+            $msg = "Geração concluída: $totalFaturas fatura(s) gerada(s) totalizando R$ " . number_format($totalValorGerado, 2, ',', '.') . " para a competência $mesAnoSafe.";
+        } elseif ($faturasJaExistentesSincronizadas > 0) {
+            $msg = "Nenhuma fatura pendente para a competência $mesAnoSafe ($faturasJaExistentesSincronizadas contrato(s) já possuíam faturas geradas e foram sincronizados).";
+        } else {
+            $msg = "Nenhuma fatura pendente de geração para a competência $mesAnoSafe.";
+        }
+
         return [
-            'success' => count($erros) === 0 || $totalFaturas > 0,
+            'success' => count($erros) === 0,
             'competencia' => $mesAnoSafe,
             'faturas_geradas' => $totalFaturas,
+            'faturas_ja_existentes_sincronizadas' => $faturasJaExistentesSincronizadas,
             'valor_total' => $totalValorGerado,
             'faturas' => $faturasCriadas,
             'erros' => $erros,
-            'message' => $totalFaturas > 0
-                ? "Geração concluída: $totalFaturas fatura(s) gerada(s) totalizando R$ " . number_format($totalValorGerado, 2, ',', '.') . " para a competência $mesAnoSafe."
-                : "Nenhuma fatura pendente de geração para a competência $mesAnoSafe."
+            'message' => $msg
         ];
     }
 }
