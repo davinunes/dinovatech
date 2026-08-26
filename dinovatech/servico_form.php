@@ -169,11 +169,11 @@ if ($id_servico) {
                                 </h3>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label for="codigo_servico_lc116"
+                                        <label for="item_lista_servico"
                                             class="block text-sm font-medium text-gray-700 mb-1">Item LC 116/03
                                             (Ex: 01.07)</label>
-                                        <input type="text" id="codigo_servico_lc116" name="codigo_servico_lc116"
-                                            value="<?= $servico['codigo_servico_lc116'] ?? '' ?>"
+                                        <input type="text" id="item_lista_servico" name="item_lista_servico"
+                                            value="<?= htmlspecialchars($servico['item_lista_servico'] ?? '') ?>"
                                             placeholder="Ex: 01.07"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
@@ -181,26 +181,35 @@ if ($id_servico) {
                                         <label for="codigo_cnae" class="block text-sm font-medium text-gray-700 mb-1">CNAE
                                             (Apenas números)</label>
                                         <input type="text" id="codigo_cnae" name="codigo_cnae"
-                                            value="<?= $servico['codigo_cnae'] ?? '' ?>" placeholder="Ex: 6201501"
+                                            value="<?= htmlspecialchars($servico['codigo_cnae'] ?? '') ?>" placeholder="Ex: 6201501"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                    <div>
+                                        <label for="codigo_nbs" class="block text-sm font-medium text-gray-700 mb-1">Código NBS</label>
+                                        <input type="text" id="codigo_nbs" name="codigo_nbs"
+                                            value="<?= htmlspecialchars($servico['codigo_nbs'] ?? '') ?>" placeholder="Ex: 115080000"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
                                     <div>
                                         <label for="codigo_tributacao_municipio"
                                             class="block text-sm font-medium text-gray-700 mb-1">Cód. Tributação
                                             Municipal</label>
                                         <input type="text" id="codigo_tributacao_municipio"
                                             name="codigo_tributacao_municipio"
-                                            value="<?= $servico['codigo_tributacao_municipio'] ?? '' ?>"
+                                            value="<?= htmlspecialchars($servico['codigo_tributacao_municipio'] ?? '') ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                     <div>
                                         <label for="aliquota_iss"
                                             class="block text-sm font-medium text-gray-700 mb-1">Alíquota ISS (%)</label>
                                         <input type="number" step="0.01" id="aliquota_iss" name="aliquota_iss"
-                                            value="<?= $servico['aliquota_iss'] ?? '0.00' ?>"
+                                            value="<?= htmlspecialchars($servico['aliquota_iss'] ?? '0.00') ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                     <div>
@@ -222,7 +231,7 @@ if ($id_servico) {
                                         (Template)</label>
                                     <textarea id="descricao_nfse_padrao" name="descricao_nfse_padrao" rows="3"
                                         placeholder="Texto que sairá na nota. Use {MES} para substituir pelo mês corrente."
-                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"><?= $servico['descricao_nfse_padrao'] ?? '' ?></textarea>
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"><?= htmlspecialchars($servico['descricao_nfse_padrao'] ?? '') ?></textarea>
                                 </div>
                             </div>
 

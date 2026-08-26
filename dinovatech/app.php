@@ -1210,12 +1210,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $valor_sugerido = mysqli_real_escape_string($link, $valor_sugerido);
 
                 // Novos Campos Fiscais e Módulos
-                $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? '');
+                $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
                 $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
-                $iss_retido = isset($_POST['iss_retido']) ? 1 : 0;
+                $iss_retido = (isset($_POST['iss_retido']) && $_POST['iss_retido'] == '1') ? 1 : 0;
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
                 
@@ -1275,12 +1275,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $valor_sugerido = mysqli_real_escape_string($link, $valor_sugerido);
 
                 // Novos Campos Fiscais
-                $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? '');
+                $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
                 $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
-                $iss_retido = isset($_POST['iss_retido']) ? 1 : 0;
+                $iss_retido = (isset($_POST['iss_retido']) && $_POST['iss_retido'] == '1') ? 1 : 0;
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
