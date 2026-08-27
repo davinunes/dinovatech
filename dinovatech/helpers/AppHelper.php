@@ -126,6 +126,10 @@ class AppHelper
         if (!$config)
             return ['success' => false, 'message' => 'Configuração Fiscal não encontrada'];
 
+        if (isset($config['modulo_fiscal_ativo']) && (int) $config['modulo_fiscal_ativo'] !== 1) {
+            return ['success' => false, 'message' => 'Módulo de emissão de Nota Fiscal está desativado nas configurações.'];
+        }
+
         // 2. Fetch Fatura & Client
         $queryFat = "SELECT F.*, C.*, C.nome as nome_tomador, F.id_fatura as f_id FROM Faturas F JOIN Clientes C ON F.id_cliente=C.id_cliente WHERE F.id_fatura='$id_fatura'";
         $resFat = mysqli_query($link, $queryFat);

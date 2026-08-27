@@ -66,6 +66,7 @@ if ($id_fatura) {
         if ($res_config && mysqli_num_rows($res_config) > 0) {
             $config_emissor = mysqli_fetch_assoc($res_config);
         }
+        $isFiscalAtivo = !empty($config_emissor['modulo_fiscal_ativo']) && (int)$config_emissor['modulo_fiscal_ativo'] === 1;
     } else {
         $error_msg = "Fatura não encontrada.";
     }
@@ -346,7 +347,8 @@ if ($id_fatura) {
                                     class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-medium transition shadow-md mb-2">Registrar
                                     Pagamento</button>
                             <?php endif; ?>
-<!-- NFS-e Section -->
+                            <?php if ($isFiscalAtivo || !empty($nfse_list)): ?>
+                            <!-- NFS-e Section -->
                             <div class="mt-4 border-t pt-4">
                                 <h3 class="font-bold text-gray-800 mb-2">Nota Fiscal (NFS-e)</h3>
 
@@ -377,60 +379,62 @@ if ($id_fatura) {
                                 }
 
                                 // Function to render NFSe Item
-                                function renderNfseItem($nfse)
-                                {
-                                    $statusClass = 'text-gray-500';
-                                    $icon = 'history';
-                                    $statusLower = strtolower($nfse['status'] ?? '');
+                                if (!function_exists('renderNfseItem')) {
+                                    function renderNfseItem($nfse)
+                                    {
+                                        $statusClass = 'text-gray-500';
+                                        $icon = 'history';
+                                        $statusLower = strtolower($nfse['status'] ?? '');
 
-                                    if ($statusLower == 'concluido') {
-                                        $statusClass = 'text-green-600';
-                                        $icon = 'check_circle';
-                                    } elseif ($statusLower == 'processando') {
-                                        $statusClass = 'text-blue-500';
-                                        $icon = 'hourglass_empty';
-                                    } else {
-                                        // Assume error or failure if not success/processing
-                                        $statusClass = 'text-red-500';
-                                        $icon = 'error';
-                                    }
+                                        if ($statusLower == 'concluido') {
+                                            $statusClass = 'text-green-600';
+                                            $icon = 'check_circle';
+                                        } elseif ($statusLower == 'processando') {
+                                            $statusClass = 'text-blue-500';
+                                            $icon = 'hourglass_empty';
+                                        } else {
+                                            // Assume error or failure if not success/processing
+                                            $statusClass = 'text-red-500';
+                                            $icon = 'error';
+                                        }
 
-                                    // Parsed Info
-                                    $numero_nota = 'Pending';
-                                    if ($nfse['xml_retorno']) {
-                                        preg_match('/<Numero>(.*?)<\/Numero>/', $nfse['xml_retorno'], $m);
-                                        if (!empty($m[1]))
-                                            $numero_nota = $m[1];
-                                    }
+                                        // Parsed Info
+                                        $numero_nota = 'Pending';
+                                        if ($nfse['xml_retorno']) {
+                                            preg_match('/<Numero>(.*?)<\/Numero>/', $nfse['xml_retorno'], $m);
+                                            if (!empty($m[1]))
+                                                $numero_nota = $m[1];
+                                        }
 
-                                    $html = '<div class="bg-gray-50 p-2 rounded border border-gray-100 mb-2 text-sm">';
-                                    $html .= '<div class="flex items-center justify-between mb-1">';
-                                    $html .= '<span class="font-bold ' . $statusClass . ' flex items-center"><span class="material-icons text-sm mr-1">' . $icon . '</span>' . ucfirst($nfse['status']) . '</span>';
-                                    $html .= '<span class="text-xs text-gray-400">' . date('d/m H:i', strtotime($nfse['data_emissao'])) . '</span>';
-                                    $html .= '</div>';
-
-                                    if ($statusLower == 'concluido') {
-                                        $html .= '<div class="text-xs text-gray-600 mt-1">';
-                                        $html .= '<strong>Número:</strong> ' . $numero_nota . '<br>';
-                                        $html .= '<strong>RPS:</strong> ' . $nfse['numero_rps'] . '/' . $nfse['serie_rps'] . '<br>';
-                                        $html .= '<span class="text-[10px] text-gray-400">' . ucfirst($nfse['ambiente']) . '</span>';
+                                        $html = '<div class="bg-gray-50 p-2 rounded border border-gray-100 mb-2 text-sm">';
+                                        $html .= '<div class="flex items-center justify-between mb-1">';
+                                        $html .= '<span class="font-bold ' . $statusClass . ' flex items-center"><span class="material-icons text-sm mr-1">' . $icon . '</span>' . ucfirst($nfse['status']) . '</span>';
+                                        $html .= '<span class="text-xs text-gray-400">' . date('d/m H:i', strtotime($nfse['data_emissao'])) . '</span>';
                                         $html .= '</div>';
 
-                                        $html .= '<div class="grid grid-cols-2 gap-2 mt-2">';
-                                        $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">XML Assinado</a>';
-                                        if ($nfse['url_pdf']) {
-                                            $html .= '<a href="' . $nfse['url_pdf'] . '" target="_blank" class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">PDF</a>';
-                                        } else {
-                                            $html .= '<button onclick="consultarUrlNfse(' . $nfse['id_emissao'] . ')" class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300" title="Tentar obter link PDF na Prefeitura">Buscar PDF</button>';
+                                        if ($statusLower == 'concluido') {
+                                            $html .= '<div class="text-xs text-gray-600 mt-1">';
+                                            $html .= '<strong>Número:</strong> ' . $numero_nota . '<br>';
+                                            $html .= '<strong>RPS:</strong> ' . $nfse['numero_rps'] . '/' . $nfse['serie_rps'] . '<br>';
+                                            $html .= '<span class="text-[10px] text-gray-400">' . ucfirst($nfse['ambiente']) . '</span>';
+                                            $html .= '</div>';
+
+                                            $html .= '<div class="grid grid-cols-2 gap-2 mt-2">';
+                                            $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">XML Assinado</a>';
+                                            if ($nfse['url_pdf']) {
+                                                $html .= '<a href="' . $nfse['url_pdf'] . '" target="_blank" class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">PDF</a>';
+                                            } else {
+                                                $html .= '<button onclick="consultarUrlNfse(' . $nfse['id_emissao'] . ')" class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300" title="Tentar obter link PDF na Prefeitura">Buscar PDF</button>';
+                                            }
+                                            $html .= '</div>';
+                                        } elseif ($statusLower !== 'processando') {
+                                            $html .= '<div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">';
+                                            $html .= substr(strip_tags($nfse['xml_retorno']), 0, 100) . '...';
+                                            $html .= '</div>';
                                         }
                                         $html .= '</div>';
-                                    } elseif ($statusLower !== 'processando') {
-                                        $html .= '<div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">';
-                                        $html .= substr(strip_tags($nfse['xml_retorno']), 0, 100) . '...';
-                                        $html .= '</div>';
+                                        return $html;
                                     }
-                                    $html .= '</div>';
-                                    return $html;
                                 }
 
                                 // Render Active
@@ -455,7 +459,7 @@ if ($id_fatura) {
                                 }
                                 ?>
 
-                                <?php if (!$hasAuthorized): ?>
+                                <?php if ($isFiscalAtivo && !$hasAuthorized): ?>
                                     <!-- NFS-e Preview Card -->
                                     <div id="nfsePreviewCard"
                                         class="hidden bg-blue-50 p-3 rounded-lg border border-blue-100 mb-3">
@@ -486,6 +490,8 @@ if ($id_fatura) {
                                         <span class="material-icons text-sm mr-2">receipt</span> Gerar NFS-e
                                     </button>
                                 <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
                             <?php if ($hasCompletedNfse): ?>
                             <!-- Premium Card: ContaDev-Contabilidade -->
                             <div class="mt-4 border-t pt-4">
@@ -1109,7 +1115,7 @@ if ($id_fatura) {
             carregarAnexos();
 
             // Load NFSe Preview
-            <?php if (!$hasAuthorized): // Only load if we can generate ?>
+            <?php if ($isFiscalAtivo && !$hasAuthorized): // Only load if we can generate ?>
                 loadNfsePreview();
             <?php endif; ?>
 
