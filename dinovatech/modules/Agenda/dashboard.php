@@ -57,6 +57,20 @@ DBClose($link);
                 gap: 5px;
             }
         }
+
+        /* Indicador do Momento Atual (Linha do Tempo) */
+        .fc .fc-timegrid-now-indicator-line {
+            border-color: #ef4444;
+            border-width: 2px;
+            z-index: 4;
+        }
+
+        .fc .fc-timegrid-now-indicator-arrow {
+            border-color: #ef4444;
+            border-top-color: transparent;
+            border-bottom-color: transparent;
+            z-index: 5;
+        }
     </style>
 </head>
 
@@ -193,6 +207,12 @@ DBClose($link);
                     }
                 },
                 timeZone: 'UTC', // Force absolute time rendering (WYSIWYG)
+                now: function () {
+                    // Mantém a hora atual local alinhada com a projeção WYSIWYG em UTC do calendário
+                    const d = new Date();
+                    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds()));
+                },
+                nowIndicator: true,
                 locale: 'pt-br',
                 slotDuration: '00:30:00',
                 slotMinTime: '06:00:00',
