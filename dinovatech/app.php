@@ -3123,14 +3123,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             // 9. Process Response
             $status = 'Erro';
-            if (strpos($responseSoap, '<Numero>') !== false && strpos($responseSoap, '<CompNfse>') !== false) {
+            if (strpos($responseSoap, '<Numero>') !== false && (strpos($responseSoap, '<CompNfse>') !== false || strpos($responseSoap, '<Nfse>') !== false || strpos($responseSoap, '<InfNfse>') !== false)) {
                 $status = 'concluido';
             } elseif (strpos($responseSoap, '<ListaMensagemRetorno>') === false && strpos($responseSoap, '<Fault>') === false && !empty($responseSoap)) {
                 // Potential raw success
             }
 
+            // AUTO-RECUPERAÇÃO / DOUBLE CHECK IMEDIATO:
+            // Se o retorno inicial não confirmou a emissão (ex: erro genérico, RPS já informado, timeout),
+            // consultamos o RPS recém-enviado para checar se a nota foi de fato gerada na prefeitura.
+            if ($status !== 'concluido') {
+                try {
+                    $inputCheck = [
+                        'cnpj' => $config['cnpj'],
+                        'im' => $config['inscricao_municipal'],
+                        'numero_rps' => $nextRps,
+                        'serie_rps' => $config['serie_rps'],
+                        'tipo_rps' => '1'
+                    ];
+                    $xmlCheck = buildConsultarNfseRpsXml($inputCheck);
+                    $rootCheck = $xmlCheck['root'];
+                    if (!empty($xmlCheck['id'])) {
+                        $rootCheck = str_replace(' Id="' . $xmlCheck['id'] . '"', '', $rootCheck);
+                    }
+                    $signedCheck = assinarRoot($rootCheck, $certs, "", 'support_combo');
+                    $resCheck = sendSoap($signedCheck, $endpoint, $certs, 'support_combo', 'consultar_rps', true);
+                    $bodyCheck = $resCheck['response_body'] ?? '';
+
+                    if (strpos($bodyCheck, '<Numero>') !== false && (strpos($bodyCheck, '<CompNfse>') !== false || strpos($bodyCheck, '<Nfse>') !== false || strpos($bodyCheck, '<InfNfse>') !== false)) {
+                        $status = 'concluido';
+                        $responseSoap = $bodyCheck; // Adota o retorno confirmado da consulta
+                    }
+                } catch (Exception $e) {
+                    // Prossegue com o fluxo normal
+                }
+            }
+
+            // Extrair campos da nota caso concluído
+            $numero_nota_val = '';
+            $codigo_verificacao_val = '';
+            $url_pdf_val = '';
+            if ($status === 'concluido') {
+                if (preg_match('/<Numero>(.*?)<\/Numero>/', $responseSoap, $m)) {
+                    $numero_nota_val = trim($m[1]);
+                }
+                if (preg_match('/<CodigoVerificacao>(.*?)<\/CodigoVerificacao>/', $responseSoap, $m)) {
+                    $codigo_verificacao_val = trim($m[1]);
+                }
+
+                // Tenta consultar URL do PDF imediatamente
+                try {
+                    $inputUrl = [
+                        'cnpj' => $config['cnpj'],
+                        'im' => $config['inscricao_municipal'],
+                        'numero_nota' => $numero_nota_val ?: '0',
+                        'numero_rps' => $nextRps,
+                        'serie_rps' => $config['serie_rps'],
+                        'tipo_rps' => '1'
+                    ];
+                    $xmlUrl = buildConsultarUrlNfseXml($inputUrl);
+                    $rootUrl = $xmlUrl['root'];
+                    if (!empty($xmlUrl['id'])) {
+                        $rootUrl = str_replace(' Id="' . $xmlUrl['id'] . '"', '', $rootUrl);
+                    }
+                    $signedUrl = assinarRoot($rootUrl, $certs, "", 'support_combo');
+                    $resUrl = sendSoap($signedUrl, $endpoint, $certs, 'support_combo', 'consultar_url', true);
+                    $bodyUrl = $resUrl['response_body'] ?? '';
+                    if (preg_match('/<UrlVisualizacaoNfse>(.*?)<\/UrlVisualizacaoNfse>/', $bodyUrl, $mU) ||
+                        preg_match('/<Url>(.*?)<\/Url>/', $bodyUrl, $mU) ||
+                        preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $bodyUrl, $mU)) {
+                        $url_pdf_val = htmlspecialchars_decode(trim($mU[1]));
+                    }
+                } catch (Exception $e) {
+                }
+            }
+
             $xml_envio_esc = mysqli_real_escape_string($link, $xmlSigned);
             $xml_retorno_esc = mysqli_real_escape_string($link, $responseSoap);
+            $num_nota_esc = mysqli_real_escape_string($link, $numero_nota_val);
+            $cod_verif_esc = mysqli_real_escape_string($link, $codigo_verificacao_val);
+            $url_pdf_esc = mysqli_real_escape_string($link, $url_pdf_val);
 
             // Prepare snapshot data
             $valor_servico = number_format($totalServicos, 2, '.', '');
@@ -3141,13 +3213,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $discriminacao_esc = mysqli_real_escape_string($link, $discriminacaoFinal);
 
             $queryLog = "INSERT INTO NfseEmissoes (
-                id_fatura, numero_rps, serie_rps, ambiente, 
+                id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente, 
                 valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
-                xml_envio, xml_retorno, status, data_emissao
+                url_pdf, xml_envio, xml_retorno, status, data_emissao
             ) VALUES (
-                '$id_fatura', '$nextRps', '{$config['serie_rps']}', '$ambiente', 
+                '$id_fatura', '$nextRps', '{$config['serie_rps']}', '$num_nota_esc', '$cod_verif_esc', '$ambiente', 
                 '$valor_servico', '$aliquota', '$iss_retido_val', '$item_lista', '$discriminacao_esc',
-                '$xml_envio_esc', '$xml_retorno_esc', '$status', NOW()
+                '$url_pdf_esc', '$xml_envio_esc', '$xml_retorno_esc', '$status', NOW()
             )";
             $insertResult = DBExecute($link, $queryLog);
 
@@ -3171,7 +3243,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
 
                 $response['success'] = true;
-                $response['message'] = "NFS-e Gerada com Sucesso! RPS $nextRps";
+                $notaLabel = !empty($numero_nota_val) ? " (NFS-e Nº $numero_nota_val)" : "";
+                $response['message'] = "NFS-e Gerada/Confirmada com Sucesso! RPS $nextRps$notaLabel";
             } else {
                 $response['success'] = false;
                 $response['message'] = "Erro ao gerar NFS-e / Recusada.";
@@ -3188,6 +3261,153 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $response['debug_xml'] = $xmlSigned;
                 $response['debug_input'] = $inputApi;
             }
+            break;
+
+        case 'sincronizar_rps_iss':
+            require_once '../nfse_test/api.php';
+
+            $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+            $config = mysqli_fetch_assoc($resConf);
+            if (!$config) {
+                $response['success'] = false;
+                $response['message'] = "Configurações do emissor não encontradas.";
+                break;
+            }
+
+            $hasCert = !empty($config['certificado_pfx_base64']) || !empty($config['caminho_certificado']);
+            if (!$hasCert) {
+                $response['success'] = false;
+                $response['message'] = "Certificado digital não configurado.";
+                break;
+            }
+
+            if (!empty($config['senha_certificado'])) {
+                try {
+                    $decrypted = EncryptionHelper::decrypt($config['senha_certificado']);
+                    if ($decrypted) {
+                        $config['senha_certificado'] = $decrypted;
+                    }
+                } catch (Exception $e) {
+                }
+            }
+
+            $pfxContent = null;
+            if (!empty($config['certificado_pfx_base64'])) {
+                $pfxContent = base64_decode($config['certificado_pfx_base64']);
+            } elseif (!empty($config['caminho_certificado'])) {
+                $pfxPath = $config['caminho_certificado'];
+                $finalPfxPath = null;
+                if (file_exists($pfxPath)) {
+                    $finalPfxPath = $pfxPath;
+                } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/' . $pfxPath;
+                } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+                }
+                if ($finalPfxPath) {
+                    $pfxContent = file_get_contents($finalPfxPath);
+                }
+            }
+
+            if (!$pfxContent) {
+                $response['success'] = false;
+                $response['message'] = "Arquivo do Certificado PFX não encontrado.";
+                break;
+            }
+
+            $certs = [];
+            if (!openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado'])) {
+                $response['success'] = false;
+                $response['message'] = "Senha do certificado incorreta ou PFX inválido.";
+                break;
+            }
+
+            $ambiente = $config['ambiente_emissao'] ?? 'producao';
+            $endpoint = ($ambiente == 'producao')
+                ? 'https://df.issnetonline.com.br/webservicenfse204/nfse.asmx'
+                : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+
+            $ultimoRpsEncontrado = null;
+            $origemIdentificacao = '';
+
+            // 1. Tentar método oficial ConsultarRpsDisponivel
+            try {
+                $inputDisp = [
+                    'cnpj' => $config['cnpj'],
+                    'im' => $config['inscricao_municipal'],
+                    'serie_rps' => $config['serie_rps'] ?? '3',
+                    'tipo_rps' => '1'
+                ];
+                $xmlDisp = buildConsultarRpsDisponivelXml($inputDisp);
+                $rootDisp = $xmlDisp['root'];
+                if (!empty($xmlDisp['id'])) {
+                    $rootDisp = str_replace(' Id="' . $xmlDisp['id'] . '"', '', $rootDisp);
+                }
+                $signedDisp = assinarRoot($rootDisp, $certs, "", 'support_combo');
+                $resDisp = sendSoap($signedDisp, $endpoint, $certs, 'support_combo', 'consultar_rps_disponivel', true);
+                $bodyDisp = $resDisp['response_body'] ?? '';
+
+                if (preg_match('/<Numero>(\d+)<\/Numero>/', $bodyDisp, $m)) {
+                    $proxRpsDisponivel = (int)$m[1];
+                    $ultimoRpsEncontrado = ($proxRpsDisponivel > 0) ? ($proxRpsDisponivel - 1) : 0;
+                    $origemIdentificacao = 'ConsultarRpsDisponivel';
+                }
+            } catch (Exception $e) {
+            }
+
+            // 2. Complementar/confirmar com ConsultarNfseServicoPrestado (últimos 90 dias)
+            try {
+                $dataInicio = date('Y-m-d', strtotime('-90 days'));
+                $dataFim = date('Y-m-d');
+                $inputPrestado = [
+                    'cnpj' => $config['cnpj'],
+                    'im' => $config['inscricao_municipal'],
+                    'dataInicial' => $dataInicio,
+                    'dataFinal' => $dataFim
+                ];
+                $xmlPrestado = buildConsultarXml($inputPrestado);
+                $rootPrest = $xmlPrestado['root'];
+                if (!empty($xmlPrestado['id'])) {
+                    $rootPrest = str_replace(' Id="' . $xmlPrestado['id'] . '"', '', $rootPrest);
+                }
+                $signedPrest = assinarRoot($rootPrest, $certs, "", 'support_combo');
+                $resPrest = sendSoap($signedPrest, $endpoint, $certs, 'support_combo', 'consultar', true);
+                $bodyPrest = $resPrest['response_body'] ?? '';
+
+                if (preg_match_all('/<IdentificacaoRps>.*?<Numero>(\d+)<\/Numero>/s', $bodyPrest, $mRps)) {
+                    $numeros = array_map('intval', $mRps[1]);
+                    $maxRps = max($numeros);
+                    if ($ultimoRpsEncontrado === null || $maxRps >= $ultimoRpsEncontrado) {
+                        $ultimoRpsEncontrado = $maxRps;
+                        $origemIdentificacao = 'ConsultarNfseServicoPrestado';
+                    }
+                }
+            } catch (Exception $e) {
+            }
+
+            if ($ultimoRpsEncontrado === null) {
+                $response['success'] = false;
+                $response['message'] = "Não foi possível obter a sequência de RPS no ISS DF. Verifique se há notas emitidas para a série " . ($config['serie_rps'] ?? '3') . ".";
+                break;
+            }
+
+            // Atualiza no banco de dados
+            if ($ambiente == 'producao') {
+                DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_producao = $ultimoRpsEncontrado WHERE id_config = {$config['id_config']}");
+                $config['ultimo_rps_producao'] = $ultimoRpsEncontrado;
+            } else {
+                DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_homologacao = $ultimoRpsEncontrado WHERE id_config = {$config['id_config']}");
+                $config['ultimo_rps_homologacao'] = $ultimoRpsEncontrado;
+            }
+
+            $response['success'] = true;
+            $response['message'] = "Sequência sincronizada com sucesso! Último RPS utilizado no ISS DF: $ultimoRpsEncontrado.";
+            $response['data'] = [
+                'ultimo_rps_producao' => $config['ultimo_rps_producao'],
+                'ultimo_rps_homologacao' => $config['ultimo_rps_homologacao'],
+                'ambiente' => $ambiente,
+                'origem' => $origemIdentificacao
+            ];
             break;
 
         case 'excluir_arquivo_fatura':

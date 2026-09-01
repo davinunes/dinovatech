@@ -311,6 +311,13 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                                 class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 text-sm">
                                         </div>
                                     </div>
+                                    <div class="mt-3 flex items-center justify-between bg-cyan-50 p-2.5 rounded-lg border border-cyan-100">
+                                        <button type="button" id="btnSincronizarRps" onclick="sincronizarRpsIss()"
+                                            class="text-xs text-cyan-800 hover:text-cyan-950 bg-white hover:bg-cyan-100 border border-cyan-300 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition shadow-sm">
+                                            <span class="material-icons text-sm text-cyan-600">sync</span> Sincronizar RPS com ISS DF
+                                        </button>
+                                        <span id="sync_rps_status" class="text-[11px] text-cyan-700 italic"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1206,6 +1213,37 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         loadContaDevStatus();
                     }, 'json');
                 }
+            };
+
+            window.sincronizarRpsIss = function() {
+                const btn = $('#btnSincronizarRps');
+                const origHtml = btn.html();
+                const statusSpan = $('#sync_rps_status');
+                
+                btn.prop('disabled', true).addClass('opacity-75');
+                btn.html('<span class="material-icons animate-spin text-sm">sync</span> Consultando ISS DF...');
+                statusSpan.text('Buscando último RPS na prefeitura...');
+
+                $.post('app.php', { action: 'sincronizar_rps_iss' }, function(res) {
+                    btn.prop('disabled', false).removeClass('opacity-75').html(origHtml);
+                    if (res.success) {
+                        if (res.data && res.data.ultimo_rps_producao !== undefined) {
+                            $('#ultimo_rps_producao').val(res.data.ultimo_rps_producao);
+                        }
+                        if (res.data && res.data.ultimo_rps_homologacao !== undefined) {
+                            $('#ultimo_rps_homologacao').val(res.data.ultimo_rps_homologacao);
+                        }
+                        statusSpan.html('<span class="text-green-600 font-bold">✓ Sincronizado!</span> RPS ' + res.data.ultimo_rps_producao);
+                        alert(res.message);
+                    } else {
+                        statusSpan.html('<span class="text-red-500 font-bold">Falha ao sincronizar</span>');
+                        alert('Erro: ' + (res.message || 'Falha ao sincronizar com ISS DF'));
+                    }
+                }, 'json').fail(function() {
+                    btn.prop('disabled', false).removeClass('opacity-75').html(origHtml);
+                    statusSpan.text('Erro de comunicação.');
+                    alert('Erro de comunicação com o servidor.');
+                });
             };
 
             loadContaDevStatus();
