@@ -294,74 +294,85 @@ DBClose($link);
                                         </div>
                                     </div>
 
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div>
-                                            <label for="item_lista_servico"
-                                                class="block text-sm font-medium text-gray-700 mb-1">Item Lista Serviço
-                                                (Override)</label>
+                                            <label for="item_lista_servico" class="block text-sm font-semibold text-gray-700 mb-1">
+                                                Item LC 116/03 (Override)
+                                            </label>
                                             <input type="text" id="item_lista_servico" name="item_lista_servico"
                                                 value="<?= $contrato['item_lista_servico'] ?? '' ?>"
-                                                placeholder="Padrão Serviço"
+                                                placeholder="Padrão Serviço (Ex: 01.05)"
                                                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                        </div>
-                                        <div>
-                                            <label for="aliquota_iss"
-                                                class="block text-sm font-medium text-gray-700 mb-1">Alíquota ISS
-                                                (%)</label>
-                                            <input type="number" id="aliquota_iss" name="aliquota_iss" step="0.01"
-                                                min="0" max="100" value="<?= $contrato['aliquota_iss'] ?? '' ?>"
-                                                placeholder="Padrão Serviço (Ex: 2.00)"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-semibold text-gray-800">
-                                        </div>
-                                        <div class="flex items-center pt-2">
-                                            <div class="w-full">
-                                                <label class="block text-sm font-medium text-gray-700 mb-1">ISS
-                                                    Retido?</label>
-                                                <select name="iss_retido" id="iss_retido"
-                                                    class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
-                                                    <option value="">Padrão do Serviço</option>
-                                                    <option value="1" <?= ($contrato['iss_retido'] ?? '') === '1' ? 'selected' : '' ?>>Sim, Retido</option>
-                                                    <option value="0" <?= ($contrato['iss_retido'] ?? '') === '0' ? 'selected' : '' ?>>Não, Normal</option>
-                                                </select>
-                                            </div>
+                                            <p class="text-[11px] text-gray-500 mt-1">Item da LC 116/2003 para este contrato.</p>
                                         </div>
 
-                                        <!-- V2 Refinements: More Overrides -->
                                         <div>
-                                            <label for="codigo_cnae"
-                                                class="block text-sm font-medium text-gray-700 mb-1">Código CNAE</label>
+                                            <label for="codigo_cnae" class="block text-sm font-semibold text-gray-700 mb-1">
+                                                Código CNAE (Override)
+                                            </label>
                                             <input type="text" id="codigo_cnae" name="codigo_cnae"
                                                 value="<?= $contrato['codigo_cnae'] ?? '' ?>"
-                                                placeholder="Padrão Serviço"
+                                                placeholder="Padrão Serviço (Ex: 6202300)"
                                                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <p class="text-[11px] text-gray-500 mt-1">CNAE de 7 dígitos da atividade econômica.</p>
                                         </div>
+
                                         <div>
-                                            <label for="codigo_nbs"
-                                                class="block text-sm font-medium text-gray-700 mb-1">Código NBS</label>
-                                            <input type="text" id="codigo_nbs" name="codigo_nbs"
-                                                value="<?= $contrato['codigo_nbs'] ?? '' ?>"
-                                                placeholder="Padrão Serviço"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                        </div>
-                                        <div>
-                                            <label for="codigo_tributacao_municipio"
-                                                class="block text-sm font-medium text-gray-700 mb-1">Cód. Trib.
-                                                Município</label>
+                                            <label for="codigo_tributacao_municipio" class="block text-sm font-semibold text-gray-700 mb-1">
+                                                Cód. Tributação Municipal
+                                            </label>
                                             <input type="text" id="codigo_tributacao_municipio"
                                                 name="codigo_tributacao_municipio"
                                                 value="<?= $contrato['codigo_tributacao_municipio'] ?? '' ?>"
-                                                placeholder="Padrão Serviço"
+                                                placeholder="Padrão Serviço (Ex: 105)"
                                                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <p class="text-[11px] text-gray-500 mt-1">Código de atividade na SEFIN DF (ex: 105).</p>
                                         </div>
 
+                                        <div>
+                                            <label for="codigo_nbs" class="block text-sm font-semibold text-gray-700 mb-1">
+                                                Código NBS (Override)
+                                            </label>
+                                            <input type="text" id="codigo_nbs" name="codigo_nbs"
+                                                value="<?= $contrato['codigo_nbs'] ?? '' ?>"
+                                                placeholder="Padrão Serviço (Ex: 115080000)"
+                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <p class="text-[11px] text-gray-500 mt-1">Nomenclatura Brasileira de Serviços.</p>
+                                        </div>
+
+                                        <div>
+                                            <label for="aliquota_iss" class="block text-sm font-semibold text-gray-700 mb-1">
+                                                Alíquota ISS (%)
+                                            </label>
+                                            <input type="number" id="aliquota_iss" name="aliquota_iss" step="0.01"
+                                                min="0" max="100" value="<?= $contrato['aliquota_iss'] ?? '' ?>"
+                                                placeholder="Padrão Serviço (Ex: 2.00)"
+                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-semibold text-gray-800 bg-gray-50">
+                                            <p class="text-[11px] text-gray-500 mt-1">Alíquota devida ao município (2,00%).</p>
+                                        </div>
+
+                                        <div>
+                                            <label for="iss_retido" class="block text-sm font-semibold text-gray-700 mb-1">
+                                                ISS Retido na Fonte?
+                                            </label>
+                                            <select name="iss_retido" id="iss_retido"
+                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
+                                                <option value="">Padrão do Serviço</option>
+                                                <option value="1" <?= ($contrato['iss_retido'] ?? '') === '1' ? 'selected' : '' ?>>Sim, Retido na Fonte</option>
+                                                <option value="0" <?= ($contrato['iss_retido'] ?? '') === '0' ? 'selected' : '' ?>>Não, Normal</option>
+                                            </select>
+                                            <p class="text-[11px] text-gray-500 mt-1">Se o cliente deve reter o ISS.</p>
+                                        </div>
                                     </div>
+
                                     <div class="mt-4">
-                                        <label for="descricao_personalizada"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Descrição
-                                            Personalizada</label>
+                                        <label for="descricao_personalizada" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            Descrição Personalizada da NFS-e
+                                        </label>
                                         <textarea id="descricao_personalizada" name="descricao_personalizada" rows="3"
-                                            placeholder="Se preenchido, substitui a descrição padrão do serviço."
+                                            placeholder="Se preenchido, substitui a descrição padrão do serviço na emissão da nota fiscal."
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"><?= $contrato['descricao_personalizada'] ?? '' ?></textarea>
+                                        <p class="text-[11px] text-gray-500 mt-1">Texto discriminatório customizado para as notas fiscais deste cliente.</p>
                                     </div>
                                 </div>
 

@@ -164,24 +164,30 @@ if ($id_servico) {
                                         <span class="text-xs text-gray-500">Preview da imagem</span>
                                     </div>
                                 </div>
-                                       <!-- DADOS FISCAIS / NFSE -->
-                            <div class="border-t pt-4 mt-2">
-                                <div class="flex items-center justify-between mb-3">
-                                    <h3 class="text-lg font-semibold text-gray-700 flex items-center">
-                                        <span class="material-icons mr-2 text-cyan-600">receipt_long</span> Parâmetros Fiscais (NFS-e)
-                                    </h3>
-                                    <span class="text-[11px] bg-cyan-50 text-cyan-700 px-2.5 py-1 rounded-full font-medium border border-cyan-100 flex items-center gap-1">
-                                        <span class="material-icons text-xs">verified</span> Ficha Cadastral SEFIN DF
+                            </div>
+
+                            <!-- DADOS FISCAIS / NFSE (LARGURA TOTAL) -->
+                            <div class="border-t border-gray-200 pt-6 mt-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                            <span class="material-icons text-cyan-600">receipt_long</span> Parâmetros Fiscais (NFS-e)
+                                        </h3>
+                                        <p class="text-xs text-gray-500 mt-0.5">Configuração tributária oficial para emissão de Notas Fiscais de Serviço no ISS DF.</p>
+                                    </div>
+                                    <span class="text-xs bg-cyan-50 text-cyan-700 px-3 py-1.5 rounded-full font-semibold border border-cyan-200 flex items-center gap-1 shadow-sm">
+                                        <span class="material-icons text-sm text-cyan-600">verified</span> SEFIN DF / Nota Control
                                     </span>
                                 </div>
 
-                                <div class="bg-gradient-to-r from-cyan-50 to-slate-50 border border-cyan-100 rounded-xl p-4 mb-4">
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- BANNER COM SELETORES INTELIGENTES -->
+                                <div class="bg-gradient-to-r from-cyan-50 via-slate-50 to-cyan-50/30 border border-cyan-200 rounded-2xl p-5 mb-6 shadow-sm">
+                                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                                         <div>
-                                            <label for="select_atividade_fiscal" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
-                                                <span class="material-icons text-xs text-cyan-600">category</span> Atividade Municipal / Item LC 116 (ISS DF)
+                                            <label for="select_atividade_fiscal" class="block text-xs font-bold text-gray-800 mb-1.5 flex items-center gap-1.5">
+                                                <span class="material-icons text-sm text-cyan-600">category</span> Atividade Municipal / Item LC 116 (Catálogo SEFIN DF)
                                             </label>
-                                            <select id="select_atividade_fiscal" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
+                                            <select id="select_atividade_fiscal" class="w-full p-3 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
                                                 <option value="">-- Selecione para auto-preencher os campos abaixo --</option>
                                                 <?php foreach ($atividadesCatalog as $ativ): 
                                                     $isMatch = (($servico['codigo_tributacao_municipio'] ?? '') == $ativ['codigo_tributacao'] || ($servico['item_lista_servico'] ?? '') == $ativ['item_lc116']);
@@ -195,14 +201,16 @@ if ($id_servico) {
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
-                                            <p class="text-[10px] text-gray-500 mt-1">Ao selecionar, os campos técnicos de Item LC 116, Código de Tributação, Alíquota (2,00%) e CNAE são preenchidos automaticamente.</p>
+                                            <p class="text-[11px] text-cyan-800 mt-1.5 flex items-center gap-1">
+                                                <span class="material-icons text-xs text-cyan-600">auto_fix_high</span> Auto-preenche Item LC 116, Código de Tributação, Alíquota (2,00%) e sugere o CNAE correspondente.
+                                            </p>
                                         </div>
 
                                         <div>
-                                            <label for="select_cnae_fiscal" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
-                                                <span class="material-icons text-xs text-cyan-600">business</span> CNAE Autorizado (Ficha Cadastral)
+                                            <label for="select_cnae_fiscal" class="block text-xs font-bold text-gray-800 mb-1.5 flex items-center gap-1.5">
+                                                <span class="material-icons text-sm text-cyan-600">business</span> CNAE Autorizado (Ficha Cadastral)
                                             </label>
-                                            <select id="select_cnae_fiscal" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
+                                            <select id="select_cnae_fiscal" class="w-full p-3 border border-cyan-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
                                                 <option value="">-- Selecione o CNAE --</option>
                                                 <?php foreach ($cnaesCatalog as $cnae): 
                                                     $isCnaeMatch = (($servico['codigo_cnae'] ?? '') == $cnae['codigo']);
@@ -212,77 +220,92 @@ if ($id_servico) {
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
-                                            <p class="text-[10px] text-gray-500 mt-1">CNAEs constantes no cadastro da sua empresa na SEFIN DF.</p>
+                                            <p class="text-[11px] text-cyan-800 mt-1.5 flex items-center gap-1">
+                                                <span class="material-icons text-xs text-cyan-600">fact_check</span> CNAEs oficiais autorizados para emissão de nota no CNPJ da empresa.
+                                            </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- CAMPOS TÉCNICOS COM LEGENDAS COMPLETAS -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                     <div>
-                                        <label for="item_lista_servico"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Item LC 116/03 (Ex: 01.05)</label>
+                                        <label for="item_lista_servico" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            Item LC 116/03
+                                        </label>
                                         <input type="text" id="item_lista_servico" name="item_lista_servico"
                                             value="<?= htmlspecialchars($servico['item_lista_servico'] ?? '') ?>"
                                             placeholder="Ex: 01.05"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <p class="text-[11px] text-gray-500 mt-1">Classificação do serviço segundo a Lei Complementar 116/2003 (ex: <strong>01.05</strong> - Licenciamento de software).</p>
                                     </div>
+
                                     <div>
-                                        <label for="codigo_cnae" class="block text-sm font-medium text-gray-700 mb-1">CNAE
-                                            (Apenas números)</label>
+                                        <label for="codigo_cnae" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            CNAE (Apenas números)
+                                        </label>
                                         <input type="text" id="codigo_cnae" name="codigo_cnae"
                                             value="<?= htmlspecialchars($servico['codigo_cnae'] ?? '') ?>" placeholder="Ex: 6202300"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <p class="text-[11px] text-gray-500 mt-1">Código de 7 dígitos da atividade econômica vinculada ao CNPJ (ex: <strong>6202300</strong>).</p>
                                     </div>
-                                </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                     <div>
-                                        <label for="codigo_nbs" class="block text-sm font-medium text-gray-700 mb-1">Código NBS</label>
-                                        <input type="text" id="codigo_nbs" name="codigo_nbs"
-                                            value="<?= htmlspecialchars($servico['codigo_nbs'] ?? '') ?>" placeholder="Ex: 115080000"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                    </div>
-                                    <div>
-                                        <label for="codigo_tributacao_municipio"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Cód. Tributação Municipal</label>
-                                        <input type="text" id="codigo_tributacao_municipio"
-                                            name="codigo_tributacao_municipio"
+                                        <label for="codigo_tributacao_municipio" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            Cód. Tributação Municipal
+                                        </label>
+                                        <input type="text" id="codigo_tributacao_municipio" name="codigo_tributacao_municipio"
                                             value="<?= htmlspecialchars($servico['codigo_tributacao_municipio'] ?? '') ?>"
                                             placeholder="Ex: 105"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <p class="text-[11px] text-gray-500 mt-1">Código interno da atividade na prefeitura / SEFIN DF (ex: <strong>105</strong>, <strong>106</strong>, <strong>101</strong>).</p>
                                     </div>
-                                </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                     <div>
-                                        <label for="aliquota_iss"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Alíquota ISS (%)</label>
+                                        <label for="codigo_nbs" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            Código NBS
+                                        </label>
+                                        <input type="text" id="codigo_nbs" name="codigo_nbs"
+                                            value="<?= htmlspecialchars($servico['codigo_nbs'] ?? '') ?>" placeholder="Ex: 115080000"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <p class="text-[11px] text-gray-500 mt-1">Nomenclatura Brasileira de Serviços e Intangíveis da Receita Federal (ex: <strong>115080000</strong>).</p>
+                                    </div>
+
+                                    <div>
+                                        <label for="aliquota_iss" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            Alíquota ISS (%)
+                                        </label>
                                         <input type="number" step="0.01" id="aliquota_iss" name="aliquota_iss"
                                             value="<?= htmlspecialchars($servico['aliquota_iss'] ?? '2.00') ?>"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-semibold text-gray-800">
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-bold text-gray-800 bg-gray-50">
+                                        <p class="text-[11px] text-gray-500 mt-1">Percentual de imposto devido ao município (conforme Ficha Cadastral: <strong>2,00%</strong>).</p>
                                     </div>
+
                                     <div>
-                                        <label for="iss_retido" class="block text-sm font-medium text-gray-700 mb-1">ISS Retido?</label>
+                                        <label for="iss_retido" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            ISS Retido na Fonte?
+                                        </label>
                                         <select id="iss_retido" name="iss_retido"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                            <option value="0" <?= ($servico['iss_retido'] ?? 0) == 0 ? 'selected' : '' ?>>Não (Normal)</option>
-                                            <option value="1" <?= ($servico['iss_retido'] ?? 0) == 1 ? 'selected' : '' ?>>Sim (Retido na Fonte)</option>
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
+                                            <option value="0" <?= ($servico['iss_retido'] ?? 0) == 0 ? 'selected' : '' ?>>Não (Normal - Prestador recolhe)</option>
+                                            <option value="1" <?= ($servico['iss_retido'] ?? 0) == 1 ? 'selected' : '' ?>>Sim (Retido na Fonte pelo Cliente)</option>
                                         </select>
+                                        <p class="text-[11px] text-gray-500 mt-1">Indica se o tomador do serviço reterá o valor do imposto do pagamento final.</p>
                                     </div>
                                 </div>
 
-                                <div class="mt-4">
-                                    <label for="descricao_nfse_padrao"
-                                        class="block text-sm font-medium text-gray-700 mb-1">Descrição Padrão (Template)</label>
+                                <div class="mt-5">
+                                    <label for="descricao_nfse_padrao" class="block text-sm font-semibold text-gray-700 mb-1">
+                                        Descrição Padrão da NFS-e (Template)
+                                    </label>
                                     <textarea id="descricao_nfse_padrao" name="descricao_nfse_padrao" rows="3"
-                                        placeholder="Texto que sairá na nota. Use {MES} para substituir pelo mês corrente."
+                                        placeholder="Texto que sairá discriminado no corpo da nota fiscal. Use {MES} para substituir dinamicamente pelo mês de competência."
                                         class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"><?= htmlspecialchars($servico['descricao_nfse_padrao'] ?? '') ?></textarea>
-                                </div>
-                            </div>
+                                    <p class="text-[11px] text-gray-500 mt-1">Texto exibido na discriminação dos serviços da nota. A tag <strong>{MES}</strong> será substituída automaticamente (ex: "Setembro/2026").</p>
                                 </div>
                             </div>
 
-                            <div class="pt-4 flex justify-end">
+                            <div class="pt-6 flex justify-end border-t border-gray-100 mt-6">
                                 <a href="servicos.php"
                                     class="px-6 py-3 mr-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">Cancelar</a>
                                 <button type="submit"
