@@ -1,0 +1,198 @@
+{
+  "versao": "1.0",
+  "municipio_padrao": "5300108",
+  "uf_padrao": "DF",
+  "descricao_orgao": "Secretaria de Estado de Economia do Distrito Federal - ISS DF (Sistema Nota Control)",
+  "cnaes": [
+    {
+      "codigo": "6204000",
+      "tipo": "Principal",
+      "descricao": "Consultoria em tecnologia da informação",
+      "grupo": "Atividades dos serviços de tecnologia da informação"
+    },
+    {
+      "codigo": "6201501",
+      "tipo": "Secundário",
+      "descricao": "Desenvolvimento de programas de computador sob encomenda",
+      "grupo": "Atividades dos serviços de tecnologia da informação"
+    },
+    {
+      "codigo": "6202300",
+      "tipo": "Secundário",
+      "descricao": "Desenvolvimento e licenciamento de programas de computador customizáveis",
+      "grupo": "Atividades dos serviços de tecnologia da informação"
+    },
+    {
+      "codigo": "6203100",
+      "tipo": "Secundário",
+      "descricao": "Desenvolvimento e licenciamento de programas de computador não-customizáveis",
+      "grupo": "Atividades dos serviços de tecnologia da informação"
+    },
+    {
+      "codigo": "6209100",
+      "tipo": "Secundário",
+      "descricao": "Suporte técnico, manutenção e outros serviços em tecnologia da informação",
+      "grupo": "Atividades dos serviços de tecnologia da informação"
+    },
+    {
+      "codigo": "6311900",
+      "tipo": "Secundário",
+      "descricao": "Tratamento de dados, provedores de aplicação e serviços de hospedagem na internet",
+      "grupo": "Tratamento de dados, hospedagem na internet e outras atividades relacionadas"
+    },
+    {
+      "codigo": "8599603",
+      "tipo": "Secundário",
+      "descricao": "Treinamento em informática",
+      "grupo": "Outras atividades de ensino"
+    },
+    {
+      "codigo": "9999999",
+      "tipo": "Secundário",
+      "descricao": "Operações de saída ou retorno de bens do estabelecimento prestador",
+      "grupo": "Outros Serviços"
+    }
+  ],
+  "atividades_municipio": [
+    {
+      "codigo_tributacao": "106",
+      "item_lc116": "01.06",
+      "aliquota": 2.00,
+      "principal": true,
+      "nome_curto": "Assessoria e consultoria em TI",
+      "descricao": "1.06 - Assessoria e consultoria em informática",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6204000"
+    },
+    {
+      "codigo_tributacao": "101",
+      "item_lc116": "01.01",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Análise e desenvolvimento de sistemas",
+      "descricao": "1.01 - Análise e desenvolvimento de sistemas",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6201501"
+    },
+    {
+      "codigo_tributacao": "102",
+      "item_lc116": "01.02",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Programação",
+      "descricao": "1.02 - Programação e codificação",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6201501"
+    },
+    {
+      "codigo_tributacao": "103",
+      "item_lc116": "01.03",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Projetos e implantação de redes",
+      "descricao": "1.03 - Serviços de projeto, planejamento, implantação, gerenciamento e manutenção de redes de dados",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6209100"
+    },
+    {
+      "codigo_tributacao": "104",
+      "item_lc116": "01.04",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Elaboração de programas, apps e jogos",
+      "descricao": "1.04 - Elaboração de programas de computadores, jogos, apps mobile, tablets",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6201501"
+    },
+    {
+      "codigo_tributacao": "105",
+      "item_lc116": "01.05",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Licenciamento de software (SaaS / Direito de Uso)",
+      "descricao": "1.05 - Licenciamento ou cessão de direito de uso de programas de computação",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6202300"
+    },
+    {
+      "codigo_tributacao": "107",
+      "item_lc116": "01.07",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Manutenção de software e bancos de dados",
+      "descricao": "1.07 - Serviços de manutenção de programas de computação e bancos de dados",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6209100"
+    },
+    {
+      "codigo_tributacao": "108",
+      "item_lc116": "01.08",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Websites e páginas eletrônicas",
+      "descricao": "1.08 - Planejamento, confecção, manutenção e atualização de páginas eletrônicas",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6201501"
+    },
+    {
+      "codigo_tributacao": "802",
+      "item_lc116": "08.02",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Treinamento e instrução pedagógica",
+      "descricao": "8.02 - Instrução, treinamento, orientação pedagógica e educacional",
+      "grupo": "08 - Serviços de educação, ensino e treinamento",
+      "cnae_sugerido": "8599603"
+    },
+    {
+      "codigo_tributacao": "1031",
+      "item_lc116": "01.03",
+      "aliquota": 5.00,
+      "principal": false,
+      "nome_curto": "Processamento e hospedagem de dados (5%)",
+      "descricao": "1.03 - Processamento, armazenamento ou hospedagem de dados, textos, imagens, nuvem",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6311900"
+    },
+    {
+      "codigo_tributacao": "1071",
+      "item_lc116": "01.07",
+      "aliquota": 5.00,
+      "principal": false,
+      "nome_curto": "Suporte técnico e instalação (5%)",
+      "descricao": "1.07 - Suporte técnico em informática, instalação e configuração de programas e bancos de dados",
+      "grupo": "01 - Serviços de informática e congêneres",
+      "cnae_sugerido": "6209100"
+    },
+    {
+      "codigo_tributacao": "1102",
+      "item_lc116": "11.02",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Vigilância e segurança",
+      "descricao": "11.02 - Vigilância, segurança ou monitoramento de bens, pessoas e semoventes",
+      "grupo": "11 - Serviços de guarda, estacionamento e vigilância",
+      "cnae_sugerido": "6209100"
+    },
+    {
+      "codigo_tributacao": "1105",
+      "item_lc116": "11.05",
+      "aliquota": 2.00,
+      "principal": false,
+      "nome_curto": "Monitoramento e telemetria de sensores / veículos",
+      "descricao": "11.05 - Serviços relacionados ao monitoramento e rastreamento a distância de sensores, veículos, telemetria",
+      "grupo": "11 - Serviços de guarda, estacionamento e vigilância",
+      "cnae_sugerido": "6311900"
+    },
+    {
+      "codigo_tributacao": "9999999",
+      "item_lc116": "99.99",
+      "aliquota": 0.00,
+      "principal": false,
+      "nome_curto": "Operações sem incidência de ISS",
+      "descricao": "Operações de saída ou retorno de bens do estabelecimento prestador",
+      "grupo": "Atividades sem incidência de ISS",
+      "cnae_sugerido": "9999999"
+    }
+  ]
+}

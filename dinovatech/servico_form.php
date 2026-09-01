@@ -7,10 +7,14 @@ if (!isset($_SESSION['usuario_id'])) {
 include "../database.php";
 require_once __DIR__ . "/config.php";
 require_once __DIR__ . "/helpers/AppHelper.php";
+require_once __DIR__ . "/helpers/FiscalCatalogHelper.php";
 
 $id_servico = $_GET['id'] ?? null;
 $servico = null;
 $is_edit = false;
+
+$cnaesCatalog = FiscalCatalogHelper::getCnaes();
+$atividadesCatalog = FiscalCatalogHelper::getAtividades();
 
 if ($id_servico) {
     $link = DBConnect();
@@ -160,28 +164,73 @@ if ($id_servico) {
                                         <span class="text-xs text-gray-500">Preview da imagem</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- DADOS FISCAIS / NFSE -->
+                                       <!-- DADOS FISCAIS / NFSE -->
                             <div class="border-t pt-4 mt-2">
-                                <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                    <span class="material-icons mr-2 text-cyan-600">receipt_long</span> Parâmetros Fiscais (NFS-e)
-                                </h3>
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-lg font-semibold text-gray-700 flex items-center">
+                                        <span class="material-icons mr-2 text-cyan-600">receipt_long</span> Parâmetros Fiscais (NFS-e)
+                                    </h3>
+                                    <span class="text-[11px] bg-cyan-50 text-cyan-700 px-2.5 py-1 rounded-full font-medium border border-cyan-100 flex items-center gap-1">
+                                        <span class="material-icons text-xs">verified</span> Ficha Cadastral SEFIN DF
+                                    </span>
+                                </div>
+
+                                <div class="bg-gradient-to-r from-cyan-50 to-slate-50 border border-cyan-100 rounded-xl p-4 mb-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label for="select_atividade_fiscal" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                                                <span class="material-icons text-xs text-cyan-600">category</span> Atividade Municipal / Item LC 116 (ISS DF)
+                                            </label>
+                                            <select id="select_atividade_fiscal" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
+                                                <option value="">-- Selecione para auto-preencher os campos abaixo --</option>
+                                                <?php foreach ($atividadesCatalog as $ativ): 
+                                                    $isMatch = (($servico['codigo_tributacao_municipio'] ?? '') == $ativ['codigo_tributacao'] || ($servico['item_lista_servico'] ?? '') == $ativ['item_lc116']);
+                                                ?>
+                                                    <option value="<?= $ativ['codigo_tributacao'] ?>" 
+                                                        data-item="<?= $ativ['item_lc116'] ?>" 
+                                                        data-aliquota="<?= number_format($ativ['aliquota'], 2, '.', '') ?>" 
+                                                        data-cnae="<?= $ativ['cnae_sugerido'] ?>"
+                                                        <?= $isMatch ? 'selected' : '' ?>>
+                                                        [Cód. <?= $ativ['codigo_tributacao'] ?> | LC <?= $ativ['item_lc116'] ?>] <?= htmlspecialchars($ativ['nome_curto']) ?> (Alíq. <?= number_format($ativ['aliquota'], 2, ',', '.') ?>%<?= $ativ['principal'] ? ' - Principal' : '' ?>)
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <p class="text-[10px] text-gray-500 mt-1">Ao selecionar, os campos técnicos de Item LC 116, Código de Tributação, Alíquota (2,00%) e CNAE são preenchidos automaticamente.</p>
+                                        </div>
+
+                                        <div>
+                                            <label for="select_cnae_fiscal" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                                                <span class="material-icons text-xs text-cyan-600">business</span> CNAE Autorizado (Ficha Cadastral)
+                                            </label>
+                                            <select id="select_cnae_fiscal" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
+                                                <option value="">-- Selecione o CNAE --</option>
+                                                <?php foreach ($cnaesCatalog as $cnae): 
+                                                    $isCnaeMatch = (($servico['codigo_cnae'] ?? '') == $cnae['codigo']);
+                                                ?>
+                                                    <option value="<?= $cnae['codigo'] ?>" <?= $isCnaeMatch ? 'selected' : '' ?>>
+                                                        <?= $cnae['codigo'] ?> - <?= htmlspecialchars($cnae['descricao']) ?> (<?= $cnae['tipo'] ?>)
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <p class="text-[10px] text-gray-500 mt-1">CNAEs constantes no cadastro da sua empresa na SEFIN DF.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label for="item_lista_servico"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Item LC 116/03
-                                            (Ex: 01.07)</label>
+                                            class="block text-sm font-medium text-gray-700 mb-1">Item LC 116/03 (Ex: 01.05)</label>
                                         <input type="text" id="item_lista_servico" name="item_lista_servico"
                                             value="<?= htmlspecialchars($servico['item_lista_servico'] ?? '') ?>"
-                                            placeholder="Ex: 01.07"
+                                            placeholder="Ex: 01.05"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                     <div>
                                         <label for="codigo_cnae" class="block text-sm font-medium text-gray-700 mb-1">CNAE
                                             (Apenas números)</label>
                                         <input type="text" id="codigo_cnae" name="codigo_cnae"
-                                            value="<?= htmlspecialchars($servico['codigo_cnae'] ?? '') ?>" placeholder="Ex: 6201501"
+                                            value="<?= htmlspecialchars($servico['codigo_cnae'] ?? '') ?>" placeholder="Ex: 6202300"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                 </div>
@@ -195,11 +244,11 @@ if ($id_servico) {
                                     </div>
                                     <div>
                                         <label for="codigo_tributacao_municipio"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Cód. Tributação
-                                            Municipal</label>
+                                            class="block text-sm font-medium text-gray-700 mb-1">Cód. Tributação Municipal</label>
                                         <input type="text" id="codigo_tributacao_municipio"
                                             name="codigo_tributacao_municipio"
                                             value="<?= htmlspecialchars($servico['codigo_tributacao_municipio'] ?? '') ?>"
+                                            placeholder="Ex: 105"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                 </div>
@@ -209,29 +258,27 @@ if ($id_servico) {
                                         <label for="aliquota_iss"
                                             class="block text-sm font-medium text-gray-700 mb-1">Alíquota ISS (%)</label>
                                         <input type="number" step="0.01" id="aliquota_iss" name="aliquota_iss"
-                                            value="<?= htmlspecialchars($servico['aliquota_iss'] ?? '0.00') ?>"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            value="<?= htmlspecialchars($servico['aliquota_iss'] ?? '2.00') ?>"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-semibold text-gray-800">
                                     </div>
                                     <div>
-                                        <label for="iss_retido" class="block text-sm font-medium text-gray-700 mb-1">ISS
-                                            Retido?</label>
+                                        <label for="iss_retido" class="block text-sm font-medium text-gray-700 mb-1">ISS Retido?</label>
                                         <select id="iss_retido" name="iss_retido"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                            <option value="0" <?= ($servico['iss_retido'] ?? 0) == 0 ? 'selected' : '' ?>>
-                                                Não</option>
-                                            <option value="1" <?= ($servico['iss_retido'] ?? 0) == 1 ? 'selected' : '' ?>>
-                                                Sim</option>
+                                            <option value="0" <?= ($servico['iss_retido'] ?? 0) == 0 ? 'selected' : '' ?>>Não (Normal)</option>
+                                            <option value="1" <?= ($servico['iss_retido'] ?? 0) == 1 ? 'selected' : '' ?>>Sim (Retido na Fonte)</option>
                                         </select>
                                     </div>
                                 </div>
 
                                 <div class="mt-4">
                                     <label for="descricao_nfse_padrao"
-                                        class="block text-sm font-medium text-gray-700 mb-1">Descrição Padrão
-                                        (Template)</label>
+                                        class="block text-sm font-medium text-gray-700 mb-1">Descrição Padrão (Template)</label>
                                     <textarea id="descricao_nfse_padrao" name="descricao_nfse_padrao" rows="3"
                                         placeholder="Texto que sairá na nota. Use {MES} para substituir pelo mês corrente."
                                         class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"><?= htmlspecialchars($servico['descricao_nfse_padrao'] ?? '') ?></textarea>
+                                </div>
+                            </div>
                                 </div>
                             </div>
 
@@ -368,6 +415,33 @@ if ($id_servico) {
             $('#icone_servico').on('input', function() {
                 const val = $(this).val().trim();
                 $('#iconePreview').text(val || '<?= AppHelper::isVetMode() ? "pets" : "build" ?>');
+            });
+
+            // Auto-preenchimento ao selecionar Atividade Municipal
+            $('#select_atividade_fiscal').on('change', function() {
+                const opt = $(this).find('option:selected');
+                if (!opt.val()) return;
+
+                const item = opt.data('item');
+                const aliquota = opt.data('aliquota');
+                const cnae = opt.data('cnae');
+                const codTrib = opt.val();
+
+                if (item) $('#item_lista_servico').val(item);
+                if (codTrib) $('#codigo_tributacao_municipio').val(codTrib);
+                if (aliquota !== undefined) $('#aliquota_iss').val(aliquota);
+                if (cnae) {
+                    $('#codigo_cnae').val(cnae);
+                    $('#select_cnae_fiscal').val(cnae);
+                }
+            });
+
+            // Sincronização ao selecionar CNAE
+            $('#select_cnae_fiscal').on('change', function() {
+                const cnaeVal = $(this).val();
+                if (cnaeVal) {
+                    $('#codigo_cnae').val(cnaeVal);
+                }
             });
 
             $('#servicoForm').on('submit', function (e) {

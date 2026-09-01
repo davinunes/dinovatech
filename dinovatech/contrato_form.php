@@ -7,6 +7,7 @@ if (!isset($_SESSION['usuario_id'])) {
 include "../database.php";
 require_once __DIR__ . "/config.php";
 require_once __DIR__ . "/helpers/AppHelper.php";
+require_once __DIR__ . "/helpers/FiscalCatalogHelper.php";
 
 $id_recorrencia = $_GET['id'] ?? null;
 // Pre-fill client ID if coming from client details
@@ -14,6 +15,9 @@ $pre_cliente_id = $_GET['cliente_id'] ?? null;
 
 $contrato = null;
 $is_edit = false;
+
+$cnaesCatalog = FiscalCatalogHelper::getCnaes();
+$atividadesCatalog = FiscalCatalogHelper::getAtividades();
 
 $link = DBConnect();
 
@@ -248,6 +252,48 @@ DBClose($link);
                                             placeholder="Ex: Consultoria Mensal (Sobrescreve o cadastro do serviço)"><?= $contrato['descricao_fiscal'] ?? '' ?></textarea>
                                     </div>
 
+                                    <div class="bg-gradient-to-r from-cyan-50 to-slate-50 border border-cyan-100 rounded-xl p-4 mb-4">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label for="select_atividade_contrato" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                                                    <span class="material-icons text-xs text-cyan-600">category</span> Atividade Municipal / Item LC 116 (ISS DF)
+                                                </label>
+                                                <select id="select_atividade_contrato" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
+                                                    <option value="">-- Padrão do Cadastro do Serviço --</option>
+                                                    <?php foreach ($atividadesCatalog as $ativ): 
+                                                        $isMatch = (($contrato['codigo_tributacao_municipio'] ?? '') == $ativ['codigo_tributacao'] || ($contrato['item_lista_servico'] ?? '') == $ativ['item_lc116']);
+                                                    ?>
+                                                        <option value="<?= $ativ['codigo_tributacao'] ?>" 
+                                                            data-item="<?= $ativ['item_lc116'] ?>" 
+                                                            data-aliquota="<?= number_format($ativ['aliquota'], 2, '.', '') ?>" 
+                                                            data-cnae="<?= $ativ['cnae_sugerido'] ?>"
+                                                            <?= $isMatch ? 'selected' : '' ?>>
+                                                            [Cód. <?= $ativ['codigo_tributacao'] ?> | LC <?= $ativ['item_lc116'] ?>] <?= htmlspecialchars($ativ['nome_curto']) ?> (Alíq. <?= number_format($ativ['aliquota'], 2, ',', '.') ?>%)
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <p class="text-[10px] text-gray-500 mt-1">Preenche Item LC 116, Código de Tributação, Alíquota (2,00%) e CNAE para este contrato.</p>
+                                            </div>
+
+                                            <div>
+                                                <label for="select_cnae_contrato" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                                                    <span class="material-icons text-xs text-cyan-600">business</span> CNAE Autorizado (Ficha Cadastral)
+                                                </label>
+                                                <select id="select_cnae_contrato" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
+                                                    <option value="">-- Padrão do Cadastro do Serviço --</option>
+                                                    <?php foreach ($cnaesCatalog as $cnae): 
+                                                        $isCnaeMatch = (($contrato['codigo_cnae'] ?? '') == $cnae['codigo']);
+                                                    ?>
+                                                        <option value="<?= $cnae['codigo'] ?>" <?= $isCnaeMatch ? 'selected' : '' ?>>
+                                                            <?= $cnae['codigo'] ?> - <?= htmlspecialchars($cnae['descricao']) ?> (<?= $cnae['tipo'] ?>)
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                                <p class="text-[10px] text-gray-500 mt-1">CNAE específico para as faturas deste contrato.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             <label for="item_lista_servico"
@@ -264,10 +310,10 @@ DBClose($link);
                                                 (%)</label>
                                             <input type="number" id="aliquota_iss" name="aliquota_iss" step="0.01"
                                                 min="0" max="100" value="<?= $contrato['aliquota_iss'] ?? '' ?>"
-                                                placeholder="Padrão Serviço"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                                placeholder="Padrão Serviço (Ex: 2.00)"
+                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-semibold text-gray-800">
                                         </div>
-                                        <div class="flex items-center pt-8">
+                                        <div class="flex items-center pt-2">
                                             <div class="w-full">
                                                 <label class="block text-sm font-medium text-gray-700 mb-1">ISS
                                                     Retido?</label>
@@ -648,6 +694,33 @@ DBClose($link);
                 valorInput.value = valor;
             }
         }
+
+        // Auto-preenchimento ao selecionar Atividade Municipal no Contrato
+        $('#select_atividade_contrato').on('change', function() {
+            const opt = $(this).find('option:selected');
+            if (!opt.val()) return;
+
+            const item = opt.data('item');
+            const aliquota = opt.data('aliquota');
+            const cnae = opt.data('cnae');
+            const codTrib = opt.val();
+
+            if (item) $('#item_lista_servico').val(item);
+            if (codTrib) $('#codigo_tributacao_municipio').val(codTrib);
+            if (aliquota !== undefined) $('#aliquota_iss').val(aliquota);
+            if (cnae) {
+                $('#codigo_cnae').val(cnae);
+                $('#select_cnae_contrato').val(cnae);
+            }
+        });
+
+        // Sincronização ao selecionar CNAE no Contrato
+        $('#select_cnae_contrato').on('change', function() {
+            const cnaeVal = $(this).val();
+            if (cnaeVal) {
+                $('#codigo_cnae').val(cnaeVal);
+            }
+        });
 
         // Keep existing save Logic
         $('#contratoForm').on('submit', function (e) {
