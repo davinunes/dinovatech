@@ -3433,6 +3433,330 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'consultar_e_vincular_nfse':
+            require_once '../nfse_test/api.php';
+
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            $tipo_busca = $_POST['tipo_busca'] ?? 'numero_nota'; // 'numero_nota' or 'numero_rps'
+            $numero_busca = trim($_POST['numero_busca'] ?? '');
+            $serie_rps = trim($_POST['serie_rps'] ?? '');
+
+            if (empty($id_fatura) || empty($numero_busca)) {
+                $response['success'] = false;
+                $response['message'] = "ID da Fatura e Número de busca são obrigatórios.";
+                break;
+            }
+
+            $id_fatura_esc = mysqli_real_escape_string($link, $id_fatura);
+            $resFat = DBExecute($link, "SELECT * FROM Faturas WHERE id_fatura = '$id_fatura_esc'");
+            $fatura = mysqli_fetch_assoc($resFat);
+            if (!$fatura) {
+                $response['success'] = false;
+                $response['message'] = "Fatura não encontrada.";
+                break;
+            }
+
+            $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+            $config = mysqli_fetch_assoc($resConf);
+            if (!$config) {
+                $response['success'] = false;
+                $response['message'] = "Configurações do emissor não encontradas.";
+                break;
+            }
+
+            $hasCert = !empty($config['certificado_pfx_base64']) || !empty($config['caminho_certificado']);
+            if (!$hasCert) {
+                $response['success'] = false;
+                $response['message'] = "Certificado digital não configurado.";
+                break;
+            }
+
+            if (!empty($config['senha_certificado'])) {
+                try {
+                    $decrypted = EncryptionHelper::decrypt($config['senha_certificado']);
+                    if ($decrypted) {
+                        $config['senha_certificado'] = $decrypted;
+                    }
+                } catch (Exception $e) {
+                }
+            }
+
+            $pfxContent = null;
+            if (!empty($config['certificado_pfx_base64'])) {
+                $pfxContent = base64_decode($config['certificado_pfx_base64']);
+            } elseif (!empty($config['caminho_certificado'])) {
+                $pfxPath = $config['caminho_certificado'];
+                $finalPfxPath = null;
+                if (file_exists($pfxPath)) {
+                    $finalPfxPath = $pfxPath;
+                } elseif (file_exists(__DIR__ . '/' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/' . $pfxPath;
+                } elseif (file_exists(__DIR__ . '/../' . $pfxPath)) {
+                    $finalPfxPath = __DIR__ . '/../' . $pfxPath;
+                }
+                if ($finalPfxPath) {
+                    $pfxContent = file_get_contents($finalPfxPath);
+                }
+            }
+
+            if (!$pfxContent) {
+                $response['success'] = false;
+                $response['message'] = "Arquivo do Certificado PFX não encontrado.";
+                break;
+            }
+
+            $certs = [];
+            if (!openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado'])) {
+                $response['success'] = false;
+                $response['message'] = "Senha do certificado incorreta ou PFX inválido.";
+                break;
+            }
+
+            $ambiente = $config['ambiente_emissao'] ?? 'producao';
+            $endpoint = ($ambiente == 'producao')
+                ? 'https://df.issnetonline.com.br/webservicenfse204/nfse.asmx'
+                : 'https://www.issnetonline.com.br/homologaabrasf/webservicenfse204/nfse.asmx';
+
+            if ($tipo_busca === 'numero_rps') {
+                $serieFinal = $serie_rps ?: ($config['serie_rps'] ?? '3');
+                $inputApi = [
+                    'cnpj' => $config['cnpj'],
+                    'im' => $config['inscricao_municipal'],
+                    'numero_rps' => $numero_busca,
+                    'serie_rps' => $serieFinal,
+                    'tipo_rps' => '1'
+                ];
+                $xmlComponents = buildConsultarNfseRpsXml($inputApi);
+                $methodSoap = 'consultar_rps';
+            } else {
+                $inputApi = [
+                    'cnpj' => $config['cnpj'],
+                    'im' => $config['inscricao_municipal'],
+                    'numero' => $numero_busca
+                ];
+                $xmlComponents = buildConsultarXml($inputApi);
+                $methodSoap = 'consultar';
+            }
+
+            $rootXml = $xmlComponents['root'];
+            $rootId = $xmlComponents['id'];
+            $uriRef = "";
+            if (!empty($rootId)) {
+                $rootXml = str_replace(' Id="' . $rootId . '"', '', $rootXml);
+            }
+
+            $signedXml = assinarRoot($rootXml, $certs, $uriRef, 'support_combo');
+            $resultSoap = sendSoap($signedXml, $endpoint, $certs, 'support_combo', $methodSoap, true);
+            $responseSoap = $resultSoap['response_body'] ?? '';
+
+            // Check if response contains nota
+            $hasNota = (strpos($responseSoap, '<Numero>') !== false && (strpos($responseSoap, '<CompNfse>') !== false || strpos($responseSoap, '<Nfse>') !== false || strpos($responseSoap, '<InfNfse>') !== false));
+
+            if (!$hasNota) {
+                $errorMsg = "Nota Fiscal não encontrada na consulta.";
+                if (preg_match_all('/<Mensagem>(.*?)<\/Mensagem>/', $responseSoap, $matches)) {
+                    $errorMsg = implode("\n", $matches[1]);
+                } elseif (preg_match('/<Fault>(.*?)<\/Fault>/s', $responseSoap, $matches)) {
+                    $errorMsg = strip_tags($matches[1]);
+                }
+                $response['success'] = false;
+                $response['message'] = $errorMsg;
+                $response['debug_xml'] = $responseSoap;
+                break;
+            }
+
+            // Extract fields from XML
+            $numeroNota = '';
+            if (preg_match('/<Numero>(.*?)<\/Numero>/', $responseSoap, $m)) {
+                $numeroNota = trim($m[1]);
+            }
+            $codigoVerificacao = '';
+            if (preg_match('/<CodigoVerificacao>(.*?)<\/CodigoVerificacao>/', $responseSoap, $m)) {
+                $codigoVerificacao = trim($m[1]);
+            }
+            $numeroRps = '';
+            if (preg_match('/<IdentificacaoRps>.*?<Numero>(.*?)<\/Numero>/s', $responseSoap, $m)) {
+                $numeroRps = trim($m[1]);
+            } elseif ($tipo_busca === 'numero_rps') {
+                $numeroRps = $numero_busca;
+            }
+            $serieRpsRes = '';
+            if (preg_match('/<IdentificacaoRps>.*?<Serie>(.*?)<\/Serie>/s', $responseSoap, $m)) {
+                $serieRpsRes = trim($m[1]);
+            } else {
+                $serieRpsRes = $serie_rps ?: ($config['serie_rps'] ?? '3');
+            }
+            $valorServico = '0.00';
+            if (preg_match('/<ValorServicos>(.*?)<\/ValorServicos>/', $responseSoap, $m)) {
+                $valorServico = trim($m[1]);
+            }
+            $aliquota = '0.00';
+            if (preg_match('/<Aliquota>(.*?)<\/Aliquota>/', $responseSoap, $m)) {
+                $aliquota = trim($m[1]);
+            }
+            $issRetido = 0;
+            if (preg_match('/<IssRetido>(.*?)<\/IssRetido>/', $responseSoap, $m)) {
+                $issRetido = ($m[1] == '1' ? 1 : 0);
+            }
+            $itemLista = '';
+            if (preg_match('/<ItemListaServico>(.*?)<\/ItemListaServico>/', $responseSoap, $m)) {
+                $itemLista = trim($m[1]);
+            }
+            $discriminacao = '';
+            if (preg_match('/<Discriminacao>(.*?)<\/Discriminacao>/', $responseSoap, $m)) {
+                $discriminacao = trim($m[1]);
+            }
+            $dataEmissaoNfse = date('Y-m-d H:i:s');
+            if (preg_match('/<DataEmissao>(.*?)<\/DataEmissao>/', $responseSoap, $m)) {
+                $dataEmissaoNfse = date('Y-m-d H:i:s', strtotime(trim($m[1])));
+            }
+
+            // Consultar URL PDF
+            $urlPdf = '';
+            try {
+                $inputUrl = [
+                    'cnpj' => $config['cnpj'],
+                    'im' => $config['inscricao_municipal'],
+                    'numero_nota' => $numeroNota ?: '0',
+                    'numero_rps' => $numeroRps ?: '0',
+                    'serie_rps' => $serieRpsRes,
+                    'tipo_rps' => '1'
+                ];
+                $xmlUrl = buildConsultarUrlNfseXml($inputUrl);
+                $rootUrlXml = $xmlUrl['root'];
+                if (!empty($xmlUrl['id'])) {
+                    $rootUrlXml = str_replace(' Id="' . $xmlUrl['id'] . '"', '', $rootUrlXml);
+                }
+                $signedUrlXml = assinarRoot($rootUrlXml, $certs, "", 'support_combo');
+                $resUrlSoap = sendSoap($signedUrlXml, $endpoint, $certs, 'support_combo', 'consultar_url', true);
+                $bodyUrl = $resUrlSoap['response_body'] ?? '';
+                if (preg_match('/<UrlVisualizacaoNfse>(.*?)<\/UrlVisualizacaoNfse>/', $bodyUrl, $mU) ||
+                    preg_match('/<Url>(.*?)<\/Url>/', $bodyUrl, $mU) ||
+                    preg_match('/<UrlNfse>(.*?)<\/UrlNfse>/', $bodyUrl, $mU)) {
+                    $urlPdf = htmlspecialchars_decode(trim($mU[1]));
+                }
+            } catch (Exception $e) {
+                // PDF URL fetch optional
+            }
+
+            // Salvar no Banco
+            $numNota_esc = mysqli_real_escape_string($link, $numeroNota);
+            $codVerif_esc = mysqli_real_escape_string($link, $codigoVerificacao);
+            $numRps_esc = !empty($numeroRps) ? (int)$numeroRps : 'NULL';
+            $serieRps_esc = mysqli_real_escape_string($link, $serieRpsRes);
+            $valServ_esc = number_format((float)$valorServico, 2, '.', '');
+            $aliq_esc = number_format((float)$aliquota, 2, '.', '');
+            $itemLista_esc = mysqli_real_escape_string($link, $itemLista);
+            $disc_esc = mysqli_real_escape_string($link, $discriminacao);
+            $urlPdf_esc = mysqli_real_escape_string($link, $urlPdf);
+            $xmlRet_esc = mysqli_real_escape_string($link, $responseSoap);
+
+            $queryIns = "INSERT INTO NfseEmissoes (
+                id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
+                valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
+                url_pdf, xml_retorno, status, data_emissao
+            ) VALUES (
+                '$id_fatura_esc', $numRps_esc, '$serieRps_esc', '$numNota_esc', '$codVerif_esc', '$ambiente',
+                '$valServ_esc', '$aliq_esc', '$issRetido', '$itemLista_esc', '$disc_esc',
+                '$urlPdf_esc', '$xmlRet_esc', 'concluido', '$dataEmissaoNfse'
+            )";
+            $resIns = DBExecute($link, $queryIns);
+
+            if (!$resIns) {
+                $response['success'] = false;
+                $response['message'] = "Erro ao registrar emissão no banco: " . mysqli_error($link);
+                break;
+            }
+
+            // Atualiza Fatura
+            @DBExecute($link, "UPDATE Faturas SET possui_nfse = 1, data_emissao_nfse = '$dataEmissaoNfse' WHERE id_fatura = '$id_fatura_esc'");
+
+            // Sincroniza sequencial de RPS se aplicável
+            if (!empty($numeroRps)) {
+                if ($ambiente == 'producao' && (int)$numeroRps > (int)($config['ultimo_rps_producao'] ?? 0)) {
+                    DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_producao = " . (int)$numeroRps . " WHERE id_config = {$config['id_config']}");
+                } elseif ($ambiente != 'producao' && (int)$numeroRps > (int)($config['ultimo_rps_homologacao'] ?? 0)) {
+                    DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_homologacao = " . (int)$numeroRps . " WHERE id_config = {$config['id_config']}");
+                }
+            }
+
+            $response['success'] = true;
+            $response['message'] = "NFS-e Nº $numeroNota vinculada com sucesso à Fatura #$id_fatura!";
+            $response['data'] = [
+                'numero_nota' => $numeroNota,
+                'codigo_verificacao' => $codigoVerificacao,
+                'numero_rps' => $numeroRps,
+                'url_pdf' => $urlPdf
+            ];
+            break;
+
+        case 'vincular_nfse_manual':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            $numero_nota = trim($_POST['numero_nota'] ?? '');
+            $codigo_verificacao = trim($_POST['codigo_verificacao'] ?? '');
+            $numero_rps = trim($_POST['numero_rps'] ?? '');
+            $serie_rps = trim($_POST['serie_rps'] ?? '');
+            $url_pdf = trim($_POST['url_pdf'] ?? '');
+            $data_emissao = trim($_POST['data_emissao'] ?? '');
+
+            if (empty($id_fatura) || empty($numero_nota)) {
+                $response['success'] = false;
+                $response['message'] = "ID da Fatura e Número da NFS-e são obrigatórios.";
+                break;
+            }
+
+            $id_fatura_esc = mysqli_real_escape_string($link, $id_fatura);
+            $resFat = DBExecute($link, "SELECT * FROM Faturas WHERE id_fatura = '$id_fatura_esc'");
+            $fatura = mysqli_fetch_assoc($resFat);
+            if (!$fatura) {
+                $response['success'] = false;
+                $response['message'] = "Fatura não encontrada.";
+                break;
+            }
+
+            $resConf = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+            $config = mysqli_fetch_assoc($resConf);
+            $ambiente = $config['ambiente_emissao'] ?? 'producao';
+            $serieFinal = $serie_rps ?: ($config['serie_rps'] ?? '3');
+
+            $dataEmissaoFinal = !empty($data_emissao) ? date('Y-m-d H:i:s', strtotime($data_emissao)) : date('Y-m-d H:i:s');
+
+            $numNota_esc = mysqli_real_escape_string($link, $numero_nota);
+            $codVerif_esc = mysqli_real_escape_string($link, $codigo_verificacao);
+            $numRps_esc = !empty($numero_rps) ? (int)$numero_rps : 'NULL';
+            $serieRps_esc = mysqli_real_escape_string($link, $serieFinal);
+            $urlPdf_esc = mysqli_real_escape_string($link, $url_pdf);
+            $valServ_esc = number_format((float)($fatura['valor_total'] ?? 0), 2, '.', '');
+
+            $queryIns = "INSERT INTO NfseEmissoes (
+                id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
+                valor_servico, aliquota_iss, iss_retido, url_pdf, status, data_emissao
+            ) VALUES (
+                '$id_fatura_esc', $numRps_esc, '$serieRps_esc', '$numNota_esc', '$codVerif_esc', '$ambiente',
+                '$valServ_esc', '0.00', 0, '$urlPdf_esc', 'concluido', '$dataEmissaoFinal'
+            )";
+            $resIns = DBExecute($link, $queryIns);
+
+            if (!$resIns) {
+                $response['success'] = false;
+                $response['message'] = "Erro ao registrar emissão manual: " . mysqli_error($link);
+                break;
+            }
+
+            @DBExecute($link, "UPDATE Faturas SET possui_nfse = 1, data_emissao_nfse = '$dataEmissaoFinal' WHERE id_fatura = '$id_fatura_esc'");
+
+            if (!empty($numero_rps)) {
+                if ($ambiente == 'producao' && (int)$numero_rps > (int)($config['ultimo_rps_producao'] ?? 0)) {
+                    DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_producao = " . (int)$numero_rps . " WHERE id_config = {$config['id_config']}");
+                } elseif ($ambiente != 'producao' && (int)$numero_rps > (int)($config['ultimo_rps_homologacao'] ?? 0)) {
+                    DBExecute($link, "UPDATE ConfiguracoesEmissor SET ultimo_rps_homologacao = " . (int)$numero_rps . " WHERE id_config = {$config['id_config']}");
+                }
+            }
+
+            $response['success'] = true;
+            $response['message'] = "NFS-e Nº $numero_nota vinculada manualmente com sucesso!";
+            break;
+
         // --- MÓDULO VET: ARQUIVOS E RECEITAS ---
 
         case 'upload_arquivo_atendimento':

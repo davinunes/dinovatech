@@ -489,6 +489,10 @@ if ($id_fatura) {
                                         class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-3 rounded-lg font-medium transition shadow-md mb-2 flex justify-center items-center">
                                         <span class="material-icons text-sm mr-2">receipt</span> Gerar NFS-e
                                     </button>
+                                    <button type="button" onclick="openImportarNfseModal()"
+                                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 py-2.5 rounded-lg text-xs font-semibold flex justify-center items-center gap-1.5 transition mb-2">
+                                        <span class="material-icons text-sm text-cyan-600">sync_alt</span> Importar / Vincular NFS-e
+                                    </button>
                                 <?php endif; ?>
                             </div>
                             <?php endif; ?>
@@ -858,6 +862,143 @@ if ($id_fatura) {
         </div>
     </div>
 
+    <!-- Modal Importar / Vincular NFS-e -->
+    <div id="modalImportarNfse"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b pb-3 mb-4">
+                <div class="flex items-center space-x-2">
+                    <span class="material-icons text-cyan-600">receipt_long</span>
+                    <h3 class="text-lg font-bold text-gray-800">Importar / Vincular NFS-e Existente</h3>
+                </div>
+                <button type="button" onclick="$('#modalImportarNfse').addClass('hidden')"
+                    class="text-gray-400 hover:text-gray-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <!-- Tabs de Navegação -->
+            <div class="flex border-b border-gray-200 mb-4">
+                <button type="button" id="tabBtnConsulta" onclick="switchNfseImportTab('consulta')"
+                    class="py-2 px-4 text-xs font-bold border-b-2 border-cyan-600 text-cyan-600 flex items-center gap-1">
+                    <span class="material-icons text-sm">travel_explore</span> Consultar no ISS DF
+                </button>
+                <button type="button" id="tabBtnManual" onclick="switchNfseImportTab('manual')"
+                    class="py-2 px-4 text-xs font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent flex items-center gap-1">
+                    <span class="material-icons text-sm">edit_note</span> Vínculo Manual
+                </button>
+            </div>
+
+            <!-- Aba 1: Consulta Automática no ISS -->
+            <div id="tabContentConsulta">
+                <form id="formConsultaNfse">
+                    <input type="hidden" name="action" value="consultar_e_vincular_nfse">
+                    <input type="hidden" name="id_fatura" value="<?= $id_fatura ?>">
+
+                    <div class="bg-cyan-50 p-3 rounded-lg border border-cyan-100 mb-4 text-xs text-cyan-900 leading-relaxed">
+                        <span class="font-bold">Como funciona:</span> O sistema usará o certificado digital para consultar a nota no ISS DF (ISSNet), baixará os dados fiscais e o XML assinado, vinculando-a diretamente a esta fatura.
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Consultar por:</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
+                                <input type="radio" name="tipo_busca" value="numero_nota" checked class="mr-2 text-cyan-600" onchange="toggleTipoBusca(this.value)">
+                                <span>Número da NFS-e</span>
+                            </label>
+                            <label class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
+                                <input type="radio" name="tipo_busca" value="numero_rps" class="mr-2 text-cyan-600" onchange="toggleTipoBusca(this.value)">
+                                <span>Número do RPS</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 mb-4">
+                        <div class="col-span-2" id="divNumeroBuscaWrapper">
+                            <label id="lblNumeroBusca" class="block text-xs font-medium text-gray-700 mb-1">Número da NFS-e</label>
+                            <input type="number" name="numero_busca" id="inputNumeroBusca" required placeholder="Ex: 53"
+                                class="w-full p-2 border rounded-lg text-sm font-semibold">
+                        </div>
+                        <div id="divSerieRps" class="hidden">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Série RPS</label>
+                            <input type="text" name="serie_rps" value="<?= htmlspecialchars($config_emissor['serie_rps'] ?? '3') ?>"
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-3 border-t">
+                        <button type="button" onclick="$('#modalImportarNfse').addClass('hidden')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg">Cancelar</button>
+                        <button type="submit" id="btnSubmitConsultaNfse"
+                            class="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow">
+                            <span class="material-icons text-sm">search</span> Consultar e Vincular
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Aba 2: Vínculo Manual Direto -->
+            <div id="tabContentManual" class="hidden">
+                <form id="formManualNfse">
+                    <input type="hidden" name="action" value="vincular_nfse_manual">
+                    <input type="hidden" name="id_fatura" value="<?= $id_fatura ?>">
+
+                    <div class="bg-amber-50 p-3 rounded-lg border border-amber-100 mb-4 text-xs text-amber-900 leading-relaxed">
+                        <span class="font-bold">Vínculo Direto:</span> Utilize esta opção caso o WebService da prefeitura esteja offline ou com instabilidade.
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Número da NFS-e *</label>
+                            <input type="text" name="numero_nota" required placeholder="Ex: 53"
+                                class="w-full p-2 border rounded-lg text-sm font-semibold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Cód. Verificação</label>
+                            <input type="text" name="codigo_verificacao" placeholder="Ex: A1B2C3D4"
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-3 mb-3">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Número do RPS</label>
+                            <input type="number" name="numero_rps" placeholder="Ex: 60"
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Série RPS</label>
+                            <input type="text" name="serie_rps" value="<?= htmlspecialchars($config_emissor['serie_rps'] ?? '3') ?>"
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Data de Emissão</label>
+                            <input type="date" name="data_emissao" value="<?= date('Y-m-d') ?>"
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Link do PDF (Opcional)</label>
+                            <input type="url" name="url_pdf" placeholder="https://..."
+                                class="w-full p-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-3 border-t">
+                        <button type="button" onclick="$('#modalImportarNfse').addClass('hidden')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg">Cancelar</button>
+                        <button type="submit" id="btnSubmitManualNfse"
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow">
+                            <span class="material-icons text-sm">save</span> Salvar e Vincular
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 
@@ -935,6 +1076,35 @@ if ($id_fatura) {
         function openIncorporarModal() { $('#modalIncorporar').removeClass('hidden'); }
         function openEditarFaturaModal() { $('#modalEditarFatura').removeClass('hidden'); }
         function openUploadModal() { $('#modalUpload').removeClass('hidden'); }
+        function openImportarNfseModal() { $('#modalImportarNfse').removeClass('hidden'); }
+
+        function switchNfseImportTab(tab) {
+            if (tab === 'consulta') {
+                $('#tabBtnConsulta').addClass('border-cyan-600 text-cyan-600 font-bold').removeClass('border-transparent text-gray-500 font-medium');
+                $('#tabBtnManual').removeClass('border-cyan-600 text-cyan-600 font-bold').addClass('border-transparent text-gray-500 font-medium');
+                $('#tabContentConsulta').removeClass('hidden');
+                $('#tabContentManual').addClass('hidden');
+            } else {
+                $('#tabBtnManual').addClass('border-cyan-600 text-cyan-600 font-bold').removeClass('border-transparent text-gray-500 font-medium');
+                $('#tabBtnConsulta').removeClass('border-cyan-600 text-cyan-600 font-bold').addClass('border-transparent text-gray-500 font-medium');
+                $('#tabContentManual').removeClass('hidden');
+                $('#tabContentConsulta').addClass('hidden');
+            }
+        }
+
+        function toggleTipoBusca(tipo) {
+            if (tipo === 'numero_rps') {
+                $('#lblNumeroBusca').text('Número do RPS');
+                $('#inputNumeroBusca').attr('placeholder', 'Ex: 60');
+                $('#divSerieRps').removeClass('hidden');
+                $('#divNumeroBuscaWrapper').removeClass('col-span-3').addClass('col-span-2');
+            } else {
+                $('#lblNumeroBusca').text('Número da NFS-e');
+                $('#inputNumeroBusca').attr('placeholder', 'Ex: 53');
+                $('#divSerieRps').addClass('hidden');
+                $('#divNumeroBuscaWrapper').removeClass('col-span-2').addClass('col-span-3');
+            }
+        }
 
         // Generic Toast Function
         function showToast(message, type = 'success') {
@@ -1143,6 +1313,48 @@ if ($id_fatura) {
                     if (res.success) location.reload();
                     else showToast(res.message, 'error');
                 }, 'json');
+            });
+
+            $('#formConsultaNfse').on('submit', function (e) {
+                e.preventDefault();
+                const btn = $('#btnSubmitConsultaNfse');
+                const origHtml = btn.html();
+                btn.prop('disabled', true).html('<span class="material-icons animate-spin text-sm">refresh</span> Consultando...');
+
+                $.post('app.php', $(this).serialize(), function (res) {
+                    if (res.success) {
+                        showToast(res.message, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast(res.message || 'Erro ao consultar NFS-e', 'error');
+                        alert(res.message || 'Erro ao consultar NFS-e.');
+                        btn.prop('disabled', false).html(origHtml);
+                    }
+                }, 'json').fail(function () {
+                    showToast('Erro de comunicação com o servidor.', 'error');
+                    btn.prop('disabled', false).html(origHtml);
+                });
+            });
+
+            $('#formManualNfse').on('submit', function (e) {
+                e.preventDefault();
+                const btn = $('#btnSubmitManualNfse');
+                const origHtml = btn.html();
+                btn.prop('disabled', true).html('<span class="material-icons animate-spin text-sm">refresh</span> Salvando...');
+
+                $.post('app.php', $(this).serialize(), function (res) {
+                    if (res.success) {
+                        showToast(res.message, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast(res.message || 'Erro ao vincular NFS-e', 'error');
+                        alert(res.message || 'Erro ao vincular NFS-e.');
+                        btn.prop('disabled', false).html(origHtml);
+                    }
+                }, 'json').fail(function () {
+                    showToast('Erro de comunicação com o servidor.', 'error');
+                    btn.prop('disabled', false).html(origHtml);
+                });
             });
 
             $('#formPagamento').on('submit', function (e) {
