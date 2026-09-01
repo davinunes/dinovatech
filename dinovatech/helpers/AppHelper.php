@@ -177,30 +177,45 @@ class AppHelper
                 $firstItem = false;
             }
 
-            // Determine Tax Settings (Prioritize First Item)
+            // Determine Tax Settings (Prioritize Concluded NFS-e Snapshot, then First Item / Recurrence)
             if (!$taxSettings) {
-                $taxSettings = [
-                    'codigo_cnae' => $row['codigo_cnae'],
-                    'codigo_nbs' => $row['codigo_nbs'],
-                    'item_lista_servico' => $row['item_lista_servico'],
-                    'codigo_tributacao_municipio' => $row['codigo_tributacao_municipio'],
-                    'aliquota_iss' => $row['aliquota_iss'],
-                    'iss_retido' => $row['iss_retido']
-                ];
+                $queryNfseEmissao = "SELECT * FROM NfseEmissoes WHERE id_fatura='$id_fatura' AND (status='concluido' OR status='processando') ORDER BY id_emissao DESC LIMIT 1";
+                $resNfseEmissao = mysqli_query($link, $queryNfseEmissao);
+                $nfseEmissaoRow = ($resNfseEmissao && mysqli_num_rows($resNfseEmissao) > 0) ? mysqli_fetch_assoc($resNfseEmissao) : null;
 
-                // Check Recurrence Override
-                if (!empty($row['rec_override'])) {
-                    $recRow = $row['rec_override'];
-                    if (!empty($recRow['codigo_cnae']))
-                        $taxSettings['codigo_cnae'] = $recRow['codigo_cnae'];
-                    if (!empty($recRow['codigo_nbs']))
-                        $taxSettings['codigo_nbs'] = $recRow['codigo_nbs'];
-                    if (!empty($recRow['codigo_tributacao_municipio']))
-                        $taxSettings['codigo_tributacao_municipio'] = $recRow['codigo_tributacao_municipio'];
-                    if (!is_null($recRow['aliquota_iss']))
-                        $taxSettings['aliquota_iss'] = $recRow['aliquota_iss'];
-                    if (!is_null($recRow['iss_retido']))
-                        $taxSettings['iss_retido'] = $recRow['iss_retido'];
+                if ($nfseEmissaoRow) {
+                    $taxSettings = [
+                        'codigo_cnae' => $row['codigo_cnae'],
+                        'codigo_nbs' => $row['codigo_nbs'],
+                        'item_lista_servico' => $nfseEmissaoRow['item_lista_servico'] ?: $row['item_lista_servico'],
+                        'codigo_tributacao_municipio' => $row['codigo_tributacao_municipio'],
+                        'aliquota_iss' => $nfseEmissaoRow['aliquota_iss'],
+                        'iss_retido' => $nfseEmissaoRow['iss_retido']
+                    ];
+                } else {
+                    $taxSettings = [
+                        'codigo_cnae' => $row['codigo_cnae'],
+                        'codigo_nbs' => $row['codigo_nbs'],
+                        'item_lista_servico' => $row['item_lista_servico'],
+                        'codigo_tributacao_municipio' => $row['codigo_tributacao_municipio'],
+                        'aliquota_iss' => $row['aliquota_iss'],
+                        'iss_retido' => $row['iss_retido']
+                    ];
+
+                    // Check Recurrence Override
+                    if (!empty($row['rec_override'])) {
+                        $recRow = $row['rec_override'];
+                        if (!empty($recRow['codigo_cnae']))
+                            $taxSettings['codigo_cnae'] = $recRow['codigo_cnae'];
+                        if (!empty($recRow['codigo_nbs']))
+                            $taxSettings['codigo_nbs'] = $recRow['codigo_nbs'];
+                        if (!empty($recRow['codigo_tributacao_municipio']))
+                            $taxSettings['codigo_tributacao_municipio'] = $recRow['codigo_tributacao_municipio'];
+                        if (!is_null($recRow['aliquota_iss']))
+                            $taxSettings['aliquota_iss'] = $recRow['aliquota_iss'];
+                        if (!is_null($recRow['iss_retido']))
+                            $taxSettings['iss_retido'] = $recRow['iss_retido'];
+                    }
                 }
             }
         }
@@ -258,9 +273,9 @@ class AppHelper
             'fatura' => $fatura,
             'config' => $config,
             'total_servicos' => $totalServicos,
+            'tomador' => $tomadorData,
             'tax_settings' => $taxSettings,
             'discriminacao' => $discriminacaoFinal,
-            'tomador' => $tomadorData,
             'validation_errors' => $validationErrors,
             'ambiente' => ($config['ambiente_padrao'] === 'producao') ? 'producao' : 'homologacao'
         ];
@@ -275,7 +290,7 @@ class AppHelper
         $totalServicos = $rowItems['total_servicos'] ?? 0.00;
 
         // 2. Fetch Invoice Discount Settings
-        $queryFatura = "SELECT desconto_valor, desconto_tipo FROM Faturas WHERE id_fatura='$id_fatura'";
+        $queryFatura = "SELECT desconto_valor, desconto_tipo, status FROM Faturas WHERE id_fatura='$id_fatura'";
         $resFatura = mysqli_query($link, $queryFatura);
         $rowFatura = mysqli_fetch_assoc($resFatura);
 
@@ -294,32 +309,38 @@ class AppHelper
         }
 
         // 3. Fetch Tax Settings relative to this Invoice
-        // We need to check if there is ANY item with retention, or if we follow the dominant service.
-        // Usually, Invoice = One Service. But if mixed, we should check each?
-        // Current logic in calculateNfseData takes the FIRST item's settings. We shall do the same for consistency.
+        // Check if there is an existing NFS-e emission snapshot (historical lock)
+        $queryNfseLock = "SELECT aliquota_iss, iss_retido FROM NfseEmissoes WHERE id_fatura='$id_fatura' AND (status='concluido' OR status='processando') ORDER BY id_emissao DESC LIMIT 1";
+        $resNfseLock = mysqli_query($link, $queryNfseLock);
+        $nfseLock = ($resNfseLock && mysqli_num_rows($resNfseLock) > 0) ? mysqli_fetch_assoc($resNfseLock) : null;
 
-        $queryTax = "SELECT I.id_recorrencia, I.id_servico, S.aliquota_iss, S.iss_retido
-                     FROM ItensFatura I 
-                     JOIN Servicos S ON I.id_servico = S.id_servico 
-                     WHERE I.id_fatura='$id_fatura' LIMIT 1";
+        if ($nfseLock) {
+            $aliquota = (float)$nfseLock['aliquota_iss'];
+            $issRetido = (string)$nfseLock['iss_retido'];
+        } else {
+            $queryTax = "SELECT I.id_recorrencia, I.id_servico, S.aliquota_iss, S.iss_retido
+                         FROM ItensFatura I 
+                         JOIN Servicos S ON I.id_servico = S.id_servico 
+                         WHERE I.id_fatura='$id_fatura' LIMIT 1";
 
-        $resTax = mysqli_query($link, $queryTax);
-        $taxData = mysqli_fetch_assoc($resTax);
+            $resTax = mysqli_query($link, $queryTax);
+            $taxData = mysqli_fetch_assoc($resTax);
 
-        $aliquota = $taxData['aliquota_iss'] ?? 0;
-        $issRetido = $taxData['iss_retido'] ?? '2'; // 2=Não
-        $idRecorrencia = $taxData['id_recorrencia'] ?? null;
+            $aliquota = $taxData['aliquota_iss'] ?? 0;
+            $issRetido = $taxData['iss_retido'] ?? '2'; // 2=Não
+            $idRecorrencia = $taxData['id_recorrencia'] ?? null;
 
-        // Check Override from Recurrence
-        if ($idRecorrencia) {
-            $queryRec = "SELECT iss_retido, aliquota_iss FROM Recorrencias WHERE id_recorrencia='$idRecorrencia'";
-            $resRec = mysqli_query($link, $queryRec);
-            $rec = mysqli_fetch_assoc($resRec);
-            if ($rec) {
-                if (!is_null($rec['iss_retido']))
-                    $issRetido = $rec['iss_retido'];
-                if (!is_null($rec['aliquota_iss']))
-                    $aliquota = $rec['aliquota_iss'];
+            // Check Override from Recurrence
+            if ($idRecorrencia) {
+                $queryRec = "SELECT iss_retido, aliquota_iss FROM Recorrencias WHERE id_recorrencia='$idRecorrencia'";
+                $resRec = mysqli_query($link, $queryRec);
+                $rec = mysqli_fetch_assoc($resRec);
+                if ($rec) {
+                    if (!is_null($rec['iss_retido']))
+                        $issRetido = $rec['iss_retido'];
+                    if (!is_null($rec['aliquota_iss']))
+                        $aliquota = $rec['aliquota_iss'];
+                }
             }
         }
 
