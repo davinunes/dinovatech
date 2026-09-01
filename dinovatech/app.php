@@ -3330,65 +3330,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $ultimoRpsEncontrado = null;
             $origemIdentificacao = '';
 
-            // 1. Tentar método oficial ConsultarRpsDisponivel
-            try {
-                $inputDisp = [
-                    'cnpj' => $config['cnpj'],
-                    'im' => $config['inscricao_municipal'],
-                    'serie_rps' => $config['serie_rps'] ?? '3',
-                    'tipo_rps' => '1'
-                ];
-                $xmlDisp = buildConsultarRpsDisponivelXml($inputDisp);
-                $rootDisp = $xmlDisp['root'];
-                if (!empty($xmlDisp['id'])) {
-                    $rootDisp = str_replace(' Id="' . $xmlDisp['id'] . '"', '', $rootDisp);
-                }
-                $signedDisp = assinarRoot($rootDisp, $certs, "", 'support_combo');
-                $resDisp = sendSoap($signedDisp, $endpoint, $certs, 'support_combo', 'consultar_rps_disponivel', true);
-                $bodyDisp = $resDisp['response_body'] ?? '';
+            // Piso de segurança: o último RPS salvo no banco local para o ambiente
+            $rpsAtualConfig = ($ambiente == 'producao') ? (int)($config['ultimo_rps_producao'] ?? 0) : (int)($config['ultimo_rps_homologacao'] ?? 0);
+            $resMaxLocal = DBExecute($link, "SELECT MAX(numero_rps) as max_rps FROM NfseEmissoes WHERE ambiente = '$ambiente' AND (status = 'concluido' OR status = 'processando')");
+            $maxLocalRow = mysqli_fetch_assoc($resMaxLocal);
+            $maxRpsLocal = (int)($maxLocalRow['max_rps'] ?? 0);
+            $pisoSeguro = max($rpsAtualConfig, $maxRpsLocal);
 
-                if (preg_match('/<Numero>(\d+)<\/Numero>/', $bodyDisp, $m)) {
-                    $proxRpsDisponivel = (int)$m[1];
-                    $ultimoRpsEncontrado = ($proxRpsDisponivel > 0) ? ($proxRpsDisponivel - 1) : 0;
-                    $origemIdentificacao = 'ConsultarRpsDisponivel';
-                }
-            } catch (Exception $e) {
-            }
-
-            // 2. Complementar/confirmar com ConsultarNfseServicoPrestado (últimos 90 dias)
-            try {
-                $dataInicio = date('Y-m-d', strtotime('-90 days'));
-                $dataFim = date('Y-m-d');
-                $inputPrestado = [
-                    'cnpj' => $config['cnpj'],
-                    'im' => $config['inscricao_municipal'],
-                    'dataInicial' => $dataInicio,
-                    'dataFinal' => $dataFim
-                ];
-                $xmlPrestado = buildConsultarXml($inputPrestado);
-                $rootPrest = $xmlPrestado['root'];
-                if (!empty($xmlPrestado['id'])) {
-                    $rootPrest = str_replace(' Id="' . $xmlPrestado['id'] . '"', '', $rootPrest);
-                }
-                $signedPrest = assinarRoot($rootPrest, $certs, "", 'support_combo');
-                $resPrest = sendSoap($signedPrest, $endpoint, $certs, 'support_combo', 'consultar', true);
-                $bodyPrest = $resPrest['response_body'] ?? '';
-
-                if (preg_match_all('/<IdentificacaoRps>.*?<Numero>(\d+)<\/Numero>/s', $bodyPrest, $mRps)) {
-                    $numeros = array_map('intval', $mRps[1]);
-                    $maxRps = max($numeros);
-                    if ($ultimoRpsEncontrado === null || $maxRps >= $ultimoRpsEncontrado) {
-                        $ultimoRpsEncontrado = $maxRps;
-                        $origemIdentificacao = 'ConsultarNfseServicoPrestado';
+            // 1. Sondagem progressiva: testa se os RPSs seguintes ao piso seguro existem na prefeitura
+            // Testa até +5 RPSs à frente do piso seguro para verificar se houve emissão direta no portal
+            $maiorRpsConfirmado = $pisoSeguro;
+            $startTest = max(1, $pisoSeguro);
+            for ($testRps = $startTest; $testRps <= $startTest + 10; $testRps++) {
+                try {
+                    $inputCheck = [
+                        'cnpj' => $config['cnpj'],
+                        'im' => $config['inscricao_municipal'],
+                        'numero_rps' => $testRps,
+                        'serie_rps' => $config['serie_rps'] ?? '3',
+                        'tipo_rps' => '1'
+                    ];
+                    $xmlCheck = buildConsultarNfseRpsXml($inputCheck);
+                    $rootCheck = $xmlCheck['root'];
+                    if (!empty($xmlCheck['id'])) {
+                        $rootCheck = str_replace(' Id="' . $xmlCheck['id'] . '"', '', $rootCheck);
                     }
+                    $signedCheck = assinarRoot($rootCheck, $certs, "", 'support_combo');
+                    $resCheck = sendSoap($signedCheck, $endpoint, $certs, 'support_combo', 'consultar_rps', true);
+                    $bodyCheck = $resCheck['response_body'] ?? '';
+
+                    if (strpos($bodyCheck, '<Numero>') !== false && (strpos($bodyCheck, '<CompNfse>') !== false || strpos($bodyCheck, '<Nfse>') !== false || strpos($bodyCheck, '<InfNfse>') !== false)) {
+                        $maiorRpsConfirmado = $testRps;
+                        $origemIdentificacao = "ConsultarNfsePorRps (RPS $testRps confirmado no ISS)";
+                    }
+                } catch (Exception $e) {
                 }
-            } catch (Exception $e) {
             }
 
-            if ($ultimoRpsEncontrado === null) {
-                $response['success'] = false;
-                $response['message'] = "Não foi possível obter a sequência de RPS no ISS DF. Verifique se há notas emitidas para a série " . ($config['serie_rps'] ?? '3') . ".";
-                break;
+            $ultimoRpsEncontrado = max($pisoSeguro, $maiorRpsConfirmado);
+            if (empty($origemIdentificacao)) {
+                $origemIdentificacao = "Base local segura (RPS $ultimoRpsEncontrado)";
             }
 
             // Atualiza no banco de dados
@@ -3401,7 +3382,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
 
             $response['success'] = true;
-            $response['message'] = "Sequência sincronizada com sucesso! Último RPS utilizado no ISS DF: $ultimoRpsEncontrado.";
+            $response['message'] = "Sequência verificada com sucesso! Último RPS confirmado: $ultimoRpsEncontrado.";
             $response['data'] = [
                 'ultimo_rps_producao' => $config['ultimo_rps_producao'],
                 'ultimo_rps_homologacao' => $config['ultimo_rps_homologacao'],
