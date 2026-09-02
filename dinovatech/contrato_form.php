@@ -21,20 +21,12 @@ $atividadesCatalog = FiscalCatalogHelper::getAtividades();
 
 $link = DBConnect();
 
-// Fetch Services for Dropdown
-$servicos = [];
-$query_servicos = "SELECT id_servico, nome_servico, valor_sugerido FROM Servicos ORDER BY nome_servico ASC";
-$result_servicos = DBExecute($link, $query_servicos);
-while ($row = mysqli_fetch_assoc($result_servicos))
-    $servicos[] = $row;
-
 // Fetch Clients for Dropdown
 $clientes = [];
 $query_clientes = "SELECT id_cliente, nome FROM Clientes ORDER BY nome ASC";
 $result_clientes = DBExecute($link, $query_clientes);
 while ($row = mysqli_fetch_assoc($result_clientes))
     $clientes[] = $row;
-
 
 if ($id_recorrencia) {
     $id_safe = mysqli_real_escape_string($link, $id_recorrencia);
@@ -44,6 +36,17 @@ if ($id_recorrencia) {
         $contrato = mysqli_fetch_assoc($result);
         $is_edit = true;
     }
+}
+
+// Fetch Services for Dropdown (apenas serviços ativos ou o serviço vinculado ao contrato em edição)
+$servicos = [];
+$current_servico_id = $contrato['id_servico'] ?? 0;
+$filtro_servicos = "(ativo = 1 OR ativo IS NULL" . ($current_servico_id ? " OR id_servico = '$current_servico_id'" : "") . ")";
+$query_servicos = "SELECT id_servico, nome_servico, valor_sugerido, COALESCE(ativo, 1) as ativo FROM Servicos WHERE $filtro_servicos ORDER BY nome_servico ASC";
+$result_servicos = DBExecute($link, $query_servicos);
+if ($result_servicos) {
+    while ($row = mysqli_fetch_assoc($result_servicos))
+        $servicos[] = $row;
 }
 
 DBClose($link);

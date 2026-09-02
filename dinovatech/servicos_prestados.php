@@ -18,7 +18,7 @@ if ($result_clientes) {
 }
 
 // 2. Carrega Serviços para o Dropdown
-$query_servicos = "SELECT id_servico, nome_servico, valor_sugerido FROM Servicos ORDER BY nome_servico ASC";
+$query_servicos = "SELECT id_servico, nome_servico, valor_sugerido FROM Servicos WHERE (ativo = 1 OR ativo IS NULL) ORDER BY nome_servico ASC";
 $result_servicos = DBExecute($query_servicos);
 if ($result_servicos) {
     while ($row = mysqli_fetch_assoc($result_servicos)) {

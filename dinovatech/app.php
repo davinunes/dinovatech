@@ -1208,6 +1208,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             } else {
                 $nome_servico = mysqli_real_escape_string($link, $nome_servico);
                 $valor_sugerido = mysqli_real_escape_string($link, $valor_sugerido);
+                $ativo = isset($_POST['ativo']) ? ((int)$_POST['ativo'] == 1 ? 1 : 0) : 1;
 
                 // Novos Campos Fiscais e Módulos
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
@@ -1229,9 +1230,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
 
                 $query = "INSERT INTO Servicos 
-                          (nome_servico, valor_sugerido, item_lista_servico, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, iss_retido, descricao_nfse_padrao, descricao_fiscal, disponivel_clinica, disponivel_banho, duracao_minutos, icone_servico, imagem_url) 
+                          (nome_servico, valor_sugerido, ativo, item_lista_servico, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, iss_retido, descricao_nfse_padrao, descricao_fiscal, disponivel_clinica, disponivel_banho, duracao_minutos, icone_servico, imagem_url) 
                           VALUES 
-                          ('$nome_servico', '$valor_sugerido', '$item_lista_servico', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$iss_retido', '$descricao_nfse_padrao', '$descricao_fiscal', '$disponivel_clinica', '$disponivel_banho', '$duracao_minutos', '$icone_servico', '$imagem_url')";
+                          ('$nome_servico', '$valor_sugerido', '$ativo', '$item_lista_servico', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$iss_retido', '$descricao_nfse_padrao', '$descricao_fiscal', '$disponivel_clinica', '$disponivel_banho', '$duracao_minutos', '$icone_servico', '$imagem_url')";
 
                 $result = DBExecute($link, $query);
 
@@ -1273,6 +1274,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $id_servico = mysqli_real_escape_string($link, $id_servico);
                 $nome_servico = mysqli_real_escape_string($link, $nome_servico);
                 $valor_sugerido = mysqli_real_escape_string($link, $valor_sugerido);
+                $ativo = isset($_POST['ativo']) ? ((int)$_POST['ativo'] == 1 ? 1 : 0) : 1;
+
+                // Se estiver tentando desativar (ativo = 0), valida se há contratos vigentes
+                if ($ativo == 0) {
+                    $hoje = date('Y-m-d');
+                    $qContratos = "SELECT R.id_recorrencia, C.nome AS nome_cliente 
+                                   FROM Recorrencias R 
+                                   JOIN Clientes C ON R.id_cliente = C.id_cliente 
+                                   WHERE R.id_servico = '$id_servico' 
+                                     AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= '$hoje')";
+                    $rContratos = DBExecute($link, $qContratos);
+                    if ($rContratos && mysqli_num_rows($rContratos) > 0) {
+                        $listaNomes = [];
+                        while ($rowCt = mysqli_fetch_assoc($rContratos)) {
+                            $listaNomes[] = $rowCt['nome_cliente'];
+                        }
+                        $qtdCt = count($listaNomes);
+                        $exemplos = implode(', ', array_slice(array_unique($listaNomes), 0, 3));
+                        if ($qtdCt > 3) $exemplos .= '...';
+
+                        $response['success'] = false;
+                        $response['message'] = "Não é possível desativar este serviço: ele pertence a $qtdCt contrato(s) em vigência (Clientes: $exemplos). Finalize os contratos antes de desativar.";
+                        break;
+                    }
+                }
 
                 // Novos Campos Fiscais
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
@@ -1296,6 +1322,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $query = "UPDATE Servicos SET 
                             nome_servico = '$nome_servico', 
                             valor_sugerido = '$valor_sugerido',
+                            ativo = '$ativo',
                             item_lista_servico = '$item_lista_servico',
                             codigo_cnae = '$codigo_cnae',
                             codigo_tributacao_municipio = '$codigo_tributacao_municipio',
@@ -1317,6 +1344,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     $response['message'] = "Serviço atualizado com sucesso!";
                 } else {
                     $response['message'] = "Erro ao atualizar serviço: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'alterar_status_servico':
+        case 'toggle_status_servico':
+            $id_servico = $_POST['id_servico'] ?? '';
+            $novo_status = isset($_POST['ativo']) ? (int)$_POST['ativo'] : null;
+
+            if (empty($id_servico)) {
+                $response['message'] = "ID do serviço é obrigatório.";
+            } else {
+                $id_servico = mysqli_real_escape_string($link, $id_servico);
+
+                // Se não passou o novo_status explicitamente, inverte o status atual
+                if ($novo_status === null) {
+                    $qAtual = "SELECT ativo FROM Servicos WHERE id_servico = '$id_servico'";
+                    $rAtual = DBExecute($link, $qAtual);
+                    if ($rAtual && $rowAtual = mysqli_fetch_assoc($rAtual)) {
+                        $novo_status = ($rowAtual['ativo'] == 1) ? 0 : 1;
+                    } else {
+                        $novo_status = 0;
+                    }
+                }
+
+                // Se estiver desativando (novo_status = 0), valida se pertence a contrato em vigência
+                if ($novo_status == 0) {
+                    $hoje = date('Y-m-d');
+                    $qContratos = "SELECT R.id_recorrencia, C.nome AS nome_cliente, R.data_inicio_cobranca, R.data_fim_cobranca 
+                                   FROM Recorrencias R 
+                                   JOIN Clientes C ON R.id_cliente = C.id_cliente 
+                                   WHERE R.id_servico = '$id_servico' 
+                                     AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= '$hoje')";
+                    $rContratos = DBExecute($link, $qContratos);
+
+                    if ($rContratos && mysqli_num_rows($rContratos) > 0) {
+                        $listaNomes = [];
+                        while ($rowCt = mysqli_fetch_assoc($rContratos)) {
+                            $listaNomes[] = $rowCt['nome_cliente'];
+                        }
+                        $qtdCt = count($listaNomes);
+                        $exemplos = implode(', ', array_slice(array_unique($listaNomes), 0, 3));
+                        if ($qtdCt > 3) $exemplos .= '...';
+
+                        $response['success'] = false;
+                        $response['message'] = "Não é possível desativar este serviço: ele pertence a $qtdCt contrato(s) em vigência (Clientes: $exemplos). Finalize ou altere os contratos antes de desativar.";
+                        break;
+                    }
+                }
+
+                $query = "UPDATE Servicos SET ativo = '$novo_status' WHERE id_servico = '$id_servico'";
+                $result = DBExecute($link, $query);
+
+                if ($result) {
+                    $response['success'] = true;
+                    $response['novo_status'] = $novo_status;
+                    $response['message'] = ($novo_status == 1) ? "Serviço reativado com sucesso!" : "Serviço desativado com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao alterar status do serviço: " . mysqli_error($link);
                 }
             }
             break;
@@ -1499,7 +1585,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $servicos = [];
             $termo = mysqli_real_escape_string($link, $termo);
 
-            $query = "SELECT id_servico, nome_servico, valor_sugerido FROM Servicos WHERE nome_servico LIKE '%$termo%' LIMIT 10";
+            $query = "SELECT id_servico, nome_servico, valor_sugerido, COALESCE(ativo, 1) as ativo FROM Servicos WHERE (ativo = 1 OR ativo IS NULL) AND nome_servico LIKE '%$termo%' LIMIT 10";
             $result = DBExecute($link, $query);
 
             if ($result) {
@@ -1544,9 +1630,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
-        case 'get_servicos': // Este é o get_servicos original, que retorna TODOS os serviços
+        case 'get_servicos': // Retorna serviços (com suporte a filtro apenas_ativos)
             $servicos = [];
-            $query = "SELECT id_servico, nome_servico, valor_sugerido FROM Servicos ORDER BY nome_servico ASC";
+            $apenas_ativos = (isset($_POST['apenas_ativos']) && $_POST['apenas_ativos'] == '1') || (isset($_GET['apenas_ativos']) && $_GET['apenas_ativos'] == '1');
+            $where_ativo = $apenas_ativos ? "WHERE (ativo = 1 OR ativo IS NULL)" : "";
+            $query = "SELECT id_servico, nome_servico, valor_sugerido, COALESCE(ativo, 1) as ativo FROM Servicos $where_ativo ORDER BY nome_servico ASC";
             $result = DBExecute($link, $query);
             if ($result) {
                 while ($row = mysqli_fetch_assoc($result)) {

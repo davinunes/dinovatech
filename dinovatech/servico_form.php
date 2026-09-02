@@ -50,8 +50,19 @@ if ($id_servico) {
                     <a href="servicos.php" class="mr-4 text-gray-500 hover:text-gray-700">
                         <span class="material-icons">arrow_back</span>
                     </a>
-                    <h2 class="text-3xl font-bold text-gray-800">
+                    <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
                         <?= $is_edit ? 'Editar Serviço' : 'Cadastrar Novo Serviço' ?>
+                        <?php if ($is_edit): ?>
+                            <?php if (($servico['ativo'] ?? 1) == 1): ?>
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Ativo
+                                </span>
+                            <?php else: ?>
+                                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-700 border border-gray-300 flex items-center gap-1">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Desativado
+                                </span>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </h2>
                 </div>
 
@@ -81,7 +92,7 @@ if ($id_servico) {
                                     placeholder="Ex: Consultoria Técnica (Deixe em branco para usar o nome do serviço)"><?= htmlspecialchars($servico['descricao_fiscal'] ?? '') ?></textarea>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label for="valor_sugerido" class="block text-sm font-medium text-gray-700 mb-1">Valor
                                         Sugerido (R$)</label>
@@ -91,12 +102,23 @@ if ($id_servico) {
                                 </div>
                                 <div>
                                     <label for="duracao_minutos" class="block text-sm font-medium text-gray-700 mb-1">
-                                        Tempo Padrão de Duração (Minutos)
+                                        Duração (Minutos)
                                     </label>
                                     <input type="number" id="duracao_minutos" name="duracao_minutos" min="5" step="5"
                                         value="<?= $servico['duracao_minutos'] ?? 30 ?>" required
                                         class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
-                                    <span class="text-xs text-gray-400">Referência para cálculo da agenda</span>
+                                    <span class="text-[11px] text-gray-400">Cálculo de agenda</span>
+                                </div>
+                                <div>
+                                    <label for="ativo" class="block text-sm font-medium text-gray-700 mb-1">
+                                        Status do Catálogo
+                                    </label>
+                                    <select id="ativo" name="ativo"
+                                        class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white font-medium text-sm">
+                                        <option value="1" <?= ($servico['ativo'] ?? 1) == 1 ? 'selected' : '' ?>>Ativo (Disponível)</option>
+                                        <option value="0" <?= isset($servico['ativo']) && $servico['ativo'] == 0 ? 'selected' : '' ?>>Desativado (Oculto)</option>
+                                    </select>
+                                    <span class="text-[11px] text-gray-400">Ativação no catálogo</span>
                                 </div>
                             </div>
 

@@ -21,9 +21,10 @@ $link = DBConnect();
 $servicos = [];
 
 if ($link) {
-    // Fetch all services available for banho/estética or geral
+    // Fetch all services available for banho/estética or geral (apenas ativos)
     $qServ = "SELECT id_servico, nome_servico, valor_sugerido, duracao_minutos, icone_servico 
               FROM Servicos 
+              WHERE (ativo = 1 OR ativo IS NULL)
               ORDER BY nome_servico ASC";
     $rServ = DBExecute($link, $qServ);
     if ($rServ) {
