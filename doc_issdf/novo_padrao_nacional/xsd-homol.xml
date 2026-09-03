@@ -1,0 +1,301 @@
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:ws="http://www.sped.fazenda.gov.br/nfse" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" name="nfse" targetNamespace="http://www.sped.fazenda.gov.br/nfse">
+<wsdl:types>
+<xsd:schema targetNamespace="http://www.sped.fazenda.gov.br/nfse">
+<xsd:complexType name="input">
+<xsd:sequence>
+<xsd:element name="nfseCabecMsg" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+<xsd:element name="nfseDadosMsg" type="xsd:string" minOccurs="1" maxOccurs="1"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:complexType name="output">
+<xsd:sequence>
+<xsd:element name="outputXML" type="xsd:string"/>
+</xsd:sequence>
+</xsd:complexType>
+<xsd:element name="CancelarNfse" type="ws:input"/>
+<xsd:element name="CancelarNfseResponse" type="ws:output"/>
+<xsd:element name="ConsultarLoteDps" type="ws:input"/>
+<xsd:element name="ConsultarLoteDpsResponse" type="ws:output"/>
+<xsd:element name="ConsultarNfseServicoPrestado" type="ws:input"/>
+<xsd:element name="ConsultarNfseServicoPrestadoResponse" type="ws:output"/>
+<xsd:element name="ConsultarNfseServicoTomado" type="ws:input"/>
+<xsd:element name="ConsultarNfseServicoTomadoResponse" type="ws:output"/>
+<xsd:element name="ConsultarNfsePorFaixa" type="ws:input"/>
+<xsd:element name="ConsultarNfsePorFaixaResponse" type="ws:output"/>
+<xsd:element name="ConsultarNfseDps" type="ws:input"/>
+<xsd:element name="ConsultarNfseDpsResponse" type="ws:output"/>
+<xsd:element name="RecepcionarLoteDps" type="ws:input"/>
+<xsd:element name="RecepcionarLoteDpsResponse" type="ws:output"/>
+<xsd:element name="GerarNfse" type="ws:input"/>
+<xsd:element name="GerarNfseResponse" type="ws:output"/>
+<xsd:element name="RecepcionarLoteDpsSincrono" type="ws:input"/>
+<xsd:element name="RecepcionarLoteDpsSincronoResponse" type="ws:output"/>
+<xsd:element name="ConsultarUrlNfse" type="ws:input"/>
+<xsd:element name="ConsultarUrlNfseResponse" type="ws:output"/>
+<xsd:element name="ConsultarDadosCadastrais" type="ws:input"/>
+<xsd:element name="ConsultarDadosCadastraisResponse" type="ws:output"/>
+<xsd:element name="ConsultarDpsDisponivel" type="ws:input"/>
+<xsd:element name="ConsultarDpsDisponivelResponse" type="ws:output"/>
+<xsd:element name="ValidarXml" type="ws:input"/>
+<xsd:element name="ValidarXmlResponse" type="ws:output"/>
+</xsd:schema>
+</wsdl:types>
+<wsdl:message name="CancelarNfseRequest">
+<wsdl:part element="ws:CancelarNfse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="CancelarNfseResponse">
+<wsdl:part element="ws:CancelarNfseResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarLoteDpsRequest">
+<wsdl:part element="ws:ConsultarLoteDps" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarLoteDpsResponse">
+<wsdl:part element="ws:ConsultarLoteDpsResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfseServicoPrestadoRequest">
+<wsdl:part element="ws:ConsultarNfseServicoPrestado" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfseServicoPrestadoResponse">
+<wsdl:part element="ws:ConsultarNfseServicoPrestadoResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfseServicoTomadoRequest">
+<wsdl:part element="ws:ConsultarNfseServicoTomado" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfseServicoTomadoResponse">
+<wsdl:part element="ws:ConsultarNfseServicoTomadoResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfsePorFaixaRequest">
+<wsdl:part element="ws:ConsultarNfsePorFaixa" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfsePorFaixaResponse">
+<wsdl:part element="ws:ConsultarNfsePorFaixaResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfseDpsRequest">
+<wsdl:part element="ws:ConsultarNfseDps" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarNfseDpsResponse">
+<wsdl:part element="ws:ConsultarNfseDpsResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="RecepcionarLoteDpsRequest">
+<wsdl:part element="ws:RecepcionarLoteDps" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="RecepcionarLoteDpsResponse">
+<wsdl:part element="ws:RecepcionarLoteDpsResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="GerarNfseRequest">
+<wsdl:part element="ws:GerarNfse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="GerarNfseResponse">
+<wsdl:part element="ws:GerarNfseResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="RecepcionarLoteDpsSincronoRequest">
+<wsdl:part element="ws:RecepcionarLoteDpsSincrono" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="RecepcionarLoteDpsSincronoResponse">
+<wsdl:part element="ws:RecepcionarLoteDpsSincronoResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarUrlNfseRequest">
+<wsdl:part element="ws:ConsultarUrlNfse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarUrlNfseResponse">
+<wsdl:part element="ws:ConsultarUrlNfseResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarDadosCadastraisRequest">
+<wsdl:part element="ws:ConsultarDadosCadastrais" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarDadosCadastraisResponse">
+<wsdl:part element="ws:ConsultarDadosCadastraisResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarDpsDisponivelRequest">
+<wsdl:part element="ws:ConsultarDpsDisponivel" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ConsultarDpsDisponivelResponse">
+<wsdl:part element="ws:ConsultarDpsDisponivelResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ValidarXmlRequest">
+<wsdl:part element="ws:ValidarXml" name="parameters"/>
+</wsdl:message>
+<wsdl:message name="ValidarXmlResponse">
+<wsdl:part element="ws:ValidarXmlResponse" name="parameters"/>
+</wsdl:message>
+<wsdl:portType name="nfse">
+<wsdl:operation name="CancelarNfse">
+<wsdl:input message="ws:CancelarNfseRequest"/>
+<wsdl:output message="ws:CancelarNfseResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarLoteDps">
+<wsdl:input message="ws:ConsultarLoteDpsRequest"/>
+<wsdl:output message="ws:ConsultarLoteDpsResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfseServicoPrestado">
+<wsdl:input message="ws:ConsultarNfseServicoPrestadoRequest"/>
+<wsdl:output message="ws:ConsultarNfseServicoPrestadoResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfseServicoTomado">
+<wsdl:input message="ws:ConsultarNfseServicoTomadoRequest"/>
+<wsdl:output message="ws:ConsultarNfseServicoTomadoResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfsePorFaixa">
+<wsdl:input message="ws:ConsultarNfsePorFaixaRequest"/>
+<wsdl:output message="ws:ConsultarNfsePorFaixaResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfseDps">
+<wsdl:input message="ws:ConsultarNfseDpsRequest"/>
+<wsdl:output message="ws:ConsultarNfseDpsResponse"/>
+</wsdl:operation>
+<wsdl:operation name="RecepcionarLoteDps">
+<wsdl:input message="ws:RecepcionarLoteDpsRequest"/>
+<wsdl:output message="ws:RecepcionarLoteDpsResponse"/>
+</wsdl:operation>
+<wsdl:operation name="GerarNfse">
+<wsdl:input message="ws:GerarNfseRequest"/>
+<wsdl:output message="ws:GerarNfseResponse"/>
+</wsdl:operation>
+<wsdl:operation name="RecepcionarLoteDpsSincrono">
+<wsdl:input message="ws:RecepcionarLoteDpsSincronoRequest"/>
+<wsdl:output message="ws:RecepcionarLoteDpsSincronoResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarUrlNfse">
+<wsdl:input message="ws:ConsultarUrlNfseRequest"/>
+<wsdl:output message="ws:ConsultarUrlNfseResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarDadosCadastrais">
+<wsdl:input message="ws:ConsultarDadosCadastraisRequest"/>
+<wsdl:output message="ws:ConsultarDadosCadastraisResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ConsultarDpsDisponivel">
+<wsdl:input message="ws:ConsultarDpsDisponivelRequest"/>
+<wsdl:output message="ws:ConsultarDpsDisponivelResponse"/>
+</wsdl:operation>
+<wsdl:operation name="ValidarXml">
+<wsdl:input message="ws:ValidarXmlRequest"/>
+<wsdl:output message="ws:ValidarXmlResponse"/>
+</wsdl:operation>
+</wsdl:portType>
+<wsdl:binding name="nfseSOAP" type="ws:nfse">
+<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+<wsdl:operation name="CancelarNfse">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/CancelarNfse"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarLoteDps">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarLoteDps"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfseServicoPrestado">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarNfseServicoPrestado"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfseServicoTomado">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarNfseServicoTomado"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfsePorFaixa">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarNfsePorFaixa"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarNfseDps">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarNfseDps"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="RecepcionarLoteDps">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/RecepcionarLoteDps"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="GerarNfse">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/GerarNfse"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="RecepcionarLoteDpsSincrono">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/RecepcionarLoteDpsSincrono"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarUrlNfse">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarUrlNfse"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarDadosCadastrais">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarDadosCadastrais"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ConsultarDpsDisponivel">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ConsultarDpsDisponivel"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+<wsdl:operation name="ValidarXml">
+<soap:operation soapAction="http://www.sped.fazenda.gov.br/nfse/ValidarXml"/>
+<wsdl:input>
+<soap:body use="literal"/>
+</wsdl:input>
+<wsdl:output>
+<soap:body use="literal"/>
+</wsdl:output>
+</wsdl:operation>
+</wsdl:binding>
+<wsdl:service name="NfseWSService">
+<wsdl:port binding="ws:nfseSOAP" name="nfseSOAP">
+<soap:address location="https://nfse.issnetonline.com.br/nfse.asmx"/>
+</wsdl:port>
+</wsdl:service>
+</wsdl:definitions>
