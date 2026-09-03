@@ -127,11 +127,24 @@ class NfseService
 
         $dto->discriminacao = $calcData['discriminacao'];
         $dto->itemListaServico = $taxSettings['item_lista_servico'] ?? '01.07';
-        $dto->codigoTributacaoNacional = $taxSettings['codigo_cnae'] ? substr(preg_replace('/\D/', '', $taxSettings['codigo_cnae']), 0, 6) : '010701';
+
+        // Determina o Código de Tributação Nacional (cTribNac de 6 dígitos)
+        if (!empty($taxSettings['codigo_tributacao_nacional'])) {
+            $dto->codigoTributacaoNacional = str_pad(preg_replace('/\D/', '', $taxSettings['codigo_tributacao_nacional']), 6, '0', STR_PAD_RIGHT);
+        } else {
+            // Fallback inteligente baseado no Item LC 116 (ex: '01.07' -> '010701')
+            $itemDigits = preg_replace('/\D/', '', $taxSettings['item_lista_servico'] ?? '0107');
+            $dto->codigoTributacaoNacional = str_pad($itemDigits, 4, '0', STR_PAD_LEFT) . '01';
+        }
+
         $dto->codigoTributacaoMunicipal = $taxSettings['codigo_tributacao_municipio'] ?? '0107001';
         $dto->codigoCnae = $taxSettings['codigo_cnae'] ?? null;
         $dto->codigoNbs = $taxSettings['codigo_nbs'] ?? null;
         $dto->municipioPrestacaoIbge = '5300108';
+        $dto->tributacaoIssqn = (int)($taxSettings['tributacao_issqn'] ?? 1);
+        $dto->cstIbsCbs = $taxSettings['cst_ibs_cbs'] ?? '000';
+        $dto->classificacaoTribIbsCbs = $taxSettings['classificacao_trib_ibs_cbs'] ?? '000000';
+        $dto->indicadorOperacao = $taxSettings['indicador_operacao'] ?? '050101';
 
         // 4. Executa a emissão pelo provedor ativo
         $result = $this->provider->emitir($dto);

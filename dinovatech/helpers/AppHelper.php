@@ -188,18 +188,28 @@ class AppHelper
                         'codigo_cnae' => $row['codigo_cnae'],
                         'codigo_nbs' => $row['codigo_nbs'],
                         'item_lista_servico' => $nfseEmissaoRow['item_lista_servico'] ?: $row['item_lista_servico'],
+                        'codigo_tributacao_nacional' => $row['codigo_tributacao_nacional'] ?? '',
                         'codigo_tributacao_municipio' => $row['codigo_tributacao_municipio'],
                         'aliquota_iss' => $nfseEmissaoRow['aliquota_iss'],
-                        'iss_retido' => $nfseEmissaoRow['iss_retido']
+                        'tributacao_issqn' => (int)($row['tributacao_issqn'] ?? 1),
+                        'iss_retido' => $nfseEmissaoRow['iss_retido'],
+                        'cst_ibs_cbs' => $row['cst_ibs_cbs'] ?? '000',
+                        'classificacao_trib_ibs_cbs' => $row['classificacao_trib_ibs_cbs'] ?? '000000',
+                        'indicador_operacao' => $row['indicador_operacao'] ?? '050101'
                     ];
                 } else {
                     $taxSettings = [
                         'codigo_cnae' => $row['codigo_cnae'],
                         'codigo_nbs' => $row['codigo_nbs'],
                         'item_lista_servico' => $row['item_lista_servico'],
+                        'codigo_tributacao_nacional' => $row['codigo_tributacao_nacional'] ?? '',
                         'codigo_tributacao_municipio' => $row['codigo_tributacao_municipio'],
                         'aliquota_iss' => $row['aliquota_iss'],
-                        'iss_retido' => $row['iss_retido']
+                        'tributacao_issqn' => (int)($row['tributacao_issqn'] ?? 1),
+                        'iss_retido' => $row['iss_retido'],
+                        'cst_ibs_cbs' => $row['cst_ibs_cbs'] ?? '000',
+                        'classificacao_trib_ibs_cbs' => $row['classificacao_trib_ibs_cbs'] ?? '000000',
+                        'indicador_operacao' => $row['indicador_operacao'] ?? '050101'
                     ];
 
                     // Check Recurrence Override

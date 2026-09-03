@@ -57,7 +57,9 @@
     {
       "codigo_tributacao": "106",
       "item_lc116": "01.06",
+      "codigo_tributacao_nacional": "010601",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": true,
       "nome_curto": "Assessoria e consultoria em TI",
       "descricao": "1.06 - Assessoria e consultoria em informática",
@@ -67,7 +69,9 @@
     {
       "codigo_tributacao": "101",
       "item_lc116": "01.01",
+      "codigo_tributacao_nacional": "010101",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Análise e desenvolvimento de sistemas",
       "descricao": "1.01 - Análise e desenvolvimento de sistemas",
@@ -77,7 +81,9 @@
     {
       "codigo_tributacao": "102",
       "item_lc116": "01.02",
+      "codigo_tributacao_nacional": "010201",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Programação",
       "descricao": "1.02 - Programação e codificação",
@@ -87,7 +93,9 @@
     {
       "codigo_tributacao": "103",
       "item_lc116": "01.03",
+      "codigo_tributacao_nacional": "010301",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Projetos e implantação de redes",
       "descricao": "1.03 - Serviços de projeto, planejamento, implantação, gerenciamento e manutenção de redes de dados",
@@ -97,7 +105,9 @@
     {
       "codigo_tributacao": "104",
       "item_lc116": "01.04",
+      "codigo_tributacao_nacional": "010401",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Elaboração de programas, apps e jogos",
       "descricao": "1.04 - Elaboração de programas de computadores, jogos, apps mobile, tablets",
@@ -107,7 +117,9 @@
     {
       "codigo_tributacao": "105",
       "item_lc116": "01.05",
+      "codigo_tributacao_nacional": "010501",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Licenciamento de software (SaaS / Direito de Uso)",
       "descricao": "1.05 - Licenciamento ou cessão de direito de uso de programas de computação",
@@ -117,7 +129,9 @@
     {
       "codigo_tributacao": "107",
       "item_lc116": "01.07",
+      "codigo_tributacao_nacional": "010701",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Manutenção de software e bancos de dados",
       "descricao": "1.07 - Serviços de manutenção de programas de computação e bancos de dados",
@@ -127,7 +141,9 @@
     {
       "codigo_tributacao": "108",
       "item_lc116": "01.08",
+      "codigo_tributacao_nacional": "010801",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Websites e páginas eletrônicas",
       "descricao": "1.08 - Planejamento, confecção, manutenção e atualização de páginas eletrônicas",
@@ -137,7 +153,9 @@
     {
       "codigo_tributacao": "802",
       "item_lc116": "08.02",
+      "codigo_tributacao_nacional": "080201",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Treinamento e instrução pedagógica",
       "descricao": "8.02 - Instrução, treinamento, orientação pedagógica e educacional",
@@ -147,7 +165,9 @@
     {
       "codigo_tributacao": "1031",
       "item_lc116": "01.03",
+      "codigo_tributacao_nacional": "010301",
       "aliquota": 5.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Processamento e hospedagem de dados (5%)",
       "descricao": "1.03 - Processamento, armazenamento ou hospedagem de dados, textos, imagens, nuvem",
@@ -157,7 +177,9 @@
     {
       "codigo_tributacao": "1071",
       "item_lc116": "01.07",
+      "codigo_tributacao_nacional": "010701",
       "aliquota": 5.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Suporte técnico e instalação (5%)",
       "descricao": "1.07 - Suporte técnico em informática, instalação e configuração de programas e bancos de dados",
@@ -167,7 +189,9 @@
     {
       "codigo_tributacao": "1102",
       "item_lc116": "11.02",
+      "codigo_tributacao_nacional": "110201",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Vigilância e segurança",
       "descricao": "11.02 - Vigilância, segurança ou monitoramento de bens, pessoas e semoventes",
@@ -177,7 +201,9 @@
     {
       "codigo_tributacao": "1105",
       "item_lc116": "11.05",
+      "codigo_tributacao_nacional": "110501",
       "aliquota": 2.00,
+      "tributacao_issqn": 1,
       "principal": false,
       "nome_curto": "Monitoramento e telemetria de sensores / veículos",
       "descricao": "11.05 - Serviços relacionados ao monitoramento e rastreamento a distância de sensores, veículos, telemetria",
@@ -187,7 +213,9 @@
     {
       "codigo_tributacao": "9999999",
       "item_lc116": "99.99",
+      "codigo_tributacao_nacional": "999901",
       "aliquota": 0.00,
+      "tributacao_issqn": 4,
       "principal": false,
       "nome_curto": "Operações sem incidência de ISS",
       "descricao": "Operações de saída ou retorno de bens do estabelecimento prestador",

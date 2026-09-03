@@ -96,10 +96,12 @@ class DpsXmlBuilder
         $vServ = number_format($data->valorServico, 2, '.', '');
         $tpRetISSQN = $data->issRetido ? '2' : '1'; // 1=Não retido, 2=Retido tomador
         $pAliq = number_format($data->aliquotaIss, 2, '.', '');
+        $tribISSQN = (string)($data->tributacaoIssqn ?: 1);
 
         // Grupo IBS/CBS (Estrutura da Reforma Tributária 1.01)
+        $cIndOp = $data->indicadorOperacao ?: '050101';
         $cstIbsCbs = $data->cstIbsCbs ?: '000';
-        $classTrib = $data->classificacaoTribIbsCbs ?: '000';
+        $classTrib = $data->classificacaoTribIbsCbs ?: '000000';
 
         $xml = <<<XML
 <GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
@@ -139,7 +141,7 @@ class DpsXmlBuilder
                 </vServPrest>
                 <trib>
                     <tribMun>
-                        <tribISSQN>1</tribISSQN>
+                        <tribISSQN>{$tribISSQN}</tribISSQN>
                         <tpRetISSQN>{$tpRetISSQN}</tpRetISSQN>
                         <pAliq>{$pAliq}</pAliq>
                     </tribMun>
@@ -150,7 +152,7 @@ class DpsXmlBuilder
             </valores>
             <IBSCBS>
                 <finNFSe>0</finNFSe>
-                <cIndOp>050101</cIndOp>
+                <cIndOp>{$cIndOp}</cIndOp>
                 <indDest>0</indDest>
                 <valores>
                     <trib>

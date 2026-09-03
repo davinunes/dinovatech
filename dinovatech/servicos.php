@@ -131,7 +131,12 @@ if ($link) {
                                                     <span class="material-icons text-lg"><?= htmlspecialchars($servico['icone_servico'] ?? (AppHelper::isVetMode() ? 'pets' : 'build')) ?></span>
                                                 </div>
                                                 <div>
-                                                    <div class="font-semibold text-gray-900"><?= htmlspecialchars($servico['nome_servico']) ?></div>
+                                                    <div class="font-semibold text-gray-900 flex items-center gap-2">
+                                                        <?= htmlspecialchars($servico['nome_servico']) ?>
+                                                        <?php if (!empty($servico['codigo_tributacao_nacional'])): ?>
+                                                            <span class="text-[10px] bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded border border-cyan-200 font-mono font-semibold" title="Código de Tributação Nacional">cTribNac: <?= htmlspecialchars($servico['codigo_tributacao_nacional']) ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
                                                     <?php if (!empty($servico['descricao_fiscal'])): ?>
                                                         <div class="text-xs text-gray-400">NFS-e: <?= htmlspecialchars($servico['descricao_fiscal']) ?></div>
                                                     <?php endif; ?>
@@ -201,7 +206,12 @@ if ($link) {
                                         <span class="material-icons text-xl"><?= htmlspecialchars($servico['icone_servico'] ?? (AppHelper::isVetMode() ? 'pets' : 'build')) ?></span>
                                     </div>
                                     <div class="flex-1">
-                                        <h3 class="font-bold text-gray-900 leading-snug"><?= htmlspecialchars($servico['nome_servico']) ?></h3>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <h3 class="font-bold text-gray-900 leading-snug"><?= htmlspecialchars($servico['nome_servico']) ?></h3>
+                                            <?php if (!empty($servico['codigo_tributacao_nacional'])): ?>
+                                                <span class="text-[9px] bg-cyan-50 text-cyan-700 px-1 py-0.5 rounded border border-cyan-200 font-mono font-semibold">cTrib: <?= htmlspecialchars($servico['codigo_tributacao_nacional']) ?></span>
+                                            <?php endif; ?>
+                                        </div>
                                         <span class="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
                                             <span class="material-icons text-[13px]">schedule</span> <?= (int)($servico['duracao_minutos'] ?? 30) ?> min
                                         </span>

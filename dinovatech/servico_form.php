@@ -216,6 +216,8 @@ if ($id_servico) {
                                                 ?>
                                                     <option value="<?= $ativ['codigo_tributacao'] ?>" 
                                                         data-item="<?= $ativ['item_lc116'] ?>" 
+                                                        data-trib-nac="<?= $ativ['codigo_tributacao_nacional'] ?? '' ?>"
+                                                        data-trib-issqn="<?= $ativ['tributacao_issqn'] ?? 1 ?>"
                                                         data-aliquota="<?= number_format($ativ['aliquota'], 2, '.', '') ?>" 
                                                         data-cnae="<?= $ativ['cnae_sugerido'] ?>"
                                                         <?= $isMatch ? 'selected' : '' ?>>
@@ -224,7 +226,7 @@ if ($id_servico) {
                                                 <?php endforeach; ?>
                                             </select>
                                             <p class="text-[11px] text-cyan-800 mt-1.5 flex items-center gap-1">
-                                                <span class="material-icons text-xs text-cyan-600">auto_fix_high</span> Auto-preenche Item LC 116, Código de Tributação, Alíquota (2,00%) e sugere o CNAE correspondente.
+                                                <span class="material-icons text-xs text-cyan-600">auto_fix_high</span> Auto-preenche Item LC 116, Código Nacional, Código Municipal, Alíquota e sugere o CNAE.
                                             </p>
                                         </div>
 
@@ -250,26 +252,28 @@ if ($id_servico) {
                                 </div>
 
                                 <!-- CAMPOS TÉCNICOS COM LEGENDAS COMPLETAS -->
-                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                     <div>
                                         <label for="item_lista_servico" class="block text-sm font-semibold text-gray-700 mb-1">
                                             Item LC 116/03
                                         </label>
                                         <input type="text" id="item_lista_servico" name="item_lista_servico"
                                             value="<?= htmlspecialchars($servico['item_lista_servico'] ?? '') ?>"
-                                            placeholder="Ex: 01.05"
+                                            placeholder="Ex: 01.07"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                        <p class="text-[11px] text-gray-500 mt-1">Classificação do serviço segundo a Lei Complementar 116/2003 (ex: <strong>01.05</strong> - Licenciamento de software).</p>
+                                        <p class="text-[11px] text-gray-500 mt-1">Classificação LC 116 (ex: <strong>01.07</strong>).</p>
                                     </div>
 
                                     <div>
-                                        <label for="codigo_cnae" class="block text-sm font-semibold text-gray-700 mb-1">
-                                            CNAE (Apenas números)
+                                        <label for="codigo_tributacao_nacional" class="block text-sm font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                                            <span>Cód. Tributação Nacional</span>
+                                            <span class="text-[10px] bg-cyan-100 text-cyan-800 px-1.5 py-0.5 rounded font-bold">Novo Padrão</span>
                                         </label>
-                                        <input type="text" id="codigo_cnae" name="codigo_cnae"
-                                            value="<?= htmlspecialchars($servico['codigo_cnae'] ?? '') ?>" placeholder="Ex: 6202300"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                        <p class="text-[11px] text-gray-500 mt-1">Código de 7 dígitos da atividade econômica vinculada ao CNPJ (ex: <strong>6202300</strong>).</p>
+                                        <input type="text" id="codigo_tributacao_nacional" name="codigo_tributacao_nacional" maxlength="6"
+                                            value="<?= htmlspecialchars($servico['codigo_tributacao_nacional'] ?? '') ?>"
+                                            placeholder="Ex: 010701"
+                                            class="w-full p-3 border border-cyan-400 bg-cyan-50/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-mono font-semibold text-cyan-950">
+                                        <p class="text-[11px] text-gray-500 mt-1">Exatamente <strong>6 dígitos</strong>: Item + Subitem + Desdobro (ex: <strong>010701</strong>).</p>
                                     </div>
 
                                     <div>
@@ -278,19 +282,29 @@ if ($id_servico) {
                                         </label>
                                         <input type="text" id="codigo_tributacao_municipio" name="codigo_tributacao_municipio"
                                             value="<?= htmlspecialchars($servico['codigo_tributacao_municipio'] ?? '') ?>"
-                                            placeholder="Ex: 105"
+                                            placeholder="Ex: 106"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                        <p class="text-[11px] text-gray-500 mt-1">Código interno da atividade na prefeitura / SEFIN DF (ex: <strong>105</strong>, <strong>106</strong>, <strong>101</strong>).</p>
+                                        <p class="text-[11px] text-gray-500 mt-1">Código da atividade no DF (ex: <strong>106</strong>).</p>
+                                    </div>
+
+                                    <div>
+                                        <label for="codigo_cnae" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            CNAE (7 dígitos)
+                                        </label>
+                                        <input type="text" id="codigo_cnae" name="codigo_cnae"
+                                            value="<?= htmlspecialchars($servico['codigo_cnae'] ?? '') ?>" placeholder="Ex: 6204000"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <p class="text-[11px] text-gray-500 mt-1">Atividade econômica no CNPJ (ex: <strong>6204000</strong>).</p>
                                     </div>
 
                                     <div>
                                         <label for="codigo_nbs" class="block text-sm font-semibold text-gray-700 mb-1">
-                                            Código NBS
+                                            Código NBS v2.0
                                         </label>
-                                        <input type="text" id="codigo_nbs" name="codigo_nbs"
+                                        <input type="text" id="codigo_nbs" name="codigo_nbs" maxlength="9"
                                             value="<?= htmlspecialchars($servico['codigo_nbs'] ?? '') ?>" placeholder="Ex: 115080000"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                        <p class="text-[11px] text-gray-500 mt-1">Nomenclatura Brasileira de Serviços e Intangíveis da Receita Federal (ex: <strong>115080000</strong>).</p>
+                                        <p class="text-[11px] text-gray-500 mt-1">Nomenclatura Bras. de Serviços (9 dígitos).</p>
                                     </div>
 
                                     <div>
@@ -300,7 +314,21 @@ if ($id_servico) {
                                         <input type="number" step="0.01" id="aliquota_iss" name="aliquota_iss"
                                             value="<?= htmlspecialchars($servico['aliquota_iss'] ?? '2.00') ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-bold text-gray-800 bg-gray-50">
-                                        <p class="text-[11px] text-gray-500 mt-1">Percentual de imposto devido ao município (conforme Ficha Cadastral: <strong>2,00%</strong>).</p>
+                                        <p class="text-[11px] text-gray-500 mt-1">Alíquota devida (padrão: <strong>2,00%</strong>).</p>
+                                    </div>
+
+                                    <div>
+                                        <label for="tributacao_issqn" class="block text-sm font-semibold text-gray-700 mb-1">
+                                            Tributação ISSQN
+                                        </label>
+                                        <select id="tributacao_issqn" name="tributacao_issqn"
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white text-sm">
+                                            <option value="1" <?= ($servico['tributacao_issqn'] ?? 1) == 1 ? 'selected' : '' ?>>1 - Operação Tributável</option>
+                                            <option value="2" <?= ($servico['tributacao_issqn'] ?? 1) == 2 ? 'selected' : '' ?>>2 - Imunidade</option>
+                                            <option value="3" <?= ($servico['tributacao_issqn'] ?? 1) == 3 ? 'selected' : '' ?>>3 - Exportação de Serviço</option>
+                                            <option value="4" <?= ($servico['tributacao_issqn'] ?? 1) == 4 ? 'selected' : '' ?>>4 - Não Incidência</option>
+                                        </select>
+                                        <p class="text-[11px] text-gray-500 mt-1">Enquadramento do ISS no município.</p>
                                     </div>
 
                                     <div>
@@ -308,11 +336,48 @@ if ($id_servico) {
                                             ISS Retido na Fonte?
                                         </label>
                                         <select id="iss_retido" name="iss_retido"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
-                                            <option value="0" <?= ($servico['iss_retido'] ?? 0) == 0 ? 'selected' : '' ?>>Não (Normal - Prestador recolhe)</option>
-                                            <option value="1" <?= ($servico['iss_retido'] ?? 0) == 1 ? 'selected' : '' ?>>Sim (Retido na Fonte pelo Cliente)</option>
+                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white text-sm">
+                                            <option value="0" <?= ($servico['iss_retido'] ?? 0) == 0 ? 'selected' : '' ?>>Não (Prestador recolhe)</option>
+                                            <option value="1" <?= ($servico['iss_retido'] ?? 0) == 1 ? 'selected' : '' ?>>Sim (Retido pelo Cliente)</option>
                                         </select>
-                                        <p class="text-[11px] text-gray-500 mt-1">Indica se o tomador do serviço reterá o valor do imposto do pagamento final.</p>
+                                        <p class="text-[11px] text-gray-500 mt-1">Retenção pelo tomador no pagamento.</p>
+                                    </div>
+                                </div>
+
+                                <!-- REFORMA TRIBUTÁRIA (IBS/CBS) -->
+                                <div class="mt-5 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="material-icons text-slate-600 text-sm">account_balance</span>
+                                            <span class="text-xs font-bold text-slate-800 uppercase tracking-wider">Reforma Tributária (IBS / CBS - Padrão Nacional 1.01)</span>
+                                        </div>
+                                        <span class="text-[10px] text-slate-500">Valores padrão para a DPS nacional</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="cst_ibs_cbs" class="block text-xs font-semibold text-slate-700 mb-1">CST IBS/CBS (3 dígitos)</label>
+                                            <input type="text" id="cst_ibs_cbs" name="cst_ibs_cbs" maxlength="3"
+                                                value="<?= htmlspecialchars($servico['cst_ibs_cbs'] ?? '000') ?>"
+                                                placeholder="000"
+                                                class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
+                                            <span class="text-[10px] text-slate-400">Padrão: 000 (Tributação Integral)</span>
+                                        </div>
+                                        <div>
+                                            <label for="classificacao_trib_ibs_cbs" class="block text-xs font-semibold text-slate-700 mb-1">Classificação Trib. (6 dígitos)</label>
+                                            <input type="text" id="classificacao_trib_ibs_cbs" name="classificacao_trib_ibs_cbs" maxlength="6"
+                                                value="<?= htmlspecialchars($servico['classificacao_trib_ibs_cbs'] ?? '000000') ?>"
+                                                placeholder="000000"
+                                                class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
+                                            <span class="text-[10px] text-slate-400">Classificação Comitê Gestor</span>
+                                        </div>
+                                        <div>
+                                            <label for="indicador_operacao" class="block text-xs font-semibold text-slate-700 mb-1">Indicador Operação (cIndOp)</label>
+                                            <input type="text" id="indicador_operacao" name="indicador_operacao" maxlength="6"
+                                                value="<?= htmlspecialchars($servico['indicador_operacao'] ?? '050101') ?>"
+                                                placeholder="050101"
+                                                class="w-full p-2.5 border border-slate-300 rounded-lg text-xs font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
+                                            <span class="text-[10px] text-slate-400">Padrão: 050101 (Serviço regular)</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -468,11 +533,15 @@ if ($id_servico) {
                 if (!opt.val()) return;
 
                 const item = opt.data('item');
+                const tribNac = opt.data('trib-nac');
+                const tribIssqn = opt.data('trib-issqn');
                 const aliquota = opt.data('aliquota');
                 const cnae = opt.data('cnae');
                 const codTrib = opt.val();
 
                 if (item) $('#item_lista_servico').val(item);
+                if (tribNac) $('#codigo_tributacao_nacional').val(tribNac);
+                if (tribIssqn) $('#tributacao_issqn').val(tribIssqn);
                 if (codTrib) $('#codigo_tributacao_municipio').val(codTrib);
                 if (aliquota !== undefined) $('#aliquota_iss').val(aliquota);
                 if (cnae) {

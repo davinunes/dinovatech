@@ -49,8 +49,10 @@ class NfseData
     public ?string $codigoCnae = null;
     public ?string $codigoNbs = null; // Ex: '114032110' (9 dígitos)
     public string $municipioPrestacaoIbge; // Ex: '5300108'
+    public int $tributacaoIssqn = 1; // 1=Tributavel, 2=Imunidade, 3=Exportacao, 4=Nao Incidencia
 
     // Reforma Tributária / IBS e CBS (Obrigatório pós 01/10/2026)
+    public ?string $indicadorOperacao = '050101'; // Ex: '050101'
     public ?string $cstIbsCbs = null;
     public ?string $classificacaoTribIbsCbs = null;
     public ?string $meioPagamento = null; // Ex: '17' para PIX, '03' Cartão

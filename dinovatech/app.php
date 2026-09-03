@@ -1223,11 +1223,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 // Novos Campos Fiscais e Módulos
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
+                $codigo_tributacao_nacional = mysqli_real_escape_string($link, $_POST['codigo_tributacao_nacional'] ?? '');
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
                 $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
+                $tributacao_issqn = (int)($_POST['tributacao_issqn'] ?? 1);
                 $iss_retido = (isset($_POST['iss_retido']) && $_POST['iss_retido'] == '1') ? 1 : 0;
+                $cst_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['cst_ibs_cbs']) ? $_POST['cst_ibs_cbs'] : '000');
+                $classificacao_trib_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['classificacao_trib_ibs_cbs']) ? $_POST['classificacao_trib_ibs_cbs'] : '000000');
+                $indicador_operacao = mysqli_real_escape_string($link, !empty($_POST['indicador_operacao']) ? $_POST['indicador_operacao'] : '050101');
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
                 
@@ -1241,9 +1246,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
 
                 $query = "INSERT INTO Servicos 
-                          (nome_servico, valor_sugerido, ativo, item_lista_servico, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, iss_retido, descricao_nfse_padrao, descricao_fiscal, disponivel_clinica, disponivel_banho, duracao_minutos, icone_servico, imagem_url) 
+                          (nome_servico, valor_sugerido, ativo, item_lista_servico, codigo_tributacao_nacional, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, tributacao_issqn, iss_retido, cst_ibs_cbs, classificacao_trib_ibs_cbs, indicador_operacao, descricao_nfse_padrao, descricao_fiscal, disponivel_clinica, disponivel_banho, duracao_minutos, icone_servico, imagem_url) 
                           VALUES 
-                          ('$nome_servico', '$valor_sugerido', '$ativo', '$item_lista_servico', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$iss_retido', '$descricao_nfse_padrao', '$descricao_fiscal', '$disponivel_clinica', '$disponivel_banho', '$duracao_minutos', '$icone_servico', '$imagem_url')";
+                          ('$nome_servico', '$valor_sugerido', '$ativo', '$item_lista_servico', '$codigo_tributacao_nacional', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$tributacao_issqn', '$iss_retido', '$cst_ibs_cbs', '$classificacao_trib_ibs_cbs', '$indicador_operacao', '$descricao_nfse_padrao', '$descricao_fiscal', '$disponivel_clinica', '$disponivel_banho', '$duracao_minutos', '$icone_servico', '$imagem_url')";
 
                 $result = DBExecute($link, $query);
 
@@ -1313,11 +1318,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 // Novos Campos Fiscais
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
+                $codigo_tributacao_nacional = mysqli_real_escape_string($link, $_POST['codigo_tributacao_nacional'] ?? '');
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
                 $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
+                $tributacao_issqn = (int)($_POST['tributacao_issqn'] ?? 1);
                 $iss_retido = (isset($_POST['iss_retido']) && $_POST['iss_retido'] == '1') ? 1 : 0;
+                $cst_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['cst_ibs_cbs']) ? $_POST['cst_ibs_cbs'] : '000');
+                $classificacao_trib_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['classificacao_trib_ibs_cbs']) ? $_POST['classificacao_trib_ibs_cbs'] : '000000');
+                $indicador_operacao = mysqli_real_escape_string($link, !empty($_POST['indicador_operacao']) ? $_POST['indicador_operacao'] : '050101');
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 
@@ -1335,11 +1345,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                             valor_sugerido = '$valor_sugerido',
                             ativo = '$ativo',
                             item_lista_servico = '$item_lista_servico',
+                            codigo_tributacao_nacional = '$codigo_tributacao_nacional',
                             codigo_cnae = '$codigo_cnae',
                             codigo_tributacao_municipio = '$codigo_tributacao_municipio',
                             codigo_nbs = '$codigo_nbs',
                             aliquota_iss = '$aliquota_iss',
+                            tributacao_issqn = '$tributacao_issqn',
                             iss_retido = '$iss_retido',
+                            cst_ibs_cbs = '$cst_ibs_cbs',
+                            classificacao_trib_ibs_cbs = '$classificacao_trib_ibs_cbs',
+                            indicador_operacao = '$indicador_operacao',
                             descricao_nfse_padrao = '$descricao_nfse_padrao',
                             descricao_fiscal = '$descricao_fiscal',
                             disponivel_clinica = '$disponivel_clinica',
