@@ -283,10 +283,23 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                     </div>
                                 </div>
 
-                                <!-- Parâmetros RPS -->
+                                <!-- Parâmetros NFS-e e Provedor -->
                                 <div class="border-t border-gray-100 pt-4">
-                                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Parâmetros de Numeração e RPS</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <h4 class="text-sm font-semibold text-gray-700">Padrão de Emissão e Numeração</h4>
+                                        <span class="text-xs bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">Transição Nacional 2026</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Padrão da Integração NFS-e</label>
+                                            <select name="nfse_provider" id="nfse_provider"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm font-bold bg-white">
+                                                <option value="legacy">ABRASF 2.04 (Provedor Legado ISS.net / DF)</option>
+                                                <option value="nacional">Padrão Nacional (Nota Control / SPED Fazenda DF)</option>
+                                            </select>
+                                            <p class="text-[11px] text-gray-500 mt-1">Permite alternar entre a emissão antiga e o novo padrão nacional sem alterar código.</p>
+                                        </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-700 mb-1">Ambiente Padrão</label>
                                             <select name="ambiente_padrao" id="ambiente_padrao"
@@ -295,28 +308,61 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                                 <option value="producao">Produção (Valendo)</option>
                                             </select>
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Série RPS</label>
-                                            <input type="text" name="serie_rps" id="serie_rps" value="8"
-                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                    </div>
+
+                                    <!-- Campos Legado RPS -->
+                                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 mb-3">
+                                        <h5 class="text-xs font-bold text-gray-700 mb-2 flex items-center">
+                                            <span class="material-icons text-sm mr-1 text-gray-500">history</span> Parâmetros Legado (RPS / ABRASF 2.04)
+                                        </h5>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-gray-600 mb-0.5">Série RPS</label>
+                                                <input type="text" name="serie_rps" id="serie_rps" value="8"
+                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-xs">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-gray-600 mb-0.5">Último RPS (Homologação)</label>
+                                                <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao" value="0"
+                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-xs">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-gray-600 mb-0.5">Último RPS (Produção)</label>
+                                                <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
+                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-xs font-semibold bg-white">
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Último RPS (Homologação)</label>
-                                            <input type="number" name="ultimo_rps_homologacao" id="ultimo_rps_homologacao" value="0"
-                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Último RPS (Produção)</label>
-                                            <input type="number" name="ultimo_rps_producao" id="ultimo_rps_producao" value="0"
-                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-semibold bg-gray-50 text-sm">
+                                        <div class="mt-2 flex items-center justify-between">
+                                            <button type="button" id="btnSincronizarRps" onclick="sincronizarRpsIss()"
+                                                class="text-xs text-gray-700 hover:text-gray-900 bg-white border border-gray-300 px-2.5 py-1 rounded font-medium flex items-center gap-1 transition shadow-sm">
+                                                <span class="material-icons text-xs text-gray-500">sync</span> Sincronizar RPS com ISS DF
+                                            </button>
+                                            <span id="sync_rps_status" class="text-[11px] text-gray-500 italic"></span>
                                         </div>
                                     </div>
-                                    <div class="mt-3 flex items-center justify-between bg-cyan-50 p-2.5 rounded-lg border border-cyan-100">
-                                        <button type="button" id="btnSincronizarRps" onclick="sincronizarRpsIss()"
-                                            class="text-xs text-cyan-800 hover:text-cyan-950 bg-white hover:bg-cyan-100 border border-cyan-300 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition shadow-sm">
-                                            <span class="material-icons text-sm text-cyan-600">sync</span> Sincronizar RPS com ISS DF
-                                        </button>
-                                        <span id="sync_rps_status" class="text-[11px] text-cyan-700 italic"></span>
+
+                                    <!-- Campos Novo Padrão DPS -->
+                                    <div class="p-3 bg-purple-50/50 rounded-lg border border-purple-200">
+                                        <h5 class="text-xs font-bold text-purple-900 mb-2 flex items-center">
+                                            <span class="material-icons text-sm mr-1 text-purple-600">verified</span> Parâmetros Novo Padrão Nacional (DPS)
+                                        </h5>
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-purple-800 mb-0.5">Série DPS</label>
+                                                <input type="text" name="serie_dps" id="serie_dps" value="1"
+                                                    class="w-full rounded-lg border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-xs bg-white">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-purple-800 mb-0.5">Última DPS (Homologação)</label>
+                                                <input type="number" name="ultimo_dps_homologacao" id="ultimo_dps_homologacao" value="0"
+                                                    class="w-full rounded-lg border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-xs bg-white">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] font-medium text-purple-800 mb-0.5">Última DPS (Produção)</label>
+                                                <input type="number" name="ultimo_dps_producao" id="ultimo_dps_producao" value="0"
+                                                    class="w-full rounded-lg border-purple-300 focus:border-purple-500 focus:ring-purple-500 text-xs font-semibold bg-white">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -831,9 +877,13 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
                     $('#regime_tributario').val(d.regime_tributario);
                     $('#ambiente_padrao').val(d.ambiente_padrao);
-                    $('#serie_rps').val(d.serie_rps);
-                    $('#ultimo_rps_homologacao').val(d.ultimo_rps_homologacao);
-                    $('#ultimo_rps_producao').val(d.ultimo_rps_producao);
+                    if (d.nfse_provider) $('#nfse_provider').val(d.nfse_provider);
+                    $('#serie_rps').val(d.serie_rps || '8');
+                    $('#ultimo_rps_homologacao').val(d.ultimo_rps_homologacao || 0);
+                    $('#ultimo_rps_producao').val(d.ultimo_rps_producao || 0);
+                    $('#serie_dps').val(d.serie_dps || '1');
+                    $('#ultimo_dps_homologacao').val(d.ultimo_dps_homologacao || 0);
+                    $('#ultimo_dps_producao').val(d.ultimo_dps_producao || 0);
                     $('#caminho_certificado').val(d.caminho_certificado);
 
                     if (d.landing_page_theme) {

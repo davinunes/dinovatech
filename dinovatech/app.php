@@ -516,6 +516,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $serie_rps = $_POST['serie_rps'] ?? '8';
             $ultimo_rps_homologacao = $_POST['ultimo_rps_homologacao'] ?? 0;
             $ultimo_rps_producao = $_POST['ultimo_rps_producao'] ?? 0;
+            $nfse_provider = in_array($_POST['nfse_provider'] ?? '', ['legacy', 'nacional']) ? $_POST['nfse_provider'] : 'legacy';
+            $serie_dps = preg_replace('/\D/', '', $_POST['serie_dps'] ?? '1') ?: '1';
+            $ultimo_dps_homologacao = (int)($_POST['ultimo_dps_homologacao'] ?? 0);
+            $ultimo_dps_producao = (int)($_POST['ultimo_dps_producao'] ?? 0);
             $caminho_certificado = $_POST['caminho_certificado'] ?? '';
             $senha_certificado = $_POST['senha_certificado'] ?? '';
             $landing_page_theme = $_POST['landing_page_theme'] ?? 'default';
@@ -762,6 +766,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $banho_checkin_foto_ativo = isset($_POST['banho_checkin_foto_ativo']) ? 1 : 0;
                 $banho_capacidade_simultanea = isset($_POST['banho_capacidade_simultanea']) ? max(1, (int)$_POST['banho_capacidade_simultanea']) : 2;
 
+                $nacional_sql_part = "";
+                $chkNacCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'nfse_provider'");
+                if ($chkNacCol && mysqli_num_rows($chkNacCol) > 0) {
+                    $nacional_sql_part = ", nfse_provider='$nfse_provider', serie_dps='$serie_dps', ultimo_dps_homologacao='$ultimo_dps_homologacao', ultimo_dps_producao='$ultimo_dps_producao'";
+                }
+
                 if (!empty($id_config)) {
                     // Update
                     $query = "UPDATE ConfiguracoesEmissor SET 
@@ -786,6 +796,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 api_oracle_url='$api_oracle_url',
                                 google_oauth_client_id='$google_oauth_client_id',
                                 email_fatura_template_id=$email_fatura_template_id_val
+                                $nacional_sql_part
                                 $senha_sql_part
                                 $pfx_sql_part
                                 $inter_secret_sql_part
@@ -3090,13 +3101,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             break;
 
         case 'gerar_nfse':
-            require_once '../nfse_test/api.php';
+            require_once __DIR__ . '/modules/Fiscal/bootstrap.php';
 
             $id_fatura = $_POST['id_fatura'] ?? '';
             if (empty($id_fatura)) {
                 $response['message'] = "ID Fatura obrigatório";
                 break;
             }
+
+            // Verifica provedor ativo nas configurações
+            $resConfProv = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+            $configEmissor = $resConfProv ? mysqli_fetch_assoc($resConfProv) : null;
+            $activeProvider = $configEmissor['nfse_provider'] ?? 'legacy';
+
+            if ($activeProvider === 'nacional') {
+                try {
+                    $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
+                    $userId = $_SESSION['usuario_id'] ?? null;
+                    $emissionRes = $nfseService->emitirPorFatura((int)$id_fatura, $userId);
+
+                    if ($emissionRes->isSuccess()) {
+                        $response['success'] = true;
+                        $notaLabel = !empty($emissionRes->numeroNota) ? " (NFS-e Nº {$emissionRes->numeroNota})" : "";
+                        $response['message'] = "NFS-e Nacional Gerada com Sucesso!{$notaLabel}";
+                        $response['chave_nfse'] = $emissionRes->chaveNfse;
+                        $response['url_pdf'] = $emissionRes->urlVisualizacao;
+                    } else {
+                        $response['success'] = false;
+                        $response['message'] = $emissionRes->message;
+                        $response['details'] = $emissionRes->details;
+                        $response['debug_xml'] = $emissionRes->xmlEnvio;
+                    }
+                } catch (Exception $e) {
+                    $response['success'] = false;
+                    $response['message'] = "Erro na emissão Nacional: " . $e->getMessage();
+                }
+                break;
+            }
+
+            // FLUXO LEGADO ABRASF 2.04 (Preservado intacto para operação contínua)
+            require_once '../nfse_test/api.php';
 
             // 1. Calculate Data via Helper
             $calcData = AppHelper::calculateNfseData($link, $id_fatura);
