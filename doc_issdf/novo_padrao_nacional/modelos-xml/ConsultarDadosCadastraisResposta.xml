@@ -1,0 +1,104 @@
+<ConsultarDadosCadastraisResposta xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+	<!-- INÍCIO CHOICE. Grupo Cadastro OR ListaMensagemRetorno -->
+	<Cadastro>
+		<!-- INÍCIO CHOICE (CNPJ OU CPF)-->
+		<!-- Número da inscrição federal (CNPJ). -->
+		<CNPJ> ? </CNPJ>
+		<!-- Número da inscrição federal (CPF). -->
+		<CPF> ? </CPF>
+		<!-- FIM CHOICE (CNPJ OU CPF)-->
+		<!-- Número de inscrição municipal. -->
+		<IM> ? </IM>
+		<!-- Nome / Razão Social. -->
+		<StatusCadastro> ? </StatusCadastro>
+		<xNome> ? </xNome>
+		<!-- Nome / Fantasia. -->
+		<xFant> ? </xFant>
+		<enderNac>
+			<!-- Informação obrigatória. Tipo e nome do logradouro da localização do endereço. -->
+			<xLgr> ? </xLgr>
+			<!-- Número do imóvel do endereço. -->
+			<nro> ? </nro>
+			<!-- Informação opcional. Complemento do endereço. -->
+			<xCpl> ? </xCpl>
+			<!-- Informação obrigatória. Bairro do endereço. -->
+			<xBairro> ? </xBairro>
+			<!-- Código do município do endereço. (Tabela do IBGE) -->
+			<cMun> ? </cMun>
+			<!-- Sigla da unidade da federação do município do endereço. -->
+			<UF> ? </UF>
+			<!-- Número do CEP do endereço. (Informar os zeros não significativos) -->
+			<CEP> ? </CEP>
+		</enderNac>
+		<!-- Número do telefone. -->
+		<fone> ? </fone>
+		<!-- E-mail. -->
+		<email> ? </email>
+		<!-- Cadastro habilitado para emitir NFS-e? -->
+		<EmiteNfse> ? </EmiteNfse>
+		<!-- Cadastro habilitado para informar outras deduções na NFS-e? -->
+		<PermiteOutrasDeducoes> ? </PermiteOutrasDeducoes>
+		<!-- Cadastro habilitado para informar desconto condicionado na NFS-e? -->
+		<PermiteDescontoCondicionado> ? </PermiteDescontoCondicionado>
+		<!-- Cadastro habilitado para informar desconto incondicionado na NFS-e? -->
+		<PermiteDescontoIncondicionado> ? </PermiteDescontoIncondicionado>
+		<!-- Cadastro habilitado para informar exigibilidade suuspensa decisão judicial na NFS-e? -->
+		<PermiteExigibilidadeSuspensaDecisaoJudicial> ? </PermiteExigibilidadeSuspensaDecisaoJudicial>
+		<!-- Cadastro habilitado para informar exigibilidade suuspensa por processo administrativo na NFS-e? -->
+		<PermiteExigibilidadeSuspensaProcAdm> ? </PermiteExigibilidadeSuspensaProcAdm>
+		<!-- Cadastro habilitado para tributar fora do município na NFS-e? -->
+		<PermiteTributarFora> ? </PermiteTributarFora>
+		<!-- Dados de opção Simples Nacional? -->
+		<OpcaoSimplesNacional>
+			<OptanteSimplesNacional> ? </OptanteSimplesNacional>
+			<Vigencias>
+				<Vigencia>
+					<DataInicial> ? </DataInicial>
+					<DataFinal> ? </DataFinal>
+				</Vigencia>
+			</Vigencias>
+		</OpcaoSimplesNacional>
+		<!-- Dados de opção MEI? -->
+		<OpcaoMei>
+			<OptanteMei> ? </OptanteMei>
+			<Vigencias>
+				<Vigencia>
+					<DataInicial> ? </DataInicial>
+					<DataFinal> ? </DataFinal>
+				</Vigencia>
+			</Vigencias>
+		</OpcaoMei>
+		<!--Lista de atividades da empresa.-->
+		<Atividades>
+			<Atividade>
+				<cTribMun> ? </cTribMun>
+				<xTribMun> ? </xTribMun>
+				<pAliq> ? </pAliq>
+				<Vigencias> ? </Vigencias>
+			</Atividade>
+		</Atividades>
+		<!--Tributações do ISSQN permitidas para emissão de NFS-e.-->
+		<TributacoesPermitidas>
+			<tribISSQN> ? </tribISSQN>
+		</TributacoesPermitidas>
+		<!--Lista de pessoas autorizadas à emitir NFS-e.-->
+		<PessoasAutorizadas>
+			<PessoasAutorizada>
+				<CNPJ> ? </CNPJ>
+				<CPF> ? </CPF>
+				<RazaoSocial> ? </RazaoSocial>
+			</PessoasAutorizada>
+		</PessoasAutorizadas>
+	</Cadastro>
+	<ListaMensagemRetorno>
+		<MensagemRetorno>
+			<!-- Código da mensagem de erro -->
+			<Codigo> ? </Codigo>
+			<!-- Descrição da mensagem de erro -->
+			<Mensagem> ? </Mensagem>
+			<!-- Descrição dos procedimentos para a correção da NFS-e -->
+			<Correcao> ? </Correcao>
+		</MensagemRetorno>
+	</ListaMensagemRetorno>
+	<!-- FIM CHOICE. Grupo Cadastro OR ListaMensagemRetorno -->
+</ConsultarDadosCadastraisResposta>

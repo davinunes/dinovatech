@@ -1,0 +1,44 @@
+<ConsultarUrlNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+	<!-- INFORMAÇÃO OBRIGATÓRIA. IDENTIFICAÇÃO DO PRESTADOR DE SERVIÇOS. -->
+	<Prestador>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do prestador. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação obrigatória. Número de inscrição municipal do prestador do serviço. -->
+		<IM> ? </IM>
+	</Prestador>
+	<!-- INÍCIO CHOICE. INFORME OBRIGATORIAMENTE (NumeroNfse OU PeriodoEmissao OU PeriodoCompetencia). -->
+	<IdentificacaoDps>
+		<NumDPS> ? </NumDPS>
+		<SerieDPS> ? </SerieDPS>
+	</IdentificacaoDps>
+	<NumeroNfse> ? </NumeroNfse>
+	<PeriodoEmissao>
+		<DataInicial> ? </DataInicial>
+		<DataFinal> ? </DataFinal>
+	</PeriodoEmissao>
+	<PeriodoCompetencia>
+		<DataInicial> ? </DataInicial>
+		<DataFinal> ? </DataFinal>
+	</PeriodoCompetencia>
+	<!-- FIM CHOICE. (NumeroNfse OU PeriodoEmissao OU PeriodoCompetencia) -->
+	<!-- INFORMAÇÃO OPCIONAL. IDENTIFICAÇÃO DO TOMADOR DE SERVIÇOS. -->
+	<Tomador>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do tomador. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação opcional. Número de inscrição municipal do tomador do serviço. -->
+		<IM> ? </IM>
+	</Tomador>
+	<!-- INFORMAÇÃO OPCIONAL. IDENTIFICAÇÃO DO INTERMEDIÁRIO DE SERVIÇOS. -->
+	<Intermediario>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do intermediário. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação opcional. Número de inscrição municipal do intermediário do serviço. -->
+		<IM> ? </IM>
+	</Intermediario>
+	<!-- O resultado da consulta será paginado em grupos de no máximo 50 notas. -->
+	<!-- Informação obrigatória. Informe a página a ser consultada. -->
+	<Pagina> ? </Pagina>
+</ConsultarUrlNfseEnvio>

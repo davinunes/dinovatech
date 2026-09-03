@@ -1,0 +1,20 @@
+<ConsultarDpsDisponivelEnvio xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+	<!-- Grupo de informações obrigatório. IDENTIFICAÇÃO DO PRESTADOR DE SERVIÇOS. -->
+	<Prestador>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do prestador. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação obrigatória. Número de inscrição municipal do prestador do serviço. -->
+		<IM> ? </IM>
+	</Prestador>
+	<!-- Grupo de informações opcional. -->
+	<IdentificacaoDps>
+		<!-- Informação obrigatória. -->
+		<NumDPS> ? </NumDPS>
+		<!-- Informação obrigatória. -->
+		<SerieDPS> ? </SerieDPS>
+	</IdentificacaoDps>
+	<!-- O resultado da consulta será paginado em grupos de no máximo 50 notas. -->
+	<!-- Informação obrigatória. Informe a página a ser consultada. -->
+	<Pagina> ? </Pagina>
+</ConsultarDpsDisponivelEnvio>

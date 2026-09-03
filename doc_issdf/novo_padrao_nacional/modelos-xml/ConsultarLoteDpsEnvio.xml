@@ -1,0 +1,12 @@
+<ConsultarLoteDpsEnvio xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+	<!-- Grupo de informações obrigatório. IDENTIFICAÇÃO DO PRESTADOR DE SERVIÇOS. -->
+	<Prestador>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do prestador. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação obrigatória. Número de inscrição municipal do prestador do serviço. -->
+		<IM> ? </IM>
+	</Prestador>
+	<!-- Informação obrigatória. Informe o protocolo fornecido ao enviar o lote de DPS. -->
+	<Protocolo> ? </Protocolo>
+</ConsultarLoteDpsEnvio>

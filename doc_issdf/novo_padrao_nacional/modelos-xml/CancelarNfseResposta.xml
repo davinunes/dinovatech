@@ -1,0 +1,138 @@
+<CancelarNfseResposta xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+	<!-- CANCELAMENTO NOTA FISCAL DE SERVIÇOS ELETRÔNICA INFORMAÇÕES GERADAS PELA ADMINISTRAÇÃO TRIBUTÁRIA MUNICIPAL -->
+	<evento>
+		<!-- INFORMAÇÕES DO PEDIDO DE REGISTRO DO EVENTO -->
+		<!-- O identificador do evento é composto pela concatenação de campos que constam no leiaute.
+	Identificador do evento é formado conforme a concatenação dos seguintes campos:
+	"EVT" + Chave de acesso(50) + Tipo do evento (6) + Pedido de Registro do Evento (3) (nPedRegEvento)-->
+		<infEvento id="EVT99999999999999999999999999999999999999999999999999101103001">
+			<!-- Versão do aplicativo que gerou o pedido do evento. -->
+			<verAplic> ? </verAplic>
+			<!-- Ambiente gerador do evento -->
+			<ambGer> ? </ambGer>
+			<!-- Sequencial do evento para o mesmo tipo de evento. Para maioria dos eventos nSeqEvento=1. Nos casos em que possa existir mais de um evento do mesmo tipo o ambiente gerador deverá numerar de forma sequencial. -->
+			<nSeqEvento> ? </nSeqEvento>
+			<!-- Data/Hora do registro do evento. Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD"-->
+			<dhProc> ? </dhProc>
+			<!-- Número sequencial do documento gerado por ambiente gerador de DFe do município. -->
+			<nDFSe> ? </nDFSe>
+			<!-- PEDIDO DE REGISTRO DO EVENTO GERADO PELO AUTOR DO EVENTO (PRESTADOR, TOMADOR E ADMINISTRAÇÃO TRIBUTÁRIA MUNICIPAL) -->
+			<pedRegEvento versao="1.01">
+				<!-- Informação obrigatória.  O identificador do pedido de registro de evento é composto pela concatenação de campos que constam no leiaute.
+	O identificador do pedido de registro do evento é formado conforme a concatenação dos seguintes campos:
+    "PRE" + Chave de Acesso NFS-e(50) + Tipo do evento (6) -->
+				<infPedReg Id="PRE99999999999999999999999999999999999999999999999999101103">
+					<!-- Tipo de ambiente:  1 - Produção;  2 - Homologação; -->
+					<tpAmb> ? </tpAmb>
+					<!-- Versão do aplicativo que gerou o pedido de registro de evento. -->
+					<verAplic> ? </verAplic>
+					<!-- Data e hora do evento no formato AAAA-MM-DDThh:mm:ssTZD (UTC - Universal Coordinated Time, onde TZD pode ser -02:00 (Fernando de Noronha), -03:00 (Brasília) ou -04:00 (Manaus), no horário de verão serão -01:00, -02:00 e -03:00. Ex.: 2010-08-19T13:00:15-03:00. -->
+					<dhEvento> ? </dhEvento>
+					<!-- INÍCIO CHOICE. Envie CNPJAutor OU CPFAutor. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+					<!-- Número de inscrição federal (CNPJ) do autor do evento.  CNPJ do autor do evento (parte interessada ou pessoa que figure na NFS-e. O autor do evento não é o procurador)" -->
+					<CNPJAutor> ? </CNPJAutor>
+					<!-- Número de inscrição federal (CPF) do autor do evento.  CPF do autor do evento (parte interessada ou pessoa que figure na NFS-e como prestador, tomador, intermediário. O autor do evento poderá ser o procurador). -->
+					<CPFAutor> ? </CPFAutor>
+					<!-- FIM CHOICE. Envie CNPJAutor OU CPFAutor. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+					<!-- Informação obrigatória. Identificador da NFS-e a qual o evento será vinculada. -->
+					<chNFSe> ? </chNFSe>
+					<!-- INÍCIO CHOICE. e101103 OU e105104 OU e105105-->
+					<!-- SOLICITAÇÃO DE ANÁLISE FISCAL PARA CANCELAMENTO DE NFS-E -->
+					<e101103>
+						<!-- Descrição do evento: "Solicitação de Análise Fiscal para Cancelamento de NFS-e" -->
+						<xDesc>Solicitação de Análise Fiscal para Cancelamento de NFS-e</xDesc>
+						<!-- Código do motivo da solicitação de análise fiscal para cancelamento de NFS-e:
+			1 - Erro na Emissão;
+			2 - Serviço não Prestado;
+			9 - Outros. -->
+						<cMotivo> ? </cMotivo>
+						<!-- Descrição para explicitar o motivo indicado neste evento. -->
+						<xMotivo> ? </xMotivo>
+					</e101103>
+					<!-- CANCELAMENTO DE NFS-E DEFERIDO POR ANÁLISE FISCAL -->
+					<e105104>
+						<!-- Descrição do evento: "Cancelamento de NFS-e Deferido por Análise Fiscal" -->
+						<xDesc>Cancelamento de NFS-e Deferido por Análise Fiscal</xDesc>
+						<!-- CPF do agente da administração tributária municipal que efetuou o deferimento da  solicitação de análise fiscal para cancelamento de NFS-e. -->
+						<CPFAgTrib> ? </CPFAgTrib>
+						<!-- Número do processo administrativo municipal vinculado à solicitação de análise fiscal para cancelamento de NFS-e.-->
+						<nProcAdm> ? </nProcAdm>
+						<!-- Resposta da solicitação de análise fiscal para cancelamento de NFS-e: 
+			1 - Cancelamento de NFS-e Deferido. -->
+						<cMotivo> ? </cMotivo>
+						<!-- Descrição para explicitar o motivo indicado neste evento. -->
+						<xMotivo> ? </xMotivo>
+					</e105104>
+					<!-- CANCELAMENTO DE NFS-E INDEFERIDO POR ANÁLISE FISCAL -->
+					<e105105>
+						<!-- Descrição do evento:"Cancelamento de NFS-e Indeferido por Análise Fiscal" -->
+						<xDesc>Cancelamento de NFS-e Indeferido por Análise Fiscal</xDesc>
+						<!-- CPF do agente da administração tributária municipal que efetuou o indeferimento da solicitação de análise fiscal para cancelamento de NFS-e. -->
+						<CPFAgTrib> ? </CPFAgTrib>
+						<!-- Número do processo administrativo municipal vinculado à solicitação de análise fiscal para cancelamento de NFS-e. -->
+						<nProcAdm> ? </nProcAdm>
+						<!-- Resposta da solicitação de análise fiscal para cancelamento de NFS-e:
+			1 - Cancelamento de NFS-e Indeferido;
+			2 - Cancelamento de NFS-e Indeferido Sem Análise de Mérito. -->
+						<cMotivo> ? </cMotivo>
+						<!-- Descrição para explicitar o motivo indicado neste evento. -->
+						<xMotivo> ? </xMotivo>
+					</e105105>
+					<!-- FIM CHOICE. e101103 OU e105104 OU e105105-->
+				</infPedReg>
+				<!-- Assinatura digital do prestador de serviços ou de seu preposto para a DPS. -->
+				<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+					<SignedInfo>
+						<CanonicalizationMethod Algorithm=" http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+						<SignatureMethod Algorithm=" http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+						<Reference URI="#PRE99999999999999999999999999999999999999999999999999999999">
+							<Transforms>
+								<Transform Algorithm=" http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+								<Transform Algorithm=" http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+							</Transforms>
+							<DigestMethod Algorithm=" http://www.w3.org/2000/09/xmldsig#sha1"/>
+							<DigestValue> ? </DigestValue>
+						</Reference>
+					</SignedInfo>
+					<SignatureValue> ? </SignatureValue>
+					<KeyInfo>
+						<X509Data>
+							<X509Certificate> ? </X509Certificate>
+						</X509Data>
+					</KeyInfo>
+				</Signature>
+			</pedRegEvento>
+		</infEvento>
+		<!-- Assinatura digital da Administração Tributária Municipal. -->
+		<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+			<SignedInfo>
+				<CanonicalizationMethod Algorithm=" http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+				<SignatureMethod Algorithm=" http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+				<Reference URI="#EVT99999999999999999999999999999999999999999999999999999999001">
+					<Transforms>
+						<Transform Algorithm=" http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+						<Transform Algorithm=" http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+					</Transforms>
+					<DigestMethod Algorithm=" http://www.w3.org/2000/09/xmldsig#sha1"/>
+					<DigestValue> ? </DigestValue>
+				</Reference>
+			</SignedInfo>
+			<SignatureValue> ? </SignatureValue>
+			<KeyInfo>
+				<X509Data>
+					<X509Certificate> ? </X509Certificate>
+				</X509Data>
+			</KeyInfo>
+		</Signature>
+	</evento>
+	<ListaMensagemRetorno>
+		<MensagemRetorno>
+			<!-- Código da mensagem de erro -->
+			<Codigo> ? </Codigo>
+			<!-- Descrição da mensagem de erro -->
+			<Mensagem> ? </Mensagem>
+			<!-- Descrição dos procedimentos para a correção da NFS-e -->
+			<Correcao> ? </Correcao>
+		</MensagemRetorno>
+	</ListaMensagemRetorno>
+</CancelarNfseResposta>

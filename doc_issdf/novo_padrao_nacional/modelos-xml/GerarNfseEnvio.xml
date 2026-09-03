@@ -1,0 +1,1035 @@
+<GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+	<!-- DECLARAÇÃO DA PRESTAÇÃO DO SERVIÇO - INFORMAÇÕES GERADAS PELO PRESTADOR DE SERVIÇOS-->
+	<!-- Versões aceitas: 1.00 e 1.01. -->
+	<!-- Usar versão 1.00 para emitir nota SEM o grupo IBS/CBS. -->
+	<!-- Usar versão 1.01 para emitir nota COM o grupo IBS/CBS. -->
+	<DPS versao="1.01">
+		<!-- Informação obrigatória. Informe no id: "DPS" + Cód.Mun (7) + Tipo de Inscrição Federal (1) + Inscrição Federal (14 - CPF completar com 000 à esquerda) + Série DPS (5)+ Núm. DPS (15). Complete com zeros à esquerda para completar os itens da composição até o tamanho exigido. -->
+		<infDPS Id="DPS999999999999999999999999999999999999999999">
+			<!-- Informação obrigatória. Informe: 1 - Produção; | 2 - Homologação. -->
+			<tpAmb> ? </tpAmb>
+			<!-- Informação obrigatória. Informe a data e hora da emissão da DPS. Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD -->
+			<dhEmi> ? </dhEmi>
+			<!-- Informação obrigatória. Informe a versão do aplicativo que gerou a DPS. -->
+			<verAplic> ? </verAplic>
+			<!-- Informação obrigatória. Informe a série da DPS. -->
+			<serie> ? </serie>
+			<!-- Informação obrigatória. Informe o número da DPS. -->
+			<nDPS> ? </nDPS>
+			<!-- Informação obrigatória. Informe a data de competência da prestação do serviço. Ano, Mês e Dia (AAAA-MM-DD). -->
+			<dCompet> ? </dCompet>
+			<!-- Informação obrigatória. Informe o tipo de emitente da DPS: 1 - Prestador. -->
+			<tpEmit> 1</tpEmit>
+			<!-- Informação obrigatória. Informe o código de 7 dígitos da localidade emissora da NFS-e. -->
+			<cLocEmi> ? </cLocEmi>
+			<!-- Grupo opcional que identitifica a nota a ser substituída. Informe apenas em caso da nota a ser emitida ser substituta. -->
+			<subst>
+				<!-- Informação obrigatória em caso de substituição. Chave de Acesso da NFS-e a ser substituída. -->
+				<chSubstda> ? </chSubstda>
+				<!-- Informação obrigatória em caso de substituição.
+			Código de justificativa para substituição de NFS-e:
+			01 - Desenquadramento de NFS-e do Simples Nacional;
+			02 - Enquadramento de NFS-e no Simples Nacional;
+			03 - Inclusão Retroativa de Imunidade/Isenção para NFS-e;
+			04 - Exclusão Retroativa de Imunidade/Isenção para NFS-e;
+			05 - Rejeição de NFS-e pelo tomador ou pelo intermediário se responsável pelo recolhimento do tributo;
+			99 – Outros. -->
+				<cMotivo> ? </cMotivo>
+				<!-- Informação obrigatória em caso de substituição por cMotivo = 99. Descrição do motivo da substituição da NFS-e. Informar no mínimo 15 caracteres. -->
+				<xMotivo> ? </xMotivo>
+			</subst>
+			<!-- Grupo de informações obrigatório. IDENTIFICAÇÃO DO PRESTADOR DE SERVIÇOS. -->
+			<prest>
+				<!-- Se o prestador FOR o emitente NÃO informar: NIF, cNaoNIF, nome e endereço. -->
+				<!-- INFORMAÇÃO OBRIGATÓRIA. INFORME CPF OU CNPJ OU NIF OU cNaoNIF DO PRESTADOR. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+				<!-- INÍCIO CHOICE - IDENTIFICAÇÃO PRESTADOR -->
+				<!-- Número da inscrição federal (CNPJ) do prestador do serviço. -->
+				<CNPJ> ? </CNPJ>
+				<!-- Número da inscrição federal (CPF) do prestador do serviço. -->
+				<CPF> ? </CPF>
+				<!-- Número de identificação fiscal fornecido por órgão de administração tributária no exterior. -->
+				<NIF> ? </NIF>
+				<!-- Motivo para não informação do NIF:
+					1 - Dispensado do NIF;
+					2 - Não exigência do NIF. -->
+				<cNaoNIF> ? </cNaoNIF>
+				<!-- FIM CHOICE - IDENTIFICAÇÃO PRESTADOR -->
+				<!-- Informação opcional. Número do Cadastro de Atividade Econômica da Pessoa Física (CAEPF) do prestador do serviço. -->
+				<CAEPF> ? </CAEPF>
+				<!-- Informação obrigatória. Número de inscrição municipal do prestador do serviço. -->
+				<IM> ? </IM>
+				<!-- Nome / Nome Empresarial do prestador. -->
+				<xNome> ? </xNome>
+				<!-- Grupo Opcional. INFORMAÇÕES DO ENDEREÇO DO PRESTADOR. -->
+				<end>
+					<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR AMBOS OS GRUPOS. -->
+					<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+					<!-- ENDEREÇO NACIONAL -->
+					<endNac>
+						<!-- Informação obrigatória. Código do município do endereço do prestador do serviço. (Tabela do IBGE) -->
+						<cMun> ? </cMun>
+						<!-- Código numérico do Endereçamento Postal nacional (CEP) do endereço do prestador do serviço. -->
+						<CEP> ? </CEP>
+					</endNac>
+					<!-- ENDEREÇO DO EXTERIOR -->
+					<endExt>
+						<!-- Informação obrigatória. Código do país do endereço do prestador do serviço. (Tabela de Países ISO) -->
+						<cPais> ? </cPais>
+						<!-- Código alfanumérico do Endereçamento Postal no exterior do prestador do serviço. -->
+						<cEndPost> ? </cEndPost>
+						<!-- Informação obrigatória. Nome da cidade no exterior do prestador do serviço. -->
+						<xCidade> ? </xCidade>
+						<!-- Informação obrigatória. Estado, província ou região da cidade no exterior do prestador do serviço. -->
+						<xEstProvReg> ? </xEstProvReg>
+					</endExt>
+					<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+					<!-- Informação obrigatória. Tipo e nome do logradouro do endereço do prestador do serviço. -->
+					<xLgr> ? </xLgr>
+					<!-- Informação obrigatória. Número no logradouro do endereço do prestador do serviço. -->
+					<nro> ? </nro>
+					<!-- Informação opcional. Complemento do endereço do prestador do serviço. -->
+					<xCpl> ? </xCpl>
+					<!-- Informação obrigatória. Bairro do endereço do prestador do serviço. -->
+					<xBairro> ? </xBairro>
+				</end>
+				<!-- Informação opcional. Número do telefone do prestador. (Preencher com o Código DDD + número do telefone. Nas operações com exterior é permitido informar o código do país + código da localidade + número do telefone) -->
+				<fone> ? </fone>
+				<!-- Informação opcional. E-mail do prestador. -->
+				<email> ? </email>
+				<!-- Grupo obrigatório. INFORMAÇÕES DOS REGIMES DE TRIBUTAÇÃO DO PRESTADOR DE SERVIÇOS. -->
+				<regTrib>
+					<!-- Informação obrigatória.
+			Situação perante Simples Nacional:
+			1 - Não Optante;
+			2 - Optante - Microempreendedor Individual (MEI);
+			3 - Optante - Microempresa ou Empresa de Pequeno Porte (ME/EPP). -->
+					<opSimpNac> ? </opSimpNac>
+					<!-- Informação opcional.
+			Regime de Apuração Tributária pelo Simples Nacional.
+			Opção para que o contribuinte optante pelo Simples Nacional ME/EPP (opSimpNac = 3) possa indicar, ao emitir o documento fiscal, 
+			em qual regime de apuração os tributos federais e municipal estão inseridos, 
+			caso tenha ultrapassado algum sublimite ou limite definido para o Simples Nacional.
+			1 – Regime de apuração dos tributos federais e municipal pelo SN;
+			2 – Regime de apuração dos tributos federais pelo SN e o ISSQN pela NFS-e conforme respectiva legislação municipal do tributo;
+			3 – Regime de apuração dos tributos federais e municipal pela NFS-e conforme respectivas legilações federal e municipal de cada tributo. -->
+					<regApTribSN> ? </regApTribSN>
+					<!-- Informação obrigatória.
+			Tipos de Regimes Especiais de Tributação Municipal:
+			0 - Nenhum;
+			1 - Ato Cooperado (Cooperativa);
+			2 - Estimativa;
+			3 - Microempresa Municipal;
+			4 - Notário ou Registrador;
+			5 - Profissional Autônomo;
+			6 - Sociedade de Profissionais. -->
+					<regEspTrib> ? </regEspTrib>
+				</regTrib>
+			</prest>
+			<!-- Grupo opcional. IDENTIFICAÇÃO DO TOMADOR DE SERVIÇOS.
+		Se o código de tributação nacional for 170501 ou o código indicador de operação for igual a 
+		030102, 050102, 100101, 100301, 100501, 030103, 050103, 100102, 100201, 100302, 100401, 100502 ou 100601, 
+		então o tomador deverá ser informado. -->
+			<toma>
+				<!-- INFORMAÇÃO OBRIGATÓRIA. INFORME CPF OU CNPJ OU NIF OU cNaoNIF DO TOMADOR. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+				<!-- INÍCIO CHOICE -->
+				<!-- Número da inscrição federal (CNPJ) do tomador de serviço. -->
+				<CNPJ> ? </CNPJ>
+				<!-- Número da inscrição federal (CPF) do tomador do serviço. -->
+				<CPF> ? </CPF>
+				<!-- Número de identificação fiscal fornecido por órgão de administração tributária no exterior. -->
+				<NIF> ? </NIF>
+				<!-- Motivo para não informação do NIF: 1 - Dispensado do NIF; 2 - Não exigência do NIF. -->
+				<cNaoNIF> ? </cNaoNIF>
+				<!-- FIM CHOICE -->
+				<!-- Informação opcional. Número do Cadastro de Atividade Econômica da Pessoa Física (CAEPF) do tomador do serviço. -->
+				<CAEPF> ? </CAEPF>
+				<!-- Informação opcional. Número de inscrição municipal do tomador do serviço. -->
+				<IM> ? </IM>
+				<!-- Informação obrigatória. Nome / Nome Empresarial do tomador. -->
+				<xNome> ? </xNome>
+				<!-- Grupo Opcional. INFORMAÇÕES DO ENDEREÇO DO TOMADOR.
+			Se o código de tributação nacional for 170501 ou o código indicador de operação for igual a 
+			030102, 050102, 100101, 100301, 100501, 030103, 050103, 100102, 100201, 100302, 100401, 100502 ou 100601, 
+			então o endereço do tomador deverá ser informado. -->
+				<end>
+					<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR ESTES GRUPOS SIMULTANEAMENTE. -->
+					<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+					<!-- ENDEREÇO NACIONAL -->
+					<endNac>
+						<!-- Informação obrigatória. Código do município do endereço do tomador do serviço. (Tabela do IBGE) -->
+						<cMun> ? </cMun>
+						<!-- Informação obrigatória. Código numérico do Endereçamento Postal nacional (CEP) do endereço do tomador do serviço. -->
+						<CEP> ? </CEP>
+					</endNac>
+					<!-- ENDEREÇO DO EXTERIOR -->
+					<endExt>
+						<!-- Informação obrigatória. Código do país do endereço do prestador do tomador do serviço. (Tabela de Países ISO) -->
+						<cPais> ? </cPais>
+						<!-- Informação obrigatória. Código alfanumérico do Endereçamento Postal no exterior do tomador do serviço. -->
+						<cEndPost> ? </cEndPost>
+						<!-- Informação obrigatória. Nome da cidade no exterior do tomador do serviço. -->
+						<xCidade> ? </xCidade>
+						<!-- Informação obrigatória. Estado, província ou região da cidade no exterior do tomador do serviço. -->
+						<xEstProvReg> ? </xEstProvReg>
+					</endExt>
+					<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+					<!-- Informação obrigatória. Tipo e nome do logradouro do endereço do tomador do serviço. -->
+					<xLgr> ? </xLgr>
+					<!-- Informação obrigatória. Número no logradouro do endereço do tomador do serviço. -->
+					<nro> ? </nro>
+					<!-- Informação opcional. Complemento do endereço do tomador do serviço. -->
+					<xCpl> ? </xCpl>
+					<!-- Informação obrigatória. Bairro do endereço do tomador do serviço. -->
+					<xBairro> ? </xBairro>
+				</end>
+				<!-- Informação opcional. Número do telefone do tomador. (Preencher com o Código DDD + número do telefone. Nas operações com exterior é permitido informar o código do país + código da localidade + número do telefone) -->
+				<fone> ? </fone>
+				<!-- Informação opcional. E-mail do tomador. -->
+				<email> ? </email>
+			</toma>
+			<!-- Grupo opcional. IDENTIFICAÇÃO DO INTERMEDIÁRIO DO SERVIÇO. -->
+			<interm>
+				<!-- INFORMAÇÃO OBRIGATÓRIA. INFORME CPF OU CNPJ OU NIF OU cNaoNIF DO INTERMEDIÁRIO. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+				<!-- INÍCIO CHOICE -->
+				<!-- Número da inscrição federal (CNPJ) do intermediário de serviço. -->
+				<CNPJ> ? </CNPJ>
+				<!-- Número da inscrição federal (CPF) do intermediário do serviço. -->
+				<CPF> ? </CPF>
+				<!-- Número de identificação fiscal fornecido por órgão de administração tributária no exterior. -->
+				<NIF> ? </NIF>
+				<!-- Motivo para não informação do NIF: 1 - Dispensado do NIF; 2 - Não exigência do NIF. -->
+				<cNaoNIF> ? </cNaoNIF>
+				<!-- FIM CHOICE -->
+				<!-- Informação opcional. Número do Cadastro de Atividade Econômica da Pessoa Física (CAEPF) do intermediário do serviço. -->
+				<CAEPF> ? </CAEPF>
+				<!-- Informação opcional. Número de inscrição municipal do intermediário do serviço. -->
+				<IM> ? </IM>
+				<!-- Informação obrigatória. Nome / Nome Empresarial do intermediário. -->
+				<xNome> ? </xNome>
+				<!-- Grupo Opcional. INFORMAÇÕES DO ENDEREÇO DO INTERMEDIÁRIO. -->
+				<end>
+					<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR ESTES GRUPOS SIMULTANEAMENTE. -->
+					<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+					<!-- ENDEREÇO NACIONAL -->
+					<endNac>
+						<!-- Informação obrigatória. Código do município do endereço do intermediário do serviço. (Tabela do IBGE) -->
+						<cMun> ? </cMun>
+						<!-- Informação obrigatória. Código numérico do Endereçamento Postal nacional (CEP) do endereço do intermediário do serviço. -->
+						<CEP> ? </CEP>
+					</endNac>
+					<!-- ENDEREÇO DO EXTERIOR -->
+					<endExt>
+						<!-- Informação obrigatória. Código do país do endereço do prestador do intermediário do serviço. (Tabela de Países ISO) -->
+						<cPais> ? </cPais>
+						<!-- Informação obrigatória. Código alfanumérico do Endereçamento Postal no exterior do intermediário do serviço. -->
+						<cEndPost> ? </cEndPost>
+						<!-- Informação obrigatória. Nome da cidade no exterior do intermediário do serviço. -->
+						<xCidade> ? </xCidade>
+						<!-- Informação obrigatória. Estado, província ou região da cidade no exterior do intermediário do serviço. -->
+						<xEstProvReg> ? </xEstProvReg>
+					</endExt>
+					<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+					<!-- Informação obrigatória. Tipo e nome do logradouro do endereço do intermediário do serviço. -->
+					<xLgr> ? </xLgr>
+					<!-- Informação obrigatória. Número no logradouro do endereço do intermediário do serviço. -->
+					<nro> ? </nro>
+					<!-- Informação opcional. Complemento do endereço do intermediário do serviço. -->
+					<xCpl> ? </xCpl>
+					<!-- Informação obrigatória. Bairro do endereço do intermediário do serviço. -->
+					<xBairro> ? </xBairro>
+				</end>
+				<!-- Informação opcional. Número do telefone do intermediário. (Preencher com o Código DDD + número do telefone. Nas operações com exterior é permitido informar o código do país + código da localidade + número do telefone) -->
+				<fone> ? </fone>
+				<!-- Informação opcional. E-mail do intermediário. -->
+				<email> ? </email>
+			</interm>
+			<!-- Grupo obrigatório. INFORMAÇÕES RELATIVAS AO SERVIÇO PRESTADO. -->
+			<serv>
+				<!-- Grupo obrigatório. INFORMAÇÕES RELATIVAS AO LOCAL DA PRESTAÇÃO DO SERVIÇO. -->
+				<locPrest>
+					<!-- INFORMAÇÃO OBRIGATÓRIA. INFORME cLocPrestacao OU cPaisPrestacao. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+					<!-- INÍCIO CHOICE -->
+					<!-- Código da localidade da prestação do serviço. -->
+					<cLocPrestacao> ? </cLocPrestacao>
+					<!-- Código do país onde ocorreu a prestação do serviço. (Tabela de Países ISO) -->
+					<cPaisPrestacao> ? </cPaisPrestacao>
+					<!-- FIM CHOICE -->
+				</locPrest>
+				<!-- Grupo obrigatório. INFORMAÇÕES RELATIVAS AO CÓDIGO DO SERVIÇO PRESTADO. -->
+				<cServ>
+					<!-- Informação obrigatória. Código de tributação nacional do ISSQN. -->
+					<cTribNac> ? </cTribNac>
+					<!-- Informação obrigatória. Código de tributação municipal do ISSQN. -->
+					<cTribMun> ? </cTribMun>
+					<!-- Informação obrigatória. Descrição completa do serviço prestado. -->
+					<xDescServ> ? </xDescServ>
+					<!-- Informação obrigatória. Código NBS correspondente ao serviço prestado. -->
+					<cNBS> ? </cNBS>
+					<!-- Informação opcional. Código interno do contribuinte. -->
+					<cIntContrib> ? </cIntContrib>
+				</cServ>
+				<!-- INFORMAÇÕES SOBRE TRANSAÇÕES ENTRE RESIDENTES OU DOMICILIADOS NO BRASIL COM RESIDENTES OU DOMICILIADOS NO EXTERIOR. -->
+				<!-- É obrigatório prestar informações de comércio exterior para as situações de exportação de serviços.
+			A Exportação de Serviço ocorrerá quando o emitente for o prestador do serviço e uma das situações abaixo ocorrer:
+			-	País no exterior do endereço do tomador do serviço;
+			-	País no exterior do endereço do intermediário do serviço;
+			-	Local da prestação do serviço no exterior;
+			-	Tributação do ISSQN for Exportação de Serviço.
+			É obrigatório prestar informações de comércio exterior para as situações de importação de serviços.
+			A Importação de Serviço ocorrerá quando o emitente for o tomador ou o intermediário e uma das situações abaixo ocorrer:
+			-	País no exterior do endereço do prestador do serviço;
+			-	Local da prestação do serviço no exterior. -->
+				<comExt>
+					<!-- Informação obrigatória.
+			Modo de Prestação:
+			1 - Transfronteiriço;
+			2 - Consumo no Brasil;
+			3 - Movimento Temporário de Pessoas Físicas;
+			4 - Consumo no Exterior. -->
+					<mdPrestacao> ? </mdPrestacao>
+					<!-- Informação obrigatória.
+			Vínculo entre as partes no negócio: 
+			1 - Controlada;
+			2 - Controladora;
+			3 - Coligada;
+			4 - Matriz;
+			5 - Filial ou sucursal;
+			6 - Outro vínculo. -->
+					<vincPrest> ? </vincPrest>
+					<!-- Informação obrigatória. Identifica a moeda da transação comercial. O usuário deve informar o código da moeda. -->
+					<tpMoeda> ? </tpMoeda>
+					<!-- Informação obrigatória. Valor do serviço prestado expresso em moeda estrangeira especificada em tpmoeda. -->
+					<vServMoeda> ? </vServMoeda>
+					<!-- Informação obrigatória. 
+			Mecanismo de apoio/fomento ao Comércio Exterior utilizado pelo prestador do serviço:
+			01 - Nenhum;
+			02 - ACC - Adiantamento sobre Contrato de Câmbio – Redução a Zero do IR e do IOF;
+			03 - ACE – Adiantamento sobre Cambiais Entregues - Redução a Zero do IR e do IOF;
+			04 - BNDES-Exim Pós-Embarque – Serviços;
+			05 - BNDES-Exim Pré-Embarque - Serviços;
+			06 - FGE - Fundo de Garantia à Exportação;
+			07 - PROEX - EQUALIZAÇÃO
+			08 - PROEX - Financiamento. -->
+					<mecAFComexP> ? </mecAFComexP>
+					<!-- Informação obrigatória.
+			Mecanismo de apoio/fomento ao Comércio Exterior utilizado pelo tomador do serviço:
+			01 - Nenhum;
+			02 - Adm. Pública e Repr. Internacional;
+			03 - Alugueis e Arrend. Mercantil de maquinas, equip., embarc. e aeronaves;
+			04 - Arrendamento Mercantil de aeronave para empresa de transporte aéreo público;
+			05 - Comissão a agentes externos na exportação;
+			06 - Despesas de armazenagem, mov. e transporte de carga no exterior;
+			07 - Eventos FIFA (subsidiária);
+			08 - Eventos FIFA;
+			09 - Fretes, arrendamentos de embarcações ou aeronaves e outros;
+			10 - Material Aeronáutico;
+			11 - Promoção de Bens no Exterior;
+			12 - Promoção de Dest. Turísticos Brasileiros;
+			13 - Promoção do Brasil no Exterior;
+			14 - Promoção Serviços no Exterior;
+			15 - RECINE;
+			16 - RECOPA;
+			17 - Registro e Manutenção de marcas, patentes e cultivares;
+			18 - REICOMP;
+			19 - REIDI;
+			20 - REPENEC;
+			21 - REPES;
+			22 - RETAERO; 
+			23 - RETID;
+			24 - Royalties, Assistência Técnica, Científica e Assemelhados;
+			25 - Serviços de avaliação da conformidade vinculados aos Acordos da OMC;
+			26 - ZPE. -->
+					<mecAFComexT> ? </mecAFComexT>
+					<!-- Informação obrigatória.
+			Vínculo da Operação à Movimentação Temporária de Bens:
+			1 - Não;
+			2 - Vinculada - Declaração de Importação;
+			3 - Vinculada - Declaração de Exportação. -->
+					<movTempBens> ? </movTempBens>
+					<!-- Informação opcional. Número da Declaração de Importação (DI/DSI/DA/DRI-E) averbado. -->
+					<nDI> ? </nDI>
+					<!-- Informação opcional. Número do Registro de Exportação (RE) averbado. -->
+					<nRE> ? </nRE>
+					<!-- Informação obrigatória.
+			Indicador se a NFS-e deverá ser disponibilizada ao MDIC.
+			0 - Não enviar para o MDIC;
+			1 - Enviar para o MDIC. -->
+					<mdic> ? </mdic>
+				</comExt>
+				<!-- GRUPO DE INFORMAÇÕES RELATIVAS À OBRAS DE CONSTRUÇÃO CIVIL E CONGÊNERES -->
+				<!-- Se o código de tributação nacional pertencer a um dos subitens, 07.02.01, 07.02.02, 07.04.01, 07.05,01, 07.05.02, 07.06.01, 07.06.02, 07.07.01, 07.08.01, 07.17.01 e 07.19.01 da lista de serviços, então o grupo de informações de obra é obrigatório. -->
+				<!-- Se o código de tributação nacional não pertencer a algum dos subitens 07.02.01, 07.02.02, 07.04.01, 07.05,01, 07.05.02, 07.06.01, 07.06.02, 07.07.01, 07.08.01, 07.17.01 e 07.19.01 da lista de serviços, então o grupo de informações de obra não é permitido. *Exceção: O grupo de informações de obra pode ser informado se o código de tributação nacional for o 99.01.01. -->
+				<obra>
+					<!-- Informação opcional. Inscrição imobiliária fiscal (código fornecido pela prefeitura para a identificação da obra ou para fins de recolhimento do IPTU) -->
+					<inscImobFisc> ? </inscImobFisc>
+					<!-- Informação opcional. Número de processo da obra no cadastro municipal. -->
+					<nProcessoObra> ? </nProcessoObra>
+					<!-- INFORMAÇÕES DO ENDEREÇO DA OBRA -->
+					<end>
+						<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR ESTES GRUPOS SIMULTANEAMENTE. -->
+						<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- ENDEREÇO NACIONAL -->
+						<endNac>
+							<!-- Informação obrigatória. Código do município do endereço da obra. (Tabela do IBGE) -->
+							<cMun> ? </cMun>
+							<!-- Código de Endereçamento Postal numérico do endereço nacional da obra. -->
+							<CEP> ? </CEP>
+						</endNac>
+						<!-- ENDEREÇO DO EXTERIOR -->
+						<endExt>
+							<!-- Código do país do endereço da obra. (Tabela de Países ISO) -->
+							<cPais> ? </cPais>
+							<!-- Código de Endereçamento Postal alfanumérico do endereço no exterior da obra. -->
+							<cEndPost> ? </cEndPost>
+							<!-- Nome da cidade no exterior, local da obra. -->
+							<xCidade> ? </xCidade>
+							<!-- Estado, província ou região da cidade no exterior, local da obra. -->
+							<xEstProvReg> ? </xEstProvReg>
+						</endExt>
+						<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- Informação obrigatória. Tipo e nome do logradouro do endereço da obra. -->
+						<xLgr> ? </xLgr>
+						<!-- Informação obrigatória. Número no logradouro do endereço da obra. -->
+						<nro> ? </nro>
+						<!-- Informação opcional. Complemento do endereço da obra. -->
+						<xCpl> ? </xCpl>
+						<!-- Informação obrigatória. Bairro do endereço da obra. -->
+						<xBairro> ? </xBairro>
+					</end>
+				</obra>
+				<!-- INFORMAÇÕES RELATIVAS À ATIVIDADES DE EVENTOS -->
+				<!-- Se o código de tributação nacional pertencer ao item 12 da lista de serviços, então o grupo de informações de Atividade/Evento é obrigatório. -->
+				<!-- Se o código de tributação nacional não pertencer ao item 12 da lista de serviços, então o grupo de informações de Atividade/Evento não é permitido. *Exceção: O grupo de informações de Atividade/Evento pode ser informado se o código de tributação nacional for o 99.01.01. -->
+				<atvEvento>
+					<!-- Informação obrigatória. Nome do evento Artístico, Cultural, Esportivo, ... -->
+					<xNome> ? </xNome>
+					<!-- Informação obrigatória. Data de início da atividade de evento. Ano, Mês e Dia (AAAA-MM-DD) -->
+					<dtIni> ? </dtIni>
+					<!-- Informação obrigatória. Data de fim da atividade de evento. Ano, Mês e Dia (AAAA-MM-DD) -->
+					<dtFim> ? </dtFim>
+					<!-- INFORMAÇÕES DO ENDEREÇO DA ATIVIDADE DE EVENTO -->
+					<end>
+						<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR ESTES GRUPOS SIMULTANEAMENTE. -->
+						<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- ENDEREÇO NACIONAL -->
+						<endNac>
+							<!-- Informação obrigatória. Código do município do endereço da atividade de evento. (Tabela do IBGE) -->
+							<cMun> ? </cMun>
+							<!-- Código de Endereçamento Postal numérico do endereço nacional da atividade de evento. -->
+							<CEP> ? </CEP>
+						</endNac>
+						<!-- ENDEREÇO DO EXTERIOR -->
+						<endExt>
+							<!-- Código do país do endereço da atividade de evento. (Tabela de Países ISO) -->
+							<cPais> ? </cPais>
+							<!-- Informação obrigatória. Código de Endereçamento Postal alfanumérico do endereço no exterior da atividade de evento. -->
+							<cEndPost> ? </cEndPost>
+							<!-- Informação obrigatória. Nome da cidade no exterior, local da atividade de evento. -->
+							<xCidade> ? </xCidade>
+							<!-- Informação obrigatória. Estado, província ou região da cidade no exterior, local da atividade de evento. -->
+							<xEstProvReg> ? </xEstProvReg>
+						</endExt>
+						<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- Informação obrigatória. Tipo e nome do logradouro do endereço da atividade de evento. -->
+						<xLgr> ? </xLgr>
+						<!-- Informação obrigatória. Número no logradouro do endereço da atividade de evento. -->
+						<nro> ? </nro>
+						<!-- Informação opcional. Complemento do endereço da atividade de evento. -->
+						<xCpl> ? </xCpl>
+						<!-- Informação obrigatória. Bairro do endereço da atividade de evento. -->
+						<xBairro> ? </xBairro>
+					</end>
+				</atvEvento>
+				<!-- INFORMAÇÕES COMPLEMENTARES DISPONÍVEL PARA TODOS OS SERVIÇOS PRESTADOS -->
+				<infoCompl>
+					<!-- Identificador de Documento de Responsabilidade Técnica: ART, RRT, DRT, Outros. -->
+					<idDocTec> ? </idDocTec>
+					<!-- Chave da nota, número identificador da nota, número do contrato ou outro identificador de documento emitido pelo prestador de serviços, que subsidia a emissão dessa nota pelo tomador do serviço ou intermediário (preenchimento obrigatório caso a nota esteja sendo emitida pelo Tomador ou intermediário do serviço). -->
+					<docRef> ? </docRef>
+					<!-- Número do  pedido/ordem de compra/ordem de serviço/projeto que autorize a prestação do serviço em operações B2B - Informação de interesse do tomador do serviço para controle e gestão da Negociação. -->
+					<xPed> ? </xPed>
+					<!-- GRUPO DE ITENS DO PEDIDO/ORDEM DE COMPRA/ORDEM DE SERVIÇO/PROJETO -->
+					<gItemPed>
+						<!-- Número do item do pedido/ordem de compra/ordem de serviço/projeto - Identificação do número do item do pedido ou ordem de compra destacado e xPed -->
+						<xItemPed> ? </xItemPed>
+					</gItemPed>
+					<!-- Campo livre para preenchimento pelo contribuinte. -->
+					<xInfComp> ? </xInfComp>
+				</infoCompl>
+			</serv>
+			<valores>
+				<!-- Grupo obrigatório. INFORMAÇÕES RELATIVAS AOS VALORES DO SERVIÇO PRESTADO -->
+				<vServPrest>
+					<!-- Informação opcional. Valor monetário recebido (R$). -->
+					<vReceb> ? </vReceb>
+					<!-- Informação obrigatória. Valor monetário do serviço (R$). -->
+					<vServ> ? </vServ>
+				</vServPrest>
+				<!-- Grupo opcional. INFORMAÇÕES RELATIVAS AOS DESCONTOS CONDICIONADOS E INCONDICIONADOS -->
+				<vDescCondIncond>
+					<!-- Informação opcional. Valor monetário recebido (R$). -->
+					<vDescIncond> ? </vDescIncond>
+					<!-- Informação opcional. Valor monetário do serviço (R$). -->
+					<vDescCond> ? </vDescCond>
+				</vDescCondIncond>
+				<!-- Grupo opcional. INFORMAÇÕES RELATIVAS AO VALORES PARA DEDUÇÃO/REDUÇÃO DO VALOR DA BASE DE CÁLCULO -->
+				<vDedRed>
+					<!-- INFORMAÇÃO OBRIGATÓRIA. Informe "pDR" OU "vDR" OU o grupo "documentos". NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+					<!-- INÍCIO CHOICE - vDedRed -->
+					<!-- Valor percentual padrão para dedução/redução do valor do serviço. -->
+					<pDR> ? </pDR>
+					<!-- Valor monetário padrão para dedução/redução do valor do serviço. -->
+					<vDR> ? </vDR>
+					<!-- INFORMAÇÕES DE DOCUMENTO UTILIZADO PARA DEDUÇÃO/REDUÇÃO DO VALOR DA BASE DE CÁLCULO -->
+					<documentos>
+						<!-- INFORMAÇÕES DE DOCUMENTO UTILIZADO PARA DEDUÇÃO/REDUÇÃO DO VALOR DA BASE DE CÁLCULO -->
+						<docDedRed>
+							<!-- INÍCIO CHOICE - docDedRed -->
+							<!-- INFORMAÇÃO OBRIGATÓRIA. Informe "chNFSe" OU "chNFe" OU o grupo "NFSeMun" OU o grupo "NFNFS" OU "nDocFisc" OU "nDoc". NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE.-->
+							<!-- Chave de acesso da NFS-e (padrão nacional). -->
+							<chNFSe> ? </chNFSe>
+							<!-- Chave de acesso da NF-e. -->
+							<chNFe> ? </chNFe>
+							<!-- INFORMAÇÕES PARA OUTRAS NOTAS ELETRÔNICAS MUNICIPAIS -->
+							<NFSeMun>
+								<!-- Código Município emissor da nota eletrônica municipal. (Tabela do IBGE) -->
+								<cMunNFSeMun> ? </cMunNFSeMun>
+								<!-- Número da nota eletrônica municipal. -->
+								<nNFSeMun> ? </nNFSeMun>
+								<!-- Código de Verificação da nota eletrônica municipal. -->
+								<cVerifNFSeMun> ? </cVerifNFSeMun>
+							</NFSeMun>
+							<!-- INFORMAÇÕES DE NF OU NFS - MODELO NÃO ELETRÔNICO -->
+							<NFNFS>
+								<!-- Número da Nota Fiscal NF ou NFS. -->
+								<nNFS> ? </nNFS>
+								<!-- Modelo da Nota Fiscal NF ou NFS. -->
+								<modNFS> ? </modNFS>
+								<!-- Série Nota Fiscal NF ou NFS. -->
+								<serieNFS> ? </serieNFS>
+							</NFNFS>
+							<!-- Identificador de documento fiscal diferente dos demais dos grupos. -->
+							<nDocFisc> ? </nDocFisc>
+							<!-- Identificador de documento não fiscal diferente dos demais dos grupos. -->
+							<nDoc> ? </nDoc>
+							<!-- FIM CHOICE - docDedRed -->
+							<!-- Tipo da Dedução/Redução:
+					1 – Alimentação e bebidas/frigobar; 
+					2 – Materiais;
+					5 – Repasse consorciado;
+					6 – Repasse plano de saúde;
+					7 – Serviços;
+					8 – Subempreitada de mão de obra;
+					99 – Outras deduções. -->
+							<tpDedRed> ? </tpDedRed>
+							<!-- Descrição da Dedução/Redução quando a opção é "99 – Outras Deduções". -->
+							<xDescOutDed> ? </xDescOutDed>
+							<!-- Data da emissão do documento dedutível. Ano, mês e dia (AAAA-MM-DD) -->
+							<dtEmiDoc> ? </dtEmiDoc>
+							<!-- Valor monetário total dedutível/redutível no documento informado (R$). Este é o valor total no documento informado que é passível de dedução/redução. -->
+							<vDedutivelRedutivel> ? </vDedutivelRedutivel>
+							<!-- Valor monetário utilizado para dedução/redução do valor do serviço da NFS-e que está sendo emitida (R$). Deve ser menor ou igual ao valor deduzível/redutível (vDedutivelRedutivel). -->
+							<vDeducaoReducao> ? </vDeducaoReducao>
+							<!-- O grupo de informações para o fornecedor deve ser informado obrigatoriamente para todos os tipos de documentos informados, exceto para os tipos de documentos NFS-e e NF-e padrões nacionais. -->
+							<fornec>
+								<!-- INÍCIO CHOICE - Fornecedor -->
+								<!-- Número da inscrição federal (CNPJ) do fornecedor de serviço. -->
+								<CNPJ> ? </CNPJ>
+								<!-- Número da inscrição federal (CPF) do fornecedor do serviço. -->
+								<CPF> ? </CPF>
+								<!-- Número de identificação fiscal fornecido por órgão de administração tributária no exterior. -->
+								<NIF> ? </NIF>
+								<!-- Motivo para não informação do NIF: 1 - Dispensado do NIF; 2 - Não exigência do NIF. -->
+								<cNaoNIF> ? </cNaoNIF>
+								<!-- FIM CHOICE - Fornecedor -->
+								<!-- Informação opcional. Número do Cadastro de Atividade Econômica da Pessoa Física (CAEPF) do fornecedor do serviço. -->
+								<CAEPF> ? </CAEPF>
+								<!-- Informação opcional. Número de inscrição municipal do fornecedor do serviço. -->
+								<IM> ? </IM>
+								<!-- Informação obrigatória. Nome / Nome Empresarial do fornecedor. -->
+								<xNome> ? </xNome>
+								<!-- Grupo Opcional. INFORMAÇÕES DO ENDEREÇO DO FORNECEDOR. -->
+								<end>
+									<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR AMBOS OS GRUPOS. -->
+									<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+									<!-- ENDEREÇO NACIONAL -->
+									<endNac>
+										<!-- Informação obrigatória. Código do município do endereço do fornecedor do serviço. (Tabela do IBGE) -->
+										<cMun> ? </cMun>
+										<!-- Informação obrigatória. Código numérico do Endereçamento Postal nacional (CEP) do endereço do fornecedor do serviço. -->
+										<CEP> ? </CEP>
+									</endNac>
+									<!-- ENDEREÇO DO EXTERIOR -->
+									<endExt>
+										<!-- Informação obrigatória. Código do país do endereço do prestador do fornecedor do serviço. (Tabela de Países ISO) -->
+										<cPais> ? </cPais>
+										<!-- Informação obrigatória. Código alfanumérico do Endereçamento Postal no exterior do fornecedor do serviço. -->
+										<cEndPost> ? </cEndPost>
+										<!-- Informação obrigatória. Nome da cidade no exterior do fornecedor do serviço. -->
+										<xCidade> ? </xCidade>
+										<!-- Informação obrigatória. Estado, província ou região da cidade no exterior do fornecedor do serviço. -->
+										<xEstProvReg> ? </xEstProvReg>
+									</endExt>
+									<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+								</end>
+								<!-- Informação obrigatória. Tipo e nome do logradouro do endereço do fornecedor do serviço. -->
+								<xLgr> ? </xLgr>
+								<!-- Informação obrigatória. Número no logradouro do endereço do fornecedor do serviço. -->
+								<nro> ? </nro>
+								<!-- Informação opcional. Complemento do endereço do fornecedor do serviço. -->
+								<xCpl> ? </xCpl>
+								<!-- Informação obrigatória. Bairro do endereço do fornecedor do serviço. -->
+								<xBairro> ? </xBairro>
+								<!-- Informação opcional. Número do telefone do fornecedor. (Preencher com o Código DDD + número do telefone. Nas operações com exterior é permitido informar o código do país + código da localidade + número do telefone) -->
+								<fone> ? </fone>
+								<!-- Informação opcional. E-mail do fornecedor. -->
+								<email> ? </email>
+							</fornec>
+						</docDedRed>
+					</documentos>
+					<!-- FIM CHOICE - vDedRed -->
+				</vDedRed>
+				<!-- INFORMAÇÕES RELACIONADOS AOS TRIBUTOS RELACIONADOS AO SERVIÇO PRESTADO -->
+				<trib>
+					<!-- INFORMAÇÕES RELACIONADOS AO IMPOSTO SOBRE SERVIÇOS DE QUALQUER NATUREZA - ISSQN -->
+					<tribMun>
+						<!-- Tributação do ISSQN sobre o serviço prestado:
+				 1 - Operação tributável;
+				 2 - Imunidade;
+				 3 - Exportação de serviço;
+				 4 - Não Incidência. -->
+						<tribISSQN> ? </tribISSQN>
+						<!-- Código do país onde ocorreu o resultado do serviço prestado. (Tabela de Países ISO). -->
+						<cPaisResult> ? </cPaisResult>
+						<!-- Identificação da Imunidade do ISSQN – somente para o caso de Imunidade.
+				Tipos de Imunidades:            
+				0 - Imunidade;
+				1 - Patrimônio, renda ou serviços, uns dos outros (CF88, Art 150, VI, a);
+				2 - Templos de qualquer culto (CF88, Art 150, VI, b);
+				3 - Patrimônio, renda ou serviços dos partidos políticos, inclusive suas fundações, das entidades sindicais dos trabalhadores, das instituições de educação e de assistência social, sem fins lucrativos, atendidos os requisitos da lei (CF88, Art 150, VI, c);
+				4 - Livros, jornais, periódicos e o papel destinado a sua impressão (CF88, Art 150, VI, d);
+				5 - Fonogramas e videofonogramas musicais produzidos no Brasil contendo obras musicais ou literomusicais de autores brasileiros e/ou obras em geral interpretadas por artistas brasileiros bem como os suportes materiais ou arquivos digitais que os contenham, salvo na etapa de replicação industrial de mídias ópticas de leitura a laser. (CF88, Art 150, VI, e). -->
+						<tpImunidade> ? </tpImunidade>
+						<!-- INFORMAÇÕES PARA A SUSPENSÃO DA EXIGIBILIDADE DO ISSQN -->
+						<exigSusp>
+							<!-- Opção para Exigibilidade Suspensa:
+				1 - Exigibilidade Suspensa por Decisão Judicial;
+				2 - Exigibilidade Suspensa por Processo Administrativo. -->
+							<tpSusp> ? </tpSusp>
+							<!-- Número do processo judicial ou administrativo de suspensão da exigibilidade. -->
+							<nProcesso> ? </nProcesso>
+						</exigSusp>
+						<!-- INFORMAÇÕES SOBRE O TIPO DO BENEFÍCIO MUNICIPAL -->
+						<BM>
+							<!-- Identificador do benefício parametrizado pelo município.
+				Trata-se de um identificador único que foi gerado pelo Sistema Nacional no momento em que o município de incidência do ISSQN incluiu o benefício no sistema.
+				Critério de formação do número de identificação de parâmetros municipais:
+				7 dígitos - posição 1 a 7: número identificador do Município, conforme código IBGE;
+				2 dígitos - posições 8 e 9 : número identificador do tipo de parametrização (01-legislação, 02-regimes especiais, 03-retenções, 04-outros benefícios);
+				5 dígitos - posição 10 a 14 : número sequencial definido pelo sistema quando do registro específico do parâmetro dentro do tipo de parametrização no sistema. -->
+							<nBM> ? </nBM>
+							<!-- INÍCIO CHOICE - INFORME vRedBCBM OU pRedBCBM. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+							<!-- Valor monetário (R$) informado pelo emitente para redução da base de cálculo (BC) do ISSQN devido a um Benefício Municipal (BM). -->
+							<vRedBCBM> ? </vRedBCBM>
+							<!-- Valor percentual (%) informado pelo emitente para redução da base de cálculo (BC) do ISSQN devido a um Benefício Municipal (BM). -->
+							<pRedBCBM> ? </pRedBCBM>
+							<!-- FIM CHOICE - vRedBCBM OU pRedBCBM -->
+						</BM>
+						<!-- Tipo de retencao do ISSQN:
+				1 - Não Retido;
+				2 - Retido pelo Tomador;
+				3 - Retido pelo Intermediario.-->
+						<tpRetISSQN> ? </tpRetISSQN>
+						<!-- Valor da alíquota (%) do serviço prestado relativo ao município sujeito ativo (município de incidência) do ISSQN.
+				Se o município de incidência pertence ao Sistema Nacional NFS-e a alíquota estará parametrizada e, portanto, será fornecida pelo sistema.
+				Se o município de incidência não pertence ao Sistema Nacional NFS-e a alíquota não estará parametrizada e, por isso, deverá ser fornecida pelo emitente. -->
+						<pAliq> ? </pAliq>
+					</tribMun>
+					<!-- INFORMAÇÕES DE OUTROS TRIBUTOS RELACIONADOS AO SERVIÇO PRESTADO -->
+					<tribFed>
+						<!-- INFORMAÇÕES DOS TRIBUTOS PIS/COFINS -->
+						<piscofins>
+							<!-- Código de Situação Tributária do PIS/COFINS (CST):
+				00 - Nenhum; 
+				01 - Operação Tributável com Alíquota Básica;
+				02 - Operação Tributável com Alíquota Diferenciada;
+				03 - Operação Tributável com Alíquota por Unidade de Medida de Produto;
+				04 - Operação Tributável monofásica - Revenda a Alíquota Zero;
+				05 - Operação Tributável por Substituição Tributária;
+				06 - Operação Tributável a Alíquota Zero;
+				07 - Operação Isenta da Contribuição;
+				08 - Operação sem Incidência da Contribuição;
+				09 - Operação com Suspensão da Contribuição;
+				49 - Outras Operações de Saída;
+				50 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita Tributada no Mercado Interno;
+				51 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita Não-Tributada no Mercado Interno;
+				52 - Operação com Direito a Crédito – Vinculada Exclusivamente a Receita de Exportação;
+				53 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno;
+				54 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas no Mercado Interno e de Exportação;
+				55 - Operação com Direito a Crédito – Vinculada a Receitas Não Tributadas no Mercado Interno e de Exportação;
+				56 - Operação com Direito a Crédito – Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno e de Exportação;
+				60 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente a Receita Tributada no Mercado Interno;
+				61 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente a Receita Não-Tributada no Mercado Interno;
+				62 - Crédito Presumido – Operação de Aquisição Vinculada Exclusivamente a Receita de Exportação;
+				63 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno;
+				64 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Tributadas no Mercado Interno e de Exportação;
+				65 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Não-Tributadas no Mercado Interno e de Exportação;
+				66 - Crédito Presumido – Operação de Aquisição Vinculada a Receitas Tributadas e Não-Tributadas no Mercado Interno e de Exportação;
+				67 - Crédito Presumido – Outras Operações;
+				70 - Operação de Aquisição sem Direito a Crédito;
+				71 - Operação de Aquisição com Isenção;
+				72 - Operação de Aquisição com Suspensão;
+				73 - Operação de Aquisição a Alíquota Zero;
+				74 - Operação de Aquisição sem Incidência da Contribuição;
+				75 - Operação de Aquisição por Substituição Tributária;
+				98 - Outras Operações de Entrada;
+				99 - Outras Operações. -->
+							<CST> ? </CST>
+							<!-- Valor da Base de Cálculo do PIS/COFINS (R$). -->
+							<vBCPisCofins> ? </vBCPisCofins>
+							<!-- Valor da Alíquota do PIS (%). -->
+							<pAliqPis> ? </pAliqPis>
+							<!-- Valor da Alíquota da COFINS (%). -->
+							<pAliqCofins> ? </pAliqCofins>
+							<!-- Valor monetário do PIS (R$). -->
+							<vPis> ? </vPis>
+							<!-- Valor monetário do COFINS (R$). -->
+							<vCofins> ? </vCofins>
+							<!-- Tipo de retencao do Pis/Cofins:
+				0 - PIS/COFINS/CSLL Não Retidos;
+				1 - PIS/COFINS Retido;
+				2 - PIS/COFINS Não Retido;
+				3 - PIS/COFINS/CSLL Retidos;
+				4 - PIS/COFINS Retidos, CSLL Não Retido;
+				5 - PIS Retido, COFINS/CSLL Não Retido;
+				6 - COFINS Retido, PIS/CSLL Não Retido;
+				7 - PIS Não Retido, COFINS/CSLL Retidos;
+				8 - PIS/COFINS Não Retidos, CSLL Retido;
+				9 - COFINS Não Retido, PIS/CSLL Retidos. -->
+							<tpRetPisCofins> ? </tpRetPisCofins>
+						</piscofins>
+						<!-- Valor monetário do CP(R$). -->
+						<vRetCP> ? </vRetCP>
+						<!-- Valor monetário do IRRF (R$). -->
+						<vRetIRRF> ? </vRetIRRF>
+						<!-- Valor monetário do CSLL (R$). -->
+						<vRetCSLL> ? </vRetCSLL>
+					</tribFed>
+					<!-- INFORMAÇÕES PARA TOTAIS APROXIMADOS DOS TRIBUTOS RELACIONADOS AO SERVIÇO PRESTADO -->
+					<totTrib>
+						<!-- VALOR MONETÁRIO TOTAL APROXIMADO DOS TRIBUTOS, EM CONFORMIDADE COM O ARTIGO 1O DA LEI NO 12.741/2012 -->
+						<vTotTrib>
+							<!-- Valor monetário total aproximado dos tributos federais (R$). -->
+							<vTotTribFed> ? </vTotTribFed>
+							<!--Valor monetário total aproximado dos tributos estaduais (R$). -->
+							<vTotTribEst> ? </vTotTribEst>
+							<!--Valor monetário total aproximado dos tributos municipais (R$). -->
+							<vTotTribMun> ? </vTotTribMun>
+						</vTotTrib>
+						<pTotTrib>
+							<!-- Valor percentual total aproximado dos tributos federais (%). -->
+							<pTotTribFed> ? </pTotTribFed>
+							<!--Valor percentual total aproximado dos tributos estaduais (%). -->
+							<pTotTribEst> ? </pTotTribEst>
+							<!--Valor percentual total aproximado dos tributos municipais (%). -->
+							<pTotTribMun> ? </pTotTribMun>
+						</pTotTrib>
+						<!-- Indicador de informação de valor total de tributos. 
+				Se informado indica que o emitente opta por não informar nenhum valor estimado para os Tributos (Decreto 8.264/2014).
+				0 - Não. -->
+						<indTotTrib> ? </indTotTrib>
+						<!-- Valor percentual aproximado do total dos tributos da alíquota do Simples Nacional (%). -->
+						<pTotTribSN> ? </pTotTribSN>
+					</totTrib>
+				</trib>
+			</valores>
+			<!-- INFORMAÇÕES DO GRUPO IBSCBS. -->
+			<!-- SOMENTE É PERMITIDO DECLARAR INFORMAÇÕES DE IBS/CBS A PARTIR DA VERSÃO 1.01 DA DPS. -->
+			<!-- É OBRIGATÓRIO DECLARAR INFORMAÇÕES DE IBS/CBS NA VERSÃO 1.01. -->
+			<IBSCBS>
+				<!-- Indicador da finalidade da emissão de NFS-e 
+			0 - NFS-e regular -->
+				<finNFSe> ? </finNFSe>
+				<!-- Indica operação de uso ou consumo pessoal. (art. 57)
+			0 - Não
+			1 - Sim -->
+				<indFinal> ? </indFinal>
+				<!-- Código indicador da operação de fornecimento, conforme tabela “código indicador de operação” -->
+				<cIndOp> ? </cIndOp>
+				<!-- Tipo de Operação com Entes Governanementais ou outros serviços sobre bens imóveis.
+			Deve ser informado SOMENTE se tpEnteGov for informado ou se o serviço prestado (cTribNac) corresponder aos serviços listados da LC 116/2003 (e seus correspondentes na NBS): - 25.05;  - 15.09; - 17.12; - 10.05.
+			1 – Fornecimento com pagamento posterior;
+			2 - Recebimento do pagamento com fornecimento já realizado;
+			3 – Fornecimento com pagamento já realizado;
+			4 – Recebimento do pagamento com fornecimento posterior;
+			5 – Fornecimento e recebimento do pagamento concomitantes. -->
+				<tpOper> ? </tpOper>
+				<!-- GRUPO DE NFS-E REFERENCIADAS.
+					O grupo deve ser informado SOMENTE quando tpOper = 2 ou 3. -->
+				<gRefNFSe>
+					<!-- Chave da NFS-e referenciada -->
+					<refNFSe> ? </refNFSe>
+				</gRefNFSe>
+				<!-- Tipo de ente governamental
+			Para administração pública direta e suas autarquias e fundações: 
+			1 - União 
+			2 - Estado 
+			3 - Distrito Federal 
+			4 - Município -->
+				<tpEnteGov> ? </tpEnteGov>
+				<!-- A respeito do Destinatário dos serviços:
+			0 – o destinatário é o próprio tomador/adquirente identificado na NFS-e (tomador = adquirente = destinatário);
+			1 – o destinatário não é o próprio adquirente, podendo ser outra pessoa, física ou jurídica (ou equiparada), ou um estabelecimento diferente do indicado como tomador (tomador = adquirente ? destinatário). -->
+				<indDest> ? </indDest>
+				<!-- GRUPO DE INFORMAÇÕES RELATIVAS AO DESTINATÁRIO -->
+				<!-- O destinatário só deve ser identificado quando indDest for 1. -->
+				<dest>
+					<!-- INÍCIO CHOICE - DESTINATÁRIO-->
+					<!-- INFORMAÇÃO OBRIGATÓRIA. INFORME CPF OU CNPJ OU NIF OU cNaoNIF DO DESTINATÁRIO. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+					<!-- Número da inscrição no Cadastro Nacional de Pessoa Jurídica (CNPJ) do destinatário de serviço -->
+					<CNPJ> ? </CNPJ>
+					<!-- Número da inscrição no Cadastro Nacional de Pessoa Física (CPF) do destinatário do serviço -->
+					<CPF> ? </CPF>
+					<!-- Número de identificação fiscal fornecido por órgão de administração tributária no exterior -->
+					<NIF> ? </NIF>
+					<!-- Motivo para não informação do NIF:
+			1 - Dispensado do NIF;
+			2 - Não exigência do NIF; -->
+					<cNaoNIF> ? </cNaoNIF>
+					<!-- FIM CHOICE - DESTINATÁRIO-->
+					<!-- Nome / Nome Empresarial do destinatário -->
+					<xNome> ? </xNome>
+					<end>
+						<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR ESTES GRUPOS SIMULTANEAMENTE. -->
+						<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- ENDEREÇO NACIONAL -->
+						<endNac>
+							<!-- Código do município do endereço do destinatário do serviço. (Tabela do IBGE) -->
+							<cMun> ? </cMun>
+							<!-- Código numérico do Endereçamento Postal nacional (CEP) do endereço do destinatário do serviço. -->
+							<CEP> ? </CEP>
+						</endNac>
+						<!-- ENDEREÇO DO EXTERIOR -->
+						<endExt>
+							<!-- Informação obrigatória. Código do país do endereço do destinatário do serviço. (Tabela de Países ISO) -->
+							<cPais> ? </cPais>
+							<!-- Código alfanumérico do Endereçamento Postal no exterior do destinatário do serviço. -->
+							<cEndPost> ? </cEndPost>
+							<!-- Informação obrigatória. Nome da cidade no exterior do destinatário do serviço. -->
+							<xCidade> ? </xCidade>
+							<!-- Informação obrigatória. Estado, província ou região da cidade no exterior do destinatário do serviço. -->
+							<xEstProvReg> ? </xEstProvReg>
+						</endExt>
+						<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- Informação obrigatória. Tipo e nome do logradouro do endereço do destinatário do serviço. -->
+						<xLgr> ? </xLgr>
+						<!-- Informação obrigatória. Número no logradouro do endereço do destinatário do serviço. -->
+						<nro> ? </nro>
+						<!-- Informação opcional. Complemento do endereço do destinatário do serviço. -->
+						<xCpl> ? </xCpl>
+						<!-- Informação obrigatória. Bairro do endereço do destinatário do serviço. -->
+						<xBairro> ? </xBairro>
+					</end>
+					<!-- Número do telefone do destinatário. (Preencher com o Código DDD + número do telefone.  Nas operações com exterior é permitido informar o código do país + código da localidade + número do telefone) -->
+					<fone> ? </fone>
+					<!-- E-mail do destinatário. -->
+					<email> ? </email>
+				</dest>
+				<!-- INFORMAÇÕES DE OPERAÇÕES RELACIONADAS A BENS IMÓVEIS, EXCETO OBRAS -->
+				<!-- O grupo imóvel deve ser informado SOMENTE se campo cIndOp for relativo a operações com imóveis (020101, 020201 ou 020301). -->
+				<imovel>
+					<!-- Inscrição imobiliária fiscal (código fornecido pela prefeitura para a identificação da obra ou para fins de recolhimento do IPTU) -->
+					<inscImobFisc> ? </inscImobFisc>
+					<!-- INFORMAÇÕES DO ENDEREÇO DO IMÓVEL -->
+					<end>
+						<!-- INFORMAÇÃO OBRIGATÓRIA. Informe o grupo endNac OU o grupo endExt. NÃO ENVIAR ESTES GRUPOS SIMULTANEAMENTE. -->
+						<!-- INÍCIO CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- ENDEREÇO NACIONAL -->
+						<endNac>
+							<!-- Informação obrigatória. Código do município do endereço do imóvel. (Tabela do IBGE) -->
+							<cMun> ? </cMun>
+							<!-- Informação obrigatória. Código de Endereçamento Postal numérico do endereço nacional do endereço do imóvel. -->
+							<CEP> ? </CEP>
+						</endNac>
+						<!-- ENDEREÇO DO EXTERIOR -->
+						<endExt>
+							<!-- Informação obrigatória. Código do país do endereço do imóvel no exterior. (Tabela de Países ISO) -->
+							<cPais> ? </cPais>
+							<!-- Informação obrigatória. Código de Endereçamento Postal alfanumérico do endereço do imóvel no exterior. -->
+							<cEndPost> ? </cEndPost>
+							<!-- Informação obrigatória. Nome da cidade no exterior, local do imóvel. -->
+							<xCidade> ? </xCidade>
+							<!-- Informação obrigatória. Estado, província ou região da cidade no exterior, local do imóvel. -->
+							<xEstProvReg> ? </xEstProvReg>
+						</endExt>
+						<!-- FIM CHOICE - ENDEREÇO NACIONAL OU EXTERIOR -->
+						<!-- Informação obrigatória. Tipo e nome do logradouro do endereço do imóvel. -->
+						<xLgr> ? </xLgr>
+						<!-- Informação obrigatória. Número no logradouro do endereço do imóvel. -->
+						<nro> ? </nro>
+						<!-- Informação opcional. Complemento do endereço do imóvel. -->
+						<xCpl> ? </xCpl>
+						<!-- Informação obrigatória. Bairro do endereço do imóvel. -->
+						<xBairro> ? </xBairro>
+					</end>
+				</imovel>
+				<!-- INFORMAÇÕES RELATIVAS AOS VALORES DO SERVIÇO PRESTADO PARA IBS E CBS. -->
+				<valores>
+					<!-- INFORMAÇÕES RELATIVAS A VALORES INCLUÍDOS NESTE DOCUMENTO E RECEBIDOS POR MOTIVO DE ESTAREM RELACIONADAS A OPERAÇÕES DE TERCEIROS, OBJETO DE REEMBOLSO, REPASSE OU RESSARCIMENTO PELO RECEBEDOR, JÁ TRIBUTADOS E AQUI REFERENCIADOS. -->
+					<gReeRepRes>
+						<!-- GRUPO RELATIVO AOS DOCUMENTOS REFERENCIADOS NOS CASOS DE REEMBOLSO, REPASSE E RESSARCIMENTO QUE SERÃO CONSIDERADOS NA BASE DE CÁLCULO DO ISSQN, DO IBS E DA CBS. -->
+						<documentos>
+							<!-- INFORMAÇÕES DE DOCUMENTOS FISCAIS ELETRÔNICOS QUE SE ENCONTRAM NO REPOSITÓRIO NACIONAL. -->
+							<dFeNacional>
+								<!-- Documento fiscal a que se refere a chaveDfe que seja um dos documentos do Repositório Nacional:
+					1 - NFS-e
+					2 - NF-e
+					3 - CT-e
+					9 - Outro -->
+								<tipoChaveDFe> ? </tipoChaveDFe>
+								<!-- Descrição da DF-e a que se refere a chaveDfe que seja um dos documentos do Repositório Nacional. Deve ser preenchido apenas quando tipoChaveDFe = 9 (Outro). -->
+								<xTipoChaveDFe> ? </xTipoChaveDFe>
+								<!-- Chave do Documento Fiscal eletrônico do repositório nacional referenciado para os casos de operações já tributadas. -->
+								<chaveDFe> ? </chaveDFe>
+							</dFeNacional>
+							<!-- GRUPO DE INFORMAÇÕES DE DOCUMENTO FISCAIS, ELETRÔNICOS OU NÃO, QUE NÃO SE ENCONTRAM NO REPOSITÓRIO NACIONAL. -->
+							<docFiscalOutro>
+								<!-- Código do município emissor do documento fiscal que não se encontra no repositório nacional. -->
+								<cMunDocFiscal> ? </cMunDocFiscal>
+								<!-- Número do documento fiscal que não se encontra no repositório nacional. -->
+								<nDocFiscal> ? </nDocFiscal>
+								<!-- Descrição do documento fiscal. -->
+								<xDocFiscal> ? </xDocFiscal>
+							</docFiscalOutro>
+							<!-- GRUPO DE INFORMAÇÕES DE DOCUMENTO NÃO FISCAL. -->
+							<docOutro>
+								<!-- Número do documento não fiscal. -->
+								<nDoc> ? </nDoc>
+								<!-- Descrição do documento não fiscal. -->
+								<xDoc> ? </xDoc>
+							</docOutro>
+							<fornec>
+								<!-- Número da inscrição federal (CNPJ) do fornecedor. -->
+								<CNPJ> ? </CNPJ>
+								<!-- Número da inscrição federal (CPF) do fornecedor. -->
+								<CPF> ? </CPF>
+								<!-- Este elemento só deverá ser preenchido para fornecedores não residentes no Brasil. -->
+								<NIF> ? </NIF>
+								<!-- Motivo para não informação do NIF:
+
+					1 - Dispensado do NIF;
+					2 - Não exigência do NIF.-->
+								<cNaoNIF> ? </cNaoNIF>
+								<!-- Nome / Razão Social do fornecedor.-->
+								<xNome> ? </xNome>
+							</fornec>
+							<!-- Data da emissão do documento dedutível. Ano, mês e dia (AAAA-MM-DD)-->
+							<dtEmiDoc> ? </dtEmiDoc>
+							<!-- Data da competência do documento dedutível. Ano, mês e dia (AAAA-MM-DD)-->
+							<dtCompDoc> ? </dtCompDoc>
+							<!-- Tipo de valor incluído neste documento, recebido por motivo de estarem relacionadas a operações de terceiros, objeto de reembolso, repasse ou ressarcimento pelo recebedor, já tributados e aqui referenciados
+					01 - Repasse de remuneração por intermediação de imóveis a demais corretores envolvidos na operação
+					02 - Repasse de valores a fornecedor relativo a fornecimento intermediado por agência de turismo
+					03 - Reembolso ou ressarcimento recebido por agência de propaganda e publicidade por valores pagos relativos a serviços de produção externa por conta e ordem de terceiro
+					04 - Reembolso ou ressarcimento recebido por agência de propaganda e publicidade por valores pagos relativos a serviços de mídia por conta e ordem de terceiro
+					99 - Outros reembolsos ou ressarcimentos recebidos por valores pagos relativos a operações por conta e ordem de terceiro.-->
+							<tpReeRepRes> ? </tpReeRepRes>
+							<!-- Descrição do reembolso ou ressarcimento quando a opção é "99 – Outros reembolsos ou ressarcimentos recebidos por valores pagos relativos a operações por conta e ordem de terceiro". -->
+							<xTpReeRepRes> ? </xTpReeRepRes>
+							<!-- Valor monetário (total ou parcial, conforme documento informado) utilizado para não inclusão na base de cálculo do ISS e do IBS e da CBS da NFS-e que está sendo emitida (R$). -->
+							<vlrReeRepRes> ? </vlrReeRepRes>
+						</documentos>
+					</gReeRepRes>
+					<!-- GRUPO DE INFORMAÇÕES RELACIONADOS AOS TRIBUTOS IBS E CBS. -->
+					<trib>
+						<!-- GRUPO DE INFORMAÇÕES RELACIONADAS AO IBS E À CBS. -->
+						<gIBSCBS>
+							<!-- Código de Situação Tributária do IBS e da CBS. -->
+							<CST> ? </CST>
+							<!-- Código de Classificação Tributária do IBS e da CBS. -->
+							<cClassTrib> ? </cClassTrib>
+							<!-- Código e classificação do crédito presumido: IBS e CBS. -->
+							<cCredPres> ? </cCredPres>
+							<!-- GRUPO DE INFORMAÇÕES DA TRIBUTAÇÃO REGULAR. -->
+							<gTribRegular>
+								<!-- Código de Situação Tributária do IBS e da CBS de tributação regular. -->
+								<CSTReg> ? </CSTReg>
+								<!-- Código da Classificação Tributária do IBS e da CBS de tributação regular. -->
+								<cClassTribReg> ? </cClassTribReg>
+							</gTribRegular>
+							<!-- GRUPO DE INFORMAÇÕES RELACIONADAS AO DIFERIMENTO PARA IBS E CBS. -->
+							<gDif>
+								<!-- Percentual de diferimento para o IBS estadual. -->
+								<pDifUF> ? </pDifUF>
+								<!-- Percentual de diferimento para o IBS municipal. -->
+								<pDifMun> ? </pDifMun>
+								<!-- Percentual de diferimento para a CBS. -->
+								<pDifCBS> ? </pDifCBS>
+							</gDif>
+						</gIBSCBS>
+					</trib>
+				</valores>
+				<!-- Opcional. GRUPO DE INFORMAÇÕES DA VINCULAÇÃO COM A TRANSAÇÃO DE PAGAMENTO. -->
+				<gPgtoVinc>
+					<!-- DADOS DOS PAGAMENTOS VINCULADOS À NFS-E. -->
+					<pgto>
+						<!--Campo obrigatório.  Numerador único de cada pagamento. -->
+						<nPag> ? </nPag>
+						<!-- Campo obrigatório. Identificador específico da transação financeira, de acordo com o pagamento. -->
+						<idTransacao> ? </idTransacao>
+						<!-- Campo obrigatório. Código de Meio de Pagamento Utilizado:
+					01 - Dinheiro
+					02 - Cheque
+					03 - Cartão de Crédito
+					04 - Cartão de Débito
+					05 - Cartão da Loja (Private Label), Crediário Digital, Outros Crediários 
+					10 - Vale Alimentação
+					11 - Vale Refeição
+					12 - Vale Presente
+					13 - Vale Combustível
+					14 - Duplicata Mercantil
+					15 - Boleto Bancário
+					16 - Depósito Bancário
+					17 - Pagamento Instantâneo (PIX) - Dinâmico
+					18 - TED (Transferência Eletrônica Disponível)
+					19 - Programa de fidelidade, Cashback, Crédito Virtual
+					20 - Pagamento Instantâneo (PIX) - Estático
+					21 - Crédito em Loja
+					22 - Pagamento Eletrônico não Informado - falha de hardware do sistema emissor
+					23 - Pagamento Instantâneo (PIX) - Automático
+					24 - TEF - "Book Transfer" 
+					90 - Sem Pagamento
+					91 - Pagamento Posterior
+					99 - Outros-->
+						<tpMeioPgto> ? </tpMeioPgto>
+						<!-- CNPJ completo do recebedor do pagamento (fornecedor, plataforma, ou outra entidade que receba o pagamento do adquirente). -->
+						<CNPJReceb> ? </CNPJReceb>
+						<!-- CNPJ base da instituição financeira ou de pagamento utilizada pelo recebedor do pagamento (fornecedor, plataforma, ou outra entidade que receba o pagamento do adquirente). -->
+						<CNPJBasePSP> ? </CNPJBasePSP>
+					</pgto>
+				</gPgtoVinc>
+			</IBSCBS>
+		</infDPS>
+		<!-- Assinatura digital do prestador de serviços ou de seu preposto para a DPS. -->
+		<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+			<SignedInfo>
+				<CanonicalizationMethod Algorithm=" http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+				<SignatureMethod Algorithm=" http://www.w3.org/2000/09/xmldsig#rsa-sha1"/>
+				<Reference URI="#DPS999999999999999999999999999999999999999999">
+					<Transforms>
+						<Transform Algorithm=" http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>
+						<Transform Algorithm=" http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/>
+					</Transforms>
+					<DigestMethod Algorithm=" http://www.w3.org/2000/09/xmldsig#sha1"/>
+					<DigestValue> ? </DigestValue>
+				</Reference>
+			</SignedInfo>
+			<SignatureValue> ? </SignatureValue>
+			<KeyInfo>
+				<X509Data>
+					<X509Certificate> ? </X509Certificate>
+				</X509Data>
+			</KeyInfo>
+		</Signature>
+	</DPS>
+</GerarNfseEnvio>

@@ -1,0 +1,35 @@
+<ConsultarUrlNfseResposta>
+	<!-- INÍCIO CHOICE. Grupo ListaLinks OR ListaMensagemRetorno-->
+	<ListaLinks>
+		<Links>
+			<IdentificacaoNfse>
+				<nDFSe> ? </nDFSe>
+				<!-- INÍCIO CHOICE. CNPJ OU CPF-->
+				<CNPJ> ? </CNPJ>
+				<CPF> ? </CPF>
+				<!-- FIM CHOICE. CNPJ OU CPF-->
+				<IM> ? </IM>
+				<cMunNFSeMun> ? </cMunNFSeMun>
+			</IdentificacaoNfse>
+			<IdentificacaoDps>
+				<NumDPS> ? </NumDPS>
+				<SerieDPS> ? </SerieDPS>
+			</IdentificacaoDps>
+			<UrlVisualizacaoNfse> ? </UrlVisualizacaoNfse>
+			<UrlVerificaAutenticidade> ? </UrlVerificaAutenticidade>
+			<UrlVisualizacaoNfseNacional> ? </UrlVisualizacaoNfseNacional>
+		</Links>
+		<Pagina> ? </Pagina>
+	</ListaLinks>
+	<ListaMensagemRetorno>
+		<MensagemRetorno>
+			<!-- Código da mensagem de erro -->
+			<Codigo> ? </Codigo>
+			<!-- Descrição da mensagem de erro -->
+			<Mensagem> ? </Mensagem>
+			<!-- Descrição dos procedimentos para a correção da NFS-e -->
+			<Correcao> ? </Correcao>
+		</MensagemRetorno>
+	</ListaMensagemRetorno>
+	<!-- FIM CHOICE. Grupo ListaLinks OR ListaMensagemRetorno-->
+</ConsultarUrlNfseResposta>

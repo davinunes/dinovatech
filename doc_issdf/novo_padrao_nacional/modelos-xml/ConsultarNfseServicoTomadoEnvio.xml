@@ -1,0 +1,43 @@
+<ConsultarNfseServicoTomadoEnvio xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+	<!-- INFORMAÇÃO OBRIGATÓRIA. IDENTIFICAÇÃO DO CONSULENTE. -->
+	<!-- A identificação do Tomador ou a identificação do Intermediário deve ser igual à identificação do Consulente. -->
+	<Consulente>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do consulente. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação opcional. Número de inscrição municipal do consulente. -->
+		<IM> ? </IM>
+	</Consulente>
+	<!-- INÍCIO CHOICE. INFORME OBRIGATORIAMENTE (NumeroNfse OU PeriodoEmissao OU PeriodoCompetencia). -->
+	<NumeroNfse> ? </NumeroNfse>
+	<PeriodoEmissao>
+		<DataInicial> ? </DataInicial>
+		<DataFinal> ? </DataFinal>
+	</PeriodoEmissao>
+	<PeriodoCompetencia>
+		<DataInicial> ? </DataInicial>
+		<DataFinal> ? </DataFinal>
+	</PeriodoCompetencia>
+	<!-- FIM CHOICE. (NumeroNfse OU PeriodoEmissao OU PeriodoCompetencia) -->
+	<!-- INÍCIO CHOICE. INFORME OBRIGATORIAMENTE (Tomador OU Intermediario). -->
+	<!-- IDENTIFICAÇÃO DO TOMADOR DE SERVIÇOS. -->
+	<Tomador>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do prestador. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação opcional. Número de inscrição municipal do prestador do serviço. -->
+		<IM> ? </IM>
+	</Tomador>
+	<!-- IDENTIFICAÇÃO DO INTERMEDIÁRIO DE SERVIÇOS. -->
+	<Intermediario>
+		<!-- Informação obrigatória. Informe CPF ou CNPJ do prestador. NÃO ENVIAR ESTAS TAGS SIMULTANEAMENTE. -->
+		<CNPJ> ? </CNPJ>
+		<CPF> ? </CPF>
+		<!-- Informação opcional. Número de inscrição municipal do prestador do serviço. -->
+		<IM> ? </IM>
+	</Intermediario>
+	<!-- FIM CHOICE. INFORME OBRIGATORIAMENTE (Tomador OU Intermediario). -->
+	<!-- O resultado da consulta será paginado em grupos de no máximo 50 notas. -->
+	<!-- Informação obrigatória. Informe a página a ser consultada. -->
+	<Pagina> ? </Pagina>
+</ConsultarNfseServicoTomadoEnvio>
