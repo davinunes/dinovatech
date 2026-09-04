@@ -27,19 +27,34 @@ Esta skill orienta o desenvolvimento e a manutenção da integração com o **Pa
    - Assinatura: `http://www.w3.org/2000/09/xmldsig#rsa-sha1`
    - Digest: `http://www.w3.org/2000/09/xmldsig#sha1`
 
-## 3. Envelope SOAP e Cabeçalho
-- **Envelope:** SOAP 1.1 estilo Document/Literal wrapped.
-- **Dois parâmetros textuais:**
-  - `nfseCabecMsg`:
+## 3. Envelope SOAP e Cabeçalho (Padrão Nota Control / SEFAZ-DF)
+- **Envelope:** SOAP 1.1 estilo Document/Literal.
+- **Estrutura dos Parâmetros:**
+  - **NUNCA inclua prólogo XML (`<?xml ...?>`)** dentro do `nfseCabecMsg`. A inclusão do prólogo dispara rejeições `[E183]` e `[E160]`.
+  - **Formato Recomendado:** XML Direto (Sem CDATA e sem Entidades HTML) e Sem Prefixo na tag do método.
+  - **Exemplo de Envelope Vencedor:**
     ```xml
-    <cabecalho versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">
-      <versaoDados>1.01</versaoDados>
-    </cabecalho>
+    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+      <soapenv:Header/>
+      <soapenv:Body>
+        <GerarNfse xmlns="http://www.sped.fazenda.gov.br/nfse">
+          <nfseCabecMsg><cabecalho versao="1.00" xmlns="http://www.sped.fazenda.gov.br/nfse"><versaoDados>1.00</versaoDados></cabecalho></nfseCabecMsg>
+          <nfseDadosMsg><DPS ...>...</DPS></nfseDadosMsg>
+        </GerarNfse>
+      </soapenv:Body>
+    </soapenv:Envelope>
     ```
-  - `nfseDadosMsg`: Payload XML do método escapado ou envolvido em CDATA.
 
-## 4. Métodos do Web Service
-- `GerarNfse`: Emissão síncrona de 1 DPS (método principal).
-- `ConsultarNfsePorDps`: Consulta síncrona da nota pelo número/série da DPS (resiliência).
+## 4. Regras de Série da DPS e Regras Cadastrais
+1. **Formato da Série (`<serie>`):** Deve ser **obrigatoriamente numérica (1 a 5 dígitos)** (ex: `1`, `3`, `900`). Letras como `"RPS"`, `"NF"`, `"A"` violam o tipo XSD `TSSerieDPS` e resultam em erro `[E160]`.
+2. **Autorização Cadastral (`[E093]`):** O erro `[E093] Série do RPS inválida` indica validação de regra de negócio do DF/Nota Control: a série precisa estar autorizada no cadastro do contribuinte na SEFAZ-DF (via AIDOF ou Portal ISS-DF).
+
+## 5. Métodos do Web Service Implementados
+- `GerarNfse`: Emissão síncrona de 1 DPS (`NacionalProvider::emitir`).
+- `ConsultarDpsDisponivel`: Consulta de sequenciais de DPS disponíveis (método 7.2.11 do manual, `NacionalProvider::consultarDpsDisponivel`).
+- `ConsultarNfsePorDps`: Consulta síncrona da nota por DPS (resiliência).
 - `ConsultarUrlNfse`: Consulta links de visualização municipal e nacional.
-- `CancelarNfse`: Solicitação de cancelamento via evento `e101103` (`infPedReg Id="PRE..."`).
+- `CancelarNfse`: Solicitação de cancelamento via evento `e101103`.
+
+## 6. Laboratório de Testes Interativo
+- O painel dedicado em `dinovatech/nfse_nacional_test/index.php` (com `api.php`) é mantido para testar variações de parâmetros SOAP, pré-visualização de XMLDSig e transmissão direta mTLS.
