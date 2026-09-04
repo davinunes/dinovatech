@@ -130,7 +130,7 @@ class DpsXmlBuilder
         }
 
         $xml = <<<XML
-<GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
+<GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
     <DPS versao="{$versaoDps}">
         <infDPS Id="{$dpsId}">
             <tpAmb>{$tpAmb}</tpAmb>
