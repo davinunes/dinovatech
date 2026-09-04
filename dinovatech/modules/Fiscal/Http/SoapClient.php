@@ -27,9 +27,7 @@ class SoapClient
      */
     public function call(string $methodName, string $dadosXml, string $versaoDados = '1.01'): array
     {
-        // O atributo versao= do cabecalho é SEMPRE "1.01" conforme o schema da NFS-e Nacional.
-        // versaoDados indica a versão do XML de dados enviado (1.00 para DPS sem IBS/CBS, 1.01 com IBS/CBS).
-        $cabecalhoXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><cabecalho versao=\"{$versaoDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
+        $cabecalhoXml = "<cabecalho versao=\"{$versaoDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
 
         $soapEnvelope = <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">

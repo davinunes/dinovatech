@@ -168,6 +168,7 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                                 <select class="form-select" name="envelope_format">
                                     <option value="cdata" selected>CDATA (<![CDATA[...]]>)</option>
                                     <option value="entities">HTML Entities (&lt;...&gt;)</option>
+                                    <option value="raw">XML Direto (Sem CDATA/Entidades)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -175,6 +176,13 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                                 <select class="form-select" name="envelope_namespace">
                                     <option value="default_ns" selected>Sem Prefixo (`GerarNfse xmlns="..."`)</option>
                                     <option value="prefixed_ns">Com Prefixo (`nfse:GerarNfse`)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Prólogo XML no Cabeçalho (`<?xml ...?>`)</label>
+                                <select class="form-select" name="prologo_cabecalho" id="prologo_cabecalho">
+                                    <option value="sem_prologo" selected>Sem Prólogo (`<cabecalho ...>`)</option>
+                                    <option value="com_prologo">Com Prólogo (`<?xml ...?><cabecalho ...>`)</option>
                                 </select>
                             </div>
                         </div>

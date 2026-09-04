@@ -165,11 +165,16 @@ try {
     $response['signed_xml'] = $signedXml;
 
     // 4. Monta o Envelope SOAP personalizado para o teste
-    $cabecalhoXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><cabecalho versao=\"{$versaoSchema}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoSchema}</versaoDados></cabecalho>";
+    $prologoCabecOption = $_POST['prologo_cabecalho'] ?? 'sem_prologo';
+    $prologoXml = ($prologoCabecOption === 'com_prologo') ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" : "";
+    $cabecalhoXml = "{$prologoXml}<cabecalho versao=\"{$versaoSchema}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoSchema}</versaoDados></cabecalho>";
 
     if ($envelopeFormat === 'entities') {
         $cabecBody = htmlspecialchars($cabecalhoXml, ENT_XML1, 'UTF-8');
         $dadosBody = htmlspecialchars($signedXml, ENT_XML1, 'UTF-8');
+    } elseif ($envelopeFormat === 'raw') {
+        $cabecBody = str_replace(['<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="utf-8"?>'], '', $cabecalhoXml);
+        $dadosBody = str_replace(['<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="utf-8"?>'], '', $signedXml);
     } else {
         $cabecBody = "<![CDATA[{$cabecalhoXml}]]>";
         $dadosBody = "<![CDATA[{$signedXml}]]>";
@@ -195,6 +200,7 @@ try {
   </soapenv:Body>
 </soapenv:Envelope>
 XML;
+
     if ($action === 'consultar_disponivel') {
         $builderDisp = new \Dinovatech\Modules\Fiscal\Builders\ConsultarDpsDisponivelXmlBuilder();
         $xmlDisp = $builderDisp->build($prestCnpj, $prestIm, 1, $serieDps, $numDps);
@@ -204,25 +210,38 @@ XML;
         if ($envelopeFormat === 'entities') {
             $cabecBody = htmlspecialchars($cabecalhoXml, ENT_XML1, 'UTF-8');
             $dadosBody = htmlspecialchars($xmlDisp, ENT_XML1, 'UTF-8');
+        } elseif ($envelopeFormat === 'raw') {
+            $cabecBody = str_replace(['<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="utf-8"?>'], '', $cabecalhoXml);
+            $dadosBody = str_replace(['<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="utf-8"?>'], '', $xmlDisp);
         } else {
             $cabecBody = "<![CDATA[{$cabecalhoXml}]]>";
             $dadosBody = "<![CDATA[{$xmlDisp}]]>";
         }
 
-        $soapEnvelope = <<<XML
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
-  <soapenv:Header/>
-  <soapenv:Body>
-    <ConsultarDpsDisponivel xmlns="http://www.sped.fazenda.gov.br/nfse">
+        if ($envelopeNamespace === 'prefixed_ns') {
+            $methodBlockDisp = "<nfse:ConsultarDpsDisponivel>
+      <nfse:nfseCabecMsg>{$cabecBody}</nfse:nfseCabecMsg>
+      <nfse:nfseDadosMsg>{$dadosBody}</nfse:nfseDadosMsg>
+    </nfse:ConsultarDpsDisponivel>";
+        } else {
+            $methodBlockDisp = "<ConsultarDpsDisponivel xmlns=\"http://www.sped.fazenda.gov.br/nfse\">
       <nfseCabecMsg>{$cabecBody}</nfseCabecMsg>
       <nfseDadosMsg>{$dadosBody}</nfseDadosMsg>
-    </ConsultarDpsDisponivel>
+    </ConsultarDpsDisponivel>";
+        }
+
+        $soapEnvelope = <<<XML
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:nfse="http://www.sped.fazenda.gov.br/nfse">
+  <soapenv:Header/>
+  <soapenv:Body>
+    {$methodBlockDisp}
   </soapenv:Body>
 </soapenv:Envelope>
 XML;
         $response['envelope_soap'] = $soapEnvelope;
         $soapAction = "http://www.sped.fazenda.gov.br/nfse/ConsultarDpsDisponivel";
     } else {
+        $response['envelope_soap'] = $soapEnvelope;
         $soapAction = "http://www.sped.fazenda.gov.br/nfse/GerarNfse";
     }
 
