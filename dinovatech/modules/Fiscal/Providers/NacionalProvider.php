@@ -238,7 +238,7 @@ class NacionalProvider implements NfseProviderInterface
     private function getEndpointUrl(string $ambiente): string
     {
         return ($ambiente === 'producao')
-            ? 'https://nfse.fazenda.df.gov.br/nfse.asmx'
-            : 'https://nfse.issnetonline.com.br/nfse.asmx';
+            ? 'https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx'
+            : 'https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx';
     }
 }

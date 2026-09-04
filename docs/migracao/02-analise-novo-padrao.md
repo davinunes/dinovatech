@@ -39,11 +39,11 @@ O modelo substitui conceitualmente o padrão anterior (**ABRASF 2.04**) e adota:
 5. **Endpoints Identificados (WSDL):**
    - **Homologação:**
      - WSDL: `doc_issdf/novo_padrao_nacional/xsd-homol.xml`
-     - Service Location: `https://nfse.issnetonline.com.br/nfse.asmx`
+     - Service Location: `https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx`
      - URL de Validação Web: `https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/validarxml`
    - **Produção:**
      - WSDL: `doc_issdf/novo_padrao_nacional/xsd-prod.xml`
-     - Service Location: `https://nfse.fazenda.df.gov.br/nfse.asmx`
+     - Service Location: `https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx`
 
 ---
 
