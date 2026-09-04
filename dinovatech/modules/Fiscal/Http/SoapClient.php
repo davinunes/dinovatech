@@ -25,7 +25,7 @@ class SoapClient
      * @param string $versaoDados Versão do XML de dados da DPS ('1.00' ou '1.01'). O cabeçalho SOAP sempre usa versao="1.00".
      * @return array ['http_code' => int, 'response_body' => string, 'curl_error' => string]
      */
-    public function call(string $methodName, string $dadosXml, string $versaoDados = '1.00'): array
+    public function call(string $methodName, string $dadosXml, string $versaoDados = '1.01'): array
     {
         // O atributo versao= do cabecalho é SEMPRE "1.01" conforme o schema da NFS-e Nacional.
         // versaoDados indica a versão do XML de dados enviado (1.00 para DPS sem IBS/CBS, 1.01 com IBS/CBS).

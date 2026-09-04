@@ -103,9 +103,10 @@ class DpsXmlBuilder
         $pAliq = number_format($data->aliquotaIss, 2, '.', '');
         $tribISSQN = (string)($data->tributacaoIssqn ?: 1);
 
-        // Versão 1.00 = sem IBSCBS (homologação), 1.01 = com IBSCBS (produção, Reforma Tributária)
-        $usarIbsCbs = ($data->ambiente === 'producao');
-        $versaoDps = $usarIbsCbs ? '1.01' : '1.00';
+        // Versão 1.01 com grupo IBS/CBS — o cabeçalho sempre anuncia versaoDados=1.01,
+        // portanto a DPS também deve ser 1.01. IBS/CBS é obrigatório na v1.01.
+        $usarIbsCbs = true;
+        $versaoDps = '1.01';
 
         $ibsCbsXml = '';
         if ($usarIbsCbs) {

@@ -64,8 +64,8 @@ class NacionalProvider implements NfseProviderInterface
             $endpoint = $this->getEndpointUrl($data->ambiente);
             $soapClient = new SoapClient($certManager, $endpoint);
 
-            $versaoDps = ($data->ambiente === 'producao') ? '1.01' : '1.00';
-            $soapResponse = $soapClient->call('GerarNfse', $signedXml, $versaoDps);
+            // versaoDados no cabeçalho é sempre 1.01 (versão do schema do serviço)
+            $soapResponse = $soapClient->call('GerarNfse', $signedXml, '1.01');
 
             if (!empty($soapResponse['curl_error'])) {
                 throw new Exception("Falha de conexão com o WebService da NFS-e: " . $soapResponse['curl_error']);
@@ -239,8 +239,9 @@ class NacionalProvider implements NfseProviderInterface
 
     private function getEndpointUrl(string $ambiente): string
     {
+        // Endpoints oficiais conforme WSDLs em doc_issdf/novo_padrao_nacional/
         return ($ambiente === 'producao')
-            ? 'https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx'
-            : 'https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx';
+            ? 'https://nfse.fazenda.df.gov.br/nfse.asmx'
+            : 'https://nfse.issnetonline.com.br/nfse.asmx';
     }
 }
