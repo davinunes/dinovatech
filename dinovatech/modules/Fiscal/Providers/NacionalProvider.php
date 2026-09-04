@@ -64,7 +64,7 @@ class NacionalProvider implements NfseProviderInterface
             $endpoint = $this->getEndpointUrl($data->ambiente);
             $soapClient = new SoapClient($certManager, $endpoint);
 
-            $soapResponse = $soapClient->call('GerarNfse', $signedXml, '1.01');
+            $soapResponse = $soapClient->call('GerarNfse', $signedXml, '1.00');
 
             if (!empty($soapResponse['curl_error'])) {
                 throw new Exception("Falha de conexão com o WebService da NFS-e: " . $soapResponse['curl_error']);
@@ -135,7 +135,7 @@ class NacionalProvider implements NfseProviderInterface
                 $this->config['inscricao_municipal'] ?? ''
             );
 
-            $res = $soapClient->call('ConsultarNfseDps', $xml, '1.01');
+            $res = $soapClient->call('ConsultarNfseDps', $xml, '1.00');
             return $this->parser->parseConsultaDps($res['response_body']);
         } catch (Exception $e) {
             $q = new QueryResult();
@@ -166,7 +166,7 @@ class NacionalProvider implements NfseProviderInterface
                 $numeroDocumento
             );
 
-            $res = $soapClient->call('ConsultarUrlNfse', $xml, '1.01');
+            $res = $soapClient->call('ConsultarUrlNfse', $xml, '1.00');
             return $this->parser->parseConsultarUrl($res['response_body']);
         } catch (Exception $e) {
             $u = new UrlResult();
@@ -199,7 +199,7 @@ class NacionalProvider implements NfseProviderInterface
             );
 
             $signedXml = $signer->sign($dados['xml'], $dados['preId']);
-            $res = $soapClient->call('CancelarNfse', $signedXml, '1.01');
+            $res = $soapClient->call('CancelarNfse', $signedXml, '1.00');
 
             return $this->parser->parseCancelamento($res['response_body'], $signedXml);
         } catch (Exception $e) {

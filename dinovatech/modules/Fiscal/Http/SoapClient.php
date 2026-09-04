@@ -25,7 +25,7 @@ class SoapClient
      * @param string $versao Versão do cabeçalho ('1.00' ou '1.01')
      * @return array ['http_code' => int, 'response_body' => string, 'curl_error' => string]
      */
-    public function call(string $methodName, string $dadosXml, string $versao = '1.01'): array
+    public function call(string $methodName, string $dadosXml, string $versao = '1.00'): array
     {
         $cabecalhoXml = "<cabecalho versao=\"{$versao}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versao}</versaoDados></cabecalho>";
 
