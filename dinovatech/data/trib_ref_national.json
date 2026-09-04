@@ -1,0 +1,5362 @@
+{
+  "tributacao_nacional": [
+    {
+      "codigo_trib_nac": "010101",
+      "descricao": "Análise e desenvolvimento de sistemas.",
+      "item_lc116": "01.01"
+    },
+    {
+      "codigo_trib_nac": "010201",
+      "descricao": "Programação.",
+      "item_lc116": "01.02"
+    },
+    {
+      "codigo_trib_nac": "010301",
+      "descricao": "Processamento de dados, textos, imagens, vídeos, páginas eletrônicas, aplicativos e sistemas de informação, entre outros formatos, e congêneres.",
+      "item_lc116": "01.03"
+    },
+    {
+      "codigo_trib_nac": "010302",
+      "descricao": "Armazenamento ou hospedagem de dados, textos, imagens, vídeos, páginas eletrônicas, aplicativos e sistemas de informação, entre outros formatos, e congêneres.",
+      "item_lc116": "01.03"
+    },
+    {
+      "codigo_trib_nac": "010401",
+      "descricao": "Elaboração de programas de computadores, inclusive de jogos eletrônicos, independentemente da arquitetura construtiva da máquina em que o programa será executado, incluindo tablets, smartphones e congêneres.",
+      "item_lc116": "01.04"
+    },
+    {
+      "codigo_trib_nac": "010501",
+      "descricao": "Licenciamento ou cessão de direito de uso de programas de computação.",
+      "item_lc116": "01.05"
+    },
+    {
+      "codigo_trib_nac": "010601",
+      "descricao": "Assessoria e consultoria em informática.",
+      "item_lc116": "01.06"
+    },
+    {
+      "codigo_trib_nac": "010701",
+      "descricao": "Suporte técnico em informática, inclusive instalação, configuração e manutenção de programas de computação e bancos de dados.",
+      "item_lc116": "01.07"
+    },
+    {
+      "codigo_trib_nac": "010801",
+      "descricao": "Planejamento, confecção, manutenção e atualização de páginas eletrônicas.",
+      "item_lc116": "01.08"
+    },
+    {
+      "codigo_trib_nac": "010901",
+      "descricao": "Disponibilização, sem cessão definitiva, de conteúdos de áudio por meio da internet (exceto a distribuição de conteúdos pelas prestadoras de Serviço de Acesso Condicionado, de que trata a Lei nº 12.485, de 12 de setembro de 2011, sujeita ao ICMS).",
+      "item_lc116": "01.09"
+    },
+    {
+      "codigo_trib_nac": "010902",
+      "descricao": "Disponibilização, sem cessão definitiva, de conteúdos de vídeo, imagem e texto por meio da internet, respeitada a imunidade de livros, jornais e periódicos (exceto a distribuição de conteúdos pelas prestadoras de Serviço de Acesso Condicionado, de que trata a Lei nº 12.485, de 12 de setembro de 2011, sujeita ao ICMS).",
+      "item_lc116": "01.09"
+    },
+    {
+      "codigo_trib_nac": "020101",
+      "descricao": "Serviços de pesquisas e desenvolvimento de qualquer natureza.",
+      "item_lc116": "02.01"
+    },
+    {
+      "codigo_trib_nac": "030201",
+      "descricao": "Cessão de direito de uso de marcas e de sinais de propaganda.",
+      "item_lc116": "03.02"
+    },
+    {
+      "codigo_trib_nac": "030301",
+      "descricao": "Exploração de salões de festas, centro de convenções, stands e congêneres, para realização de eventos ou negócios de qualquer natureza.",
+      "item_lc116": "03.03"
+    },
+    {
+      "codigo_trib_nac": "030302",
+      "descricao": "Exploração de escritórios virtuais e congêneres, para realização de eventos ou negócios de qualquer natureza.",
+      "item_lc116": "03.03"
+    },
+    {
+      "codigo_trib_nac": "030303",
+      "descricao": "Exploração de quadras esportivas, estádios, ginásios, canchas e congêneres, para realização de eventos ou negócios de qualquer natureza.",
+      "item_lc116": "03.03"
+    },
+    {
+      "codigo_trib_nac": "030304",
+      "descricao": "Exploração de auditórios, casas de espetáculos e congêneres, para realização de eventos ou negócios de qualquer natureza.",
+      "item_lc116": "03.03"
+    },
+    {
+      "codigo_trib_nac": "030305",
+      "descricao": "Exploração de parques de diversões e congêneres, para realização de eventos ou negócios de qualquer natureza.",
+      "item_lc116": "03.03"
+    },
+    {
+      "codigo_trib_nac": "030401",
+      "descricao": "Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de ferrovia.",
+      "item_lc116": "03.04"
+    },
+    {
+      "codigo_trib_nac": "030402",
+      "descricao": "Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de rodovia.",
+      "item_lc116": "03.04"
+    },
+    {
+      "codigo_trib_nac": "030403",
+      "descricao": "Locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de postes, cabos, dutos e condutos de qualquer natureza.",
+      "item_lc116": "03.04"
+    },
+    {
+      "codigo_trib_nac": "030501",
+      "descricao": "Cessão de andaimes, palcos, coberturas e outras estruturas de uso temporário.",
+      "item_lc116": "03.05"
+    },
+    {
+      "codigo_trib_nac": "040101",
+      "descricao": "Medicina.",
+      "item_lc116": "04.01"
+    },
+    {
+      "codigo_trib_nac": "040102",
+      "descricao": "Biomedicina.",
+      "item_lc116": "04.01"
+    },
+    {
+      "codigo_trib_nac": "040201",
+      "descricao": "Análises clínicas e congêneres.",
+      "item_lc116": "04.02"
+    },
+    {
+      "codigo_trib_nac": "040202",
+      "descricao": "Patologia e congêneres.",
+      "item_lc116": "04.02"
+    },
+    {
+      "codigo_trib_nac": "040203",
+      "descricao": "Eletricidade médica (eletroestimulação de nervos e musculos, cardioversão, etc) e congêneres.",
+      "item_lc116": "04.02"
+    },
+    {
+      "codigo_trib_nac": "040204",
+      "descricao": "Radioterapia, quimioterapia e congêneres.",
+      "item_lc116": "04.02"
+    },
+    {
+      "codigo_trib_nac": "040205",
+      "descricao": "Ultra-sonografia, ressonância magnética, radiologia, tomografia e congêneres.",
+      "item_lc116": "04.02"
+    },
+    {
+      "codigo_trib_nac": "040301",
+      "descricao": "Hospitais e congêneres.",
+      "item_lc116": "04.03"
+    },
+    {
+      "codigo_trib_nac": "040302",
+      "descricao": "Laboratórios e congêneres.",
+      "item_lc116": "04.03"
+    },
+    {
+      "codigo_trib_nac": "040303",
+      "descricao": "Clínicas, sanatórios, manicômios, casas de saúde, prontos-socorros, ambulatórios e congêneres.",
+      "item_lc116": "04.03"
+    },
+    {
+      "codigo_trib_nac": "040401",
+      "descricao": "Instrumentação cirúrgica.",
+      "item_lc116": "04.04"
+    },
+    {
+      "codigo_trib_nac": "040501",
+      "descricao": "Acupuntura.",
+      "item_lc116": "04.05"
+    },
+    {
+      "codigo_trib_nac": "040601",
+      "descricao": "Enfermagem, inclusive serviços auxiliares.",
+      "item_lc116": "04.06"
+    },
+    {
+      "codigo_trib_nac": "040701",
+      "descricao": "Serviços farmacêuticos.",
+      "item_lc116": "04.07"
+    },
+    {
+      "codigo_trib_nac": "040801",
+      "descricao": "Terapia ocupacional.",
+      "item_lc116": "04.08"
+    },
+    {
+      "codigo_trib_nac": "040802",
+      "descricao": "Fisioterapia.",
+      "item_lc116": "04.08"
+    },
+    {
+      "codigo_trib_nac": "040803",
+      "descricao": "Fonoaudiologia.",
+      "item_lc116": "04.08"
+    },
+    {
+      "codigo_trib_nac": "040901",
+      "descricao": "Terapias de qualquer espécie destinadas ao tratamento físico, orgânico e mental.",
+      "item_lc116": "04.09"
+    },
+    {
+      "codigo_trib_nac": "041001",
+      "descricao": "Nutrição.",
+      "item_lc116": "04.10"
+    },
+    {
+      "codigo_trib_nac": "041101",
+      "descricao": "Obstetrícia.",
+      "item_lc116": "04.11"
+    },
+    {
+      "codigo_trib_nac": "041201",
+      "descricao": "Odontologia.",
+      "item_lc116": "04.12"
+    },
+    {
+      "codigo_trib_nac": "041301",
+      "descricao": "Ortóptica.",
+      "item_lc116": "04.13"
+    },
+    {
+      "codigo_trib_nac": "041401",
+      "descricao": "Próteses sob encomenda.",
+      "item_lc116": "04.14"
+    },
+    {
+      "codigo_trib_nac": "041501",
+      "descricao": "Psicanálise.",
+      "item_lc116": "04.15"
+    },
+    {
+      "codigo_trib_nac": "041601",
+      "descricao": "Psicologia.",
+      "item_lc116": "04.16"
+    },
+    {
+      "codigo_trib_nac": "041701",
+      "descricao": "Casas de repouso e congêneres.",
+      "item_lc116": "04.17"
+    },
+    {
+      "codigo_trib_nac": "041702",
+      "descricao": "Casas de recuperação e congêneres.",
+      "item_lc116": "04.17"
+    },
+    {
+      "codigo_trib_nac": "041703",
+      "descricao": "Creches e congêneres.",
+      "item_lc116": "04.17"
+    },
+    {
+      "codigo_trib_nac": "041704",
+      "descricao": "Asilos e congêneres.",
+      "item_lc116": "04.17"
+    },
+    {
+      "codigo_trib_nac": "041801",
+      "descricao": "Inseminação artificial, fertilização in vitro e congêneres.",
+      "item_lc116": "04.18"
+    },
+    {
+      "codigo_trib_nac": "041901",
+      "descricao": "Bancos de sangue, leite, pele, olhos, óvulos, sêmen e congêneres.",
+      "item_lc116": "04.19"
+    },
+    {
+      "codigo_trib_nac": "042001",
+      "descricao": "Coleta de sangue, leite, tecidos, sêmen, órgãos e materiais biológicos de qualquer espécie.",
+      "item_lc116": "04.20"
+    },
+    {
+      "codigo_trib_nac": "042101",
+      "descricao": "Unidade de atendimento, assistência ou tratamento móvel e congêneres.",
+      "item_lc116": "04.21"
+    },
+    {
+      "codigo_trib_nac": "042201",
+      "descricao": "Planos de medicina de grupo ou individual e convênios para prestação de assistência médica, hospitalar, odontológica e congêneres.",
+      "item_lc116": "04.22"
+    },
+    {
+      "codigo_trib_nac": "042301",
+      "descricao": "Outros planos de saúde que se cumpram através de serviços de terceiros contratados, credenciados, cooperados ou apenas pagos pelo operador do plano mediante indicação do beneficiário.",
+      "item_lc116": "04.23"
+    },
+    {
+      "codigo_trib_nac": "050101",
+      "descricao": "Medicina veterinária",
+      "item_lc116": "05.01"
+    },
+    {
+      "codigo_trib_nac": "050102",
+      "descricao": "Zootecnia.",
+      "item_lc116": "05.01"
+    },
+    {
+      "codigo_trib_nac": "050201",
+      "descricao": "Hospitais e congêneres, na área veterinária.",
+      "item_lc116": "05.02"
+    },
+    {
+      "codigo_trib_nac": "050202",
+      "descricao": "Clínicas, ambulatórios, prontos-socorros e congêneres, na área veterinária.",
+      "item_lc116": "05.02"
+    },
+    {
+      "codigo_trib_nac": "050301",
+      "descricao": "Laboratórios de análise na área veterinária.",
+      "item_lc116": "05.03"
+    },
+    {
+      "codigo_trib_nac": "050401",
+      "descricao": "Inseminação artificial, fertilização in vitro e congêneres.",
+      "item_lc116": "05.04"
+    },
+    {
+      "codigo_trib_nac": "050501",
+      "descricao": "Bancos de sangue e de órgãos e congêneres.",
+      "item_lc116": "05.05"
+    },
+    {
+      "codigo_trib_nac": "050601",
+      "descricao": "Coleta de sangue, leite, tecidos, sêmen, órgãos e materiais biológicos de qualquer espécie.",
+      "item_lc116": "05.06"
+    },
+    {
+      "codigo_trib_nac": "050701",
+      "descricao": "Unidade de atendimento, assistência ou tratamento móvel e congêneres.",
+      "item_lc116": "05.07"
+    },
+    {
+      "codigo_trib_nac": "050801",
+      "descricao": "Guarda, tratamento, amestramento, embelezamento, alojamento e congêneres.",
+      "item_lc116": "05.08"
+    },
+    {
+      "codigo_trib_nac": "050901",
+      "descricao": "Planos de atendimento e assistência médico-veterinária.",
+      "item_lc116": "05.09"
+    },
+    {
+      "codigo_trib_nac": "060101",
+      "descricao": "Barbearia, cabeleireiros, manicuros, pedicuros e congêneres.",
+      "item_lc116": "06.01"
+    },
+    {
+      "codigo_trib_nac": "060201",
+      "descricao": "Esteticistas, tratamento de pele, depilação e congêneres.",
+      "item_lc116": "06.02"
+    },
+    {
+      "codigo_trib_nac": "060301",
+      "descricao": "Banhos, duchas, sauna, massagens e congêneres.",
+      "item_lc116": "06.03"
+    },
+    {
+      "codigo_trib_nac": "060401",
+      "descricao": "Ginástica, dança, esportes, natação, artes marciais e demais atividades físicas.",
+      "item_lc116": "06.04"
+    },
+    {
+      "codigo_trib_nac": "060501",
+      "descricao": "Centros de emagrecimento, spa e congêneres.",
+      "item_lc116": "06.05"
+    },
+    {
+      "codigo_trib_nac": "060601",
+      "descricao": "Aplicação de tatuagens, piercings e congêneres.",
+      "item_lc116": "06.06"
+    },
+    {
+      "codigo_trib_nac": "070101",
+      "descricao": "Engenharia e congêneres.",
+      "item_lc116": "07.01"
+    },
+    {
+      "codigo_trib_nac": "070102",
+      "descricao": "Agronomia e congêneres.",
+      "item_lc116": "07.01"
+    },
+    {
+      "codigo_trib_nac": "070103",
+      "descricao": "Agrimensura e congêneres.",
+      "item_lc116": "07.01"
+    },
+    {
+      "codigo_trib_nac": "070104",
+      "descricao": "Arquitetura, urbanismo e congêneres.",
+      "item_lc116": "07.01"
+    },
+    {
+      "codigo_trib_nac": "070105",
+      "descricao": "Geologia e congêneres.",
+      "item_lc116": "07.01"
+    },
+    {
+      "codigo_trib_nac": "070106",
+      "descricao": "Paisagismo e congêneres.",
+      "item_lc116": "07.01"
+    },
+    {
+      "codigo_trib_nac": "070201",
+      "descricao": "Execução, por administração, de obras de construção civil, hidráulica ou elétrica e de outras obras semelhantes, inclusive sondagem, perfuração de poços, escavação, drenagem e irrigação, terraplanagem, pavimentação, concretagem e a instalação e montagem de produtos, peças e equipamentos (exceto o fornecimento de mercadorias produzidas pelo prestador de serviços fora do local da prestação dos serviços, que fica sujeito ao ICMS).",
+      "item_lc116": "07.02"
+    },
+    {
+      "codigo_trib_nac": "070202",
+      "descricao": "Execução, por empreitada ou subempreitada, de obras de construção civil, hidráulica ou elétrica e de outras obras semelhantes, inclusive sondagem, perfuração de poços, escavação, drenagem e irrigação, terraplanagem, pavimentação, concretagem e a instalação e montagem de produtos, peças e equipamentos (exceto o fornecimento de mercadorias produzidas pelo prestador de serviços fora do local da prestação dos serviços, que fica sujeito ao ICMS).",
+      "item_lc116": "07.02"
+    },
+    {
+      "codigo_trib_nac": "070301",
+      "descricao": "Elaboração de planos diretores, estudos de viabilidade, estudos organizacionais e outros, relacionados com obras e serviços de engenharia.",
+      "item_lc116": "07.03"
+    },
+    {
+      "codigo_trib_nac": "070302",
+      "descricao": "Elaboração de anteprojetos, projetos básicos e projetos executivos para trabalhos de engenharia.",
+      "item_lc116": "07.03"
+    },
+    {
+      "codigo_trib_nac": "070401",
+      "descricao": "Demolição.",
+      "item_lc116": "07.04"
+    },
+    {
+      "codigo_trib_nac": "070501",
+      "descricao": "Reparação, conservação e reforma de edifícios e congêneres (exceto o fornecimento de mercadorias produzidas pelo prestador dos serviços, fora do local da prestação dos serviços, que fica sujeito ao ICMS).",
+      "item_lc116": "07.05"
+    },
+    {
+      "codigo_trib_nac": "070502",
+      "descricao": "Reparação, conservação e reforma de estradas, pontes, portos e congêneres (exceto o fornecimento de mercadorias produzidas pelo prestador dos serviços, fora do local da prestação dos serviços, que fica sujeito ao ICMS).",
+      "item_lc116": "07.05"
+    },
+    {
+      "codigo_trib_nac": "070601",
+      "descricao": "Colocação e instalação de tapetes, carpetes, cortinas e congêneres, com material fornecido pelo tomador do serviço.",
+      "item_lc116": "07.06"
+    },
+    {
+      "codigo_trib_nac": "070602",
+      "descricao": "Colocação e instalação de assoalhos, revestimentos de parede, vidros, divisórias, placas de gesso e congêneres, com material fornecido pelo tomador do serviço.",
+      "item_lc116": "07.06"
+    },
+    {
+      "codigo_trib_nac": "070701",
+      "descricao": "Recuperação, raspagem, polimento e lustração de pisos e congêneres.",
+      "item_lc116": "07.07"
+    },
+    {
+      "codigo_trib_nac": "070801",
+      "descricao": "Calafetação.",
+      "item_lc116": "07.08"
+    },
+    {
+      "codigo_trib_nac": "070901",
+      "descricao": "Varrição, coleta e remoção de lixo, rejeitos e outros resíduos quaisquer.",
+      "item_lc116": "07.09"
+    },
+    {
+      "codigo_trib_nac": "070902",
+      "descricao": "Incineração, tratamento, reciclagem, separação e destinação final de lixo, rejeitos e outros resíduos quaisquer.",
+      "item_lc116": "07.09"
+    },
+    {
+      "codigo_trib_nac": "071001",
+      "descricao": "Limpeza, manutenção e conservação de vias e logradouros públicos, parques, jardins e congêneres.",
+      "item_lc116": "07.10"
+    },
+    {
+      "codigo_trib_nac": "071002",
+      "descricao": "Limpeza, manutenção e conservação de imóveis, chaminés, piscinas e congêneres.",
+      "item_lc116": "07.10"
+    },
+    {
+      "codigo_trib_nac": "071101",
+      "descricao": "Decoração.",
+      "item_lc116": "07.11"
+    },
+    {
+      "codigo_trib_nac": "071102",
+      "descricao": "Jardinagem, inclusive corte e poda de árvores.",
+      "item_lc116": "07.11"
+    },
+    {
+      "codigo_trib_nac": "071201",
+      "descricao": "Controle e tratamento de efluentes de qualquer natureza e de agentes físicos, químicos e biológicos.",
+      "item_lc116": "07.12"
+    },
+    {
+      "codigo_trib_nac": "071301",
+      "descricao": "Dedetização, desinfecção, desinsetização, imunização, higienização, desratização, pulverização e congêneres.",
+      "item_lc116": "07.13"
+    },
+    {
+      "codigo_trib_nac": "071601",
+      "descricao": "Florestamento, reflorestamento, semeadura, adubação, reparação de solo, plantio, silagem, colheita, corte e descascamento de árvores, silvicultura, exploração florestal e dos serviços congêneres indissociáveis da formação, manutenção e colheita de florestas, para quaisquer fins e por quaisquer meios.",
+      "item_lc116": "07.16"
+    },
+    {
+      "codigo_trib_nac": "071701",
+      "descricao": "Escoramento, contenção de encostas e serviços congêneres.",
+      "item_lc116": "07.17"
+    },
+    {
+      "codigo_trib_nac": "071801",
+      "descricao": "Limpeza e dragagem de rios, portos, canais, baías, lagos, lagoas, represas, açudes e congêneres.",
+      "item_lc116": "07.18"
+    },
+    {
+      "codigo_trib_nac": "071901",
+      "descricao": "Acompanhamento e fiscalização da execução de obras de engenharia, arquitetura e urbanismo.",
+      "item_lc116": "07.19"
+    },
+    {
+      "codigo_trib_nac": "072001",
+      "descricao": "Aerofotogrametria (inclusive interpretação), cartografia, mapeamento e congêneres.",
+      "item_lc116": "07.20"
+    },
+    {
+      "codigo_trib_nac": "072002",
+      "descricao": "Levantamentos batimétricos, geográficos, geodésicos, geológicos, geofísicos e congêneres.",
+      "item_lc116": "07.20"
+    },
+    {
+      "codigo_trib_nac": "072003",
+      "descricao": "Levantamentos topográficos e congêneres.",
+      "item_lc116": "07.20"
+    },
+    {
+      "codigo_trib_nac": "072101",
+      "descricao": "Pesquisa, perfuração, cimentação, mergulho, perfilagem, concretação, testemunhagem, pescaria, estimulação e outros serviços relacionados com a exploração e explotação de petróleo, gás natural e de outros recursos minerais.",
+      "item_lc116": "07.21"
+    },
+    {
+      "codigo_trib_nac": "072201",
+      "descricao": "Nucleação e bombardeamento de nuvens e congêneres.",
+      "item_lc116": "07.22"
+    },
+    {
+      "codigo_trib_nac": "080101",
+      "descricao": "Ensino regular pré-escolar, fundamental e médio.",
+      "item_lc116": "08.01"
+    },
+    {
+      "codigo_trib_nac": "080102",
+      "descricao": "Ensino regular superior.",
+      "item_lc116": "08.01"
+    },
+    {
+      "codigo_trib_nac": "080201",
+      "descricao": "Instrução, treinamento, orientação pedagógica e educacional, avaliação de conhecimentos de qualquer natureza.",
+      "item_lc116": "08.02"
+    },
+    {
+      "codigo_trib_nac": "090101",
+      "descricao": "Hospedagem em hotéis, hotelaria marítima e congêneres (o valor da alimentação e gorjeta, quando incluído no preço da diária, fica sujeito ao Imposto Sobre Serviços).",
+      "item_lc116": "09.01"
+    },
+    {
+      "codigo_trib_nac": "090102",
+      "descricao": "Hospedagem em pensões, albergues, pousadas, hospedarias, ocupação por temporada com fornecimento de serviços e congêneres (o valor da alimentação e gorjeta, quando incluído no preço da diária, fica sujeito ao Imposto Sobre Serviços).",
+      "item_lc116": "09.01"
+    },
+    {
+      "codigo_trib_nac": "090103",
+      "descricao": "Hospedagem em motéis e congêneres (o valor da alimentação e gorjeta, quando incluído no preço da diária, fica sujeito ao Imposto Sobre Serviços).",
+      "item_lc116": "09.01"
+    },
+    {
+      "codigo_trib_nac": "090104",
+      "descricao": "Hospedagem em apart-service condominiais, flat, apart-hotéis, hotéis residência, residence-service, suite service e congêneres (o valor da alimentação e gorjeta, quando incluído no preço da diária, fica sujeito ao Imposto Sobre Serviços).",
+      "item_lc116": "09.01"
+    },
+    {
+      "codigo_trib_nac": "090201",
+      "descricao": "Agenciamento e intermediação de programas de turismo, passeios, viagens, excursões, hospedagens e congêneres.",
+      "item_lc116": "09.02"
+    },
+    {
+      "codigo_trib_nac": "090202",
+      "descricao": "Organização, promoção e execução de programas de turismo, passeios, viagens, excursões, hospedagens e congêneres.",
+      "item_lc116": "09.02"
+    },
+    {
+      "codigo_trib_nac": "090301",
+      "descricao": "Guias de turismo.",
+      "item_lc116": "09.03"
+    },
+    {
+      "codigo_trib_nac": "100101",
+      "descricao": "Agenciamento, corretagem ou intermediação de câmbio.",
+      "item_lc116": "10.01"
+    },
+    {
+      "codigo_trib_nac": "100102",
+      "descricao": "Agenciamento, corretagem ou intermediação de seguros.",
+      "item_lc116": "10.01"
+    },
+    {
+      "codigo_trib_nac": "100103",
+      "descricao": "Agenciamento, corretagem ou intermediação de cartões de crédito.",
+      "item_lc116": "10.01"
+    },
+    {
+      "codigo_trib_nac": "100104",
+      "descricao": "Agenciamento, corretagem ou intermediação de planos de saúde.",
+      "item_lc116": "10.01"
+    },
+    {
+      "codigo_trib_nac": "100105",
+      "descricao": "Agenciamento, corretagem ou intermediação de planos de previdência privada.",
+      "item_lc116": "10.01"
+    },
+    {
+      "codigo_trib_nac": "100201",
+      "descricao": "Agenciamento, corretagem ou intermediação de títulos em geral e valores mobiliários.",
+      "item_lc116": "10.02"
+    },
+    {
+      "codigo_trib_nac": "100202",
+      "descricao": "Agenciamento, corretagem ou intermediação de contratos quaisquer.",
+      "item_lc116": "10.02"
+    },
+    {
+      "codigo_trib_nac": "100301",
+      "descricao": "Agenciamento, corretagem ou intermediação de direitos de propriedade industrial, artística ou literária.",
+      "item_lc116": "10.03"
+    },
+    {
+      "codigo_trib_nac": "100401",
+      "descricao": "Agenciamento, corretagem ou intermediação de contratos de arrendamento mercantil (leasing).",
+      "item_lc116": "10.04"
+    },
+    {
+      "codigo_trib_nac": "100402",
+      "descricao": "Agenciamento, corretagem ou intermediação de contratos de franquia (franchising).",
+      "item_lc116": "10.04"
+    },
+    {
+      "codigo_trib_nac": "100403",
+      "descricao": "Agenciamento, corretagem ou intermediação de faturização (factoring).",
+      "item_lc116": "10.04"
+    },
+    {
+      "codigo_trib_nac": "100501",
+      "descricao": "Agenciamento, corretagem ou intermediação de bens móveis ou imóveis, não abrangidos em outros itens ou subitens, por quaisquer meios.",
+      "item_lc116": "10.05"
+    },
+    {
+      "codigo_trib_nac": "100502",
+      "descricao": "Agenciamento, corretagem ou intermediação de bens móveis ou imóveis realizados no âmbito de Bolsas de Mercadorias e Futuros, por quaisquer meios.",
+      "item_lc116": "10.05"
+    },
+    {
+      "codigo_trib_nac": "100601",
+      "descricao": "Agenciamento marítimo.",
+      "item_lc116": "10.06"
+    },
+    {
+      "codigo_trib_nac": "100701",
+      "descricao": "Agenciamento de notícias.",
+      "item_lc116": "10.07"
+    },
+    {
+      "codigo_trib_nac": "100801",
+      "descricao": "Agenciamento de publicidade e propaganda, inclusive o agenciamento de veiculação por quaisquer meios.",
+      "item_lc116": "10.08"
+    },
+    {
+      "codigo_trib_nac": "100901",
+      "descricao": "Representação de qualquer natureza, inclusive comercial.",
+      "item_lc116": "10.09"
+    },
+    {
+      "codigo_trib_nac": "101001",
+      "descricao": "Distribuição de bens de terceiros.",
+      "item_lc116": "10.10"
+    },
+    {
+      "codigo_trib_nac": "110101",
+      "descricao": "Guarda e estacionamento de veículos terrestres automotores.",
+      "item_lc116": "11.01"
+    },
+    {
+      "codigo_trib_nac": "110102",
+      "descricao": "Guarda e estacionamento de aeronaves e de embarcações.",
+      "item_lc116": "11.01"
+    },
+    {
+      "codigo_trib_nac": "110201",
+      "descricao": "Vigilância, segurança ou monitoramento de bens, pessoas e semoventes.",
+      "item_lc116": "11.02"
+    },
+    {
+      "codigo_trib_nac": "110301",
+      "descricao": "Escolta, inclusive de veículos e cargas.",
+      "item_lc116": "11.03"
+    },
+    {
+      "codigo_trib_nac": "110401",
+      "descricao": "Armazenamento, depósito, guarda de bens de qualquer espécie.",
+      "item_lc116": "11.04"
+    },
+    {
+      "codigo_trib_nac": "110402",
+      "descricao": "Carga, descarga, arrumação de bens de qualquer espécie.",
+      "item_lc116": "11.04"
+    },
+    {
+      "codigo_trib_nac": "110501",
+      "descricao": "Serviços relacionados ao monitoramento e rastreamento a distância, em qualquer via ou local, de veículos, cargas, pessoas e semoventes em circulação ou movimento, realizados por meio de telefonia móvel, transmissão de satélites, rádio ou qualquer outro meio, inclusive pelas empresas de Tecnologia da Informação Veicular, independentemente de o prestador de serviços ser proprietário ou não da infraestrutura de telecomunicações que utiliza.",
+      "item_lc116": "11.05"
+    },
+    {
+      "codigo_trib_nac": "120101",
+      "descricao": "Espetáculos teatrais.",
+      "item_lc116": "12.01"
+    },
+    {
+      "codigo_trib_nac": "120201",
+      "descricao": "Exibições cinematográficas.",
+      "item_lc116": "12.02"
+    },
+    {
+      "codigo_trib_nac": "120301",
+      "descricao": "Espetáculos circenses.",
+      "item_lc116": "12.03"
+    },
+    {
+      "codigo_trib_nac": "120401",
+      "descricao": "Programas de auditório.",
+      "item_lc116": "12.04"
+    },
+    {
+      "codigo_trib_nac": "120501",
+      "descricao": "Parques de diversões, centros de lazer e congêneres.",
+      "item_lc116": "12.05"
+    },
+    {
+      "codigo_trib_nac": "120601",
+      "descricao": "Boates, taxi-dancing e congêneres.",
+      "item_lc116": "12.06"
+    },
+    {
+      "codigo_trib_nac": "120701",
+      "descricao": "Shows, ballet, danças, desfiles, bailes, óperas, concertos, recitais, festivais e congêneres.",
+      "item_lc116": "12.07"
+    },
+    {
+      "codigo_trib_nac": "120801",
+      "descricao": "Feiras, exposições, congressos e congêneres.",
+      "item_lc116": "12.08"
+    },
+    {
+      "codigo_trib_nac": "120901",
+      "descricao": "Bilhares.",
+      "item_lc116": "12.09"
+    },
+    {
+      "codigo_trib_nac": "120902",
+      "descricao": "Boliches.",
+      "item_lc116": "12.09"
+    },
+    {
+      "codigo_trib_nac": "120903",
+      "descricao": "Diversões eletrônicas ou não.",
+      "item_lc116": "12.09"
+    },
+    {
+      "codigo_trib_nac": "121001",
+      "descricao": "Corridas e competições de animais.",
+      "item_lc116": "12.10"
+    },
+    {
+      "codigo_trib_nac": "121101",
+      "descricao": "Competições esportivas ou de destreza física ou intelectual, com ou sem a participação do espectador.",
+      "item_lc116": "12.11"
+    },
+    {
+      "codigo_trib_nac": "121201",
+      "descricao": "Execução de música.",
+      "item_lc116": "12.12"
+    },
+    {
+      "codigo_trib_nac": "121301",
+      "descricao": "Produção, mediante ou sem encomenda prévia, de eventos, espetáculos, entrevistas, shows, ballet, danças, desfiles, bailes, teatros, óperas, concertos, recitais, festivais e congêneres.",
+      "item_lc116": "12.13"
+    },
+    {
+      "codigo_trib_nac": "121401",
+      "descricao": "Fornecimento de música para ambientes fechados ou não, mediante transmissão por qualquer processo.",
+      "item_lc116": "12.14"
+    },
+    {
+      "codigo_trib_nac": "121501",
+      "descricao": "Desfiles de blocos carnavalescos ou folclóricos, trios elétricos e congêneres.",
+      "item_lc116": "12.15"
+    },
+    {
+      "codigo_trib_nac": "121601",
+      "descricao": "Exibição de filmes, entrevistas, musicais, espetáculos, shows, concertos, desfiles, óperas, competições esportivas, de destreza intelectual ou congêneres.",
+      "item_lc116": "12.16"
+    },
+    {
+      "codigo_trib_nac": "121701",
+      "descricao": "Recreação e animação, inclusive em festas e eventos de qualquer natureza.",
+      "item_lc116": "12.17"
+    },
+    {
+      "codigo_trib_nac": "130201",
+      "descricao": "Fonografia ou gravação de sons, inclusive trucagem, dublagem, mixagem e congêneres.",
+      "item_lc116": "13.02"
+    },
+    {
+      "codigo_trib_nac": "130301",
+      "descricao": "Fotografia e cinematografia, inclusive revelação, ampliação, cópia, reprodução, trucagem e congêneres.",
+      "item_lc116": "13.03"
+    },
+    {
+      "codigo_trib_nac": "130401",
+      "descricao": "Reprografia, microfilmagem e digitalização.",
+      "item_lc116": "13.04"
+    },
+    {
+      "codigo_trib_nac": "130501",
+      "descricao": "Composição gráfica, inclusive confecção de impressos gráficos, fotocomposição, clicheria, zincografia, litografia e fotolitografia, exceto se destinados a posterior operação de comercialização ou industrialização, ainda que incorporados, de qualquer forma, a outra mercadoria que deva ser objeto de posterior circulação, tais como bulas, rótulos, etiquetas, caixas, cartuchos, embalagens e manuais técnicos e de instrução, quando ficarão sujeitos ao ICMS.",
+      "item_lc116": "13.05"
+    },
+    {
+      "codigo_trib_nac": "140101",
+      "descricao": "Lubrificação, limpeza, lustração, revisão, carga e recarga, conserto, restauração, blindagem, manutenção e conservação de máquinas, veículos, aparelhos, equipamentos, motores, elevadores ou de qualquer objeto (exceto peças e partes empregadas, que ficam sujeitas ao ICMS).",
+      "item_lc116": "14.01"
+    },
+    {
+      "codigo_trib_nac": "140201",
+      "descricao": "Assistência técnica.",
+      "item_lc116": "14.02"
+    },
+    {
+      "codigo_trib_nac": "140301",
+      "descricao": "Recondicionamento de motores (exceto peças e partes empregadas, que ficam sujeitas ao ICMS).",
+      "item_lc116": "14.03"
+    },
+    {
+      "codigo_trib_nac": "140401",
+      "descricao": "Recauchutagem ou regeneração de pneus.",
+      "item_lc116": "14.04"
+    },
+    {
+      "codigo_trib_nac": "140501",
+      "descricao": "Restauração, recondicionamento, acondicionamento, pintura, beneficiamento, lavagem, secagem, tingimento, galvanoplastia, anodização, corte, recorte, plastificação, costura, acabamento, polimento e congêneres de objetos quaisquer.",
+      "item_lc116": "14.05"
+    },
+    {
+      "codigo_trib_nac": "140601",
+      "descricao": "Instalação e montagem de aparelhos, máquinas e equipamentos, inclusive montagem industrial, prestados ao usuário final, exclusivamente com material por ele fornecido.",
+      "item_lc116": "14.06"
+    },
+    {
+      "codigo_trib_nac": "140701",
+      "descricao": "Colocação de molduras e congêneres.",
+      "item_lc116": "14.07"
+    },
+    {
+      "codigo_trib_nac": "140801",
+      "descricao": "Encadernação, gravação e douração de livros, revistas e congêneres.",
+      "item_lc116": "14.08"
+    },
+    {
+      "codigo_trib_nac": "140901",
+      "descricao": "Alfaiataria e costura, quando o material for fornecido pelo usuário final, exceto aviamento.",
+      "item_lc116": "14.09"
+    },
+    {
+      "codigo_trib_nac": "141001",
+      "descricao": "Tinturaria e lavanderia.",
+      "item_lc116": "14.10"
+    },
+    {
+      "codigo_trib_nac": "141101",
+      "descricao": "Tapeçaria e reforma de estofamentos em geral.",
+      "item_lc116": "14.11"
+    },
+    {
+      "codigo_trib_nac": "141201",
+      "descricao": "Funilaria e lanternagem.",
+      "item_lc116": "14.12"
+    },
+    {
+      "codigo_trib_nac": "141301",
+      "descricao": "Carpintaria.",
+      "item_lc116": "14.13"
+    },
+    {
+      "codigo_trib_nac": "141302",
+      "descricao": "Serralheria.",
+      "item_lc116": "14.13"
+    },
+    {
+      "codigo_trib_nac": "141401",
+      "descricao": "Guincho intramunicipal.",
+      "item_lc116": "14.14"
+    },
+    {
+      "codigo_trib_nac": "141402",
+      "descricao": "Guindaste e içamento.",
+      "item_lc116": "14.14"
+    },
+    {
+      "codigo_trib_nac": "150101",
+      "descricao": "Administração de fundos quaisquer e congêneres.",
+      "item_lc116": "15.01"
+    },
+    {
+      "codigo_trib_nac": "150102",
+      "descricao": "Administração de consórcio e congêneres.",
+      "item_lc116": "15.01"
+    },
+    {
+      "codigo_trib_nac": "150103",
+      "descricao": "Administração de cartão de crédito ou débito e congêneres.",
+      "item_lc116": "15.01"
+    },
+    {
+      "codigo_trib_nac": "150104",
+      "descricao": "Administração de carteira de clientes e congêneres.",
+      "item_lc116": "15.01"
+    },
+    {
+      "codigo_trib_nac": "150105",
+      "descricao": "Administração de cheques pré-datados e congêneres.",
+      "item_lc116": "15.01"
+    },
+    {
+      "codigo_trib_nac": "150201",
+      "descricao": "Abertura de conta-corrente no País, bem como a manutenção da referida conta ativa e inativa.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150202",
+      "descricao": "Abertura de conta-corrente no exterior, bem como a manutenção da referida conta ativa e inativa.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150203",
+      "descricao": "Abertura de conta de investimentos e aplicação no País, bem como a manutenção da referida conta ativa e inativa.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150204",
+      "descricao": "Abertura de conta de investimentos e aplicação no exterior, bem como a manutenção da referida conta ativa e inativa.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150205",
+      "descricao": "Abertura de caderneta de poupança no País, bem como a manutenção da referida conta ativa e inativa.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150206",
+      "descricao": "Abertura de caderneta de poupança no exterior, bem como a manutenção da referida conta ativa e inativa.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150207",
+      "descricao": "Abertura de contas em geral no País, não abrangida em outro subitem, bem como a manutenção das referidas contas ativas e inativas.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150208",
+      "descricao": "Abertura de contas em geral no exterior, não abrangida em outro subitem, bem como a manutenção das referidas contas ativas e inativas.",
+      "item_lc116": "15.02"
+    },
+    {
+      "codigo_trib_nac": "150301",
+      "descricao": "Locação de cofres particulares.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150302",
+      "descricao": "Manutenção de cofres particulares.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150303",
+      "descricao": "Locação de terminais eletrônicos.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150304",
+      "descricao": "Manutenção de terminais eletrônicos.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150305",
+      "descricao": "Locação de terminais de atendimento.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150306",
+      "descricao": "Manutenção de terminais de atendimento.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150307",
+      "descricao": "Locação de bens e equipamentos em geral.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150308",
+      "descricao": "Manutenção de bens e equipamentos em geral.",
+      "item_lc116": "15.03"
+    },
+    {
+      "codigo_trib_nac": "150401",
+      "descricao": "Fornecimento ou emissão de atestados em geral, inclusive atestado de idoneidade, atestado de capacidade financeira e congêneres.",
+      "item_lc116": "15.04"
+    },
+    {
+      "codigo_trib_nac": "150501",
+      "descricao": "Cadastro, elaboração de ficha cadastral, renovação cadastral e congêneres.",
+      "item_lc116": "15.05"
+    },
+    {
+      "codigo_trib_nac": "150502",
+      "descricao": "Inclusão no Cadastro de Emitentes de Cheques sem Fundos - CCF.",
+      "item_lc116": "15.05"
+    },
+    {
+      "codigo_trib_nac": "150503",
+      "descricao": "Exclusão no Cadastro de Emitentes de Cheques sem Fundos - CCF.",
+      "item_lc116": "15.05"
+    },
+    {
+      "codigo_trib_nac": "150504",
+      "descricao": "Inclusão em quaisquer outros bancos cadastrais.",
+      "item_lc116": "15.05"
+    },
+    {
+      "codigo_trib_nac": "150505",
+      "descricao": "Exclusão em quaisquer outros bancos cadastrais.",
+      "item_lc116": "15.05"
+    },
+    {
+      "codigo_trib_nac": "150601",
+      "descricao": "Emissão, reemissão e fornecimento de avisos, comprovantes e documentos em geral",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150602",
+      "descricao": "Abono de firmas.",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150603",
+      "descricao": "Coleta e entrega de documentos, bens e valores.",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150604",
+      "descricao": "Comunicação com outra agência ou com a administração central.",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150605",
+      "descricao": "Licenciamento eletrônico de veículos.",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150606",
+      "descricao": "Transferência de veículos.",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150607",
+      "descricao": "Agenciamento fiduciário ou depositário.",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150608",
+      "descricao": "Devolução de bens em custódia.",
+      "item_lc116": "15.06"
+    },
+    {
+      "codigo_trib_nac": "150701",
+      "descricao": "Acesso, movimentação, atendimento e consulta a contas em geral, por qualquer meio ou processo, inclusive por telefone, fac-símile, internet e telex.",
+      "item_lc116": "15.07"
+    },
+    {
+      "codigo_trib_nac": "150702",
+      "descricao": "Acesso a terminais de atendimento, inclusive vinte e quatro horas.",
+      "item_lc116": "15.07"
+    },
+    {
+      "codigo_trib_nac": "150703",
+      "descricao": "Acesso a outro banco e à rede compartilhada.",
+      "item_lc116": "15.07"
+    },
+    {
+      "codigo_trib_nac": "150704",
+      "descricao": "Fornecimento de saldo, extrato e demais informações relativas a contas em geral, por qualquer meio ou processo.",
+      "item_lc116": "15.07"
+    },
+    {
+      "codigo_trib_nac": "150801",
+      "descricao": "Emissão, reemissão, alteração, cessão, substituição, cancelamento e registro de contrato de crédito.",
+      "item_lc116": "15.08"
+    },
+    {
+      "codigo_trib_nac": "150802",
+      "descricao": "Estudo, análise e avaliação de operações de crédito.",
+      "item_lc116": "15.08"
+    },
+    {
+      "codigo_trib_nac": "150803",
+      "descricao": "Emissão, concessão, alteração ou contratação de aval, fiança, anuência e congêneres.",
+      "item_lc116": "15.08"
+    },
+    {
+      "codigo_trib_nac": "150804",
+      "descricao": "Serviços relativos à abertura de crédito, para quaisquer fins.",
+      "item_lc116": "15.08"
+    },
+    {
+      "codigo_trib_nac": "150901",
+      "descricao": "Arrendamento mercantil (leasing) de quaisquer bens, inclusive cessão de direitos e obrigações, substituição de garantia, alteração, cancelamento e registro de contrato, e demais serviços relacionados ao arrendamento mercantil (leasing).",
+      "item_lc116": "15.09"
+    },
+    {
+      "codigo_trib_nac": "151001",
+      "descricao": "Serviços relacionados a cobranças em geral, de títulos quaisquer, de contas ou carnês, de câmbio, de tributos e por conta de terceiros, inclusive os efetuados por meio eletrônico, automático ou por máquinas de atendimento.",
+      "item_lc116": "15.10"
+    },
+    {
+      "codigo_trib_nac": "151002",
+      "descricao": "Serviços relacionados a recebimentos em geral, de títulos quaisquer, de contas ou carnês, de câmbio, de tributos e por conta de terceiros, inclusive os efetuados por meio eletrônico, automático ou por máquinas de atendimento.",
+      "item_lc116": "15.10"
+    },
+    {
+      "codigo_trib_nac": "151003",
+      "descricao": "Serviços relacionados a pagamentos em geral, de títulos quaisquer, de contas ou carnês, de câmbio, de tributos e por conta de terceiros, inclusive os efetuados por meio eletrônico, automático ou por máquinas de atendimento.",
+      "item_lc116": "15.10"
+    },
+    {
+      "codigo_trib_nac": "151004",
+      "descricao": "Serviços relacionados a fornecimento de posição de cobrança, recebimento ou pagamento.",
+      "item_lc116": "15.10"
+    },
+    {
+      "codigo_trib_nac": "151005",
+      "descricao": "Serviços relacionados a emissão de carnês, fichas de compensação, impressos e documentos em geral.",
+      "item_lc116": "15.10"
+    },
+    {
+      "codigo_trib_nac": "151101",
+      "descricao": "Devolução de títulos, protesto de títulos, sustação de protesto, manutenção de títulos, reapresentação de títulos, e demais serviços a eles relacionados.",
+      "item_lc116": "15.11"
+    },
+    {
+      "codigo_trib_nac": "151201",
+      "descricao": "Custódia em geral, inclusive de títulos e valores mobiliários.",
+      "item_lc116": "15.12"
+    },
+    {
+      "codigo_trib_nac": "151301",
+      "descricao": "Serviços relacionados a operações de câmbio em geral, edição, alteração, prorrogação, cancelamento e baixa de contrato de câmbio.",
+      "item_lc116": "15.13"
+    },
+    {
+      "codigo_trib_nac": "151302",
+      "descricao": "Serviços relacionados a emissão de registro de exportação ou de crédito.",
+      "item_lc116": "15.13"
+    },
+    {
+      "codigo_trib_nac": "151303",
+      "descricao": "Serviços relacionados a cobrança ou depósito no exterior.",
+      "item_lc116": "15.13"
+    },
+    {
+      "codigo_trib_nac": "151304",
+      "descricao": "Serviços relacionados a emissão, fornecimento e cancelamento de cheques de viagem.",
+      "item_lc116": "15.13"
+    },
+    {
+      "codigo_trib_nac": "151305",
+      "descricao": "Serviços relacionados a fornecimento, transferência, cancelamento e demais serviços relativos a carta de crédito de importação, exportação e garantias recebidas.",
+      "item_lc116": "15.13"
+    },
+    {
+      "codigo_trib_nac": "151306",
+      "descricao": "Serviços relacionados a envio e recebimento de mensagens em geral relacionadas a operações de câmbio.",
+      "item_lc116": "15.13"
+    },
+    {
+      "codigo_trib_nac": "151401",
+      "descricao": "Fornecimento, emissão, reemissão de cartão magnético, cartão de crédito, cartão de débito, cartão salário e congêneres.",
+      "item_lc116": "15.14"
+    },
+    {
+      "codigo_trib_nac": "151402",
+      "descricao": "Renovação de cartão magnético, cartão de crédito, cartão de débito, cartão salário e congêneres.",
+      "item_lc116": "15.14"
+    },
+    {
+      "codigo_trib_nac": "151403",
+      "descricao": "Manutenção de cartão magnético, cartão de crédito, cartão de débito, cartão salário e congêneres.",
+      "item_lc116": "15.14"
+    },
+    {
+      "codigo_trib_nac": "151501",
+      "descricao": "Compensação de cheques e títulos quaisquer.",
+      "item_lc116": "15.15"
+    },
+    {
+      "codigo_trib_nac": "151502",
+      "descricao": "Serviços relacionados a depósito, inclusive depósito identificado, a saque de contas quaisquer, por qualquer meio ou processo, inclusive em terminais eletrônicos e de atendimento.",
+      "item_lc116": "15.15"
+    },
+    {
+      "codigo_trib_nac": "151601",
+      "descricao": "Emissão, reemissão, liquidação, alteração, cancelamento e baixa de ordens de pagamento, ordens de crédito e similares, por qualquer meio ou processo.",
+      "item_lc116": "15.16"
+    },
+    {
+      "codigo_trib_nac": "151602",
+      "descricao": "Serviços relacionados à transferência de valores, dados, fundos, pagamentos e similares, inclusive entre contas em geral.",
+      "item_lc116": "15.16"
+    },
+    {
+      "codigo_trib_nac": "151701",
+      "descricao": "Emissão e fornecimento de cheques quaisquer, avulso ou por talão.",
+      "item_lc116": "15.17"
+    },
+    {
+      "codigo_trib_nac": "151702",
+      "descricao": "Devolução de cheques quaisquer, avulso ou por talão.",
+      "item_lc116": "15.17"
+    },
+    {
+      "codigo_trib_nac": "151703",
+      "descricao": "Sustação, cancelamento e oposição de cheques quaisquer, avulso ou por talão.",
+      "item_lc116": "15.17"
+    },
+    {
+      "codigo_trib_nac": "151801",
+      "descricao": "Serviços relacionados a crédito imobiliário, de avaliação e vistoria de imóvel ou obra.",
+      "item_lc116": "15.18"
+    },
+    {
+      "codigo_trib_nac": "151802",
+      "descricao": "Serviços relacionados a crédito imobiliário, de análise técnica e jurídica.",
+      "item_lc116": "15.18"
+    },
+    {
+      "codigo_trib_nac": "151803",
+      "descricao": "Serviços relacionados a crédito imobiliário, de emissão, reemissão, alteração, transferência e renegociação de contrato.",
+      "item_lc116": "15.18"
+    },
+    {
+      "codigo_trib_nac": "151804",
+      "descricao": "Serviços relacionados a crédito imobiliário, de emissão e reemissão do termo de quitação.",
+      "item_lc116": "15.18"
+    },
+    {
+      "codigo_trib_nac": "151805",
+      "descricao": "Demais serviços relacionados a crédito imobiliário.",
+      "item_lc116": "15.18"
+    },
+    {
+      "codigo_trib_nac": "160101",
+      "descricao": "Serviços de transporte coletivo municipal rodoviário de passageiros.",
+      "item_lc116": "16.01"
+    },
+    {
+      "codigo_trib_nac": "160102",
+      "descricao": "Serviços de transporte coletivo municipal metroviário de passageiros.",
+      "item_lc116": "16.01"
+    },
+    {
+      "codigo_trib_nac": "160103",
+      "descricao": "Serviços de transporte coletivo municipal ferroviário de passageiros.",
+      "item_lc116": "16.01"
+    },
+    {
+      "codigo_trib_nac": "160104",
+      "descricao": "Serviços de transporte coletivo municipal aquaviário de passageiros.",
+      "item_lc116": "16.01"
+    },
+    {
+      "codigo_trib_nac": "160201",
+      "descricao": "Outros serviços de transporte de natureza municipal.",
+      "item_lc116": "16.02"
+    },
+    {
+      "codigo_trib_nac": "170101",
+      "descricao": "Assessoria ou consultoria de qualquer natureza, não contida em outros itens desta lista.",
+      "item_lc116": "17.01"
+    },
+    {
+      "codigo_trib_nac": "170102",
+      "descricao": "Análise, exame, pesquisa, coleta, compilação e fornecimento de dados e informações de qualquer natureza, inclusive cadastro e similares.",
+      "item_lc116": "17.01"
+    },
+    {
+      "codigo_trib_nac": "170201",
+      "descricao": "Datilografia, digitação, estenografia e congêneres.",
+      "item_lc116": "17.02"
+    },
+    {
+      "codigo_trib_nac": "170202",
+      "descricao": "Expediente, secretaria em geral, apoio e infra-estrutura administrativa e congêneres.",
+      "item_lc116": "17.02"
+    },
+    {
+      "codigo_trib_nac": "170203",
+      "descricao": "Resposta audível e congêneres.",
+      "item_lc116": "17.02"
+    },
+    {
+      "codigo_trib_nac": "170204",
+      "descricao": "Redação, edição, revisão e congêneres.",
+      "item_lc116": "17.02"
+    },
+    {
+      "codigo_trib_nac": "170205",
+      "descricao": "Interpretação, tradução e congêneres.",
+      "item_lc116": "17.02"
+    },
+    {
+      "codigo_trib_nac": "170301",
+      "descricao": "Planejamento, coordenação, programação ou organização técnica.",
+      "item_lc116": "17.03"
+    },
+    {
+      "codigo_trib_nac": "170302",
+      "descricao": "Planejamento, coordenação, programação ou organização financeira.",
+      "item_lc116": "17.03"
+    },
+    {
+      "codigo_trib_nac": "170303",
+      "descricao": "Planejamento, coordenação, programação ou organização administrativa.",
+      "item_lc116": "17.03"
+    },
+    {
+      "codigo_trib_nac": "170401",
+      "descricao": "Recrutamento, agenciamento, seleção e colocação de mão-de-obra.",
+      "item_lc116": "17.04"
+    },
+    {
+      "codigo_trib_nac": "170501",
+      "descricao": "Fornecimento de mão-de-obra, mesmo em caráter temporário, inclusive de empregados ou trabalhadores, avulsos ou temporários, contratados pelo prestador de serviço.",
+      "item_lc116": "17.05"
+    },
+    {
+      "codigo_trib_nac": "170601",
+      "descricao": "Propaganda e publicidade, inclusive promoção de vendas, planejamento de campanhas ou sistemas de publicidade, elaboração de desenhos, textos e demais materiais publicitários.",
+      "item_lc116": "17.06"
+    },
+    {
+      "codigo_trib_nac": "170801",
+      "descricao": "Franquia (franchising).",
+      "item_lc116": "17.08"
+    },
+    {
+      "codigo_trib_nac": "170901",
+      "descricao": "Perícias, laudos, exames técnicos e análises técnicas.",
+      "item_lc116": "17.09"
+    },
+    {
+      "codigo_trib_nac": "171001",
+      "descricao": "Planejamento, organização e administração de feiras, exposições, e congêneres.",
+      "item_lc116": "17.10"
+    },
+    {
+      "codigo_trib_nac": "171002",
+      "descricao": "Planejamento, organização e administração de congressos e congêneres.",
+      "item_lc116": "17.10"
+    },
+    {
+      "codigo_trib_nac": "171101",
+      "descricao": "Organização de festas e recepções.",
+      "item_lc116": "17.11"
+    },
+    {
+      "codigo_trib_nac": "171102",
+      "descricao": "Bufê (exceto o fornecimento de alimentação e bebidas, que fica sujeito ao ICMS).",
+      "item_lc116": "17.11"
+    },
+    {
+      "codigo_trib_nac": "171201",
+      "descricao": "Administração em geral, inclusive de bens e negócios de terceiros.",
+      "item_lc116": "17.12"
+    },
+    {
+      "codigo_trib_nac": "171301",
+      "descricao": "Leilão e congêneres.",
+      "item_lc116": "17.13"
+    },
+    {
+      "codigo_trib_nac": "171401",
+      "descricao": "Advocacia",
+      "item_lc116": "17.14"
+    },
+    {
+      "codigo_trib_nac": "171501",
+      "descricao": "Arbitragem de qualquer espécie, inclusive jurídica.",
+      "item_lc116": "17.15"
+    },
+    {
+      "codigo_trib_nac": "171601",
+      "descricao": "Auditoria.",
+      "item_lc116": "17.16"
+    },
+    {
+      "codigo_trib_nac": "171701",
+      "descricao": "Análise de Organização e Métodos.",
+      "item_lc116": "17.17"
+    },
+    {
+      "codigo_trib_nac": "171801",
+      "descricao": "Atuária e cálculos técnicos de qualquer natureza.",
+      "item_lc116": "17.18"
+    },
+    {
+      "codigo_trib_nac": "171901",
+      "descricao": "Contabilidade, inclusive serviços técnicos e auxiliares.",
+      "item_lc116": "17.19"
+    },
+    {
+      "codigo_trib_nac": "172001",
+      "descricao": "Consultoria e assessoria econômica ou financeira.",
+      "item_lc116": "17.20"
+    },
+    {
+      "codigo_trib_nac": "172101",
+      "descricao": "Estatística.",
+      "item_lc116": "17.21"
+    },
+    {
+      "codigo_trib_nac": "172201",
+      "descricao": "Cobrança em geral.",
+      "item_lc116": "17.22"
+    },
+    {
+      "codigo_trib_nac": "172301",
+      "descricao": "Assessoria, análise, avaliação, atendimento, consulta, cadastro, seleção, gerenciamento de informações, administração de contas a receber ou a pagar e em geral, relacionados a operações de faturização (factoring).",
+      "item_lc116": "17.23"
+    },
+    {
+      "codigo_trib_nac": "172401",
+      "descricao": "Apresentação de palestras, conferências, seminários e congêneres.",
+      "item_lc116": "17.24"
+    },
+    {
+      "codigo_trib_nac": "172501",
+      "descricao": "Inserção de textos, desenhos e outros materiais de propaganda e publicidade, em qualquer meio (exceto em livros, jornais, periódicos e nas modalidades de serviços de radiodifusão sonora e de sons e imagens de recepção livre e gratuita).",
+      "item_lc116": "17.25"
+    },
+    {
+      "codigo_trib_nac": "180101",
+      "descricao": "Serviços de regulação de sinistros vinculados a contratos de seguros e congêneres.",
+      "item_lc116": "18.01"
+    },
+    {
+      "codigo_trib_nac": "180102",
+      "descricao": "Serviços de inspeção e avaliação de riscos para cobertura de contratos de seguros e congêneres.",
+      "item_lc116": "18.01"
+    },
+    {
+      "codigo_trib_nac": "180103",
+      "descricao": "Serviços de prevenção e gerência de riscos seguráveis e congêneres.",
+      "item_lc116": "18.01"
+    },
+    {
+      "codigo_trib_nac": "190101",
+      "descricao": "Serviços de distribuição e venda de bilhetes e demais produtos de loteria, cartões, pules ou cupons de apostas, sorteios, prêmios, inclusive os decorrentes de títulos de capitalização e congêneres.",
+      "item_lc116": "19.01"
+    },
+    {
+      "codigo_trib_nac": "190102",
+      "descricao": "Serviços de distribuição e venda de bingos e congêneres.",
+      "item_lc116": "19.01"
+    },
+    {
+      "codigo_trib_nac": "200101",
+      "descricao": "Serviços portuários, ferroportuários, utilização de porto, movimentação de passageiros, reboque de embarcações, rebocador escoteiro, atracação, desatracação, serviços de praticagem, capatazia, armazenagem de qualquer natureza, serviços acessórios, movimentação de mercadorias, serviços de apoio marítimo, de movimentação ao largo, serviços de armadores, estiva, conferência, logística e congêneres. (prestado em terra)",
+      "item_lc116": "20.01"
+    },
+    {
+      "codigo_trib_nac": "200102",
+      "descricao": "Serviços portuários, ferroportuários, utilização de porto, movimentação de passageiros, reboque de embarcações, rebocador escoteiro, atracação, desatracação, serviços de praticagem, capatazia, armazenagem de qualquer natureza, serviços acessórios, movimentação de mercadorias, serviços de apoio marítimo, de movimentação ao largo, serviços de armadores, estiva, conferência, logística e congêneres. (prestado em águas marinhas)",
+      "item_lc116": "20.01"
+    },
+    {
+      "codigo_trib_nac": "200201",
+      "descricao": "Serviços aeroportuários, utilização de aeroporto, movimentação de passageiros, armazenagem de qualquer natureza, capatazia, movimentação de aeronaves, serviços de apoio aeroportuários, serviços acessórios, movimentação de mercadorias, logística e congêneres.",
+      "item_lc116": "20.02"
+    },
+    {
+      "codigo_trib_nac": "200301",
+      "descricao": "Serviços de terminais rodoviários, ferroviários, metroviários, movimentação de passageiros, mercadorias, inclusive suas operações, logística e congêneres.",
+      "item_lc116": "20.03"
+    },
+    {
+      "codigo_trib_nac": "210101",
+      "descricao": "Serviços de registros públicos, cartorários e notariais.",
+      "item_lc116": "21.01"
+    },
+    {
+      "codigo_trib_nac": "220101",
+      "descricao": "Serviços de exploração de rodovia mediante cobrança de preço ou pedágio dos usuários, envolvendo execução de serviços de conservação, manutenção, melhoramentos para adequação de capacidade e segurança de trânsito, operação, monitoração, assistência aos usuários e outros serviços definidos em contratos, atos de concessão ou de permissão ou em normas oficiais.",
+      "item_lc116": "22.01"
+    },
+    {
+      "codigo_trib_nac": "230101",
+      "descricao": "Serviços de programação e comunicação visual e congêneres.",
+      "item_lc116": "23.01"
+    },
+    {
+      "codigo_trib_nac": "230102",
+      "descricao": "Serviços de desenho industrial e congêneres.",
+      "item_lc116": "23.01"
+    },
+    {
+      "codigo_trib_nac": "240101",
+      "descricao": "Serviços de chaveiros, confecção de carimbos e congêneres.",
+      "item_lc116": "24.01"
+    },
+    {
+      "codigo_trib_nac": "240102",
+      "descricao": "Serviços de placas, sinalização visual, banners, adesivos e congêneres.",
+      "item_lc116": "24.01"
+    },
+    {
+      "codigo_trib_nac": "250101",
+      "descricao": "Funerais, inclusive fornecimento de caixão, urna ou esquifes; aluguel de capela; transporte do corpo cadavérico; fornecimento de flores, coroas e outros paramentos; desembaraço de certidão de óbito; fornecimento de véu, essa e outros adornos; embalsamento, embelezamento, conservação ou restauração de cadáveres.",
+      "item_lc116": "25.01"
+    },
+    {
+      "codigo_trib_nac": "250201",
+      "descricao": "Translado intramunicipal de corpos e partes de corpos cadavéricos.",
+      "item_lc116": "25.02"
+    },
+    {
+      "codigo_trib_nac": "250202",
+      "descricao": "Cremação de corpos e partes de corpos cadavéricos.",
+      "item_lc116": "25.02"
+    },
+    {
+      "codigo_trib_nac": "250301",
+      "descricao": "Planos ou convênio funerários.",
+      "item_lc116": "25.03"
+    },
+    {
+      "codigo_trib_nac": "250401",
+      "descricao": "Manutenção e conservação de jazigos e cemitérios.",
+      "item_lc116": "25.04"
+    },
+    {
+      "codigo_trib_nac": "250501",
+      "descricao": "Cessão de uso de espaços em cemitérios para sepultamento.",
+      "item_lc116": "25.05"
+    },
+    {
+      "codigo_trib_nac": "260101",
+      "descricao": "Serviços de coleta, remessa ou entrega de correspondências, documentos, objetos, bens ou valores, inclusive pelos correios e suas agências franqueadas.",
+      "item_lc116": "26.01"
+    },
+    {
+      "codigo_trib_nac": "260102",
+      "descricao": "Serviços de courrier e congêneres.",
+      "item_lc116": "26.01"
+    },
+    {
+      "codigo_trib_nac": "270101",
+      "descricao": "Serviços de assistência social.",
+      "item_lc116": "27.01"
+    },
+    {
+      "codigo_trib_nac": "280101",
+      "descricao": "Serviços de avaliação de bens e serviços de qualquer natureza.",
+      "item_lc116": "28.01"
+    },
+    {
+      "codigo_trib_nac": "290101",
+      "descricao": "Serviços de biblioteconomia.",
+      "item_lc116": "29.01"
+    },
+    {
+      "codigo_trib_nac": "300101",
+      "descricao": "Serviços de biologia e biotecnologia.",
+      "item_lc116": "30.01"
+    },
+    {
+      "codigo_trib_nac": "300102",
+      "descricao": "Serviços de química.",
+      "item_lc116": "30.01"
+    },
+    {
+      "codigo_trib_nac": "310101",
+      "descricao": "Serviços técnicos em edificações e congêneres.",
+      "item_lc116": "31.01"
+    },
+    {
+      "codigo_trib_nac": "310102",
+      "descricao": "Serviços técnicos em eletrônica, eletrotécnica e congêneres.",
+      "item_lc116": "31.01"
+    },
+    {
+      "codigo_trib_nac": "310103",
+      "descricao": "Serviços técnicos em mecânica e congêneres.",
+      "item_lc116": "31.01"
+    },
+    {
+      "codigo_trib_nac": "310104",
+      "descricao": "Serviços técnicos em telecomunicações e congêneres.",
+      "item_lc116": "31.01"
+    },
+    {
+      "codigo_trib_nac": "320101",
+      "descricao": "Serviços de desenhos técnicos.",
+      "item_lc116": "32.01"
+    },
+    {
+      "codigo_trib_nac": "330101",
+      "descricao": "Serviços de desembaraço aduaneiro, comissários, despachantes e congêneres.",
+      "item_lc116": "33.01"
+    },
+    {
+      "codigo_trib_nac": "340101",
+      "descricao": "Serviços de investigações particulares, detetives e congêneres.",
+      "item_lc116": "34.01"
+    },
+    {
+      "codigo_trib_nac": "350101",
+      "descricao": "Serviços de reportagem e jornalismo.",
+      "item_lc116": "35.01"
+    },
+    {
+      "codigo_trib_nac": "350102",
+      "descricao": "Serviços de assessoria de imprensa.",
+      "item_lc116": "35.01"
+    },
+    {
+      "codigo_trib_nac": "350103",
+      "descricao": "Serviços de relações públicas.",
+      "item_lc116": "35.01"
+    },
+    {
+      "codigo_trib_nac": "360101",
+      "descricao": "Serviços de meteorologia.",
+      "item_lc116": "36.01"
+    },
+    {
+      "codigo_trib_nac": "370101",
+      "descricao": "Serviços de artistas, atletas, modelos e manequins.",
+      "item_lc116": "37.01"
+    },
+    {
+      "codigo_trib_nac": "380101",
+      "descricao": "Serviços de museologia.",
+      "item_lc116": "38.01"
+    },
+    {
+      "codigo_trib_nac": "390101",
+      "descricao": "Serviços de ourivesaria e lapidação (quando o material for fornecido pelo tomador do serviço).",
+      "item_lc116": "39.01"
+    },
+    {
+      "codigo_trib_nac": "400101",
+      "descricao": "Obras de arte sob encomenda.",
+      "item_lc116": "40.01"
+    },
+    {
+      "codigo_trib_nac": "990101",
+      "descricao": "Serviços sem a incidência de ISSQN e ICMS",
+      "item_lc116": "99.01"
+    }
+  ],
+  "nbs": [
+    {
+      "codigo_nbs": "101011100",
+      "descricao": "Serviços de construção de edificações residenciais de um e dois pavimentos"
+    },
+    {
+      "codigo_nbs": "101011200",
+      "descricao": "Serviços de construção de edificações residenciais com mais de dois pavimentos"
+    },
+    {
+      "codigo_nbs": "101012100",
+      "descricao": "Serviços de construção de edificações industriais"
+    },
+    {
+      "codigo_nbs": "101012200",
+      "descricao": "Serviços de construção de edificações comerciais"
+    },
+    {
+      "codigo_nbs": "101012900",
+      "descricao": "Serviços de construção de edificações não residenciais não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "101013000",
+      "descricao": "Serviços de construção de edificações de uso misto (residencial e não residencial)"
+    },
+    {
+      "codigo_nbs": "101021100",
+      "descricao": "Serviços de construção de autoestradas (exceto autoestradas elevadas), ruas e estradas"
+    },
+    {
+      "codigo_nbs": "101021200",
+      "descricao": "Serviços de construção de ferrovias"
+    },
+    {
+      "codigo_nbs": "101021300",
+      "descricao": "Serviços de construção de pistas de pouso e decolagem em aeroportos e de infraestrutura aeroportuária"
+    },
+    {
+      "codigo_nbs": "101022000",
+      "descricao": "Serviços de construção de pontes, autoestradas elevadas e túneis"
+    },
+    {
+      "codigo_nbs": "101023100",
+      "descricao": "Serviços de construção de infraestrutura de proteção e acesso aquaviário"
+    },
+    {
+      "codigo_nbs": "101023200",
+      "descricao": "Serviços de construção de infraestrutura de acostagem aquaviária"
+    },
+    {
+      "codigo_nbs": "101023300",
+      "descricao": "Serviços de construção de infraestrutura terrestre e de obras de engenharia afins nos portos"
+    },
+    {
+      "codigo_nbs": "101023400",
+      "descricao": "Serviços de construção de barragens"
+    },
+    {
+      "codigo_nbs": "101023510",
+      "descricao": "Serviços de construção de adutoras em conduto livre"
+    },
+    {
+      "codigo_nbs": "101023520",
+      "descricao": "Serviços de construção de sistemas de irrigação"
+    },
+    {
+      "codigo_nbs": "101023530",
+      "descricao": "Serviços de construção relacionada ao controle dos cursos de água, inclusive canalização"
+    },
+    {
+      "codigo_nbs": "101024110",
+      "descricao": "Serviços de construção de dutos de longo curso para o transporte de petróleo, seus derivados, e gás"
+    },
+    {
+      "codigo_nbs": "101024120",
+      "descricao": "Serviços de construção de dutos de longo curso para o transporte e escoamento de águas"
+    },
+    {
+      "codigo_nbs": "101024190",
+      "descricao": "Serviços de construção de dutos de longo curso não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "101024210",
+      "descricao": "Serviços de construção de linhas de comunicação de longo curso"
+    },
+    {
+      "codigo_nbs": "101024220",
+      "descricao": "Serviços de construção de linhas de transmissão de alta tensão"
+    },
+    {
+      "codigo_nbs": "101025100",
+      "descricao": "Serviços de construção de dutos locais"
+    },
+    {
+      "codigo_nbs": "101025210",
+      "descricao": "Serviços de construção de linhas locais de comunicação"
+    },
+    {
+      "codigo_nbs": "101025220",
+      "descricao": "Serviços de construção de linhas locais de transmissão de baixa e média tensão"
+    },
+    {
+      "codigo_nbs": "101025310",
+      "descricao": "Serviços de construção de sistemas de esgotos"
+    },
+    {
+      "codigo_nbs": "101025320",
+      "descricao": "Serviços de construção de sistemas de estações para elevação, tratamento e purificação de água"
+    },
+    {
+      "codigo_nbs": "101026100",
+      "descricao": "Serviços de construção de usinas de geração de energia"
+    },
+    {
+      "codigo_nbs": "101026900",
+      "descricao": "Serviços de construção de instalações industriais não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "101027000",
+      "descricao": "Serviços de construção de minas e suas unidades industriais"
+    },
+    {
+      "codigo_nbs": "101028000",
+      "descricao": "Serviços de construção de instalações para recreação e atividades desportivas ao ar livre"
+    },
+    {
+      "codigo_nbs": "101029000",
+      "descricao": "Serviços de construção de obras de engenharia civil não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "101031000",
+      "descricao": "Serviços de demolição"
+    },
+    {
+      "codigo_nbs": "101032000",
+      "descricao": "Serviços de preparação de terrenos e de canteiros de obras"
+    },
+    {
+      "codigo_nbs": "101033000",
+      "descricao": "Serviços de escavação e remoção de terra"
+    },
+    {
+      "codigo_nbs": "101034100",
+      "descricao": "Serviços de perfuração de poços de água"
+    },
+    {
+      "codigo_nbs": "101034200",
+      "descricao": "Serviços de instalação de sistemas sépticos"
+    },
+    {
+      "codigo_nbs": "101040000",
+      "descricao": "Serviços de montagem e de edificação de construções pré-fabricadas"
+    },
+    {
+      "codigo_nbs": "101051100",
+      "descricao": "Serviços de estaqueamento"
+    },
+    {
+      "codigo_nbs": "101051200",
+      "descricao": "Serviços de fundação"
+    },
+    {
+      "codigo_nbs": "101052100",
+      "descricao": "Serviços de construção de estruturas de edificações"
+    },
+    {
+      "codigo_nbs": "101052200",
+      "descricao": "Serviços de construção de estruturas de telhados e coberturas"
+    },
+    {
+      "codigo_nbs": "101053000",
+      "descricao": "Serviços de construção de telhados e coberturas e serviços de impermeabilização"
+    },
+    {
+      "codigo_nbs": "101054000",
+      "descricao": "Serviços de concretagem"
+    },
+    {
+      "codigo_nbs": "101055000",
+      "descricao": "Serviços de montagem de estruturas de aço"
+    },
+    {
+      "codigo_nbs": "101056000",
+      "descricao": "Serviços de alvenaria"
+    },
+    {
+      "codigo_nbs": "101057000",
+      "descricao": "Serviços de andaimes"
+    },
+    {
+      "codigo_nbs": "101059000",
+      "descricao": "Serviços especializados de construção não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "101061100",
+      "descricao": "Serviços de instalação de fiação elétrica e componentes"
+    },
+    {
+      "codigo_nbs": "101061200",
+      "descricao": "Serviços de instalação de alarmes contra incêndio"
+    },
+    {
+      "codigo_nbs": "101061300",
+      "descricao": "Serviços de instalação de sistemas de alarmes antifurto"
+    },
+    {
+      "codigo_nbs": "101061400",
+      "descricao": "Serviços de instalação de antenas residenciais"
+    },
+    {
+      "codigo_nbs": "101061900",
+      "descricao": "Serviços de instalação elétrica não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "101062100",
+      "descricao": "Serviços de instalação de tubulação para fornecimento de água"
+    },
+    {
+      "codigo_nbs": "101062200",
+      "descricao": "Serviços de instalação de tubulação para escoamento de água"
+    },
+    {
+      "codigo_nbs": "101063100",
+      "descricao": "Serviços de instalação de equipamentos de aquecimento"
+    },
+    {
+      "codigo_nbs": "101063200",
+      "descricao": "Serviços de instalação de equipamentos de ventilação e de ar condicionado"
+    },
+    {
+      "codigo_nbs": "101064000",
+      "descricao": "Serviços de instalação de gás"
+    },
+    {
+      "codigo_nbs": "101065000",
+      "descricao": "Serviços de instalação de isolamentos"
+    },
+    {
+      "codigo_nbs": "101066000",
+      "descricao": "Serviços de instalação de elevadores, esteiras e escadas rolantes"
+    },
+    {
+      "codigo_nbs": "101069000",
+      "descricao": "Serviços de instalação não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "101071000",
+      "descricao": "Serviços de vidraçaria"
+    },
+    {
+      "codigo_nbs": "101072000",
+      "descricao": "Serviços de gesso e de estuque"
+    },
+    {
+      "codigo_nbs": "101073000",
+      "descricao": "Serviços de pintura"
+    },
+    {
+      "codigo_nbs": "101074000",
+      "descricao": "Serviços de revestimento de pisos e de paredes"
+    },
+    {
+      "codigo_nbs": "101075000",
+      "descricao": "Serviços de carpintaria e de serralharia"
+    },
+    {
+      "codigo_nbs": "101076000",
+      "descricao": "Serviços de instalação de cercas e grades"
+    },
+    {
+      "codigo_nbs": "101079000",
+      "descricao": "Serviços de acabamento não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "102010000",
+      "descricao": "Serviços de intermediação na distribuição de mercadorias"
+    },
+    {
+      "codigo_nbs": "102020000",
+      "descricao": "Comércio atacadista"
+    },
+    {
+      "codigo_nbs": "102030000",
+      "descricao": "Comércio varejista"
+    },
+    {
+      "codigo_nbs": "102040000",
+      "descricao": "Serviços de despacho aduaneiro"
+    },
+    {
+      "codigo_nbs": "102050000",
+      "descricao": "Serviços de intermediação na comercialização de energia elétrica"
+    },
+    {
+      "codigo_nbs": "103011000",
+      "descricao": "Fornecimento de refeições acompanhado de serviços de restaurante"
+    },
+    {
+      "codigo_nbs": "103012100",
+      "descricao": "Fornecimento de refeições pelo sistema de autosserviço (self-service)"
+    },
+    {
+      "codigo_nbs": "103012200",
+      "descricao": "Fornecimento de comidas rápidas (fast-food)"
+    },
+    {
+      "codigo_nbs": "103012900",
+      "descricao": "Fornecimento de refeições com serviços limitados de restaurante não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "103013100",
+      "descricao": "Fornecimento de alimentação para eventos"
+    },
+    {
+      "codigo_nbs": "103013200",
+      "descricao": "Fornecimento de alimentação para operadores de transportes (comissaria ou catering)"
+    },
+    {
+      "codigo_nbs": "103013900",
+      "descricao": "Fornecimento de alimentação, incluindo refeições, sob contrato, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "103019000",
+      "descricao": "Fornecimento de alimentação não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "103020000",
+      "descricao": "Fornecimento de bebidas em bares, cervejarias e outros"
+    },
+    {
+      "codigo_nbs": "103031100",
+      "descricao": "Serviços de hospedagem em quartos ou unidades de hospedagem para visitantes, com serviços diários de faxina"
+    },
+    {
+      "codigo_nbs": "103031200",
+      "descricao": "Serviços de hospedagem em quartos ou unidades de hospedagem para visitantes, sem serviços diários de faxina"
+    },
+    {
+      "codigo_nbs": "103031300",
+      "descricao": "Serviços de hospedagem em quartos ou unidades de hospedagem para visitantes, em propriedades partilhadas"
+    },
+    {
+      "codigo_nbs": "103031400",
+      "descricao": "Serviços de hospedagem para visitantes, em quartos de múltipla ocupação"
+    },
+    {
+      "codigo_nbs": "103032000",
+      "descricao": "Serviços de acampamentos turísticos (camping)"
+    },
+    {
+      "codigo_nbs": "103039000",
+      "descricao": "Serviços de hospedagem para visitantes não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "103041000",
+      "descricao": "Serviços de hospedagem em quartos ou unidades de hospedagem para estudantes em residências estudantis"
+    },
+    {
+      "codigo_nbs": "103042000",
+      "descricao": "Serviços de hospedagem em quartos ou unidades de hospedagem para trabalhadores em hotéis ou campos"
+    },
+    {
+      "codigo_nbs": "103049000",
+      "descricao": "Serviços de hospedagem, exceto para visitantes, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104011111",
+      "descricao": "Serviços de transporte rodoviário local prestados exclusivamente por meio de ônibus"
+    },
+    {
+      "codigo_nbs": "104011119",
+      "descricao": "Serviços de transporte rodoviário local regular de passageiros, exceto em áreas metropolitanas, não classificados em subitens anteriores"
+    },
+    {
+      "codigo_nbs": "104011120",
+      "descricao": "Serviços de transporte rodoviário local regular de passageiros, em áreas metropolitanas"
+    },
+    {
+      "codigo_nbs": "104011210",
+      "descricao": "Serviços de transporte escolar"
+    },
+    {
+      "codigo_nbs": "104011220",
+      "descricao": "Serviços de transporte para aeroportos (shuttle)"
+    },
+    {
+      "codigo_nbs": "104011290",
+      "descricao": "Serviços especiais de transporte rodoviário local regular de passageiros não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104011300",
+      "descricao": "Serviços de táxi"
+    },
+    {
+      "codigo_nbs": "104011400",
+      "descricao": "Serviços de carro com motorista, exceto táxi"
+    },
+    {
+      "codigo_nbs": "104011510",
+      "descricao": "Serviços de fretamento contínuo, local"
+    },
+    {
+      "codigo_nbs": "104011520",
+      "descricao": "Serviços de fretamento eventual ou turístico, local"
+    },
+    {
+      "codigo_nbs": "104011610",
+      "descricao": "Serviços de transporte ferroviário local de passageiros"
+    },
+    {
+      "codigo_nbs": "104011620",
+      "descricao": "Serviços de transporte metroviário (metrô) local de passageiros"
+    },
+    {
+      "codigo_nbs": "104011690",
+      "descricao": "Serviços de transporte local de passageiros por veículos sobre trilhos não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104011710",
+      "descricao": "Serviços de transporte rodoviário para passeios turísticos (sightseeing)"
+    },
+    {
+      "codigo_nbs": "104011720",
+      "descricao": "Serviços de transporte ferroviário para passeios turísticos (sightseeing)"
+    },
+    {
+      "codigo_nbs": "104011790",
+      "descricao": "Serviços de transporte terrestre para passeios turísticos (sightseeing), não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104011900",
+      "descricao": "Serviços de transporte terrestre local de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104012110",
+      "descricao": "Serviços de transporte aquaviário local de passageiros, por navegação interior, em embarcações para travessia"
+    },
+    {
+      "codigo_nbs": "104012120",
+      "descricao": "Serviços de transporte aquaviário local de passageiros, por navegação interior, em embarcações para cruzeiros"
+    },
+    {
+      "codigo_nbs": "104012190",
+      "descricao": "Serviços de transporte aquaviário local de passageiros, por navegação interior, não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104012200",
+      "descricao": "Serviços de transporte aquaviário local de passageiros por fretamento"
+    },
+    {
+      "codigo_nbs": "104012300",
+      "descricao": "Serviços de transporte aquaviário para passeios turísticos (sightseeing)"
+    },
+    {
+      "codigo_nbs": "104012900",
+      "descricao": "Serviços de transporte aquaviário local de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104013000",
+      "descricao": "Serviços de transporte integrado local de passageiros"
+    },
+    {
+      "codigo_nbs": "104014100",
+      "descricao": "Serviços de táxi aéreo local"
+    },
+    {
+      "codigo_nbs": "104014200",
+      "descricao": "Serviços de transporte aéreo local de passageiros por fretamento"
+    },
+    {
+      "codigo_nbs": "104014300",
+      "descricao": "Serviços de transporte aéreo para passeios turísticos (sightseeing)"
+    },
+    {
+      "codigo_nbs": "104014900",
+      "descricao": "Serviços de transporte aéreo local de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104019000",
+      "descricao": "Serviços de transporte local de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104021110",
+      "descricao": "Serviços de transporte rodoviário nacional, exceto local, prestados exclusivamente por meio de ônibus"
+    },
+    {
+      "codigo_nbs": "104021190",
+      "descricao": "Serviços de transporte rodoviário nacional, exceto local, de passageiros, não classificados em subitens anteriores"
+    },
+    {
+      "codigo_nbs": "104021200",
+      "descricao": "Serviços especiais de transporte rodoviário nacional, exceto local, regular de passageiros"
+    },
+    {
+      "codigo_nbs": "104021310",
+      "descricao": "Serviços de fretamento contínuo, nacional, exceto local"
+    },
+    {
+      "codigo_nbs": "104021320",
+      "descricao": "Serviços de fretamento eventual ou turístico, nacional, exceto local"
+    },
+    {
+      "codigo_nbs": "104021400",
+      "descricao": "Serviços de transporte ferroviário nacional, exceto local, de passageiros"
+    },
+    {
+      "codigo_nbs": "104021900",
+      "descricao": "Serviços de transporte terrestre nacional, exceto local, de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104022110",
+      "descricao": "Serviços de transporte aquaviário de passageiros, por navegação interior, em embarcações para travessia"
+    },
+    {
+      "codigo_nbs": "104022120",
+      "descricao": "Serviços de transporte aquaviário de passageiros, por navegação interior, em embarcações para cruzeiros"
+    },
+    {
+      "codigo_nbs": "104022190",
+      "descricao": "Serviços de transporte aquaviário nacional, exceto local, de passageiros, por navegação interior, não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104022200",
+      "descricao": "Serviços de transporte aquaviário nacional costeiro de passageiros"
+    },
+    {
+      "codigo_nbs": "104022300",
+      "descricao": "Serviços de transporte aquaviário nacional, exceto local, de passageiros, por fretamento"
+    },
+    {
+      "codigo_nbs": "104023100",
+      "descricao": "Serviços de transporte aéreo nacional, exceto local, regular de passageiros"
+    },
+    {
+      "codigo_nbs": "104023200",
+      "descricao": "Serviços de táxi aéreo nacional, exceto local"
+    },
+    {
+      "codigo_nbs": "104023300",
+      "descricao": "Serviços de transporte aéreo nacional, exceto local, de passageiros, por fretamento"
+    },
+    {
+      "codigo_nbs": "104023900",
+      "descricao": "Serviços de transporte aéreo nacional, exceto local, de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104029000",
+      "descricao": "Serviços de transporte nacional, exceto local, de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104031110",
+      "descricao": "Serviços de transporte de passageiros prestados exclusivamente por meio de ônibus"
+    },
+    {
+      "codigo_nbs": "104031190",
+      "descricao": "Serviços de transporte rodoviário internacional de passageiros não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104031200",
+      "descricao": "Serviços de transporte rodoviário internacional de passageiros por fretamento"
+    },
+    {
+      "codigo_nbs": "104031310",
+      "descricao": "Serviços de transporte internacional ferroviário de passageiros"
+    },
+    {
+      "codigo_nbs": "104031390",
+      "descricao": "Serviços de transporte internacional de passageiros por veículos sobre trilhos não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104031900",
+      "descricao": "Serviços de transporte terrestre internacional de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104032110",
+      "descricao": "Serviços de transporte aquaviário internacional de passageiros, por navegação interior, em embarcações para travessia"
+    },
+    {
+      "codigo_nbs": "104032120",
+      "descricao": "Serviços de transporte aquaviário internacional de passageiros, por navegação interior, em embarcações para cruzeiros"
+    },
+    {
+      "codigo_nbs": "104032190",
+      "descricao": "Serviços de transporte aquaviário internacional de passageiros, por navegação interior, não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "104032200",
+      "descricao": "Serviços de transporte aquaviário internacional costeiro de passageiros"
+    },
+    {
+      "codigo_nbs": "104032300",
+      "descricao": "Serviços de transporte aquaviário internacional transoceânico de passageiros"
+    },
+    {
+      "codigo_nbs": "104032400",
+      "descricao": "Serviços de transporte aquaviário internacional de passageiros por fretamento"
+    },
+    {
+      "codigo_nbs": "104033100",
+      "descricao": "Serviços de transporte aéreo internacional regular de passageiros"
+    },
+    {
+      "codigo_nbs": "104033200",
+      "descricao": "Serviços de táxi aéreo internacional"
+    },
+    {
+      "codigo_nbs": "104033300",
+      "descricao": "Serviços de transporte aéreo internacional de passageiros por fretamento"
+    },
+    {
+      "codigo_nbs": "104033900",
+      "descricao": "Serviços de transporte aéreo internacional de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104039000",
+      "descricao": "Serviços de transporte internacional de passageiros, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "104041000",
+      "descricao": "Locação de veículos rodoviários de passageiros com motorista"
+    },
+    {
+      "codigo_nbs": "104042000",
+      "descricao": "Locação de embarcações de passageiros com tripulação"
+    },
+    {
+      "codigo_nbs": "104043000",
+      "descricao": "Locação de aeronaves de passageiros com tripulação"
+    },
+    {
+      "codigo_nbs": "104050000",
+      "descricao": "Afretamento de embarcações de passageiros por tempo"
+    },
+    {
+      "codigo_nbs": "105011110",
+      "descricao": "Serviços de transporte rodoviário de cargas sólidas a granel"
+    },
+    {
+      "codigo_nbs": "105011120",
+      "descricao": "Serviços de transporte rodoviário de cargas líquidas, ou liquefeitas, a granel"
+    },
+    {
+      "codigo_nbs": "105011130",
+      "descricao": "Serviços de transporte rodoviário de cargas gasosas a granel"
+    },
+    {
+      "codigo_nbs": "105011210",
+      "descricao": "Serviços de transporte rodoviário de carga solta, não unitizada"
+    },
+    {
+      "codigo_nbs": "105011220",
+      "descricao": "Serviços de transporte rodoviário de carga unitizada"
+    },
+    {
+      "codigo_nbs": "105011230",
+      "descricao": "Serviços de transporte rodoviário de carga frigorificada ou climatizada"
+    },
+    {
+      "codigo_nbs": "105011310",
+      "descricao": "Serviços de transporte rodoviário de cargas em contêineres frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105011320",
+      "descricao": "Serviços de transporte rodoviário de cargas em contêineres não frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105011410",
+      "descricao": "Serviços de transporte rodoviário de cargas vivas"
+    },
+    {
+      "codigo_nbs": "105011420",
+      "descricao": "Serviços de transporte rodoviário de mudanças domésticas e de mobília e outros objetos de escritório"
+    },
+    {
+      "codigo_nbs": "105011430",
+      "descricao": "Serviços de transporte rodoviário de cargas de grande porte"
+    },
+    {
+      "codigo_nbs": "105011440",
+      "descricao": "Serviços de transporte rodoviário de veículos"
+    },
+    {
+      "codigo_nbs": "105011451",
+      "descricao": "Serviços de transporte rodoviário de combustíveis, lubrificantes e GLP, inclusive apresentados em botijões metálicos"
+    },
+    {
+      "codigo_nbs": "105011452",
+      "descricao": "Serviços de transporte rodoviário de produtos químicos perigosos, exceto lubrificantes e GLP"
+    },
+    {
+      "codigo_nbs": "105011459",
+      "descricao": "Serviços de transporte rodoviário de produtos perigosos não classificados em subitens anteriores"
+    },
+    {
+      "codigo_nbs": "105011500",
+      "descricao": "Serviços de transporte rodoviário de cargas postais e malotes"
+    },
+    {
+      "codigo_nbs": "105011900",
+      "descricao": "Serviços de transporte rodoviário de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105012110",
+      "descricao": "Serviços de transporte ferroviário de cargas sólidas a granel"
+    },
+    {
+      "codigo_nbs": "105012120",
+      "descricao": "Serviços de transporte ferroviário de cargas líquidas, ou liquefeitas, a granel"
+    },
+    {
+      "codigo_nbs": "105012130",
+      "descricao": "Serviços de transporte ferroviário de cargas gasosas a granel"
+    },
+    {
+      "codigo_nbs": "105012210",
+      "descricao": "Serviços de transporte ferroviário de carga solta, não unitizada"
+    },
+    {
+      "codigo_nbs": "105012220",
+      "descricao": "Serviços de transporte ferroviário de carga unitizada"
+    },
+    {
+      "codigo_nbs": "105012230",
+      "descricao": "Serviços de transporte ferroviário de carga frigorificada ou climatizada"
+    },
+    {
+      "codigo_nbs": "105012310",
+      "descricao": "Serviços de transporte ferroviário de cargas em contêineres frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105012320",
+      "descricao": "Serviços de transporte ferroviário de cargas em contêineres não frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105012410",
+      "descricao": "Serviços de transporte ferroviário de cargas vivas"
+    },
+    {
+      "codigo_nbs": "105012421",
+      "descricao": "Serviços de transporte ferroviário de combustíveis, lubrificantes e GLP, inclusive apresentados em botijões metálicos"
+    },
+    {
+      "codigo_nbs": "105012422",
+      "descricao": "Serviços de transporte ferroviário de produtos químicos perigosos, exceto lubrificantes e GLP"
+    },
+    {
+      "codigo_nbs": "105012429",
+      "descricao": "Serviços de transporte ferroviário de produtos perigosos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105012500",
+      "descricao": "Serviços de transporte ferroviário de bens e valores"
+    },
+    {
+      "codigo_nbs": "105012900",
+      "descricao": "Serviços de transporte ferroviário de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105013100",
+      "descricao": "Serviços de transporte de petróleo, gás natural e combustível por meio de dutos"
+    },
+    {
+      "codigo_nbs": "105013200",
+      "descricao": "Serviços de transporte de minérios por meio de dutos"
+    },
+    {
+      "codigo_nbs": "105013900",
+      "descricao": "Serviços de transporte de cargas por meio de dutos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105021110",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas sólidas, a granel"
+    },
+    {
+      "codigo_nbs": "105021120",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas líquidas, ou liquefeitas, a granel"
+    },
+    {
+      "codigo_nbs": "105021130",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas gasosas a granel"
+    },
+    {
+      "codigo_nbs": "105021210",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de carga solta, não unitizada"
+    },
+    {
+      "codigo_nbs": "105021220",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de carga unitizada"
+    },
+    {
+      "codigo_nbs": "105021230",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de carga frigorificada ou climatizada"
+    },
+    {
+      "codigo_nbs": "105021310",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas em contêineres frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105021320",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas em contêineres não frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105021410",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas vivas"
+    },
+    {
+      "codigo_nbs": "105021420",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de mudanças domésticas e de mobília e outros objetos de escritório"
+    },
+    {
+      "codigo_nbs": "105021430",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas de grande porte"
+    },
+    {
+      "codigo_nbs": "105021440",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de veículos"
+    },
+    {
+      "codigo_nbs": "105021451",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de combustíveis, lubrificantes e GLP, inclusive apresentado em botijões metálicos"
+    },
+    {
+      "codigo_nbs": "105021452",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de produtos químicos perigosos, exceto lubrificantes e GLP"
+    },
+    {
+      "codigo_nbs": "105021459",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de produtos perigosos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105021490",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas especiais não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105021900",
+      "descricao": "Serviços de transporte aquaviário por navegação interior de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105022110",
+      "descricao": "Serviços de transporte aquaviário costeiro de cargas sólidas a granel"
+    },
+    {
+      "codigo_nbs": "105022120",
+      "descricao": "Serviços de transporte aquaviário costeiro de cargas líquidas ou liquefeitas, a granel"
+    },
+    {
+      "codigo_nbs": "105022130",
+      "descricao": "Serviços de transporte aquaviário costeiro de cargas gasosas a granel"
+    },
+    {
+      "codigo_nbs": "105022210",
+      "descricao": "Serviços de transporte aquaviário costeiro de carga solta, não unitizada"
+    },
+    {
+      "codigo_nbs": "105022220",
+      "descricao": "Serviços de transporte aquaviário costeiro de carga unitizada"
+    },
+    {
+      "codigo_nbs": "105022230",
+      "descricao": "Serviços de transporte aquaviário costeiro de carga frigorificada ou climatizada"
+    },
+    {
+      "codigo_nbs": "105022310",
+      "descricao": "Serviços de transporte aquaviário costeiro de cargas em contêineres frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105022320",
+      "descricao": "Serviços de transporte aquaviário costeiro de cargas em contêineres não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105022410",
+      "descricao": "Serviços de transporte aquaviário costeiro de cargas vivas"
+    },
+    {
+      "codigo_nbs": "105022420",
+      "descricao": "Serviços de transporte aquaviário costeiro de mudanças domésticas e de mobília e outros objetos de escritório"
+    },
+    {
+      "codigo_nbs": "105022430",
+      "descricao": "Serviços de transporte aquaviário costeiro de cargas de grande porte"
+    },
+    {
+      "codigo_nbs": "105022440",
+      "descricao": "Serviços de transporte aquaviário costeiro de veículos"
+    },
+    {
+      "codigo_nbs": "105022451",
+      "descricao": "Serviços de transporte aquaviário costeiro de combustíveis, lubrificantes e GLP, inclusive apresentado em botijões metálicos"
+    },
+    {
+      "codigo_nbs": "105022452",
+      "descricao": "Serviços de transporte aquaviário costeiro de produtos químicos perigosos, exceto lubrificantes e GLP"
+    },
+    {
+      "codigo_nbs": "105022459",
+      "descricao": "Serviços de transporte aquaviário costeiro de produtos perigosos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105022900",
+      "descricao": "Serviços de transportes aquaviário costeiro de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105023110",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas sólidas a granel"
+    },
+    {
+      "codigo_nbs": "105023120",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas líquidas, ou liquefeitas, a granel"
+    },
+    {
+      "codigo_nbs": "105023130",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas gasosas a granel"
+    },
+    {
+      "codigo_nbs": "105023210",
+      "descricao": "Serviços de transporte aquaviário transoceânico de carga solta, não unitizada"
+    },
+    {
+      "codigo_nbs": "105023220",
+      "descricao": "Serviços de transporte aquaviário transoceânico de carga unitizada"
+    },
+    {
+      "codigo_nbs": "105023230",
+      "descricao": "Serviços de transporte aquaviário transoceânico de carga frigorificada ou climatizada"
+    },
+    {
+      "codigo_nbs": "105023310",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas em contêineres frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105023320",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas em contêineres não frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105023410",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas vivas"
+    },
+    {
+      "codigo_nbs": "105023420",
+      "descricao": "Serviços de transporte aquaviário transoceânico de mudanças domésticas e de mobília e outros objetos de escritório"
+    },
+    {
+      "codigo_nbs": "105023430",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas de grande porte"
+    },
+    {
+      "codigo_nbs": "105023440",
+      "descricao": "Serviços de transporte aquaviário transoceânico de veículos"
+    },
+    {
+      "codigo_nbs": "105023451",
+      "descricao": "Serviços de transporte aquaviário transoceânico de combustíveis, lubrificantes e GLP, inclusive apresentado em botijões metálicos"
+    },
+    {
+      "codigo_nbs": "105023452",
+      "descricao": "Serviços de transporte aquaviário transoceânico de produtos químicos perigosos, exceto lubrificantes e GLP"
+    },
+    {
+      "codigo_nbs": "105023459",
+      "descricao": "Serviços de transporte aquaviário transoceânico de produtos perigosos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105023900",
+      "descricao": "Serviços de transporte aquaviário transoceânico de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105031100",
+      "descricao": "Serviços de transporte aéreo de cargas em contêineres frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105031200",
+      "descricao": "Serviços de transporte aéreo de cargas em contêineres não frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105032100",
+      "descricao": "Serviços de transporte aéreo de produtos perigosos"
+    },
+    {
+      "codigo_nbs": "105032200",
+      "descricao": "Serviços de transporte aéreo de animais vivos"
+    },
+    {
+      "codigo_nbs": "105032300",
+      "descricao": "Serviços de transporte aéreo de máquinas e veículos"
+    },
+    {
+      "codigo_nbs": "105032400",
+      "descricao": "Serviços de transporte aéreo de perecíveis"
+    },
+    {
+      "codigo_nbs": "105032500",
+      "descricao": "Serviços de transporte aéreo de cargas frágeis"
+    },
+    {
+      "codigo_nbs": "105032600",
+      "descricao": "Serviços de transporte aéreo de cargas controladas"
+    },
+    {
+      "codigo_nbs": "105032700",
+      "descricao": "Serviços de transporte aéreo de valores"
+    },
+    {
+      "codigo_nbs": "105032800",
+      "descricao": "Serviços de transporte aéreo de cargas postais, remessas expressas e cargas congêneres"
+    },
+    {
+      "codigo_nbs": "105032900",
+      "descricao": "Serviços de transporte aéreo de cargas especiais não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105039000",
+      "descricao": "Serviços de transporte aéreo de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105041100",
+      "descricao": "Serviços de transporte multimodal de cargas sólidas a granel"
+    },
+    {
+      "codigo_nbs": "105041200",
+      "descricao": "Serviços de transporte multimodal de cargas líquidas, ou liquefeitas, a granel"
+    },
+    {
+      "codigo_nbs": "105041300",
+      "descricao": "Serviços de transporte multimodal de cargas gasosas a granel"
+    },
+    {
+      "codigo_nbs": "105042100",
+      "descricao": "Serviços de transporte multimodal de carga solta, não unitizada"
+    },
+    {
+      "codigo_nbs": "105042200",
+      "descricao": "Serviços de transporte multimodal de carga unitizada"
+    },
+    {
+      "codigo_nbs": "105042300",
+      "descricao": "Serviços de transporte multimodal de carga frigorificada ou climatizada"
+    },
+    {
+      "codigo_nbs": "105043100",
+      "descricao": "Serviços de transporte multimodal de cargas em contêineres frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105043200",
+      "descricao": "Serviços de transporte multimodal de cargas em contêineres não frigorificados ou climatizados"
+    },
+    {
+      "codigo_nbs": "105044100",
+      "descricao": "Serviços de transporte multimodal de cargas vivas"
+    },
+    {
+      "codigo_nbs": "105044200",
+      "descricao": "Serviços de transporte multimodal de mudanças domésticas e de mobília e outros objetos de escritório"
+    },
+    {
+      "codigo_nbs": "105044300",
+      "descricao": "Serviços de transporte multimodal de cargas de grande porte"
+    },
+    {
+      "codigo_nbs": "105044400",
+      "descricao": "Serviços de transporte multimodal de veículos"
+    },
+    {
+      "codigo_nbs": "105044510",
+      "descricao": "Serviços de transporte multimodal de combustíveis, lubrificantes e GLP, inclusive apresentado em botijões metálicos"
+    },
+    {
+      "codigo_nbs": "105044520",
+      "descricao": "Serviços de transporte multimodal de produtos químicos perigosos, exceto lubrificantes e GLP"
+    },
+    {
+      "codigo_nbs": "105044590",
+      "descricao": "Serviços de transporte multimodal de produtos perigosos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105044900",
+      "descricao": "Serviços de transporte multimodal de cargas especiais não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105049000",
+      "descricao": "Serviços de transporte multimodal de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "105051000",
+      "descricao": "Locação de veículos rodoviários de carga com motorista"
+    },
+    {
+      "codigo_nbs": "105052000",
+      "descricao": "Locação de embarcações de carga com tripulação"
+    },
+    {
+      "codigo_nbs": "105053000",
+      "descricao": "Locação de aeronaves de carga com tripulação"
+    },
+    {
+      "codigo_nbs": "105060000",
+      "descricao": "Afretamento de embarcações de carga por tempo"
+    },
+    {
+      "codigo_nbs": "106011000",
+      "descricao": "Serviços de manuseio de contêineres"
+    },
+    {
+      "codigo_nbs": "106019000",
+      "descricao": "Serviços de manuseio de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "106021000",
+      "descricao": "Serviços de armazenagem frigorificada"
+    },
+    {
+      "codigo_nbs": "106022100",
+      "descricao": "Serviços de armazenagem de petróleo e seus derivados"
+    },
+    {
+      "codigo_nbs": "106022200",
+      "descricao": "Serviços de armazenagem de combustíveis, lubrificantes e GLP, inclusive apresentado em botijões metálicos"
+    },
+    {
+      "codigo_nbs": "106022300",
+      "descricao": "Serviços de armazenagem de produtos químicos perigosos"
+    },
+    {
+      "codigo_nbs": "106022900",
+      "descricao": "Serviços de armazenagem de outros produtos perigosos"
+    },
+    {
+      "codigo_nbs": "106023100",
+      "descricao": "Serviços de armazenagem de granéis sólidos"
+    },
+    {
+      "codigo_nbs": "106023200",
+      "descricao": "Serviços de armazenagem de granéis líquidos ou liquefeitos"
+    },
+    {
+      "codigo_nbs": "106023300",
+      "descricao": "Serviços de armazenagem de granéis gasosos"
+    },
+    {
+      "codigo_nbs": "106029000",
+      "descricao": "Serviços de armazenagem não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "106030000",
+      "descricao": "Serviços de apoio ao transporte ferroviário"
+    },
+    {
+      "codigo_nbs": "106041000",
+      "descricao": "Serviços de estações rodoviárias"
+    },
+    {
+      "codigo_nbs": "106042100",
+      "descricao": "Serviços de operação de rodovias"
+    },
+    {
+      "codigo_nbs": "106042200",
+      "descricao": "Serviços de operação de pontes e túneis"
+    },
+    {
+      "codigo_nbs": "106043000",
+      "descricao": "Serviços de estacionamento"
+    },
+    {
+      "codigo_nbs": "106044000",
+      "descricao": "Serviços de reboque para veículos particulares e comerciais"
+    },
+    {
+      "codigo_nbs": "106049000",
+      "descricao": "Serviços de apoio ao transporte rodoviário não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "106051000",
+      "descricao": "Serviços de operação de portos e canais, exceto manuseio de cargas"
+    },
+    {
+      "codigo_nbs": "106052000",
+      "descricao": "Serviços de praticagem e de atracação"
+    },
+    {
+      "codigo_nbs": "106053000",
+      "descricao": "Serviços de salvamento de embarcações"
+    },
+    {
+      "codigo_nbs": "106054000",
+      "descricao": "Serviços de navegação de apoio"
+    },
+    {
+      "codigo_nbs": "106059000",
+      "descricao": "Serviços de apoio ao transporte aquaviário não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "106061100",
+      "descricao": "Serviços de operação aeroportuária, exceto manuseio de cargas"
+    },
+    {
+      "codigo_nbs": "106061200",
+      "descricao": "Serviços de controle de tráfego aéreo"
+    },
+    {
+      "codigo_nbs": "106061900",
+      "descricao": "Serviços de apoio ao transporte aéreo não classificados em suposições anteriores"
+    },
+    {
+      "codigo_nbs": "106062000",
+      "descricao": "Serviços de apoio ao transporte aeroespacial"
+    },
+    {
+      "codigo_nbs": "106070000",
+      "descricao": "Serviços de agenciamento de transporte de cargas"
+    },
+    {
+      "codigo_nbs": "106081000",
+      "descricao": "Serviços de coleta e entrega de cargas no transporte multimodal"
+    },
+    {
+      "codigo_nbs": "106082000",
+      "descricao": "Serviços de unitização ou desunitização de cargas no transporte multimodal"
+    },
+    {
+      "codigo_nbs": "106083000",
+      "descricao": "Serviços de movimentação de cargas no transporte multimodal"
+    },
+    {
+      "codigo_nbs": "106084000",
+      "descricao": "Serviços de consolidação ou desconsolidação documental de cargas no transporte multimodal"
+    },
+    {
+      "codigo_nbs": "106089000",
+      "descricao": "Serviços de apoio ao transporte multimodal de cargas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "106090000",
+      "descricao": "Serviços de apoio aos transportes não classificados em posições anteriores"
+    },
+    {
+      "codigo_nbs": "107010000",
+      "descricao": "Serviços postais e de telegrama"
+    },
+    {
+      "codigo_nbs": "107020000",
+      "descricao": "Serviços de coleta, transporte, remessa ou entrega de documentos ou encomendas, exceto remessas expressas"
+    },
+    {
+      "codigo_nbs": "107030000",
+      "descricao": "Serviços de remessas expressas"
+    },
+    {
+      "codigo_nbs": "108011000",
+      "descricao": "Serviços de transmissão de eletricidade"
+    },
+    {
+      "codigo_nbs": "108012000",
+      "descricao": "Serviços de distribuição de eletricidade"
+    },
+    {
+      "codigo_nbs": "108021000",
+      "descricao": "Serviços de distribuição de água por meio de tubulações, exceto vapor de água e água quente"
+    },
+    {
+      "codigo_nbs": "108022000",
+      "descricao": "Serviços de distribuição de vapor de água, água quente e ar condicionado por meio de tubulações"
+    },
+    {
+      "codigo_nbs": "108023000",
+      "descricao": "Serviços de distribuição de água, exceto por meio de tubulações"
+    },
+    {
+      "codigo_nbs": "108030000",
+      "descricao": "Serviços de distribuição de gás canalizado"
+    },
+    {
+      "codigo_nbs": "109011000",
+      "descricao": "Serviços de banco central"
+    },
+    {
+      "codigo_nbs": "109012100",
+      "descricao": "Serviços de depósito para pessoas jurídicas"
+    },
+    {
+      "codigo_nbs": "109012200",
+      "descricao": "Serviços de depósito para pessoas físicas"
+    },
+    {
+      "codigo_nbs": "109012900",
+      "descricao": "Serviços de depósito para outros depositantes"
+    },
+    {
+      "codigo_nbs": "109013100",
+      "descricao": "Serviços de financiamentos imobiliários residenciais"
+    },
+    {
+      "codigo_nbs": "109013200",
+      "descricao": "Serviços de financiamentos imobiliários não residenciais"
+    },
+    {
+      "codigo_nbs": "109013300",
+      "descricao": "Serviços de empréstimos e financiamentos pessoais"
+    },
+    {
+      "codigo_nbs": "109013400",
+      "descricao": "Serviços de empréstimos e financiamentos comerciais"
+    },
+    {
+      "codigo_nbs": "109013500",
+      "descricao": "Serviços de empréstimos e financiamentos industriais"
+    },
+    {
+      "codigo_nbs": "109013600",
+      "descricao": "Serviços de empréstimos e financiamentos agropecuários"
+    },
+    {
+      "codigo_nbs": "109013900",
+      "descricao": "Serviços de concessão de crédito não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109014000",
+      "descricao": "Serviços de cartão de crédito"
+    },
+    {
+      "codigo_nbs": "109015111",
+      "descricao": "Arrendamento mercantil financeiro de veículos rodoviários automotores para o transporte de passageiros"
+    },
+    {
+      "codigo_nbs": "109015112",
+      "descricao": "Arrendamento mercantil financeiro de veículos rodoviários automotores para o transporte de mercadorias"
+    },
+    {
+      "codigo_nbs": "109015113",
+      "descricao": "Arrendamento mercantil financeiro de veículos e equipamentos ferroviários"
+    },
+    {
+      "codigo_nbs": "109015114",
+      "descricao": "Arrendamento mercantil financeiro de outros equipamentos de transporte terrestre, inclusive de veículos de uso misto"
+    },
+    {
+      "codigo_nbs": "109015115",
+      "descricao": "Arrendamento mercantil financeiro de navios e outras embarcações"
+    },
+    {
+      "codigo_nbs": "109015116",
+      "descricao": "Arrendamento mercantil financeiro de aeronaves"
+    },
+    {
+      "codigo_nbs": "109015117",
+      "descricao": "Arrendamento mercantil financeiro de contêineres"
+    },
+    {
+      "codigo_nbs": "109015121",
+      "descricao": "Arrendamento mercantil financeiro de máquinas e equipamentos agrícolas"
+    },
+    {
+      "codigo_nbs": "109015122",
+      "descricao": "Arrendamento mercantil financeiro de máquinas e equipamentos de construção"
+    },
+    {
+      "codigo_nbs": "109015123",
+      "descricao": "Arrendamento mercantil financeiro de máquinas e equipamentos para escritórios, exceto computadores"
+    },
+    {
+      "codigo_nbs": "109015124",
+      "descricao": "Arrendamento mercantil financeiro de computadores"
+    },
+    {
+      "codigo_nbs": "109015125",
+      "descricao": "Arrendamento mercantil financeiro de equipamentos de telecomunicação"
+    },
+    {
+      "codigo_nbs": "109015129",
+      "descricao": "Arrendamento mercantil financeiro de outras máquinas e equipamentos não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109015210",
+      "descricao": "Arrendamento mercantil financeiro de televisão e outros eletroeletrônicos domésticos, bem como seus acessórios"
+    },
+    {
+      "codigo_nbs": "109015220",
+      "descricao": "Arrendamento mercantil financeiro de mídias gravadas"
+    },
+    {
+      "codigo_nbs": "109015230",
+      "descricao": "Arrendamento mercantil financeiro de móveis e eletrodomésticos"
+    },
+    {
+      "codigo_nbs": "109015240",
+      "descricao": "Arrendamento mercantil financeiro de equipamentos para diversão e lazer"
+    },
+    {
+      "codigo_nbs": "109015250",
+      "descricao": "Arrendamento mercantil financeiro de artigos de cama, mesa e banho"
+    },
+    {
+      "codigo_nbs": "109015290",
+      "descricao": "Arrendamento mercantil financeiro de outras mercadorias não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109019000",
+      "descricao": "Serviços financeiros, exceto bancos de investimento, serviços de seguros e previdência complementar, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109021000",
+      "descricao": "Serviços de valoração de ativos"
+    },
+    {
+      "codigo_nbs": "109022000",
+      "descricao": "Serviços de subscrição de valores mobiliários"
+    },
+    {
+      "codigo_nbs": "109023000",
+      "descricao": "Serviços de fusões e aquisições"
+    },
+    {
+      "codigo_nbs": "109024000",
+      "descricao": "Serviços de capital de risco e finanças corporativas"
+    },
+    {
+      "codigo_nbs": "109029000",
+      "descricao": "Serviços de banco de investimento não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109031100",
+      "descricao": "Serviços de seguro de vida"
+    },
+    {
+      "codigo_nbs": "109031200",
+      "descricao": "Serviços de previdência complementar aberta"
+    },
+    {
+      "codigo_nbs": "109031300",
+      "descricao": "Serviços de previdência complementar fechada"
+    },
+    {
+      "codigo_nbs": "109032100",
+      "descricao": "Serviços de seguro saúde"
+    },
+    {
+      "codigo_nbs": "109032200",
+      "descricao": "Serviços de seguro de acidentes"
+    },
+    {
+      "codigo_nbs": "109033100",
+      "descricao": "Serviços de seguro de veículos rodoviários"
+    },
+    {
+      "codigo_nbs": "109033200",
+      "descricao": "Serviços de seguro de veículos e equipamentos para transporte ferroviário, aquaviário e aéreo"
+    },
+    {
+      "codigo_nbs": "109033300",
+      "descricao": "Serviços de seguro de cargas"
+    },
+    {
+      "codigo_nbs": "109033400",
+      "descricao": "Serviços de seguro de outras propriedades"
+    },
+    {
+      "codigo_nbs": "109033500",
+      "descricao": "Serviços de seguro por responsabilidade civil"
+    },
+    {
+      "codigo_nbs": "109033600",
+      "descricao": "Serviços de seguro de crédito e de caução"
+    },
+    {
+      "codigo_nbs": "109033700",
+      "descricao": "Serviços de seguro de viagem"
+    },
+    {
+      "codigo_nbs": "109033800",
+      "descricao": "Serviços de seguro rural"
+    },
+    {
+      "codigo_nbs": "109033900",
+      "descricao": "Serviços de outros seguros, excluídos os serviços de resseguro, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109041000",
+      "descricao": "Serviços de resseguro de vida"
+    },
+    {
+      "codigo_nbs": "109042100",
+      "descricao": "Serviços de resseguro saúde"
+    },
+    {
+      "codigo_nbs": "109042200",
+      "descricao": "Serviços de resseguro de acidentes"
+    },
+    {
+      "codigo_nbs": "109043100",
+      "descricao": "Serviços de resseguro de veículos rodoviários"
+    },
+    {
+      "codigo_nbs": "109043200",
+      "descricao": "Serviços de resseguro de veículos e equipamentos para transporte ferroviário, aquaviário e aéreo"
+    },
+    {
+      "codigo_nbs": "109043300",
+      "descricao": "Serviços de resseguro de cargas"
+    },
+    {
+      "codigo_nbs": "109043400",
+      "descricao": "Serviços de resseguro de outras propriedades"
+    },
+    {
+      "codigo_nbs": "109043500",
+      "descricao": "Serviços de resseguro de responsabilidade civil"
+    },
+    {
+      "codigo_nbs": "109043600",
+      "descricao": "Serviços de resseguro de crédito e caução"
+    },
+    {
+      "codigo_nbs": "109043700",
+      "descricao": "Serviços de resseguro rural"
+    },
+    {
+      "codigo_nbs": "109043900",
+      "descricao": "Serviços de outros resseguros não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109051100",
+      "descricao": "Serviços de corretagem de títulos"
+    },
+    {
+      "codigo_nbs": "109051200",
+      "descricao": "Serviços de corretagem de derivativos e commodities"
+    },
+    {
+      "codigo_nbs": "109051300",
+      "descricao": "Serviços de compensação de transações financeiras, inclusive com ativos financeiros (clearinghouse)"
+    },
+    {
+      "codigo_nbs": "109052100",
+      "descricao": "Serviços de gestão e administração de carteiras de ativos, exceto fundos de pensão"
+    },
+    {
+      "codigo_nbs": "109052200",
+      "descricao": "Serviços de administração fundos de investimento e fundos de pensão"
+    },
+    {
+      "codigo_nbs": "109052300",
+      "descricao": "Serviços de gestão e administração de trust"
+    },
+    {
+      "codigo_nbs": "109053000",
+      "descricao": "Serviços de guarda e custódia"
+    },
+    {
+      "codigo_nbs": "109054000",
+      "descricao": "Serviços relacionados à administração de mercados financeiros"
+    },
+    {
+      "codigo_nbs": "109055000",
+      "descricao": "Serviços de consultoria financeira"
+    },
+    {
+      "codigo_nbs": "109056000",
+      "descricao": "Serviços de câmbio"
+    },
+    {
+      "codigo_nbs": "109057000",
+      "descricao": "Serviços de classificação de risco (rating)"
+    },
+    {
+      "codigo_nbs": "109058000",
+      "descricao": "Serviços fiduciários"
+    },
+    {
+      "codigo_nbs": "109059000",
+      "descricao": "Serviços auxiliares aos serviços financeiros não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109061100",
+      "descricao": "Serviços de agenciamento e corretagem de seguros, resseguros e previdência complementar, exceto de seguros saúde"
+    },
+    {
+      "codigo_nbs": "109061200",
+      "descricao": "Serviços de corretagem de seguros saúde"
+    },
+    {
+      "codigo_nbs": "109062000",
+      "descricao": "Serviços de perícia e avaliação de seguros e resseguros"
+    },
+    {
+      "codigo_nbs": "109063000",
+      "descricao": "Serviços atuariais"
+    },
+    {
+      "codigo_nbs": "109064000",
+      "descricao": "Serviços de gestão de fundos de previdência complementar"
+    },
+    {
+      "codigo_nbs": "109069000",
+      "descricao": "Serviços auxiliares a seguros, resseguros e previdência complementar não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109070000",
+      "descricao": "Serviços de seguro de recebíveis"
+    },
+    {
+      "codigo_nbs": "109080000",
+      "descricao": "Fomento comercial (factoring)"
+    },
+    {
+      "codigo_nbs": "109091000",
+      "descricao": "Serviços de holding de patrimônio de empresas subsidiárias"
+    },
+    {
+      "codigo_nbs": "109092000",
+      "descricao": "Serviços de holding de valores mobiliários e outros ativos financeiros e fundos e entidades financeiras similares"
+    },
+    {
+      "codigo_nbs": "109101000",
+      "descricao": "Serviços de planos privados de assistência à saúde"
+    },
+    {
+      "codigo_nbs": "109102000",
+      "descricao": "Serviços de corretagem de planos privados de assistência à saúde"
+    },
+    {
+      "codigo_nbs": "109109000",
+      "descricao": "Serviços de planos privados de assistência à saúde e serviços relacionados não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "109110000",
+      "descricao": "Serviços financeiros e serviços relacionados não classificados em posições anteriores"
+    },
+    {
+      "codigo_nbs": "110011100",
+      "descricao": "Serviços de administração e locação de imóveis residenciais"
+    },
+    {
+      "codigo_nbs": "110011210",
+      "descricao": "Serviços de administração e locação, sublocação, arrendamento, direito de passagem ou permissão de uso, compartilhado ou não, de ferrovia, rodovia, postes, cabos, dutos e condutos de qualquer natureza"
+    },
+    {
+      "codigo_nbs": "110011290",
+      "descricao": "Serviços de administração e locação de outros imóveis não residenciais"
+    },
+    {
+      "codigo_nbs": "110012100",
+      "descricao": "Serviços de intermediação na compra e venda de imóveis residenciais"
+    },
+    {
+      "codigo_nbs": "110012200",
+      "descricao": "Serviços de intermediação na compra e venda de imóveis não residenciais"
+    },
+    {
+      "codigo_nbs": "110013000",
+      "descricao": "Serviços de avaliação de imóveis"
+    },
+    {
+      "codigo_nbs": "110014000",
+      "descricao": "Serviços de consultoria imobiliária"
+    },
+    {
+      "codigo_nbs": "110015000",
+      "descricao": "Serviços de assessoria de gestão condominial (condomínios, edifícios residenciais e mistos)"
+    },
+    {
+      "codigo_nbs": "110019000",
+      "descricao": "Serviços imobiliários não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "110021000",
+      "descricao": "Locação de imóveis residenciais"
+    },
+    {
+      "codigo_nbs": "110022000",
+      "descricao": "Locação de imóveis não residenciais"
+    },
+    {
+      "codigo_nbs": "111011100",
+      "descricao": "Arrendamento mercantil operacional ou locação de veículos rodoviários automotores para o transporte de até oito passageiros, sem operador"
+    },
+    {
+      "codigo_nbs": "111011200",
+      "descricao": "Arrendamento mercantil operacional ou locação de veículos rodoviários automotores para o transporte de cargas, sem operador"
+    },
+    {
+      "codigo_nbs": "111011300",
+      "descricao": "Arrendamento mercantil operacional ou locação de veículos e equipamentos de transporte ferroviário, sem operador"
+    },
+    {
+      "codigo_nbs": "111011400",
+      "descricao": "Arrendamento mercantil operacional ou locação de outros equipamentos de transporte terrestre, inclusive de veículos de uso misto, sem operador"
+    },
+    {
+      "codigo_nbs": "111011500",
+      "descricao": "Arrendamento mercantil operacional ou locação de navios e outras embarcações, sem tripulação"
+    },
+    {
+      "codigo_nbs": "111011600",
+      "descricao": "Arrendamento mercantil operacional ou locação de aeronaves, sem tripulação"
+    },
+    {
+      "codigo_nbs": "111011700",
+      "descricao": "Arrendamento mercantil operacional ou locação de contêineres"
+    },
+    {
+      "codigo_nbs": "111012000",
+      "descricao": "Arrendamento mercantil operacional ou locação de máquinas e equipamentos agrícolas, sem operador"
+    },
+    {
+      "codigo_nbs": "111013000",
+      "descricao": "Arrendamento mercantil operacional ou locação de máquinas e equipamentos de construção, sem operador"
+    },
+    {
+      "codigo_nbs": "111014000",
+      "descricao": "Arrendamento mercantil operacional ou locação de máquinas e equipamentos para escritórios, exceto computadores, sem operador"
+    },
+    {
+      "codigo_nbs": "111015000",
+      "descricao": "Arrendamento mercantil operacional ou locação de computadores, sem operador"
+    },
+    {
+      "codigo_nbs": "111016000",
+      "descricao": "Arrendamento mercantil operacional ou locação de equipamentos de telecomunicação, sem operador"
+    },
+    {
+      "codigo_nbs": "111019000",
+      "descricao": "Arrendamento mercantil operacional ou locação de máquinas e equipamentos, sem operador, não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111021000",
+      "descricao": "Arrendamento mercantil operacional ou locação de televisão e outros eletroeletrônicos, bem como seus acessórios"
+    },
+    {
+      "codigo_nbs": "111022000",
+      "descricao": "Arrendamento mercantil operacional ou locação de mídias gravadas"
+    },
+    {
+      "codigo_nbs": "111023000",
+      "descricao": "Arrendamento mercantil operacional ou locação de móveis e eletrodomésticos"
+    },
+    {
+      "codigo_nbs": "111024000",
+      "descricao": "Arrendamento mercantil operacional ou locação de equipamentos para diversão e lazer"
+    },
+    {
+      "codigo_nbs": "111025000",
+      "descricao": "Arrendamento mercantil operacional ou locação de artigos de cama, mesa e banho"
+    },
+    {
+      "codigo_nbs": "111026000",
+      "descricao": "Arrendamento mercantil operacional ou locação de roupas e calçados"
+    },
+    {
+      "codigo_nbs": "111029000",
+      "descricao": "Arrendamento mercantil operacional ou locação de outras mercadorias não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111031000",
+      "descricao": "Licenciamento de direitos de obras literárias"
+    },
+    {
+      "codigo_nbs": "111032100",
+      "descricao": "Licenciamento de direitos de produção, distribuição ou comercialização de programas de computador (software)"
+    },
+    {
+      "codigo_nbs": "111032200",
+      "descricao": "Licenciamento de direitos de uso de programas de computador (software)"
+    },
+    {
+      "codigo_nbs": "111032300",
+      "descricao": "Licenciamento de direitos sobre bancos de dados"
+    },
+    {
+      "codigo_nbs": "111032900",
+      "descricao": "Licenciamento de direitos sobre programas de computador (software) e bancos de dados não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111033100",
+      "descricao": "Licenciamento de direitos de autor de obras cinematográficas"
+    },
+    {
+      "codigo_nbs": "111033200",
+      "descricao": "Licenciamento de direitos de autor de obras jornalísticas"
+    },
+    {
+      "codigo_nbs": "111033300",
+      "descricao": "Licenciamento de direitos de autor de obras publicitárias"
+    },
+    {
+      "codigo_nbs": "111033400",
+      "descricao": "Licenciamento de direitos conexos de artistas intérpretes ou executantes em obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "111033500",
+      "descricao": "Licenciamento de direitos conexos de produtores de obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "111033610",
+      "descricao": "Licenciamento de direitos de obras audiovisuais sobre transmissões de eventos esportivos"
+    },
+    {
+      "codigo_nbs": "111033620",
+      "descricao": "Licenciamento de direitos de obras audiovisuais sobre transmissões de programas televisivos"
+    },
+    {
+      "codigo_nbs": "111033690",
+      "descricao": "Licenciamento de direitos de obras audiovisuais sobre outras transmissões televisivas"
+    },
+    {
+      "codigo_nbs": "111033900",
+      "descricao": "Licenciamento de direitos de obras audiovisuais não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111034100",
+      "descricao": "Licenciamento de direitos de autor de obras musicais ou literomusicais"
+    },
+    {
+      "codigo_nbs": "111034200",
+      "descricao": "Licenciamento de direitos conexos de artistas intérpretes ou executantes"
+    },
+    {
+      "codigo_nbs": "111034300",
+      "descricao": "Licenciamento de direitos conexos de produtores de fonogramas"
+    },
+    {
+      "codigo_nbs": "111035000",
+      "descricao": "Licenciamento de direitos relacionados à radiodifusão"
+    },
+    {
+      "codigo_nbs": "111039000",
+      "descricao": "Licenciamento de direitos de autor e de direitos conexos não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111041000",
+      "descricao": "Licenciamento de direitos sobre patentes"
+    },
+    {
+      "codigo_nbs": "111042000",
+      "descricao": "Licenciamento de direitos sobre marcas"
+    },
+    {
+      "codigo_nbs": "111043000",
+      "descricao": "Licenciamento de direitos sobre desenho industrial"
+    },
+    {
+      "codigo_nbs": "111049000",
+      "descricao": "Licenciamento de direitos sobre a propriedade industrial não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111051000",
+      "descricao": "Licenciamento de direitos sobre cultivares"
+    },
+    {
+      "codigo_nbs": "111052000",
+      "descricao": "Licenciamento de direitos sobre topografias de circuitos integrados"
+    },
+    {
+      "codigo_nbs": "111053000",
+      "descricao": "Licenciamento de direitos relativos à informação não divulgada"
+    },
+    {
+      "codigo_nbs": "111054100",
+      "descricao": "Exploração de recursos vegetais, inclusive florestais"
+    },
+    {
+      "codigo_nbs": "111054200",
+      "descricao": "Exploração de recursos minerais"
+    },
+    {
+      "codigo_nbs": "111055100",
+      "descricao": "Licenciamento de direitos sobre conhecimento tradicional associado a recursos genéticos"
+    },
+    {
+      "codigo_nbs": "111055900",
+      "descricao": "Licenciamento de direitos sobre conhecimento tradicional não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111056000",
+      "descricao": "Licenciamento de direitos relativos ao acesso a recursos genéticos, exceto os decorrentes do conhecimento tradicional"
+    },
+    {
+      "codigo_nbs": "111057000",
+      "descricao": "Licenciamento de direitos sobre informações relativas à experiência adquirida no setor industrial, comercial ou científico (know-how)"
+    },
+    {
+      "codigo_nbs": "111059000",
+      "descricao": "Licenciamento de outros direitos não classificado em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111061000",
+      "descricao": "Cessão temporária de direitos de obras literárias"
+    },
+    {
+      "codigo_nbs": "111062000",
+      "descricao": "Cessão temporária de direitos sobre programas de computador (software)"
+    },
+    {
+      "codigo_nbs": "111063100",
+      "descricao": "Cessão temporária de direitos de autor de obras cinematográficas"
+    },
+    {
+      "codigo_nbs": "111063200",
+      "descricao": "Cessão temporária de direitos de autor de obras jornalísticas"
+    },
+    {
+      "codigo_nbs": "111063300",
+      "descricao": "Cessão temporária de direitos de autor de obras publicitárias"
+    },
+    {
+      "codigo_nbs": "111063400",
+      "descricao": "Cessão temporária de direitos conexos de artistas intérpretes ou executantes em obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "111063500",
+      "descricao": "Cessão temporária de direitos conexos de produtores de obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "111063610",
+      "descricao": "Cessão temporária de direitos de obras audiovisuais sobre transmissões de eventos esportivos"
+    },
+    {
+      "codigo_nbs": "111063620",
+      "descricao": "Cessão temporária de direitos de obras audiovisuais sobre transmissões de programas televisivos"
+    },
+    {
+      "codigo_nbs": "111063690",
+      "descricao": "Cessão temporária de direitos de obras audiovisuais sobre outras transmissões televisivas"
+    },
+    {
+      "codigo_nbs": "111063900",
+      "descricao": "Cessão temporária de direitos de obras audiovisuais não classificada em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111064100",
+      "descricao": "Cessão temporária de direitos de autor de obras musicais e literomusicais"
+    },
+    {
+      "codigo_nbs": "111064200",
+      "descricao": "Cessão temporária de direitos conexos de artistas intérpretes ou executantes"
+    },
+    {
+      "codigo_nbs": "111064300",
+      "descricao": "Cessão temporária de direitos conexos de produtores de fonogramas"
+    },
+    {
+      "codigo_nbs": "111065000",
+      "descricao": "Cessão temporária de direitos relacionados à radiodifusão"
+    },
+    {
+      "codigo_nbs": "111069000",
+      "descricao": "Cessão temporária de direitos de autor e de direitos conexos não classificada em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111071000",
+      "descricao": "Cessão definitiva de direitos de obras literárias"
+    },
+    {
+      "codigo_nbs": "111072000",
+      "descricao": "Cessão definitiva de direitos sobre programas de computador (software)"
+    },
+    {
+      "codigo_nbs": "111073100",
+      "descricao": "Cessão definitiva de direitos de obras cinematográficas"
+    },
+    {
+      "codigo_nbs": "111073200",
+      "descricao": "Cessão definitiva de direitos de obras jornalísticas"
+    },
+    {
+      "codigo_nbs": "111073300",
+      "descricao": "Cessão definitiva de direitos de obras publicitárias"
+    },
+    {
+      "codigo_nbs": "111073900",
+      "descricao": "Cessão definitiva de direitos de obras audiovisuais não classificada em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111074000",
+      "descricao": "Cessão definitiva de direitos de obras musicais e de fonogramas"
+    },
+    {
+      "codigo_nbs": "111075000",
+      "descricao": "Cessão definitiva de direitos relacionados à radiodifusão"
+    },
+    {
+      "codigo_nbs": "111079000",
+      "descricao": "Cessão definitiva de direitos de autor e de direitos conexos não classificada em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111081000",
+      "descricao": "Cessão definitiva de direitos sobre patentes"
+    },
+    {
+      "codigo_nbs": "111082000",
+      "descricao": "Cessão definitiva de direitos sobre marcas"
+    },
+    {
+      "codigo_nbs": "111083000",
+      "descricao": "Cessão definitiva de direitos sobre desenho industrial"
+    },
+    {
+      "codigo_nbs": "111089000",
+      "descricao": "Cessão definitiva de direitos sobre a propriedade industrial não classificada em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111091000",
+      "descricao": "Cessão definitiva de direitos sobre cultivares"
+    },
+    {
+      "codigo_nbs": "111092000",
+      "descricao": "Cessão definitiva de direitos sobre topografias de circuitos integrados"
+    },
+    {
+      "codigo_nbs": "111093000",
+      "descricao": "Cessão definitiva de direitos relativos à informação não divulgada"
+    },
+    {
+      "codigo_nbs": "111099000",
+      "descricao": "Cessão definitiva de outros direitos não classificada em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "111100000",
+      "descricao": "Franquia"
+    },
+    {
+      "codigo_nbs": "112011100",
+      "descricao": "Serviços de pesquisa e desenvolvimento em ciências físicas"
+    },
+    {
+      "codigo_nbs": "112011200",
+      "descricao": "Serviços de pesquisa e desenvolvimento em química e biologia"
+    },
+    {
+      "codigo_nbs": "112011900",
+      "descricao": "Serviços de pesquisa e desenvolvimento em ciências naturais não classificadas em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "112012000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em biotecnologia"
+    },
+    {
+      "codigo_nbs": "112013100",
+      "descricao": "Serviços de pesquisa e desenvolvimento em Tecnologia da Informação e Comunicação (TIC)"
+    },
+    {
+      "codigo_nbs": "112013200",
+      "descricao": "Serviços de pesquisa e desenvolvimento em nanotecnologia"
+    },
+    {
+      "codigo_nbs": "112013300",
+      "descricao": "Serviços de pesquisa e desenvolvimento em engenharia e tecnologia nucleares"
+    },
+    {
+      "codigo_nbs": "112013400",
+      "descricao": "Serviços de pesquisa e desenvolvimento em engenharia e tecnologia em micro-ondas de potência"
+    },
+    {
+      "codigo_nbs": "112013900",
+      "descricao": "Serviços de pesquisa e desenvolvimento em engenharia e tecnologia não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "112014000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em ciências médicas, odontológicas e farmacêuticas"
+    },
+    {
+      "codigo_nbs": "112015000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em ciências agrárias"
+    },
+    {
+      "codigo_nbs": "112019000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em ciências, engenharia e tecnologia não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "112021000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em psicologia"
+    },
+    {
+      "codigo_nbs": "112022000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em ciências econômicas"
+    },
+    {
+      "codigo_nbs": "112023000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em direito"
+    },
+    {
+      "codigo_nbs": "112024000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em línguas e literatura"
+    },
+    {
+      "codigo_nbs": "112029000",
+      "descricao": "Serviços de pesquisa e desenvolvimento em ciências sociais e humanidades não classificadas em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "112030000",
+      "descricao": "Serviços de pesquisa e desenvolvimento interdisciplinar"
+    },
+    {
+      "codigo_nbs": "113011000",
+      "descricao": "Serviços de representação e consultoria jurídica criminal"
+    },
+    {
+      "codigo_nbs": "113012000",
+      "descricao": "Serviços de representação e consultoria jurídica em outras áreas do direito, exceto consultoria tributária"
+    },
+    {
+      "codigo_nbs": "113013000",
+      "descricao": "Serviços de documentação e certificação, exceto os serviços notariais e de registro"
+    },
+    {
+      "codigo_nbs": "113014000",
+      "descricao": "Serviços de arbitragem, conciliação e mediação"
+    },
+    {
+      "codigo_nbs": "113019000",
+      "descricao": "Serviços jurídicos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "113021100",
+      "descricao": "Serviços de auditoria contábil"
+    },
+    {
+      "codigo_nbs": "113021900",
+      "descricao": "Serviços de auditoria não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "113022100",
+      "descricao": "Serviços de contabilidade"
+    },
+    {
+      "codigo_nbs": "113022200",
+      "descricao": "Serviços de escrituração mercantil"
+    },
+    {
+      "codigo_nbs": "113022300",
+      "descricao": "Serviços de folha de pagamento"
+    },
+    {
+      "codigo_nbs": "113031000",
+      "descricao": "Serviços de consultoria tributária para pessoas jurídicas"
+    },
+    {
+      "codigo_nbs": "113032000",
+      "descricao": "Serviços de consultoria tributária para pessoas físicas"
+    },
+    {
+      "codigo_nbs": "113040000",
+      "descricao": "Serviços notariais e de registro"
+    },
+    {
+      "codigo_nbs": "114011100",
+      "descricao": "Serviços de consultoria em gestão estratégica"
+    },
+    {
+      "codigo_nbs": "114011200",
+      "descricao": "Serviços de consultoria em gestão financeira"
+    },
+    {
+      "codigo_nbs": "114011300",
+      "descricao": "Serviços de consultoria em gestão de recursos humanos"
+    },
+    {
+      "codigo_nbs": "114011400",
+      "descricao": "Serviços de consultoria em gestão de marketing"
+    },
+    {
+      "codigo_nbs": "114011500",
+      "descricao": "Serviços de consultoria em gestão operacional"
+    },
+    {
+      "codigo_nbs": "114011600",
+      "descricao": "Serviços de consultoria em gestão energética"
+    },
+    {
+      "codigo_nbs": "114011700",
+      "descricao": "Serviços de consultoria em gestão de cadeia logística"
+    },
+    {
+      "codigo_nbs": "114011800",
+      "descricao": "Serviços de consultoria em gestão hospitalar"
+    },
+    {
+      "codigo_nbs": "114011900",
+      "descricao": "Serviços de consultoria em gestão empresarial não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114012100",
+      "descricao": "Serviços de gestão em processos de negócios"
+    },
+    {
+      "codigo_nbs": "114012200",
+      "descricao": "Serviços de gestão hospitalar"
+    },
+    {
+      "codigo_nbs": "114012900",
+      "descricao": "Serviços de gestão não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114013100",
+      "descricao": "Serviços de assessoria de imprensa"
+    },
+    {
+      "codigo_nbs": "114013200",
+      "descricao": "Serviços de relações públicas"
+    },
+    {
+      "codigo_nbs": "114013900",
+      "descricao": "Serviços de assessoria empresarial não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114021100",
+      "descricao": "Serviços de consultoria em arquitetura"
+    },
+    {
+      "codigo_nbs": "114021200",
+      "descricao": "Serviços de arquitetura para projetos de construções residenciais"
+    },
+    {
+      "codigo_nbs": "114021300",
+      "descricao": "Serviços de arquitetura para projetos de construções não residenciais"
+    },
+    {
+      "codigo_nbs": "114021400",
+      "descricao": "Serviços de arquitetura para restauração de prédios históricos"
+    },
+    {
+      "codigo_nbs": "114021500",
+      "descricao": "Serviços de arquitetura relativos ao acompanhamento e fiscalização da execução de projetos arquitetônicos e urbanísticos"
+    },
+    {
+      "codigo_nbs": "114022100",
+      "descricao": "Serviços de planejamento urbano"
+    },
+    {
+      "codigo_nbs": "114022200",
+      "descricao": "Serviços de planejamento de áreas rurais"
+    },
+    {
+      "codigo_nbs": "114023100",
+      "descricao": "Serviços de consultoria em paisagismo"
+    },
+    {
+      "codigo_nbs": "114023200",
+      "descricao": "Serviços de paisagismo, exceto consultoria"
+    },
+    {
+      "codigo_nbs": "114029000",
+      "descricao": "Serviços de arquitetura, de planejamento urbano e de áreas rurais e de paisagismo não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114031000",
+      "descricao": "Serviços de consultoria em engenharia"
+    },
+    {
+      "codigo_nbs": "114032110",
+      "descricao": "Serviços de engenharia para projetos de construção residencial"
+    },
+    {
+      "codigo_nbs": "114032120",
+      "descricao": "Serviços de engenharia para projetos de construção não-residencial"
+    },
+    {
+      "codigo_nbs": "011403221",
+      "descricao": "Serviços de engenharia para exploração de minerais, petróleo, gás e biocombustíveis"
+    },
+    {
+      "codigo_nbs": "114032211",
+      "descricao": "Serviços de engenharia para projetos de exploração de minerais"
+    },
+    {
+      "codigo_nbs": "114032212",
+      "descricao": "Serviços de engenharia para projetos de exploração de petróleo e gás"
+    },
+    {
+      "codigo_nbs": "114032213",
+      "descricao": "Serviços de engenharia para projetos de refino de petróleo e petroquímica"
+    },
+    {
+      "codigo_nbs": "114032214",
+      "descricao": "Serviços de engenharia para projetos de unidades de produção de biocombustíveis"
+    },
+    {
+      "codigo_nbs": "011403222",
+      "descricao": "Serviços de engenharia para projetos de veículos"
+    },
+    {
+      "codigo_nbs": "114032221",
+      "descricao": "Serviços de engenharia para projetos de veículos terrestres"
+    },
+    {
+      "codigo_nbs": "114032222",
+      "descricao": "Serviços de engenharia para projetos de embarcações"
+    },
+    {
+      "codigo_nbs": "114032223",
+      "descricao": "Serviços de engenharia para projetos de veículos aéreos e aeroespaciais"
+    },
+    {
+      "codigo_nbs": "114032290",
+      "descricao": "Serviços de engenharia para outros projetos industriais e de fabricação, exceto para projetos de energia"
+    },
+    {
+      "codigo_nbs": "114032300",
+      "descricao": "Serviços de engenharia para projetos de infraestrutura de transportes"
+    },
+    {
+      "codigo_nbs": "114032400",
+      "descricao": "Serviços de engenharia para projetos de energia"
+    },
+    {
+      "codigo_nbs": "114032500",
+      "descricao": "Serviços de engenharia para projetos de telecomunicações, radiodifusão e televisão"
+    },
+    {
+      "codigo_nbs": "114032600",
+      "descricao": "Serviços de engenharia para projetos de gerenciamento de resíduos (perigosos e não perigosos)"
+    },
+    {
+      "codigo_nbs": "114032700",
+      "descricao": "Serviços de engenharia para projetos de distribuição de água e rede de esgoto"
+    },
+    {
+      "codigo_nbs": "114032900",
+      "descricao": "Serviços de engenharia para outros projetos"
+    },
+    {
+      "codigo_nbs": "114033000",
+      "descricao": "Serviços de gerenciamento de projetos de construção"
+    },
+    {
+      "codigo_nbs": "114039000",
+      "descricao": "Serviços de engenharia não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114041100",
+      "descricao": "Serviços de consultoria geológica e geofísica"
+    },
+    {
+      "codigo_nbs": "114041200",
+      "descricao": "Serviços geofísicos"
+    },
+    {
+      "codigo_nbs": "114041300",
+      "descricao": "Serviços geoquímicos"
+    },
+    {
+      "codigo_nbs": "114041400",
+      "descricao": "Serviços de informações para avaliação e exploração de recursos naturais"
+    },
+    {
+      "codigo_nbs": "114041900",
+      "descricao": "Serviços geológicos, geofísicos e outros de prospecção não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114042100",
+      "descricao": "Serviços topográficos"
+    },
+    {
+      "codigo_nbs": "114042200",
+      "descricao": "Serviços cartográficos"
+    },
+    {
+      "codigo_nbs": "114043000",
+      "descricao": "Serviços meteorológicos e de previsão do tempo"
+    },
+    {
+      "codigo_nbs": "114044100",
+      "descricao": "Serviços de análise e de exames técnicos sobre pureza e composição"
+    },
+    {
+      "codigo_nbs": "114044200",
+      "descricao": "Serviços de análise e de exames técnicos de propriedades físicas"
+    },
+    {
+      "codigo_nbs": "114044300",
+      "descricao": "Serviços de análise e de exames técnicos de sistemas elétricos e mecânicos"
+    },
+    {
+      "codigo_nbs": "114044400",
+      "descricao": "Serviços de inspeção técnica de veículos de transporte rodoviário"
+    },
+    {
+      "codigo_nbs": "114044900",
+      "descricao": "Serviços de análise e exames técnicos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114051100",
+      "descricao": "Serviços hospitalares, com ou sem internação, para animais domésticos"
+    },
+    {
+      "codigo_nbs": "114051200",
+      "descricao": "Serviços de atendimento, assistência ou tratamento para animais domésticos"
+    },
+    {
+      "codigo_nbs": "114052100",
+      "descricao": "Serviços hospitalares, com ou sem internação, para animais de corte"
+    },
+    {
+      "codigo_nbs": "114052200",
+      "descricao": "Serviços de atendimento, assistência ou tratamento para animais de corte"
+    },
+    {
+      "codigo_nbs": "114053000",
+      "descricao": "Serviços funerários, de cremação e de embalsamamento de animais"
+    },
+    {
+      "codigo_nbs": "114054000",
+      "descricao": "Serviços de bancos de órgãos, sangue, sêmen, tecidos, óvulos e outros materiais biológicos"
+    },
+    {
+      "codigo_nbs": "114055000",
+      "descricao": "Planos de atendimento e assistência médico-veterinária"
+    },
+    {
+      "codigo_nbs": "114056000",
+      "descricao": "Serviços de guarda, adestramento, embelezamento e alojamento"
+    },
+    {
+      "codigo_nbs": "114059000",
+      "descricao": "Serviços veterinários não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114061100",
+      "descricao": "Serviços de campanhas publicitárias"
+    },
+    {
+      "codigo_nbs": "114061200",
+      "descricao": "Serviços de marketing direto e mala direta"
+    },
+    {
+      "codigo_nbs": "114061900",
+      "descricao": "Serviços de propaganda não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114062000",
+      "descricao": "Aquisição ou venda de espaço ou tempo para propaganda, sob comissão"
+    },
+    {
+      "codigo_nbs": "114063100",
+      "descricao": "Venda de espaço para propaganda em mídia impressa, exceto sob comissão"
+    },
+    {
+      "codigo_nbs": "114063200",
+      "descricao": "Venda de tempo para propaganda em rádio e televisão, exceto sob comissão"
+    },
+    {
+      "codigo_nbs": "114063300",
+      "descricao": "Venda de espaço para propaganda na rede mundial de computadores, exceto sob comissão"
+    },
+    {
+      "codigo_nbs": "114063400",
+      "descricao": "Venda de espaço para propaganda em mídia exterior, exceto sob comissão"
+    },
+    {
+      "codigo_nbs": "114063900",
+      "descricao": "Venda de espaço ou tempo para propaganda, exceto sob comissão, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114070000",
+      "descricao": "Pesquisas de mercado e serviços de pesquisa de opinião pública"
+    },
+    {
+      "codigo_nbs": "114081100",
+      "descricao": "Serviços fotográficos de retratos"
+    },
+    {
+      "codigo_nbs": "114081200",
+      "descricao": "Serviços fotográficos e videográficos para propaganda"
+    },
+    {
+      "codigo_nbs": "114081300",
+      "descricao": "Serviços fotográficos e videográficos de eventos"
+    },
+    {
+      "codigo_nbs": "114081400",
+      "descricao": "Serviços fotográficos especiais"
+    },
+    {
+      "codigo_nbs": "114081500",
+      "descricao": "Serviços de restauração e retoque de fotografias"
+    },
+    {
+      "codigo_nbs": "114081900",
+      "descricao": "Serviços fotográficos e videográficos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114082000",
+      "descricao": "Serviços de processamento de fotografias"
+    },
+    {
+      "codigo_nbs": "114091100",
+      "descricao": "Serviços de design de interiores para espaços comerciais e públicos"
+    },
+    {
+      "codigo_nbs": "114091200",
+      "descricao": "Serviços de design de interiores para espaços residenciais"
+    },
+    {
+      "codigo_nbs": "114092100",
+      "descricao": "Serviços de desenho industrial de embalagens, expositores de loja e objetos promocionais para comunicação e vendas"
+    },
+    {
+      "codigo_nbs": "114092200",
+      "descricao": "Serviços de desenho industrial de produtos, utensílios, equipamentos, vestuário, calçados, ornamentos, joias e objetos pessoais"
+    },
+    {
+      "codigo_nbs": "114092300",
+      "descricao": "Serviços de desenho industrial de máquinas, equipamentos, acessórios e objetos de uso industrial de qualquer natureza"
+    },
+    {
+      "codigo_nbs": "114092400",
+      "descricao": "Serviços de desenho industrial de mobiliários e itens de decoração"
+    },
+    {
+      "codigo_nbs": "114092500",
+      "descricao": "Serviços de desenho industrial de utensílios e equipamentos eletrodomésticos e eletroeletrônicos"
+    },
+    {
+      "codigo_nbs": "114092900",
+      "descricao": "Serviços de desenho industrial não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114093000",
+      "descricao": "Serviços de design de marcas, imagens, objetos gráficos e digitais"
+    },
+    {
+      "codigo_nbs": "114099000",
+      "descricao": "Serviços especializados de design não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114101000",
+      "descricao": "Serviços de consultoria ambiental"
+    },
+    {
+      "codigo_nbs": "114109000",
+      "descricao": "Serviços de consultoria técnica e científica não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "114110000",
+      "descricao": "Serviços de tradução e de intérpretes"
+    },
+    {
+      "codigo_nbs": "114120000",
+      "descricao": "Serviços para registros de marcas comerciais e de franquias empresariais, exceto as licenças de uso de direito"
+    },
+    {
+      "codigo_nbs": "114130000",
+      "descricao": "Serviços de prospecção de clientes"
+    },
+    {
+      "codigo_nbs": "114140000",
+      "descricao": "Serviços de prospecção de fornecedores"
+    },
+    {
+      "codigo_nbs": "114150000",
+      "descricao": "Serviços profissionais, técnicos e gerenciais não classificados em posições anteriores"
+    },
+    {
+      "codigo_nbs": "115011000",
+      "descricao": "Serviços de consultoria em tecnologia da informação (TI)"
+    },
+    {
+      "codigo_nbs": "115012000",
+      "descricao": "Serviços de segurança em tecnologia da informação (TI)"
+    },
+    {
+      "codigo_nbs": "115013000",
+      "descricao": "Serviços de suporte em tecnologia da informação (TI)"
+    },
+    {
+      "codigo_nbs": "115021000",
+      "descricao": "Serviços de projeto, desenvolvimento e instalação de aplicativos e programas não personalizados (não customizados)"
+    },
+    {
+      "codigo_nbs": "115022000",
+      "descricao": "Serviços de projeto e desenvolvimento, adaptação e instalação de aplicativos personalizados (customizados)"
+    },
+    {
+      "codigo_nbs": "115023000",
+      "descricao": "Serviços de projeto e desenvolvimento de estruturas e conteúdo de páginas eletrônicas"
+    },
+    {
+      "codigo_nbs": "115024000",
+      "descricao": "Serviços de projeto e desenvolvimento de estruturas e conteúdo de bancos de dados"
+    },
+    {
+      "codigo_nbs": "115025000",
+      "descricao": "Serviços de integração de sistemas em tecnologia da informação (TI)"
+    },
+    {
+      "codigo_nbs": "115029000",
+      "descricao": "Serviços de projeto e desenvolvimento de aplicativos e programas em tecnologia da informação (TI) não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "115030000",
+      "descricao": "Serviços de projeto e desenvolvimento de redes em tecnologia da informação (TI)"
+    },
+    {
+      "codigo_nbs": "115040000",
+      "descricao": "Serviços de projeto e desenvolvimento de topografias de circuitos integrados"
+    },
+    {
+      "codigo_nbs": "115050000",
+      "descricao": "Serviços de projeto de circuitos integrados"
+    },
+    {
+      "codigo_nbs": "115061000",
+      "descricao": "Serviços de hospedagem de sítios na rede mundial de computadores"
+    },
+    {
+      "codigo_nbs": "115062100",
+      "descricao": "Serviços de hospedagem de aplicativos e programas software como serviço (SaaS)"
+    },
+    {
+      "codigo_nbs": "115062200",
+      "descricao": "Serviços de fornecimento de infraestrutura como serviço (IaaS)"
+    },
+    {
+      "codigo_nbs": "115062300",
+      "descricao": "Serviços de fornecimento de plataformas como serviço (PaaS)"
+    },
+    {
+      "codigo_nbs": "115062900",
+      "descricao": "Serviços de hospedagem de aplicativos e programas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "115069000",
+      "descricao": "Serviços de hospedagem e de disponibilização de infraestrutura em tecnologia da informação (TI) não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "115071000",
+      "descricao": "Serviços de gerenciamento de redes"
+    },
+    {
+      "codigo_nbs": "115072000",
+      "descricao": "Serviços de gerenciamento de sistemas computacionais"
+    },
+    {
+      "codigo_nbs": "115079000",
+      "descricao": "Serviços de gerenciamento de infraestrutura em tecnologia da informação (TI) não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "115080000",
+      "descricao": "Serviços de manutenção de aplicativos e programas"
+    },
+    {
+      "codigo_nbs": "115090000",
+      "descricao": "Serviços de processamento de dados"
+    },
+    {
+      "codigo_nbs": "115100000",
+      "descricao": "Serviços em tecnologia da informação (TI) não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "117011100",
+      "descricao": "Serviços de interconexão pelo uso da rede fixa"
+    },
+    {
+      "codigo_nbs": "117011200",
+      "descricao": "Serviços de interconexão pelo uso de rede móvel"
+    },
+    {
+      "codigo_nbs": "117011900",
+      "descricao": "Serviços de operadoras não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "117012100",
+      "descricao": "Serviços de chamadas de telecomunicações fixos comutados"
+    },
+    {
+      "codigo_nbs": "117012900",
+      "descricao": "Serviços de telecomunicações fixos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "117013100",
+      "descricao": "Serviços de voz nas telecomunicações móveis"
+    },
+    {
+      "codigo_nbs": "117013200",
+      "descricao": "Serviços de texto nas telecomunicações móveis"
+    },
+    {
+      "codigo_nbs": "117013300",
+      "descricao": "Serviços de transmissão de dados nas telecomunicações móveis, exceto serviços de texto"
+    },
+    {
+      "codigo_nbs": "117013400",
+      "descricao": "Serviços de telecomunicações móveis para usuários visitantes (roaming)"
+    },
+    {
+      "codigo_nbs": "117014000",
+      "descricao": "Serviços de redes privadas"
+    },
+    {
+      "codigo_nbs": "117015100",
+      "descricao": "Serviços de transmissão de dados local, nacional ou internacional"
+    },
+    {
+      "codigo_nbs": "117015200",
+      "descricao": "Serviços de exploração de linha dedicada local, nacional ou internacional"
+    },
+    {
+      "codigo_nbs": "117019000",
+      "descricao": "Outros serviços de telecomunicações, exceto pela rede mundial de computadores, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "117021000",
+      "descricao": "Serviços de fornecimento de infraestrutura de acesso (backbone) à rede mundial de computadores"
+    },
+    {
+      "codigo_nbs": "117022100",
+      "descricao": "Serviços de acesso à rede mundial de computadores por banda estreita"
+    },
+    {
+      "codigo_nbs": "117022200",
+      "descricao": "Serviços de acesso à rede mundial de computadores por banda larga"
+    },
+    {
+      "codigo_nbs": "117029000",
+      "descricao": "Serviços de telecomunicações pela rede mundial de computadores não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "117031000",
+      "descricao": "Serviços de oferta de livros, jornais, periódicos, diretórios e malas diretas de acesso imediato (on-line)"
+    },
+    {
+      "codigo_nbs": "117032100",
+      "descricao": "Serviços de oferta de áudio para download"
+    },
+    {
+      "codigo_nbs": "117032200",
+      "descricao": "Serviços de oferta de áudio de conteúdo contínuo (streaming)"
+    },
+    {
+      "codigo_nbs": "117033100",
+      "descricao": "Serviços de oferta de arquivos contendo filmes e vídeos para download"
+    },
+    {
+      "codigo_nbs": "117033200",
+      "descricao": "Serviços de oferta de filmes e vídeos de conteúdo contínuo (streaming)"
+    },
+    {
+      "codigo_nbs": "117039100",
+      "descricao": "Serviços de oferta de jogos e games de acesso imediato (on-line)"
+    },
+    {
+      "codigo_nbs": "117039200",
+      "descricao": "Serviços de oferta de conteúdo de portais de busca na rede mundial de computadores"
+    },
+    {
+      "codigo_nbs": "117039900",
+      "descricao": "Serviços de oferta de outros conteúdos de acesso imediato (on-line) não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "117041000",
+      "descricao": "Serviços de agências de notícias para jornais e periódicos"
+    },
+    {
+      "codigo_nbs": "117042000",
+      "descricao": "Serviços de agências de notícias para mídia audiovisual"
+    },
+    {
+      "codigo_nbs": "117051000",
+      "descricao": "Serviços de biblioteca"
+    },
+    {
+      "codigo_nbs": "117052000",
+      "descricao": "Serviços de arquivo"
+    },
+    {
+      "codigo_nbs": "117061100",
+      "descricao": "Serviços de programação dos canais de rádio"
+    },
+    {
+      "codigo_nbs": "117061200",
+      "descricao": "Serviços de programação dos canais de televisão"
+    },
+    {
+      "codigo_nbs": "117062100",
+      "descricao": "Serviços de transmissão de sinais, sons e imagens de rádio e televisão, aberta ou por assinatura"
+    },
+    {
+      "codigo_nbs": "117062200",
+      "descricao": "Serviços de distribuição de pacotes básicos de programação de televisão por assinatura"
+    },
+    {
+      "codigo_nbs": "117062300",
+      "descricao": "Serviços de distribuição de pacotes de programação adicional de televisão por assinatura"
+    },
+    {
+      "codigo_nbs": "117062400",
+      "descricao": "Serviços de distribuição de programas de televisão por assinatura, na modalidade \"pague por exibição\" (pay-per-view)"
+    },
+    {
+      "codigo_nbs": "117069000",
+      "descricao": "Serviços de difusão, programação e distribuição de programas de rádio e televisão não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118011100",
+      "descricao": "Serviço de recrutamento e seleção de profissionais executivos"
+    },
+    {
+      "codigo_nbs": "118011200",
+      "descricao": "Serviço de recrutamento e seleção de profissionais, exceto executivos"
+    },
+    {
+      "codigo_nbs": "118012100",
+      "descricao": "Serviços de fornecimento de mão de obra terceirizada, exceto temporária"
+    },
+    {
+      "codigo_nbs": "118012200",
+      "descricao": "Serviços de fornecimento de mão de obra temporária"
+    },
+    {
+      "codigo_nbs": "118012900",
+      "descricao": "Serviços de fornecimento de mão de obra não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118021000",
+      "descricao": "Serviços de investigação"
+    },
+    {
+      "codigo_nbs": "118022000",
+      "descricao": "Serviços de consultoria em segurança"
+    },
+    {
+      "codigo_nbs": "118023000",
+      "descricao": "Serviços de sistemas de segurança"
+    },
+    {
+      "codigo_nbs": "118024000",
+      "descricao": "Serviços de carro-forte"
+    },
+    {
+      "codigo_nbs": "118025000",
+      "descricao": "Serviços de guarda e escolta armada"
+    },
+    {
+      "codigo_nbs": "118029000",
+      "descricao": "Serviços de segurança não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118031000",
+      "descricao": "Serviços gerais de limpeza"
+    },
+    {
+      "codigo_nbs": "118032100",
+      "descricao": "Serviços de desinfecção e extermínio de pragas"
+    },
+    {
+      "codigo_nbs": "118032200",
+      "descricao": "Serviços de limpeza de janelas"
+    },
+    {
+      "codigo_nbs": "118032900",
+      "descricao": "Serviços especializados de limpeza não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118040000",
+      "descricao": "Serviços de acondicionamento e empacotamento"
+    },
+    {
+      "codigo_nbs": "118051100",
+      "descricao": "Serviços de reservas para transporte aéreo de passageiros"
+    },
+    {
+      "codigo_nbs": "118051200",
+      "descricao": "Serviços de reservas para transporte ferroviário de passageiros"
+    },
+    {
+      "codigo_nbs": "118051300",
+      "descricao": "Serviços de reservas para transporte rodoviário de passageiros"
+    },
+    {
+      "codigo_nbs": "118051400",
+      "descricao": "Serviços de reservas de carros de aluguel"
+    },
+    {
+      "codigo_nbs": "118051900",
+      "descricao": "Serviços de reservas para transporte de passageiros não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118052100",
+      "descricao": "Serviços de reservas de hospedagem, exceto em unidades compartilhadas"
+    },
+    {
+      "codigo_nbs": "118052200",
+      "descricao": "Serviços de reservas e intercâmbio de unidades compartilhadas (time-share)"
+    },
+    {
+      "codigo_nbs": "118052300",
+      "descricao": "Serviços de reservas em cruzeiros"
+    },
+    {
+      "codigo_nbs": "118052400",
+      "descricao": "Serviços de reservas de pacotes turísticos"
+    },
+    {
+      "codigo_nbs": "118053100",
+      "descricao": "Serviços de reservas para centros de convenções, centros de congressos e salas de exposições"
+    },
+    {
+      "codigo_nbs": "118053200",
+      "descricao": "Serviços de reservas de ingressos para eventos de entretenimento e recreativos"
+    },
+    {
+      "codigo_nbs": "118053900",
+      "descricao": "Serviços de reservas não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118054000",
+      "descricao": "Serviços de operadoras de turismo"
+    },
+    {
+      "codigo_nbs": "118055000",
+      "descricao": "Serviços de guias turísticos"
+    },
+    {
+      "codigo_nbs": "118056100",
+      "descricao": "Serviços de promoção turística"
+    },
+    {
+      "codigo_nbs": "118056200",
+      "descricao": "Serviços de informação a visitantes"
+    },
+    {
+      "codigo_nbs": "118061000",
+      "descricao": "Serviços de informação cadastral e análise de crédito"
+    },
+    {
+      "codigo_nbs": "118062000",
+      "descricao": "Serviços de cobrança"
+    },
+    {
+      "codigo_nbs": "118063100",
+      "descricao": "Serviços de call center"
+    },
+    {
+      "codigo_nbs": "118063900",
+      "descricao": "Serviços de apoio às atividades empresariais por meio de telefone não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118064000",
+      "descricao": "Serviços combinados de escritório e apoio administrativo"
+    },
+    {
+      "codigo_nbs": "118065100",
+      "descricao": "Serviços de fotocópias e outros serviços de reprodução de documentos"
+    },
+    {
+      "codigo_nbs": "118065200",
+      "descricao": "Serviços de execução e envio de mala direta e de elaboração de listas de endereços"
+    },
+    {
+      "codigo_nbs": "118065300",
+      "descricao": "Serviços de preparação de documentos"
+    },
+    {
+      "codigo_nbs": "118065900",
+      "descricao": "Serviços especializados de apoio a escritório não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "118066100",
+      "descricao": "Serviços de assistência e organização de convenções"
+    },
+    {
+      "codigo_nbs": "118066200",
+      "descricao": "Serviços de assistência e organização de feiras de negócios"
+    },
+    {
+      "codigo_nbs": "118066300",
+      "descricao": "Serviços de assistência e organização de exposições e outros eventos"
+    },
+    {
+      "codigo_nbs": "118067000",
+      "descricao": "Serviços de jardinagem"
+    },
+    {
+      "codigo_nbs": "118068100",
+      "descricao": "Serviços de agenciamento de modelos"
+    },
+    {
+      "codigo_nbs": "118068200",
+      "descricao": "Serviços de agenciamento de artistas"
+    },
+    {
+      "codigo_nbs": "118068300",
+      "descricao": "Serviços de agenciamento de atletas"
+    },
+    {
+      "codigo_nbs": "118069000",
+      "descricao": "Serviços de apoio não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "119011000",
+      "descricao": "Serviços de apoio à agricultura"
+    },
+    {
+      "codigo_nbs": "119012000",
+      "descricao": "Serviços de apoio à pecuária"
+    },
+    {
+      "codigo_nbs": "119013000",
+      "descricao": "Serviços de apoio à produção florestal (silvicultura)"
+    },
+    {
+      "codigo_nbs": "119014000",
+      "descricao": "Serviços de apoio à pesca"
+    },
+    {
+      "codigo_nbs": "119015000",
+      "descricao": "Serviços de apoio à aquicultura"
+    },
+    {
+      "codigo_nbs": "119021000",
+      "descricao": "Serviços de apoio à extração de petróleo e gás"
+    },
+    {
+      "codigo_nbs": "119029000",
+      "descricao": "Serviços de apoio à mineração não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "119031100",
+      "descricao": "Serviços de apoio à transmissão de eletricidade"
+    },
+    {
+      "codigo_nbs": "119031200",
+      "descricao": "Serviços de apoio à distribuição de eletricidade"
+    },
+    {
+      "codigo_nbs": "119032000",
+      "descricao": "Serviços de apoio à distribuição de gás por meio de tubulações"
+    },
+    {
+      "codigo_nbs": "119033000",
+      "descricao": "Serviços de apoio à distribuição de água por meio de tubulações, exceto vapor de água e água quente"
+    },
+    {
+      "codigo_nbs": "119034000",
+      "descricao": "Serviços de apoio a distribuição de vapor de água, água quente e ar condicionado por meio de tubulações"
+    },
+    {
+      "codigo_nbs": "119035000",
+      "descricao": "Serviços de apoio à distribuição de água, exceto por meio de tubulações"
+    },
+    {
+      "codigo_nbs": "120011000",
+      "descricao": "Serviços de manutenção e reparação de produtos metálicos, exceto maquinários e equipamentos"
+    },
+    {
+      "codigo_nbs": "120012000",
+      "descricao": "Serviços de manutenção e reparação de computadores e seus periféricos e de maquinário para escritório"
+    },
+    {
+      "codigo_nbs": "120013110",
+      "descricao": "Serviços de manutenção e reparação de veículos rodoviários motorizados"
+    },
+    {
+      "codigo_nbs": "120013120",
+      "descricao": "Serviços de manutenção e reparação de veículos rodoviários não motorizados"
+    },
+    {
+      "codigo_nbs": "120013200",
+      "descricao": "Serviços de manutenção e reparação de veículos sobre trilhos"
+    },
+    {
+      "codigo_nbs": "120013300",
+      "descricao": "Serviços de manutenção e reparação de veículos aquaviários"
+    },
+    {
+      "codigo_nbs": "120013410",
+      "descricao": "Serviços de manutenção e reparação de aeronaves, exceto de motores, turborreatores e turbopropulsores aeronáuticos"
+    },
+    {
+      "codigo_nbs": "120013420",
+      "descricao": "Serviços de manutenção e reparação de motores, turborreatores e turbopropulsores aeronáuticos"
+    },
+    {
+      "codigo_nbs": "120013430",
+      "descricao": "Serviços de manutenção e reparação de foguetes e equipamentos aeroespaciais"
+    },
+    {
+      "codigo_nbs": "120013500",
+      "descricao": "Serviços de manutenção e reparação de veículos militares"
+    },
+    {
+      "codigo_nbs": "120013900",
+      "descricao": "Serviços de manutenção e reparação de maquinários e equipamentos de transporte não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "120014000",
+      "descricao": "Serviços de manutenção e reparação de plataformas, inclusive navios-plataforma, para extração de petróleo e gás"
+    },
+    {
+      "codigo_nbs": "120015000",
+      "descricao": "Serviços de manutenção e reparação de maquinários e equipamentos de uso industrial"
+    },
+    {
+      "codigo_nbs": "120016000",
+      "descricao": "Serviços de manutenção e reparação de maquinários e equipamentos de uso comercial"
+    },
+    {
+      "codigo_nbs": "120017000",
+      "descricao": "Serviços de manutenção e reparação de equipamentos e aparelhos de telecomunicações"
+    },
+    {
+      "codigo_nbs": "120018100",
+      "descricao": "Serviços de manutenção e reparação de aparelhos eletroeletrônicos domésticos"
+    },
+    {
+      "codigo_nbs": "120018200",
+      "descricao": "Serviços de manutenção e reparação de instrumentos e equipamentos médico-hospitalares, odontológicos, óticos e de precisão"
+    },
+    {
+      "codigo_nbs": "120018300",
+      "descricao": "Serviços de manutenção e reparação de equipamentos militares"
+    },
+    {
+      "codigo_nbs": "120018900",
+      "descricao": "Serviços de manutenção e reparação de outros maquinários e equipamentos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "120021000",
+      "descricao": "Serviços de manutenção e reparação de produtos de couro, calçados, malas e bolsas"
+    },
+    {
+      "codigo_nbs": "120022000",
+      "descricao": "Serviços de manutenção e reparação de relógios e joias"
+    },
+    {
+      "codigo_nbs": "120023000",
+      "descricao": "Serviços de manutenção e reparação de móveis"
+    },
+    {
+      "codigo_nbs": "120024000",
+      "descricao": "Serviços de manutenção de roupas e outros produtos têxteis"
+    },
+    {
+      "codigo_nbs": "120029000",
+      "descricao": "Serviços de manutenção e reparação de outros bens de consumo não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "120031000",
+      "descricao": "Serviços de instalação de produtos metálicos, exceto maquinário e equipamentos"
+    },
+    {
+      "codigo_nbs": "120032110",
+      "descricao": "Serviços de montagem sob encomenda de turbinas industriais"
+    },
+    {
+      "codigo_nbs": "120032190",
+      "descricao": "Serviços de instalação de maquinários, aparelhos e equipamentos industriais não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "120032200",
+      "descricao": "Serviços de instalação de computadores e seus periféricos e maquinário de escritório"
+    },
+    {
+      "codigo_nbs": "120032300",
+      "descricao": "Serviços de instalação de equipamentos e aparelhos de comunicação, incluindo de rádio e de televisão"
+    },
+    {
+      "codigo_nbs": "120032400",
+      "descricao": "Serviços de instalação de maquinários, equipamentos, instrumentos e aparelhos médico-hospitalares, óticos e de precisão"
+    },
+    {
+      "codigo_nbs": "120032510",
+      "descricao": "Serviços de instalação de sensores e sistemas de armas"
+    },
+    {
+      "codigo_nbs": "120032520",
+      "descricao": "Serviços de instalação de maquinários, aparelhos e equipamentos de emprego militar"
+    },
+    {
+      "codigo_nbs": "120032610",
+      "descricao": "Serviços de montagem sob encomenda de motores, turborreatores e turbopropulsores aeronáuticos"
+    },
+    {
+      "codigo_nbs": "120032690",
+      "descricao": "Serviços de instalação de maquinários e equipamentos de transporte não classificados em itens anteriores"
+    },
+    {
+      "codigo_nbs": "120032900",
+      "descricao": "Serviços de instalação de maquinários, aparelhos e equipamentos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "121011000",
+      "descricao": "Serviços de editoração"
+    },
+    {
+      "codigo_nbs": "121012100",
+      "descricao": "Serviços de impressão"
+    },
+    {
+      "codigo_nbs": "121012200",
+      "descricao": "Serviços relacionados à impressão"
+    },
+    {
+      "codigo_nbs": "121012300",
+      "descricao": "Serviços de reprodução de mídia gravada"
+    },
+    {
+      "codigo_nbs": "121013000",
+      "descricao": "Serviços de publicação"
+    },
+    {
+      "codigo_nbs": "122011100",
+      "descricao": "Serviços de creches ou de entidade equivalente"
+    },
+    {
+      "codigo_nbs": "122011200",
+      "descricao": "Serviços de pré-escola"
+    },
+    {
+      "codigo_nbs": "122011900",
+      "descricao": "Serviços de educação infantil não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "122012000",
+      "descricao": "Serviços de ensino fundamental"
+    },
+    {
+      "codigo_nbs": "122013000",
+      "descricao": "Serviços de ensino médio"
+    },
+    {
+      "codigo_nbs": "122020000",
+      "descricao": "Serviços de educação técnica de nível médio"
+    },
+    {
+      "codigo_nbs": "122031000",
+      "descricao": "Serviços de ensino fundamental de jovens e adultos"
+    },
+    {
+      "codigo_nbs": "122032000",
+      "descricao": "Serviços de ensino médio de jovens e adultos"
+    },
+    {
+      "codigo_nbs": "122041000",
+      "descricao": "Serviços educacionais de graduação"
+    },
+    {
+      "codigo_nbs": "122042000",
+      "descricao": "Serviços educacionais de pós-graduação"
+    },
+    {
+      "codigo_nbs": "122043000",
+      "descricao": "Serviços educacionais de extensão"
+    },
+    {
+      "codigo_nbs": "122044000",
+      "descricao": "Serviços educacionais de cursos sequenciais"
+    },
+    {
+      "codigo_nbs": "122051100",
+      "descricao": "Serviços de educação com enfoque cultural"
+    },
+    {
+      "codigo_nbs": "122051200",
+      "descricao": "Serviços de educação desportiva e recreacional"
+    },
+    {
+      "codigo_nbs": "122051300",
+      "descricao": "Serviços de educação em línguas estrangeiras e de sinais"
+    },
+    {
+      "codigo_nbs": "122051400",
+      "descricao": "Serviços de palestras e conferências"
+    },
+    {
+      "codigo_nbs": "122051900",
+      "descricao": "Outros serviços de educação, inclusive treinamento, não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "122052000",
+      "descricao": "Serviços de apoio aos serviços educacionais"
+    },
+    {
+      "codigo_nbs": "123011100",
+      "descricao": "Serviços cirúrgicos"
+    },
+    {
+      "codigo_nbs": "123011200",
+      "descricao": "Serviços ginecológicos e obstétricos"
+    },
+    {
+      "codigo_nbs": "123011300",
+      "descricao": "Serviços psiquiátricos"
+    },
+    {
+      "codigo_nbs": "123011400",
+      "descricao": "Serviços prestados em Unidades de Terapia Intensiva"
+    },
+    {
+      "codigo_nbs": "123011500",
+      "descricao": "Serviços de atendimento de urgência"
+    },
+    {
+      "codigo_nbs": "123011900",
+      "descricao": "Serviços hospitalares não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "123012100",
+      "descricao": "Serviços de clínica médica"
+    },
+    {
+      "codigo_nbs": "123012200",
+      "descricao": "Serviços médicos especializados"
+    },
+    {
+      "codigo_nbs": "123012300",
+      "descricao": "Serviços odontológicos"
+    },
+    {
+      "codigo_nbs": "123019100",
+      "descricao": "Serviços de enfermagem"
+    },
+    {
+      "codigo_nbs": "123019200",
+      "descricao": "Serviços de fisioterapia"
+    },
+    {
+      "codigo_nbs": "123019300",
+      "descricao": "Serviços laboratoriais"
+    },
+    {
+      "codigo_nbs": "123019400",
+      "descricao": "Serviços de diagnóstico por imagem"
+    },
+    {
+      "codigo_nbs": "123019500",
+      "descricao": "Serviços de bancos de material biológico humano"
+    },
+    {
+      "codigo_nbs": "123019600",
+      "descricao": "Serviços de ambulância"
+    },
+    {
+      "codigo_nbs": "123019700",
+      "descricao": "Serviços de assistência ao parto e pós-parto"
+    },
+    {
+      "codigo_nbs": "123019800",
+      "descricao": "Serviços de psicologia"
+    },
+    {
+      "codigo_nbs": "123019900",
+      "descricao": "Outros serviços de saúde humana não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "123021000",
+      "descricao": "Serviços de cuidado em saúde em unidades de acolhimento"
+    },
+    {
+      "codigo_nbs": "123022100",
+      "descricao": "Serviços de assistência a idosos em unidades de acolhimento"
+    },
+    {
+      "codigo_nbs": "123022200",
+      "descricao": "Serviços de assistência a crianças e adolescentes com deficiência em unidades de acolhimento"
+    },
+    {
+      "codigo_nbs": "123022300",
+      "descricao": "Serviços de assistência a adultos com deficiência em unidades de acolhimento"
+    },
+    {
+      "codigo_nbs": "123030000",
+      "descricao": "Serviços de assistência prestados a pessoas em situação de vulnerabilidade social com acomodação"
+    },
+    {
+      "codigo_nbs": "123041100",
+      "descricao": "Serviços de reabilitação vocacional para pessoas com deficiência"
+    },
+    {
+      "codigo_nbs": "123041200",
+      "descricao": "Serviços de reabilitação vocacional para desempregados"
+    },
+    {
+      "codigo_nbs": "123041900",
+      "descricao": "Serviço de reabilitação vocacional não classificados nas subposições anteriores"
+    },
+    {
+      "codigo_nbs": "123042000",
+      "descricao": "Serviços de orientação e aconselhamento relacionados a crianças e adolescentes"
+    },
+    {
+      "codigo_nbs": "123049000",
+      "descricao": "Serviços de assistência social sem acomodação não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "124010000",
+      "descricao": "Serviços de tratamento de água"
+    },
+    {
+      "codigo_nbs": "124021000",
+      "descricao": "Serviços de esgoto e tratamento de esgotos"
+    },
+    {
+      "codigo_nbs": "124022000",
+      "descricao": "Serviços de esvaziamento e limpeza de fossas sépticas"
+    },
+    {
+      "codigo_nbs": "124031100",
+      "descricao": "Serviços de coleta de resíduos de serviços de saúde e outros resíduos biológicos"
+    },
+    {
+      "codigo_nbs": "124031200",
+      "descricao": "Serviços de coleta de resíduos perigosos industriais, exceto resíduos de serviços de saúde e outros resíduos biológicos"
+    },
+    {
+      "codigo_nbs": "124031900",
+      "descricao": "Serviços de coleta de outros resíduos perigosos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "124032100",
+      "descricao": "Serviços de coleta de resíduos recicláveis, não perigosos, de origem doméstica"
+    },
+    {
+      "codigo_nbs": "124032200",
+      "descricao": "Serviços de coleta de resíduos recicláveis, não perigosos, exceto de origem doméstica"
+    },
+    {
+      "codigo_nbs": "124033100",
+      "descricao": "Serviços de coleta de resíduos gerais de origem doméstica"
+    },
+    {
+      "codigo_nbs": "124033200",
+      "descricao": "Serviços de coleta de resíduos gerais, exceto de origem doméstica"
+    },
+    {
+      "codigo_nbs": "124041100",
+      "descricao": "Serviços de triagem, preparação, consolidação e estocagem de resíduos perigosos"
+    },
+    {
+      "codigo_nbs": "124041200",
+      "descricao": "Serviços de demolição e desmantelamento de embarcações, veículos e outros bens"
+    },
+    {
+      "codigo_nbs": "124041300",
+      "descricao": "Serviços de triagem, preparação, consolidação e estocagem de resíduos recicláveis não perigosos"
+    },
+    {
+      "codigo_nbs": "124041900",
+      "descricao": "Serviços de triagem, preparação, consolidação e estocagem de resíduos não perigosos, exceto os recicláveis"
+    },
+    {
+      "codigo_nbs": "124042100",
+      "descricao": "Serviços de tratamento de resíduos perigosos"
+    },
+    {
+      "codigo_nbs": "124042200",
+      "descricao": "Serviços de eliminação de resíduos perigosos"
+    },
+    {
+      "codigo_nbs": "124043100",
+      "descricao": "Serviços de tratamento e eliminação de resíduos não perigosos em aterros sanitários"
+    },
+    {
+      "codigo_nbs": "124043200",
+      "descricao": "Serviços de tratamento e eliminação de resíduos não perigosos em aterros, exceto os sanitários"
+    },
+    {
+      "codigo_nbs": "124043300",
+      "descricao": "Serviços de incineração de resíduos não perigosos"
+    },
+    {
+      "codigo_nbs": "124043900",
+      "descricao": "Serviços de tratamento e eliminação de resíduos não perigosos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "124051100",
+      "descricao": "Serviços de remediação e limpeza do ar"
+    },
+    {
+      "codigo_nbs": "124051200",
+      "descricao": "Serviços de remediação e limpeza de águas de superfície"
+    },
+    {
+      "codigo_nbs": "124051300",
+      "descricao": "Serviços de remediação e limpeza do solo e de águas subterrâneas"
+    },
+    {
+      "codigo_nbs": "124051400",
+      "descricao": "Serviços de remediação em edificações"
+    },
+    {
+      "codigo_nbs": "124052000",
+      "descricao": "Serviços de contenção, controle e monitoramento de áreas contaminadas"
+    },
+    {
+      "codigo_nbs": "124059000",
+      "descricao": "Serviços de remediação não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "124061000",
+      "descricao": "Serviços de varrição de vias e áreas públicas"
+    },
+    {
+      "codigo_nbs": "124069000",
+      "descricao": "Serviços de limpeza urbana e similares não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "124070000",
+      "descricao": "Serviços de proteção ambiental não classificados em posições anteriores"
+    },
+    {
+      "codigo_nbs": "125011100",
+      "descricao": "Serviços de gravação de som em estúdio"
+    },
+    {
+      "codigo_nbs": "125011200",
+      "descricao": "Serviços de gravação de som ao vivo"
+    },
+    {
+      "codigo_nbs": "125012100",
+      "descricao": "Serviços de produção de programas de televisão, videoteipes e filmes"
+    },
+    {
+      "codigo_nbs": "125012200",
+      "descricao": "Serviços de produção de programas de rádio"
+    },
+    {
+      "codigo_nbs": "125013100",
+      "descricao": "Serviços de edição de obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "125013200",
+      "descricao": "Serviços de duplicação e transferência de obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "125013300",
+      "descricao": "Serviços de correção de cor e restauração digital de obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "125013400",
+      "descricao": "Serviços de efeitos visuais em obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "125013500",
+      "descricao": "Serviços de animação"
+    },
+    {
+      "codigo_nbs": "125013600",
+      "descricao": "Serviços de legendas, títulos e dublagem em obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "125013700",
+      "descricao": "Serviços de projeto e edição de som em obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "125013900",
+      "descricao": "Serviços de pós-produção de obras audiovisuais não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "125014000",
+      "descricao": "Serviços de agenciamento para a comercialização de obras audiovisuais"
+    },
+    {
+      "codigo_nbs": "125015000",
+      "descricao": "Serviços de projeção de filmes"
+    },
+    {
+      "codigo_nbs": "125019000",
+      "descricao": "Serviços de produção audiovisual, de apoio e relacionados não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "125021000",
+      "descricao": "Serviços de organização e promoção de atuações artísticas ao vivo"
+    },
+    {
+      "codigo_nbs": "125022000",
+      "descricao": "Serviços de produção e apresentação de atuações artísticas ao vivo"
+    },
+    {
+      "codigo_nbs": "125023000",
+      "descricao": "Serviços de apoio para atuações artísticas ao vivo"
+    },
+    {
+      "codigo_nbs": "125029000",
+      "descricao": "Serviços de apresentação e promoção de atuações artísticas e outros serviços de entretenimento ao vivo não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "125031000",
+      "descricao": "Serviços de atuação artística"
+    },
+    {
+      "codigo_nbs": "125032000",
+      "descricao": "Serviços de autores, compositores, escultores, pintores e outros artistas, exceto os de atuação artística"
+    },
+    {
+      "codigo_nbs": "125041100",
+      "descricao": "Serviços de museus"
+    },
+    {
+      "codigo_nbs": "125041200",
+      "descricao": "Serviços de preservação e operação de locais e construções históricas"
+    },
+    {
+      "codigo_nbs": "125042100",
+      "descricao": "Serviços de jardins botânico e zoológico"
+    },
+    {
+      "codigo_nbs": "125042200",
+      "descricao": "Serviços de reserva natural, incluindo preservação de vida selvagem"
+    },
+    {
+      "codigo_nbs": "125051000",
+      "descricao": "Serviços de organização e promoção de eventos desportivos e recreacionais desportivos"
+    },
+    {
+      "codigo_nbs": "125052000",
+      "descricao": "Serviços de clubes desportivos"
+    },
+    {
+      "codigo_nbs": "125059000",
+      "descricao": "Serviços desportivos e recreacionais desportivos não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "125060000",
+      "descricao": "Serviços fornecidos por atletas e desportistas, por conta própria, e serviços de apoio relacionados com desportes e recreação desportiva"
+    },
+    {
+      "codigo_nbs": "125071000",
+      "descricao": "Serviços de parques temáticos de diversão"
+    },
+    {
+      "codigo_nbs": "125079000",
+      "descricao": "Serviços de parques de diversão e atrações similares não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "125080000",
+      "descricao": "Serviços recreativos, culturais e desportivos não classificados em posições anteriores"
+    },
+    {
+      "codigo_nbs": "126011000",
+      "descricao": "Serviços de limpeza de têxteis, exceto quando realizados a seco"
+    },
+    {
+      "codigo_nbs": "126012000",
+      "descricao": "Serviços de limpeza a seco"
+    },
+    {
+      "codigo_nbs": "126013000",
+      "descricao": "Serviços de tinturaria"
+    },
+    {
+      "codigo_nbs": "126014000",
+      "descricao": "Serviços de passadoria de roupas e outros artigos têxteis"
+    },
+    {
+      "codigo_nbs": "126019000",
+      "descricao": "Serviços de lavanderia não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "126021000",
+      "descricao": "Serviços de cabeleireiros e barbeiros"
+    },
+    {
+      "codigo_nbs": "126022000",
+      "descricao": "Serviços de manicure, pedicure e tratamento cosmético"
+    },
+    {
+      "codigo_nbs": "126023000",
+      "descricao": "Serviços de bem-estar físico"
+    },
+    {
+      "codigo_nbs": "126029000",
+      "descricao": "Serviços de tratamento de beleza e bem-estar físico não classificados em subposições anteriores"
+    },
+    {
+      "codigo_nbs": "126030000",
+      "descricao": "Serviços funerários, de cremação e de embalsamamento"
+    },
+    {
+      "codigo_nbs": "126040000",
+      "descricao": "Serviços de confecção de roupas e outros artigos têxteis"
+    },
+    {
+      "codigo_nbs": "126050000",
+      "descricao": "Serviços domésticos"
+    },
+    {
+      "codigo_nbs": "126060000",
+      "descricao": "Serviços pessoais não classificados em posições anteriores"
+    }
+  ]
+}

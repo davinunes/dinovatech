@@ -88,6 +88,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
     $action = $_POST['action'] ?? $_GET['action'] ?? $_REQUEST['action'] ?? '';
 
     switch ($action) {
+        // ACTIONS: Catálogo e Referência Fiscal Nacional (TribRef...)
+        case 'search_fiscal_catalog':
+            $termo = trim($_POST['termo'] ?? $_GET['termo'] ?? '');
+            $tipo = trim($_POST['tipo'] ?? $_GET['tipo'] ?? 'tributacao');
+            
+            if ($tipo === 'nbs') {
+                $results = FiscalCatalogHelper::searchNbs($termo, $link);
+            } else {
+                $results = FiscalCatalogHelper::searchTributacaoNacional($termo, $link);
+            }
+            $response['success'] = true;
+            $response['data'] = $results;
+            break;
+
+        case 'get_correlacao_reforma':
+            $cTribNac = trim($_POST['codigo_trib_nac'] ?? '');
+            $cNbs = trim($_POST['codigo_nbs'] ?? '');
+            $correlacao = FiscalCatalogHelper::getCorrelacaoReforma($cTribNac, $cNbs, $link);
+            $response['success'] = true;
+            $response['data'] = $correlacao;
+            break;
+
         // ACTIONS: ContaDev Integration
         case 'contadev_login':
             $email = trim($_POST['email'] ?? '');

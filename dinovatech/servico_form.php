@@ -632,13 +632,30 @@ if ($id_servico) {
                 const codTrib = opt.val();
 
                 if (item) $('#item_lista_servico').val(item);
-                if (tribNac) $('#codigo_tributacao_nacional').val(tribNac);
+                if (tribNac) {
+                    $('#codigo_tributacao_nacional').val(tribNac).trigger('change');
+                }
                 if (tribIssqn) $('#tributacao_issqn').val(tribIssqn);
                 if (codTrib) $('#codigo_tributacao_municipio').val(codTrib);
                 if (aliquota !== undefined) $('#aliquota_iss').val(aliquota);
                 if (cnae) {
                     $('#codigo_cnae').val(cnae);
                     $('#select_cnae_fiscal').val(cnae);
+                }
+            });
+
+            // Sincronização ao alterar cTribNac (busca automática dos parâmetros de IBS/CBS)
+            $('#codigo_tributacao_nacional, #codigo_nbs').on('change blur', function() {
+                const cTrib = $('#codigo_tributacao_nacional').val().trim();
+                const cNbs = $('#codigo_nbs').val().trim();
+                if (cTrib.length >= 6) {
+                    $.post('app.php', { action: 'get_correlacao_reforma', codigo_trib_nac: cTrib, codigo_nbs: cNbs }, function(res) {
+                        if (res.success && res.data) {
+                            if (res.data.cst_ibs_cbs) $('#cst_ibs_cbs').val(res.data.cst_ibs_cbs);
+                            if (res.data.classificacao_trib_ibs_cbs) $('#classificacao_trib_ibs_cbs').val(res.data.classificacao_trib_ibs_cbs);
+                            if (res.data.indicador_operacao) $('#indicador_operacao').val(res.data.indicador_operacao);
+                        }
+                    }, 'json');
                 }
             });
 
