@@ -16,6 +16,7 @@ class EmissionResult
     public ?string $urlVisualizacaoNacional = null;
     public ?string $xmlEnvio = null;
     public ?string $xmlRetorno = null;
+    public ?string $envelopeEnvio = null;
     public array $erros = [];
 
     public function isSuccess(): bool

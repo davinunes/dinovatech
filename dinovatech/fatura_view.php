@@ -1269,6 +1269,9 @@ if ($id_fatura) {
                     if (res.debug_xml) {
                         console.log("DEBUG XML ENVIO:", res.debug_xml);
                     }
+                    if (res.debug_envelope) {
+                        console.log("DEBUG ENVELOPE SOAP:", res.debug_envelope);
+                    }
                     if (res.debug_retorno) {
                         console.log("DEBUG RETORNO SOAP:", res.debug_retorno);
                     }

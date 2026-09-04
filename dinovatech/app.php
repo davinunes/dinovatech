@@ -3146,6 +3146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $response['message'] = $emissionRes->message;
                         $response['details'] = $emissionRes->details;
                         $response['debug_xml'] = $emissionRes->xmlEnvio;
+                        $response['debug_envelope'] = $emissionRes->envelopeEnvio;
                         $retornoStr = $emissionRes->xmlRetorno ?: '';
                         if (!mb_check_encoding($retornoStr, 'UTF-8')) {
                             $retornoStr = mb_convert_encoding($retornoStr, 'UTF-8', 'ISO-8859-1, Windows-1252');

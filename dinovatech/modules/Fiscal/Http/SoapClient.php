@@ -38,8 +38,8 @@ class SoapClient
   <soapenv:Header/>
   <soapenv:Body>
     <nfse:{$methodName}>
-      <nfseCabecMsg>{$cabecEscaped}</nfseCabecMsg>
-      <nfseDadosMsg>{$dadosEscaped}</nfseDadosMsg>
+      <nfse:nfseCabecMsg>{$cabecEscaped}</nfse:nfseCabecMsg>
+      <nfse:nfseDadosMsg>{$dadosEscaped}</nfse:nfseDadosMsg>
     </nfse:{$methodName}>
   </soapenv:Body>
 </soapenv:Envelope>

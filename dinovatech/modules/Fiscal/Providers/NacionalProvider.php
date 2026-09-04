@@ -78,6 +78,7 @@ class NacionalProvider implements NfseProviderInterface
 
             // 5. Interpreta o retorno
             $result = $this->parser->parseEmissao($responseXml, $signedXml, $dpsId);
+            $result->envelopeEnvio = $soapResponse['request_envelope'] ?? '';
 
             // 6. AUTO-RECUPERAÇÃO / RESILIÊNCIA: Se não confirmou imediatamente, consulta a DPS
             if (!$result->isSuccess()) {
