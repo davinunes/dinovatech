@@ -34,14 +34,15 @@ class SoapClient
         $dadosEscaped = htmlspecialchars($dadosXml, ENT_XML1, 'UTF-8');
 
         $soapEnvelope = <<<XML
-<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Body>
-    <{$methodName} xmlns="http://www.sped.fazenda.gov.br/nfse">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:nfse="http://www.sped.fazenda.gov.br/nfse">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <nfse:{$methodName}>
       <nfseCabecMsg>{$cabecEscaped}</nfseCabecMsg>
       <nfseDadosMsg>{$dadosEscaped}</nfseDadosMsg>
-    </{$methodName}>
-  </soap:Body>
-</soap:Envelope>
+    </nfse:{$methodName}>
+  </soapenv:Body>
+</soapenv:Envelope>
 XML;
 
         $soapAction = "http://www.sped.fazenda.gov.br/nfse/{$methodName}";
