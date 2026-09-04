@@ -29,7 +29,7 @@ class SoapClient
     {
         // O atributo versao= do cabecalho é SEMPRE "1.01" conforme o schema da NFS-e Nacional.
         // versaoDados indica a versão do XML de dados enviado (1.00 para DPS sem IBS/CBS, 1.01 com IBS/CBS).
-        $cabecalhoXml = "<cabecalho versao=\"1.01\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
+        $cabecalhoXml = "<cabecalho versao=\"{$versaoDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
 
         // Prepara os parâmetros do Envelope (escapados conforme o WSDL wrapped)
         $cabecEscaped = htmlspecialchars($cabecalhoXml, ENT_XML1, 'UTF-8');

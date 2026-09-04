@@ -64,8 +64,8 @@ class NacionalProvider implements NfseProviderInterface
             $endpoint = $this->getEndpointUrl($data->ambiente);
             $soapClient = new SoapClient($certManager, $endpoint);
 
-            // versaoDados no cabeçalho é sempre 1.01 (versão do schema do serviço)
-            $soapResponse = $soapClient->call('GerarNfse', $signedXml, '1.01');
+            $versaoDados = ($data->ambiente === 'producao') ? '1.01' : '1.00';
+            $soapResponse = $soapClient->call('GerarNfse', $signedXml, $versaoDados);
 
             if (!empty($soapResponse['curl_error'])) {
                 throw new Exception("Falha de conexão com o WebService da NFS-e: " . $soapResponse['curl_error']);
