@@ -7,11 +7,16 @@ use Dinovatech\Modules\Fiscal\Formatters\DpsIdGenerator;
 class DpsXmlBuilder
 {
     /**
-     * Monta o XML completo para envio da DPS no método GerarNfse (antes da assinatura).
-     * 
+     * Monta o XML da DPS para o método GerarNfse.
+     *
+     * Versão da DPS:
+     *  - 1.00: sem o grupo IBS/CBS — compatível com todos os ambientes.
+     *          Usar para homologação, onde o servidor pode ainda não suportar 1.01.
+     *  - 1.01: com o grupo IBS/CBS — apenas quando o servidor aceitar (produção).
+     *
      * @param NfseData $data
-     * @param string $dpsId ID gerado de 45 caracteres
-     * @return string XML não-assinado contendo <GerarNfseEnvio><DPS versao="1.01"><infDPS Id="...">...</infDPS></DPS></GerarNfseEnvio>
+     * @param string $dpsId ID de 45 chars
+     * @return string XML não-assinado
      */
     public function build(NfseData $data, string $dpsId): string
     {
@@ -98,14 +103,34 @@ class DpsXmlBuilder
         $pAliq = number_format($data->aliquotaIss, 2, '.', '');
         $tribISSQN = (string)($data->tributacaoIssqn ?: 1);
 
-        // Grupo IBS/CBS (Estrutura da Reforma Tributária 1.01)
-        $cIndOp = $data->indicadorOperacao ?: '050101';
-        $cstIbsCbs = $data->cstIbsCbs ?: '000';
-        $classTrib = $data->classificacaoTribIbsCbs ?: '000000';
+        // Versão 1.00 = sem IBSCBS (homologação), 1.01 = com IBSCBS (produção, Reforma Tributária)
+        $usarIbsCbs = ($data->ambiente === 'producao');
+        $versaoDps = $usarIbsCbs ? '1.01' : '1.00';
+
+        $ibsCbsXml = '';
+        if ($usarIbsCbs) {
+            $cIndOp    = $data->indicadorOperacao ?: '050101';
+            $cstIbsCbs = $data->cstIbsCbs ?: '000';
+            $classTrib = $data->classificacaoTribIbsCbs ?: '000000';
+            $ibsCbsXml = "<IBSCBS>
+                <finNFSe>0</finNFSe>
+                <indFinal>0</indFinal>
+                <cIndOp>{$cIndOp}</cIndOp>
+                <indDest>0</indDest>
+                <valores>
+                    <trib>
+                        <gIBSCBS>
+                            <CST>{$cstIbsCbs}</CST>
+                            <cClassTrib>{$classTrib}</cClassTrib>
+                        </gIBSCBS>
+                    </trib>
+                </valores>
+            </IBSCBS>";
+        }
 
         $xml = <<<XML
 <GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
-    <DPS versao="1.01">
+    <DPS versao="{$versaoDps}">
         <infDPS Id="{$dpsId}">
             <tpAmb>{$tpAmb}</tpAmb>
             <dhEmi>{$dhEmi}</dhEmi>
@@ -150,20 +175,7 @@ class DpsXmlBuilder
                     </totTrib>
                 </trib>
             </valores>
-            <IBSCBS>
-                <finNFSe>0</finNFSe>
-                <indFinal>0</indFinal>
-                <cIndOp>{$cIndOp}</cIndOp>
-                <indDest>0</indDest>
-                <valores>
-                    <trib>
-                        <gIBSCBS>
-                            <CST>{$cstIbsCbs}</CST>
-                            <cClassTrib>{$classTrib}</cClassTrib>
-                        </gIBSCBS>
-                    </trib>
-                </valores>
-            </IBSCBS>
+            {$ibsCbsXml}
         </infDPS>
     </DPS>
 </GerarNfseEnvio>
