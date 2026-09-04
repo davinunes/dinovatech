@@ -234,32 +234,51 @@ DBClose($link);
                                 </div>
 
                                 <!-- DADOS FISCAIS PERSONALIZADOS -->
-                                <div class="border-t pt-4 mt-2">
-                                    <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                                        <span class="material-icons mr-2 text-cyan-600">receipt_long</span> Dados
-                                        Fiscais
-                                        (Personalização)
-                                    </h3>
-                                    <p class="text-sm text-gray-500 mb-4">Deixe em branco para usar o padrão do Serviço.
-                                    </p>
-
-                                    <div class="mb-4">
-                                        <label for="descricao_fiscal"
-                                            class="block text-sm font-medium text-gray-700 mb-1">
-                                            Descrição Fiscal (Override)
-                                            <span class="text-xs text-gray-500 font-normal ml-1">- Substitui a descrição
-                                                do serviço para este contrato</span>
-                                        </label>
-                                        <textarea id="descricao_fiscal" name="descricao_fiscal" rows="2"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
-                                            placeholder="Ex: Consultoria Mensal (Sobrescreve o cadastro do serviço)"><?= $contrato['descricao_fiscal'] ?? '' ?></textarea>
+                                <div class="border-t pt-6 mt-4">
+                                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                        <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                                            <span class="material-icons mr-2 text-amber-500">tune</span> 
+                                            Personalização Fiscal (Sobreposição / Override)
+                                        </h3>
+                                        <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
+                                            <span class="material-icons text-[14px]">layers</span> Precedência: Serviço &lt; Contrato
+                                        </span>
                                     </div>
 
-                                    <div class="bg-gradient-to-r from-cyan-50 to-slate-50 border border-cyan-100 rounded-xl p-4 mb-4">
+                                    <!-- Banner de Alerta de Sobreposição -->
+                                    <div class="bg-amber-50/90 border border-amber-200 rounded-xl p-3.5 mb-5 text-xs text-amber-900 flex items-start gap-2.5 shadow-sm">
+                                        <span class="material-icons text-amber-600 text-base mt-0.5">info</span>
+                                        <div>
+                                            <span class="font-bold">Atenção sobre a Precedência:</span> Os campos preenchidos nesta seção <strong>sobrepõem diretamente o cadastro do Serviço</strong> para todas as faturas geradas por este contrato. 
+                                            <span class="block text-amber-800/90 mt-0.5">
+                                                Campos deixados <em>em branco</em> continuarão herdando automaticamente as informações cadastradas no Serviço original.
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label for="descricao_fiscal" class="block text-sm font-semibold text-gray-700">
+                                                Descrição Fiscal da NFS-e
+                                            </label>
+                                            <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                                ⚡ Sobrepõe o Serviço
+                                            </span>
+                                        </div>
+                                        <textarea id="descricao_fiscal" name="descricao_fiscal" rows="2"
+                                            class="w-full p-3 border border-amber-200 bg-amber-50/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 transition text-sm"
+                                            placeholder="Ex: Mensalidade de Gestão e Suporte TI - Contrato Especial (Deixe em branco para usar o texto padrão do serviço)"><?= $contrato['descricao_fiscal'] ?? '' ?></textarea>
+                                        <p class="text-[11px] text-gray-500 mt-1">Substitui a discriminação do serviço para este contrato. Suporta a variável <code class="bg-gray-100 px-1 py-0.5 rounded text-cyan-700 font-mono">{MES}</code>.</p>
+                                    </div>
+
+                                    <div class="bg-gradient-to-r from-amber-50/40 via-slate-50 to-cyan-50/40 border border-amber-200/80 rounded-xl p-4 mb-4">
                                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label for="select_atividade_contrato" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
-                                                    <span class="material-icons text-xs text-cyan-600">category</span> Atividade Municipal / Item LC 116 (ISS DF)
+                                                <label for="select_atividade_contrato" class="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                                                    <span class="flex items-center gap-1">
+                                                        <span class="material-icons text-xs text-cyan-600">category</span> Atividade Municipal / Item LC 116 (ISS DF)
+                                                    </span>
+                                                    <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800">Sobreposição</span>
                                                 </label>
                                                 <select id="select_atividade_contrato" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
                                                     <option value="">-- Padrão do Cadastro do Serviço --</option>
@@ -275,12 +294,15 @@ DBClose($link);
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
-                                                <p class="text-[10px] text-gray-500 mt-1">Preenche Item LC 116, Código de Tributação, Alíquota (2,00%) e CNAE para este contrato.</p>
+                                                <p class="text-[10px] text-gray-500 mt-1">Preenche automaticamente Item LC 116, Código de Tributação, Alíquota e CNAE para este contrato.</p>
                                             </div>
 
                                             <div>
-                                                <label for="select_cnae_contrato" class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
-                                                    <span class="material-icons text-xs text-cyan-600">business</span> CNAE Autorizado (Ficha Cadastral)
+                                                <label for="select_cnae_contrato" class="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                                                    <span class="flex items-center gap-1">
+                                                        <span class="material-icons text-xs text-cyan-600">business</span> CNAE Autorizado (Ficha Cadastral)
+                                                    </span>
+                                                    <span class="text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800">Sobreposição</span>
                                                 </label>
                                                 <select id="select_cnae_contrato" class="w-full p-2.5 border border-cyan-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white text-xs font-medium text-gray-800 shadow-sm">
                                                     <option value="">-- Padrão do Cadastro do Serviço --</option>
@@ -299,72 +321,90 @@ DBClose($link);
 
                                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div>
-                                            <label for="item_lista_servico" class="block text-sm font-semibold text-gray-700 mb-1">
-                                                Item LC 116/03 (Override)
-                                            </label>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <label for="item_lista_servico" class="block text-xs font-bold text-gray-700">
+                                                    Item LC 116/03
+                                                </label>
+                                                <span class="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">Override</span>
+                                            </div>
                                             <input type="text" id="item_lista_servico" name="item_lista_servico"
                                                 value="<?= $contrato['item_lista_servico'] ?? '' ?>"
                                                 placeholder="Padrão Serviço (Ex: 01.05)"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                            <p class="text-[11px] text-gray-500 mt-1">Item da LC 116/2003 para este contrato.</p>
+                                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <p class="text-[10px] text-gray-500 mt-1">Item da LC 116 para este contrato.</p>
                                         </div>
 
                                         <div>
-                                            <label for="codigo_cnae" class="block text-sm font-semibold text-gray-700 mb-1">
-                                                Código CNAE (Override)
-                                            </label>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <label for="codigo_cnae" class="block text-xs font-bold text-gray-700">
+                                                    Código CNAE
+                                                </label>
+                                                <span class="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">Override</span>
+                                            </div>
                                             <input type="text" id="codigo_cnae" name="codigo_cnae"
                                                 value="<?= $contrato['codigo_cnae'] ?? '' ?>"
                                                 placeholder="Padrão Serviço (Ex: 6202300)"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                            <p class="text-[11px] text-gray-500 mt-1">CNAE de 7 dígitos da atividade econômica.</p>
+                                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <p class="text-[10px] text-gray-500 mt-1">CNAE de 7 dígitos da atividade.</p>
                                         </div>
 
                                         <div>
-                                            <label for="codigo_tributacao_municipio" class="block text-sm font-semibold text-gray-700 mb-1">
-                                                Cód. Tributação Municipal
-                                            </label>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <label for="codigo_tributacao_municipio" class="block text-xs font-bold text-gray-700">
+                                                    Cód. Tributação Municipal
+                                                </label>
+                                                <span class="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">Override</span>
+                                            </div>
                                             <input type="text" id="codigo_tributacao_municipio"
                                                 name="codigo_tributacao_municipio"
                                                 value="<?= $contrato['codigo_tributacao_municipio'] ?? '' ?>"
                                                 placeholder="Padrão Serviço (Ex: 105)"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                            <p class="text-[11px] text-gray-500 mt-1">Código de atividade na SEFIN DF (ex: 105).</p>
+                                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <p class="text-[10px] text-gray-500 mt-1">Código SEFIN DF (ex: 105).</p>
                                         </div>
 
                                         <div>
-                                            <label for="codigo_nbs" class="block text-sm font-semibold text-gray-700 mb-1">
-                                                Código NBS (Override)
-                                            </label>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <label for="codigo_nbs" class="block text-xs font-bold text-gray-700">
+                                                    Código NBS
+                                                </label>
+                                                <span class="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">Override</span>
+                                            </div>
                                             <input type="text" id="codigo_nbs" name="codigo_nbs"
                                                 value="<?= $contrato['codigo_nbs'] ?? '' ?>"
                                                 placeholder="Padrão Serviço (Ex: 115080000)"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                            <p class="text-[11px] text-gray-500 mt-1">Nomenclatura Brasileira de Serviços.</p>
+                                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <p class="text-[10px] text-gray-500 mt-1">Nomenclatura Bras. Serviços.</p>
                                         </div>
 
                                         <div>
-                                            <label for="aliquota_iss" class="block text-sm font-semibold text-gray-700 mb-1">
-                                                Alíquota ISS (%)
-                                            </label>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <label for="aliquota_iss" class="block text-xs font-bold text-gray-700">
+                                                    Alíquota ISS (%)
+                                                </label>
+                                                <span class="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">Override</span>
+                                            </div>
                                             <input type="number" id="aliquota_iss" name="aliquota_iss" step="0.01"
                                                 min="0" max="100" value="<?= $contrato['aliquota_iss'] ?? '' ?>"
                                                 placeholder="Padrão Serviço (Ex: 2.00)"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-semibold text-gray-800 bg-gray-50">
-                                            <p class="text-[11px] text-gray-500 mt-1">Alíquota devida ao município (2,00%).</p>
+                                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition font-semibold text-gray-800 bg-gray-50">
+                                            <p class="text-[10px] text-gray-500 mt-1">Alíquota devida (ex: 2,00%).</p>
                                         </div>
 
                                         <div>
-                                            <label for="iss_retido" class="block text-sm font-semibold text-gray-700 mb-1">
-                                                ISS Retido na Fonte?
-                                            </label>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <label for="iss_retido" class="block text-xs font-bold text-gray-700">
+                                                    ISS Retido na Fonte?
+                                                </label>
+                                                <span class="text-[9px] font-semibold text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">Override</span>
+                                            </div>
                                             <select name="iss_retido" id="iss_retido"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
+                                                class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white">
                                                 <option value="">Padrão do Serviço</option>
                                                 <option value="1" <?= ($contrato['iss_retido'] ?? '') === '1' ? 'selected' : '' ?>>Sim, Retido na Fonte</option>
                                                 <option value="0" <?= ($contrato['iss_retido'] ?? '') === '0' ? 'selected' : '' ?>>Não, Normal</option>
                                             </select>
-                                            <p class="text-[11px] text-gray-500 mt-1">Se o cliente deve reter o ISS.</p>
+                                            <p class="text-[10px] text-gray-500 mt-1">Se o cliente deve reter o ISS.</p>
                                         </div>
                                     </div>
 
