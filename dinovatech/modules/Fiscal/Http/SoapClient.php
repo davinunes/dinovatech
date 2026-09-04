@@ -28,14 +28,17 @@ class SoapClient
     public function call(string $methodName, string $dadosXml, string $versaoDados = '1.01'): array
     {
         $cabecalhoXml = "<cabecalho versao=\"{$versaoDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
+        
+        // Garante a remoção de prólogos XML internos para evitar rejeições E183/E160
+        $cleanDadosXml = str_replace(['<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="utf-8"?>'], '', $dadosXml);
 
         $soapEnvelope = <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Header/>
   <soapenv:Body>
     <{$methodName} xmlns="http://www.sped.fazenda.gov.br/nfse">
-      <nfseCabecMsg><![CDATA[{$cabecalhoXml}]]></nfseCabecMsg>
-      <nfseDadosMsg><![CDATA[{$dadosXml}]]></nfseDadosMsg>
+      <nfseCabecMsg>{$cabecalhoXml}</nfseCabecMsg>
+      <nfseDadosMsg>{$cleanDadosXml}</nfseDadosMsg>
     </{$methodName}>
   </soapenv:Body>
 </soapenv:Envelope>
