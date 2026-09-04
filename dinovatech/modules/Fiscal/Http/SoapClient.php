@@ -36,13 +36,13 @@ class SoapClient
         $dadosEscaped = htmlspecialchars($dadosXml, ENT_XML1, 'UTF-8');
 
         $soapEnvelope = <<<XML
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:nfse="http://www.sped.fazenda.gov.br/nfse">
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Header/>
   <soapenv:Body>
-    <nfse:{$methodName}>
+    <{$methodName} xmlns="http://www.sped.fazenda.gov.br/nfse">
       <nfseCabecMsg>{$cabecEscaped}</nfseCabecMsg>
       <nfseDadosMsg>{$dadosEscaped}</nfseDadosMsg>
-    </nfse:{$methodName}>
+    </{$methodName}>
   </soapenv:Body>
 </soapenv:Envelope>
 XML;
