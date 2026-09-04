@@ -239,9 +239,10 @@ class NacionalProvider implements NfseProviderInterface
 
     private function getEndpointUrl(string $ambiente): string
     {
-        // Endpoints oficiais conforme WSDLs em doc_issdf/novo_padrao_nacional/
+        // Endpoints operacionais confirmados (soap:address do WSDL aponta para /nfse.asmx,
+        // mas o serviço real está em /wsnfsenacional/).
         return ($ambiente === 'producao')
-            ? 'https://nfse.fazenda.df.gov.br/nfse.asmx'
-            : 'https://nfse.issnetonline.com.br/nfse.asmx';
+            ? 'https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx'
+            : 'https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx';
     }
 }
