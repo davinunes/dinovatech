@@ -3145,8 +3145,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $response['success'] = false;
                         $response['message'] = $emissionRes->message;
                         $response['details'] = $emissionRes->details;
+                        $vDados = ($configEmissor['ambiente_padrao'] ?? 'homologacao') === 'producao' ? '1.01' : '1.00';
                         $response['debug_xml'] = $emissionRes->xmlEnvio;
-                        $response['debug_cabecalho'] = "<cabecalho versao=\"{$versaoDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
+                        $response['debug_cabecalho'] = "<cabecalho versao=\"{$vDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$vDados}</versaoDados></cabecalho>";
                         $response['debug_envelope'] = $emissionRes->envelopeEnvio;
                         $retornoStr = $emissionRes->xmlRetorno ?: '';
                         if (!mb_check_encoding($retornoStr, 'UTF-8')) {

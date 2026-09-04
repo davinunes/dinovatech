@@ -29,19 +29,15 @@ class SoapClient
     {
         // O atributo versao= do cabecalho é SEMPRE "1.01" conforme o schema da NFS-e Nacional.
         // versaoDados indica a versão do XML de dados enviado (1.00 para DPS sem IBS/CBS, 1.01 com IBS/CBS).
-        $cabecalhoXml = "<cabecalho versao=\"{$versaoDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
-
-        // Prepara os parâmetros do Envelope (escapados conforme o WSDL wrapped)
-        $cabecEscaped = htmlspecialchars($cabecalhoXml, ENT_XML1, 'UTF-8');
-        $dadosEscaped = htmlspecialchars($dadosXml, ENT_XML1, 'UTF-8');
+        $cabecalhoXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><cabecalho versao=\"{$versaoDados}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
 
         $soapEnvelope = <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
   <soapenv:Header/>
   <soapenv:Body>
     <{$methodName} xmlns="http://www.sped.fazenda.gov.br/nfse">
-      <nfseCabecMsg>{$cabecEscaped}</nfseCabecMsg>
-      <nfseDadosMsg>{$dadosEscaped}</nfseDadosMsg>
+      <nfseCabecMsg><![CDATA[{$cabecalhoXml}]]></nfseCabecMsg>
+      <nfseDadosMsg><![CDATA[{$dadosXml}]]></nfseDadosMsg>
     </{$methodName}>
   </soapenv:Body>
 </soapenv:Envelope>
