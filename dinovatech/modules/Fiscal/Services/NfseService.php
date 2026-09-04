@@ -149,8 +149,12 @@ class NfseService
         // 4. Executa a emissão pelo provedor ativo
         $result = $this->provider->emitir($dto);
 
-        // 5. Persiste o histórico em NfseEmissoes
-        $this->persistirEmissao($dto, $result, $idUsuarioResponsavel);
+        // 5. Persiste o histórico em NfseEmissoes (blindado contra falha de gravação)
+        try {
+            $this->persistirEmissao($dto, $result, $idUsuarioResponsavel);
+        } catch (\Throwable $t) {
+            error_log("Aviso: Falha ao persistir histórico em NfseEmissoes: " . $t->getMessage());
+        }
 
         // 6. Atualiza contadores e fatura se emitido com sucesso
         if ($result->isSuccess()) {

@@ -105,10 +105,11 @@ class NacionalProvider implements NfseProviderInterface
                 }
             }
 
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             $result->success = false;
             $result->status = 'erro';
             $result->message = 'Exceção na emissão Nacional: ' . $e->getMessage();
+            $result->details = "Erro em " . $e->getFile() . ":" . $e->getLine() . "\n" . $e->getTraceAsString();
         } finally {
             if (isset($certManager)) {
                 $certManager->cleanup();

@@ -29,8 +29,8 @@ class NacionalResponseParser
             $result->success = false;
             $result->status = 'erro';
             $result->message = 'Erro de comunicação SOAP (Fault).';
-            if (preg_match('/<([a-zA-Z0-9_\-]+:)?faultstring\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?faultstring>/si', $responseXml, $m)) {
-                $result->details = trim(strip_tags(htmlspecialchars_decode($m[2])));
+            if (preg_match('/<(?:\w+:)?faultstring\b[^>]*>(.*?)<\/(?:\w+:)?faultstring>/si', $responseXml, $m)) {
+                $result->details = trim(strip_tags(htmlspecialchars_decode($m[1])));
             } else {
                 $result->details = trim(strip_tags(htmlspecialchars_decode($responseXml)));
             }
@@ -51,21 +51,21 @@ class NacionalResponseParser
             $result->message = 'NFS-e emitida com sucesso no Padrão Nacional.';
 
             // Extrai número da nota
-            if (preg_match('/<([a-zA-Z0-9_\-]+:)?nNFSe\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?nNFSe>/si', $responseXml, $m) || 
-                preg_match('/<([a-zA-Z0-9_\-]+:)?nDFSe\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?nDFSe>/si', $responseXml, $m)) {
-                $result->numeroNota = trim($m[2]);
+            if (preg_match('/<(?:\w+:)?nNFSe\b[^>]*>(.*?)<\/(?:\w+:)?nNFSe>/si', $responseXml, $m) || 
+                preg_match('/<(?:\w+:)?nDFSe\b[^>]*>(.*?)<\/(?:\w+:)?nDFSe>/si', $responseXml, $m)) {
+                $result->numeroNota = trim($m[1]);
             }
 
             // Extrai Chave de Acesso Nacional (50 dígitos)
             if (preg_match('/Id="NFS([0-9A-Z]{50})"/i', $responseXml, $m) || 
-                preg_match('/<([a-zA-Z0-9_\-]+:)?chNFSe\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?chNFSe>/si', $responseXml, $m)) {
-                $result->chaveNfse = trim($m[1] ?? $m[2]);
+                preg_match('/<(?:\w+:)?chNFSe\b[^>]*>(.*?)<\/(?:\w+:)?chNFSe>/si', $responseXml, $m)) {
+                $result->chaveNfse = trim($m[1]);
             }
 
             // Código de verificação
-            if (preg_match('/<([a-zA-Z0-9_\-]+:)?cVerifNFSeMun\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?cVerifNFSeMun>/si', $responseXml, $m) || 
-                preg_match('/<([a-zA-Z0-9_\-]+:)?cVerif\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?cVerif>/si', $responseXml, $m)) {
-                $result->codigoVerificacao = trim($m[2]);
+            if (preg_match('/<(?:\w+:)?cVerifNFSeMun\b[^>]*>(.*?)<\/(?:\w+:)?cVerifNFSeMun>/si', $responseXml, $m) || 
+                preg_match('/<(?:\w+:)?cVerif\b[^>]*>(.*?)<\/(?:\w+:)?cVerif>/si', $responseXml, $m)) {
+                $result->codigoVerificacao = trim($m[1]);
             }
         } else {
             $result->success = false;
@@ -191,14 +191,14 @@ class NacionalResponseParser
         $messages = [];
 
         // 1. Padrão ABRASF / Nota Control: <MensagemRetorno> com ou sem namespace
-        if (preg_match_all('/<([a-zA-Z0-9_\-]+:)?MensagemRetorno\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?MensagemRetorno>/si', $xml, $matches)) {
-            foreach ($matches[2] as $item) {
+        if (preg_match_all('/<(?:\w+:)?MensagemRetorno\b[^>]*>(.*?)<\/(?:\w+:)?MensagemRetorno>/si', $xml, $matches)) {
+            foreach ($matches[1] as $item) {
                 $cod = '';
                 $msg = '';
                 $corr = '';
-                if (preg_match('/<([a-zA-Z0-9_\-]+:)?Codigo\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?Codigo>/si', $item, $m)) $cod = trim($m[2]);
-                if (preg_match('/<([a-zA-Z0-9_\-]+:)?Mensagem\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?Mensagem>/si', $item, $m)) $msg = trim($m[2]);
-                if (preg_match('/<([a-zA-Z0-9_\-]+:)?Correcao\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?Correcao>/si', $item, $m)) $corr = trim($m[2]);
+                if (preg_match('/<(?:\w+:)?Codigo\b[^>]*>(.*?)<\/(?:\w+:)?Codigo>/si', $item, $m)) $cod = trim($m[1]);
+                if (preg_match('/<(?:\w+:)?Mensagem\b[^>]*>(.*?)<\/(?:\w+:)?Mensagem>/si', $item, $m)) $msg = trim($m[1]);
+                if (preg_match('/<(?:\w+:)?Correcao\b[^>]*>(.*?)<\/(?:\w+:)?Correcao>/si', $item, $m)) $corr = trim($m[1]);
 
                 $entry = $cod ? "[$cod] $msg" : $msg;
                 if ($corr) {
@@ -212,11 +212,11 @@ class NacionalResponseParser
 
         // 2. Padrão SPED Nacional: <cStat> / <xMotivo>
         if (empty($messages)) {
-            if (preg_match('/<([a-zA-Z0-9_\-]+:)?cStat\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?cStat>/si', $xml, $mStat)) {
-                $cStat = trim($mStat[2]);
+            if (preg_match('/<(?:\w+:)?cStat\b[^>]*>(.*?)<\/(?:\w+:)?cStat>/si', $xml, $mStat)) {
+                $cStat = trim($mStat[1]);
                 $xMotivo = '';
-                if (preg_match('/<([a-zA-Z0-9_\-]+:)?xMotivo\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?xMotivo>/si', $xml, $mMot)) {
-                    $xMotivo = trim($mMot[2]);
+                if (preg_match('/<(?:\w+:)?xMotivo\b[^>]*>(.*?)<\/(?:\w+:)?xMotivo>/si', $xml, $mMot)) {
+                    $xMotivo = trim($mMot[1]);
                 }
                 if ($cStat || $xMotivo) {
                     $messages[] = "[$cStat] $xMotivo";
@@ -226,8 +226,8 @@ class NacionalResponseParser
 
         // 3. Padrão <erro><descricao> ou <erro><mensagem>
         if (empty($messages)) {
-            if (preg_match_all('/<([a-zA-Z0-9_\-]+:)?erro\b[^>]*>(.*?)<\/([a-zA-Z0-9_\-]+:)?erro>/si', $xml, $matches)) {
-                foreach ($matches[2] as $item) {
+            if (preg_match_all('/<(?:\w+:)?erro\b[^>]*>(.*?)<\/(?:\w+:)?erro>/si', $xml, $matches)) {
+                foreach ($matches[1] as $item) {
                     $txt = trim(strip_tags($item));
                     if ($txt) $messages[] = $txt;
                 }

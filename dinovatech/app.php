@@ -3148,9 +3148,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $response['debug_xml'] = $emissionRes->xmlEnvio;
                         $response['debug_retorno'] = $emissionRes->xmlRetorno;
                     }
-                } catch (Exception $e) {
+                } catch (\Throwable $e) {
                     $response['success'] = false;
                     $response['message'] = "Erro na emissão Nacional: " . $e->getMessage();
+                    $response['details'] = "Arquivo: " . $e->getFile() . " (Linha " . $e->getLine() . ")\n" . $e->getTraceAsString();
                 }
                 break;
             }

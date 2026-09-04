@@ -1275,8 +1275,10 @@ if ($id_fatura) {
                     if (debugMsg) alert(debugMsg);
                     btn.prop('disabled', false).html(originalText);
                 }
-            }, 'json').fail(function () {
-                showToast('Erro de comunicação com o servidor.', 'error');
+            }, 'json').fail(function (jqXHR, textStatus, errorThrown) {
+                console.error("FALHA AJAX EMISSÃO:", textStatus, errorThrown, jqXHR.responseText);
+                alert("Resposta do servidor:\n\n" + (jqXHR.responseText || ("Status: " + textStatus + " / " + errorThrown)));
+                showToast('Falha na resposta do servidor.', 'error');
                 btn.prop('disabled', false).html(originalText);
             });
         }
