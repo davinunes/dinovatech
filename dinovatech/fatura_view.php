@@ -1267,16 +1267,16 @@ if ($id_fatura) {
                     // Show detailed error in alert for easier debugging
                     let debugMsg = res.details || res.message || '';
                     if (res.debug_xml) {
-                        console.log("DEBUG XML ENVIO (CORPO):", res.debug_xml);
+                        console.log("%cDEBUG XML ENVIO (CORPO):\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_xml);
                     }
                     if (res.debug_cabecalho) {
-                        console.log("DEBUG CABECALHO:", res.debug_cabecalho);
+                        console.log("%cDEBUG CABECALHO:\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_cabecalho);
                     }
                     if (res.debug_envelope) {
-                        console.log("DEBUG ENVELOPE SOAP:", res.debug_envelope);
+                        console.log("%cDEBUG ENVELOPE SOAP:\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_envelope);
                     }
                     if (res.debug_retorno) {
-                        console.log("DEBUG RETORNO SOAP:", res.debug_retorno);
+                        console.log("%cDEBUG RETORNO SOAP:\n", "color: #dc2626; font-weight: bold; font-size: 13px;", res.debug_retorno);
                     }
                     if (debugMsg) alert(debugMsg);
                     btn.prop('disabled', false).html(originalText);
