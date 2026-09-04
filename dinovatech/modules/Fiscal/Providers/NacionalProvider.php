@@ -151,6 +151,37 @@ class NacionalProvider implements NfseProviderInterface
         }
     }
 
+    public function consultarDpsDisponivel(int $pagina = 1, ?string $serie = null, ?int $numero = null): QueryResult
+    {
+        try {
+            $certManager = $this->getCertificateManager();
+            $builder = new \Dinovatech\Modules\Fiscal\Builders\ConsultarDpsDisponivelXmlBuilder();
+            $ambiente = $this->config['ambiente_padrao'] ?? 'homologacao';
+            $endpoint = $this->getEndpointUrl($ambiente);
+            $soapClient = new SoapClient($certManager, $endpoint);
+
+            $xml = $builder->build(
+                $this->config['cnpj'] ?? '',
+                $this->config['inscricao_municipal'] ?? '',
+                $pagina,
+                $serie,
+                $numero
+            );
+
+            $res = $soapClient->call('ConsultarDpsDisponivel', $xml, '1.00');
+            return $this->parser->parseConsultaDps($res['response_body']);
+        } catch (Exception $e) {
+            $q = new QueryResult();
+            $q->success = false;
+            $q->message = "Erro ao consultar DPS disponíveis: " . $e->getMessage();
+            return $q;
+        } finally {
+            if (isset($certManager)) {
+                $certManager->cleanup();
+            }
+        }
+    }
+
     public function consultarUrl(string $numeroNota, ?string $serie = null, ?int $numeroDocumento = null): UrlResult
     {
         try {

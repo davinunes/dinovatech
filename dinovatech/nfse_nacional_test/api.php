@@ -195,7 +195,36 @@ try {
   </soapenv:Body>
 </soapenv:Envelope>
 XML;
-    $response['envelope_soap'] = $soapEnvelope;
+    if ($action === 'consultar_disponivel') {
+        $builderDisp = new \Dinovatech\Modules\Fiscal\Builders\ConsultarDpsDisponivelXmlBuilder();
+        $xmlDisp = $builderDisp->build($prestCnpj, $prestIm, 1, $serieDps, $numDps);
+        $response['raw_xml'] = $xmlDisp;
+        $response['signed_xml'] = $xmlDisp;
+
+        if ($envelopeFormat === 'entities') {
+            $cabecBody = htmlspecialchars($cabecalhoXml, ENT_XML1, 'UTF-8');
+            $dadosBody = htmlspecialchars($xmlDisp, ENT_XML1, 'UTF-8');
+        } else {
+            $cabecBody = "<![CDATA[{$cabecalhoXml}]]>";
+            $dadosBody = "<![CDATA[{$xmlDisp}]]>";
+        }
+
+        $soapEnvelope = <<<XML
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <ConsultarDpsDisponivel xmlns="http://www.sped.fazenda.gov.br/nfse">
+      <nfseCabecMsg>{$cabecBody}</nfseCabecMsg>
+      <nfseDadosMsg>{$dadosBody}</nfseDadosMsg>
+    </ConsultarDpsDisponivel>
+  </soapenv:Body>
+</soapenv:Envelope>
+XML;
+        $response['envelope_soap'] = $soapEnvelope;
+        $soapAction = "http://www.sped.fazenda.gov.br/nfse/ConsultarDpsDisponivel";
+    } else {
+        $soapAction = "http://www.sped.fazenda.gov.br/nfse/GerarNfse";
+    }
 
     // Se o pedido for apenas preview, encerra com os XMLs gerados
     if ($action === 'preview') {
@@ -210,7 +239,6 @@ XML;
         ? 'https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx'
         : 'https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx';
 
-    $soapAction = "http://www.sped.fazenda.gov.br/nfse/GerarNfse";
     $tlsFiles = $certManager->getTlsFiles();
 
     $ch = curl_init();
