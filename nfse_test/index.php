@@ -57,6 +57,11 @@ date_default_timezone_set('UTC'); // Reset to predictable base
         <header class="mb-5 text-center">
             <h1 class="display-6 fw-bold text-primary">Painel de Integração NFS-e DF</h1>
             <p class="text-muted">Ambiente de Validação e Testes - Digital Inovation</p>
+            <div class="mt-3">
+                <a href="../dinovatech/nfse_nacional_test/index.php" class="btn btn-dark btn-lg shadow-sm">
+                    <i class="bi bi-shield-check text-warning me-2"></i>Acessar Campo de Prova — Novo Padrão Nacional (2026)
+                </a>
+            </div>
         </header>
 
         <!-- Environment Config -->
