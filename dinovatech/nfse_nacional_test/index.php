@@ -152,8 +152,8 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                             <div class="col-md-6">
                                 <label class="form-label">Ambiente WebService</label>
                                 <select class="form-select" name="ambiente" id="ambiente" onchange="ajustarAmbiente()">
-                                    <option value="homologacao" selected>Homologação (https://nfse.issnetonline.com.br/nfse.asmx)</option>
-                                    <option value="producao">Produção (https://nfse.fazenda.df.gov.br/nfse.asmx)</option>
+                                    <option value="homologacao" selected>Homologação (https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx)</option>
+                                    <option value="producao">Produção (https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">

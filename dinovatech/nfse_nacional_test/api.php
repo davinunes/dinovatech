@@ -41,8 +41,20 @@ try {
         throw new Exception("Configurações do emissor não encontradas no banco de dados.");
     }
 
+    // Carrega o conteúdo do Certificado A1
+    $pfxContent = null;
+    if (!empty($configEmissor['certificado_pfx_base64'])) {
+        $pfxContent = $configEmissor['certificado_pfx_base64'];
+    } elseif (!empty($configEmissor['caminho_certificado']) && file_exists($configEmissor['caminho_certificado'])) {
+        $pfxContent = file_get_contents($configEmissor['caminho_certificado']);
+    }
+
+    if (!$pfxContent) {
+        throw new Exception("Certificado digital A1 não configurado nas Configurações Fiscais.");
+    }
+
     // Inicializa CertificateManager
-    $certManager = new CertificateManager($configEmissor);
+    $certManager = new CertificateManager($pfxContent, $configEmissor['senha_certificado'] ?? '');
     $signer = new XmlSigner($certManager);
     $parser = new NacionalResponseParser();
 
@@ -195,8 +207,8 @@ XML;
 
     // 5. Transmissão real via cURL
     $endpoint = ($ambiente === 'producao')
-        ? 'https://nfse.fazenda.df.gov.br/nfse.asmx'
-        : 'https://nfse.issnetonline.com.br/nfse.asmx';
+        ? 'https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx'
+        : 'https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx';
 
     $soapAction = "http://www.sped.fazenda.gov.br/nfse/GerarNfse";
     $tlsFiles = $certManager->getTlsFiles();
