@@ -22,12 +22,14 @@ class SoapClient
      * 
      * @param string $methodName Ex: 'GerarNfse', 'ConsultarNfseDps', 'ConsultarUrlNfse', 'CancelarNfse'
      * @param string $dadosXml XML correspondente ao payload da operação
-     * @param string $versao Versão do cabeçalho ('1.00' ou '1.01')
+     * @param string $versaoDados Versão do XML de dados da DPS ('1.00' ou '1.01'). O cabeçalho SOAP sempre usa versao="1.00".
      * @return array ['http_code' => int, 'response_body' => string, 'curl_error' => string]
      */
-    public function call(string $methodName, string $dadosXml, string $versao = '1.00'): array
+    public function call(string $methodName, string $dadosXml, string $versaoDados = '1.00'): array
     {
-        $cabecalhoXml = "<cabecalho versao=\"{$versao}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versao}</versaoDados></cabecalho>";
+        // O atributo versao= do cabecalho é SEMPRE "1.00" conforme o WSDL.
+        // versaoDados indica a versão do XML de dados enviado (pode ser 1.00 ou 1.01).
+        $cabecalhoXml = "<cabecalho versao=\"1.00\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\"><versaoDados>{$versaoDados}</versaoDados></cabecalho>";
 
         // Prepara os parâmetros do Envelope (escapados conforme o WSDL wrapped)
         $cabecEscaped = htmlspecialchars($cabecalhoXml, ENT_XML1, 'UTF-8');

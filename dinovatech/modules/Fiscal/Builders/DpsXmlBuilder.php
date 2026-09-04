@@ -152,6 +152,7 @@ class DpsXmlBuilder
             </valores>
             <IBSCBS>
                 <finNFSe>0</finNFSe>
+                <indFinal>0</indFinal>
                 <cIndOp>{$cIndOp}</cIndOp>
                 <indDest>0</indDest>
                 <valores>
