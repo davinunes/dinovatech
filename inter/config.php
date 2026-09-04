@@ -17,17 +17,11 @@ if ($link) {
 }
 
 // --- Configuração de Ambientes ---
-// O ambiente padrão pode vir do banco também, mas por segurança/testes, as vezes é setado no código ou env
-// Vamos usar o do banco se disponível, senão 'sandbox'
-$ambiente = 'sandbox'; // default
-if ($dbConfig && !empty($dbConfig['ambiente_padrao'])) {
-    // ambiente_padrao no banco é 'homologacao' ou 'producao'
-    // Mapear para 'sandbox' ou 'production'
-    if ($dbConfig['ambiente_padrao'] === 'producao') {
-        $ambiente = 'production';
-    } else {
-        $ambiente = 'sandbox';
-    }
+// O ambiente do Banco Inter deve ser 'production' quando há credenciais/certificados cadastrados,
+// pois o 'ambiente_padrao' da tabela ConfiguracoesEmissor refere-se ao ambiente FISCAL (NFS-e) e não às APIs bancárias.
+$ambiente = 'production';
+if (isset($_ENV['INTER_ENVIRONMENT']) && $_ENV['INTER_ENVIRONMENT'] === 'sandbox') {
+    $ambiente = 'sandbox';
 }
 
 // Decrypt Secret
