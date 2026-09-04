@@ -3146,6 +3146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $response['message'] = $emissionRes->message;
                         $response['details'] = $emissionRes->details;
                         $response['debug_xml'] = $emissionRes->xmlEnvio;
+                        $response['debug_retorno'] = $emissionRes->xmlRetorno;
                     }
                 } catch (Exception $e) {
                     $response['success'] = false;

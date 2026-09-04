@@ -65,7 +65,16 @@ class NacionalProvider implements NfseProviderInterface
             $soapClient = new SoapClient($certManager, $endpoint);
 
             $soapResponse = $soapClient->call('GerarNfse', $signedXml, '1.01');
+
+            if (!empty($soapResponse['curl_error'])) {
+                throw new Exception("Falha de conexão com o WebService da NFS-e: " . $soapResponse['curl_error']);
+            }
+
             $responseXml = $soapResponse['response_body'];
+            if (empty($responseXml)) {
+                $httpCode = $soapResponse['http_code'] ?? 0;
+                throw new Exception("Servidor da NFS-e não retornou resposta (Código HTTP {$httpCode}).");
+            }
 
             // 5. Interpreta o retorno
             $result = $this->parser->parseEmissao($responseXml, $signedXml, $dpsId);
