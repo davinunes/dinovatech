@@ -360,12 +360,15 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                         </div>
 
                         <!-- ACTION BUTTONS -->
-                        <div class="d-flex gap-3 pt-3 border-top border-slate-700">
+                        <div class="d-flex flex-wrap gap-2 pt-3 border-top border-slate-700">
                             <button type="button" class="btn btn-glow-primary flex-grow-1 py-2" onclick="executarTeste('preview')">
-                                <i class="bi bi-code-slash me-2"></i> 1. Gerar & Assinar XML (Preview)
+                                <i class="bi bi-code-slash me-2"></i> 1. Preview (GerarNfse)
                             </button>
                             <button type="button" class="btn btn-glow-success flex-grow-1 py-2" onclick="executarTeste('gerar')">
-                                <i class="bi bi-send-check-fill me-2"></i> 2. Transmitir ao WebService (GerarNfse)
+                                <i class="bi bi-send-check-fill me-2"></i> 2. Transmitir (GerarNfse)
+                            </button>
+                            <button type="button" class="btn btn-outline-info flex-grow-1 py-2" onclick="executarTeste('consultar_disponivel')">
+                                <i class="bi bi-search me-2"></i> 3. Consultar DPS Disponível
                             </button>
                         </div>
 

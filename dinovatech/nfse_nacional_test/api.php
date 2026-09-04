@@ -291,16 +291,29 @@ XML;
     $response['response_xml'] = $responseBody;
 
     // Interpreta o retorno
-    $parsedRes = $parser->parseEmissao($responseBody, $signedXml, $dpsId);
-    $response['success'] = $parsedRes->isSuccess();
-    $response['message'] = $parsedRes->message;
-    $response['details'] = $parsedRes->details;
-    $response['erros'] = $parsedRes->erros;
+    if ($action === 'consultar_disponivel') {
+        $parsedRes = $parser->parseConsultaDps($responseBody);
+        $response['success'] = $parsedRes->success;
+        $response['message'] = $parsedRes->message;
+        $response['erros'] = $parsedRes->erros;
+        $response['details'] = !empty($parsedRes->erros) ? implode("\n", $parsedRes->erros) : 'Consulta processada pelo WebService.';
+        if ($parsedRes->encontrada) {
+            $response['numero_nota'] = $parsedRes->numeroNota;
+            $response['chave_nfse'] = $parsedRes->chaveNfse;
+            $response['codigo_verificacao'] = $parsedRes->codigoVerificacao;
+        }
+    } else {
+        $parsedRes = $parser->parseEmissao($responseBody, $signedXml, $dpsId);
+        $response['success'] = $parsedRes->isSuccess();
+        $response['message'] = $parsedRes->message;
+        $response['details'] = $parsedRes->details;
+        $response['erros'] = $parsedRes->erros;
 
-    if ($parsedRes->isSuccess()) {
-        $response['numero_nota'] = $parsedRes->numeroNota;
-        $response['chave_nfse'] = $parsedRes->chaveNfse;
-        $response['codigo_verificacao'] = $parsedRes->codigoVerificacao;
+        if ($parsedRes->isSuccess()) {
+            $response['numero_nota'] = $parsedRes->numeroNota;
+            $response['chave_nfse'] = $parsedRes->chaveNfse;
+            $response['codigo_verificacao'] = $parsedRes->codigoVerificacao;
+        }
     }
 
 } catch (\Throwable $e) {
