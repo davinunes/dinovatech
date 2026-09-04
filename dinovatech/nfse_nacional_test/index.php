@@ -179,10 +179,10 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Prólogo XML no Cabeçalho (`<?xml ...?>`)</label>
+                                <label class="form-label">Prólogo XML no Cabeçalho (&lt;?xml ...?&gt;)</label>
                                 <select class="form-select" name="prologo_cabecalho" id="prologo_cabecalho">
-                                    <option value="sem_prologo" selected>Sem Prólogo (`<cabecalho ...>`)</option>
-                                    <option value="com_prologo">Com Prólogo (`<?xml ...?><cabecalho ...>`)</option>
+                                    <option value="sem_prologo" selected>Sem Prólogo (&lt;cabecalho ...&gt;)</option>
+                                    <option value="com_prologo">Com Prólogo (&lt;?xml ...?&gt;&lt;cabecalho ...&gt;)</option>
                                 </select>
                             </div>
                         </div>
