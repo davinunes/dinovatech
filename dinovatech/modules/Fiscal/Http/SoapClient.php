@@ -66,12 +66,18 @@ XML;
         curl_setopt($ch, CURLOPT_SSLKEY, $tlsFiles['key']);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_ENCODING, ''); // Suporta gzip / deflate automaticamente
 
         $responseBody = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
 
         curl_close($ch);
+
+        // Garante codificação UTF-8 válida no corpo da resposta
+        if (!empty($responseBody) && !mb_check_encoding($responseBody, 'UTF-8')) {
+            $responseBody = mb_convert_encoding($responseBody, 'UTF-8', 'ISO-8859-1, Windows-1252');
+        }
 
         // Desembrulha respostas XML se vierem com entidades HTML no retorno
         if ($responseBody && strpos($responseBody, '&lt;') !== false && strpos($responseBody, '&gt;') !== false) {

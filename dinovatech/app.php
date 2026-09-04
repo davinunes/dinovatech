@@ -3146,7 +3146,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $response['message'] = $emissionRes->message;
                         $response['details'] = $emissionRes->details;
                         $response['debug_xml'] = $emissionRes->xmlEnvio;
-                        $response['debug_retorno'] = $emissionRes->xmlRetorno;
+                        $retornoStr = $emissionRes->xmlRetorno ?: '';
+                        if (!mb_check_encoding($retornoStr, 'UTF-8')) {
+                            $retornoStr = mb_convert_encoding($retornoStr, 'UTF-8', 'ISO-8859-1, Windows-1252');
+                        }
+                        $response['debug_retorno'] = $retornoStr;
                     }
                 } catch (\Throwable $e) {
                     $response['success'] = false;
@@ -6161,5 +6165,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 }
 
 DBClose($link);
-echo json_encode($response);
+
+header('Content-Type: application/json; charset=utf-8');
+$jsonOut = json_encode($response, JSON_INVALID_UTF8_SUBSTITUTE | JSON_PARTIAL_OUTPUT_ON_ERROR);
+if ($jsonOut === false) {
+    $err = json_last_error_msg();
+    echo json_encode([
+        'success' => false,
+        'message' => 'Erro ao serializar resposta JSON: ' . $err,
+        'details' => $response['message'] ?? 'Falha na codificação UTF-8'
+    ]);
+} else {
+    echo $jsonOut;
+}
 ?>
