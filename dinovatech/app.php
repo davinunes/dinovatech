@@ -3146,6 +3146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $response['message'] = $emissionRes->message;
                         $response['details'] = $emissionRes->details;
                         $response['debug_xml'] = $emissionRes->xmlEnvio;
+                        $response['debug_cabecalho'] = '<cabecalho versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse"><versaoDados>1.01</versaoDados></cabecalho>';
                         $response['debug_envelope'] = $emissionRes->envelopeEnvio;
                         $retornoStr = $emissionRes->xmlRetorno ?: '';
                         if (!mb_check_encoding($retornoStr, 'UTF-8')) {

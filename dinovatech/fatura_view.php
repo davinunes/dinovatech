@@ -1267,7 +1267,10 @@ if ($id_fatura) {
                     // Show detailed error in alert for easier debugging
                     let debugMsg = res.details || res.message || '';
                     if (res.debug_xml) {
-                        console.log("DEBUG XML ENVIO:", res.debug_xml);
+                        console.log("DEBUG XML ENVIO (CORPO):", res.debug_xml);
+                    }
+                    if (res.debug_cabecalho) {
+                        console.log("DEBUG CABECALHO:", res.debug_cabecalho);
                     }
                     if (res.debug_envelope) {
                         console.log("DEBUG ENVELOPE SOAP:", res.debug_envelope);
