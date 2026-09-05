@@ -16,12 +16,15 @@ if (!$id_emissao) {
 $link = DBConnect();
 $id_safe = mysqli_real_escape_string($link, $id_emissao);
 
-$query = "SELECT e.*, f.id_fatura, c.razao_social as cliente_nome
+$query = "SELECT e.*, f.id_fatura, c.nome as cliente_nome, c.cpf_cnpj as cliente_cpf_cnpj
           FROM NfseEmissoes e
           LEFT JOIN Faturas f ON e.id_fatura = f.id_fatura
           LEFT JOIN Clientes c ON f.id_cliente = c.id_cliente
           WHERE e.id_emissao = '$id_safe'";
 $result = DBExecute($link, $query);
+if (!$result) {
+    die("Erro na consulta do banco de dados: " . mysqli_error($link));
+}
 $emissao = mysqli_fetch_assoc($result);
 
 if (!$emissao || empty($emissao['xml_retorno'])) {
@@ -43,7 +46,7 @@ $data = [
     'prestador_im' => '0841147200111',
     'prestador_endereco' => 'Brasília / DF',
     'tomador_nome' => $emissao['cliente_nome'] ?: 'DAVI NUNES DE FRANCA',
-    'tomador_cpf_cnpj' => '016.911.281-04',
+    'tomador_cpf_cnpj' => $emissao['cliente_cpf_cnpj'] ?: '016.911.281-04',
     'tomador_endereco' => 'Taguatinga Norte - Brasília / DF',
     'discriminacao' => $emissao['discriminacao'] ?: 'Prestacao de Servicos de TI',
     'valor_servico' => number_format((float)$emissao['valor_servico'], 2, ',', '.'),
