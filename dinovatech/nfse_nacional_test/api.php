@@ -84,6 +84,9 @@ try {
             throw new Exception("A Fatura #{$idFatura} NÃO existe no banco de dados.");
         }
 
+        // Remove registros anteriores duplicados de NFS-e para esta mesma fatura
+        DBExecute($link, "DELETE FROM NfseEmissoes WHERE id_fatura = '$idFaturaEsc'");
+
         $numNotaEsc = mysqli_real_escape_string($link, $numNota);
         $numDpsEsc = mysqli_real_escape_string($link, $numDps);
         $serieDpsEsc = mysqli_real_escape_string($link, $serieDps);
@@ -91,7 +94,7 @@ try {
         $xmlEnvioEsc = mysqli_real_escape_string($link, $xmlEnvio);
         $xmlRetornoEsc = mysqli_real_escape_string($link, $xmlRetorno);
 
-        $urlPdf = "https://nfse.fazenda.df.gov.br/NfseTax/Nfse/VisualizarNfse?chave=" . $chaveNfse;
+        $urlPdf = "https://www.nfse.gov.br/consultanfse/";
         $urlPdfEsc = mysqli_real_escape_string($link, $urlPdf);
 
         $qInsert = "INSERT INTO NfseEmissoes (

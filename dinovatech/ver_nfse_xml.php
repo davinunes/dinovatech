@@ -22,10 +22,15 @@ if (!$row || empty($row['xml_retorno'])) {
 }
 
 $xmlContent = $row['xml_retorno'];
+
+// Trata tags HTML não fechadas (como <br> ou <hr>) dentro do XML do Fisco para evitar erro de parser no navegador
+$xmlContent = preg_replace('/<br\s*\/?>/i', '<br/>', $xmlContent);
+$xmlContent = preg_replace('/<hr\s*\/?>/i', '<hr/>', $xmlContent);
+
 $filename = "nfse_" . ($row['numero_nota'] ?: $id_emissao) . ".xml";
 
 // Force download or just view? Let's generic XML view.
-header('Content-Type: application/xml');
+header('Content-Type: application/xml; charset=utf-8');
 header('Content-Disposition: inline; filename="' . $filename . '"');
 
 echo $xmlContent;

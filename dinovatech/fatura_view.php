@@ -421,11 +421,11 @@ if ($id_fatura) {
 
                                             $html .= '<div class="grid grid-cols-2 gap-2 mt-2">';
                                             $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">XML Assinado</a>';
-                                            if ($nfse['url_pdf']) {
-                                                $html .= '<a href="' . $nfse['url_pdf'] . '" target="_blank" class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">PDF</a>';
-                                            } else {
-                                                $html .= '<button onclick="consultarUrlNfse(' . $nfse['id_emissao'] . ')" class="text-center text-xs bg-gray-100 text-gray-600 py-1 rounded hover:bg-gray-200 border border-gray-300" title="Tentar obter link PDF na Prefeitura">Buscar PDF</button>';
+                                            $urlPdfShow = $nfse['url_pdf'] ?? '';
+                                            if (empty($urlPdfShow) || strpos($urlPdfShow, 'VisualizarNfse') !== false) {
+                                                $urlPdfShow = 'https://www.nfse.gov.br/consultanfse/';
                                             }
+                                            $html .= '<a href="' . $urlPdfShow . '" target="_blank" class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">Portal / PDF</a>';
                                             $html .= '</div>';
                                         } elseif ($statusLower !== 'processando') {
                                             $html .= '<div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">';
