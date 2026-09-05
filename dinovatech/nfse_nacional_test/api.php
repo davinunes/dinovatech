@@ -83,14 +83,17 @@ try {
         $xmlEnvioEsc = mysqli_real_escape_string($link, $xmlEnvio);
         $xmlRetornoEsc = mysqli_real_escape_string($link, $xmlRetorno);
 
+        $urlPdf = "https://www.nfse.gov.br/consultanfse/visualizar/" . $chaveNfse;
+        $urlPdfEsc = mysqli_real_escape_string($link, $urlPdf);
+
         $qInsert = "INSERT INTO NfseEmissoes (
             id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
             valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
-            xml_envio, xml_retorno, status, data_emissao
+            url_pdf, xml_envio, xml_retorno, status, data_emissao
         ) VALUES (
             '$idFaturaEsc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
             '10.00', '2.00', '0', '01.06', 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
-            '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW()
+            '$urlPdfEsc', '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW()
         )";
         DBExecute($link, $qInsert);
 

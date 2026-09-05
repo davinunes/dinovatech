@@ -9,14 +9,14 @@ class ConsultarUrlXmlBuilder
         $cleanIm = preg_replace('/\D/', '', $imPrestador);
 
         $identificadorXml = '';
-        if (!empty($numeroNota) && $numeroNota !== '0') {
+        if (!empty($numeroDps) && !empty($serieDps)) {
+            $identificadorXml = "<IdentificacaoDps>
+        <NumDPS>{$numeroDps}</NumDPS>
+        <SerieDPS>{$serieDps}</SerieDPS>
+    </IdentificacaoDps>";
+        } elseif (!empty($numeroNota) && $numeroNota !== '0') {
             $cleanNum = preg_replace('/\D/', '', $numeroNota);
             $identificadorXml = "<NumeroNfse>{$cleanNum}</NumeroNfse>";
-        } elseif (!empty($numeroDps)) {
-            $identificadorXml = "<IdentificacaoDps>
-                <NumDPS>{$numeroDps}</NumDPS>
-                <SerieDPS>{$serieDps}</SerieDPS>
-            </IdentificacaoDps>";
         } else {
             $identificadorXml = "<NumeroNfse>0</NumeroNfse>";
         }

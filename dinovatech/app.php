@@ -3730,12 +3730,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $emissao['serie_rps'] ?? null,
                         (int)($emissao['numero_rps'] ?? 0)
                     );
+                    $urlFinal = null;
                     if ($urlRes->success && !empty($urlRes->urlVisualizacao)) {
-                        $url_esc = mysqli_real_escape_string($link, $urlRes->urlVisualizacao);
+                        $urlFinal = $urlRes->urlVisualizacao;
+                    } elseif (!empty($emissao['codigo_verificacao']) && strpos($emissao['codigo_verificacao'], 'NFS') === 0) {
+                        $urlFinal = "https://www.nfse.gov.br/consultanfse/visualizar/" . trim($emissao['codigo_verificacao']);
+                    }
+
+                    if (!empty($urlFinal)) {
+                        $url_esc = mysqli_real_escape_string($link, $urlFinal);
                         DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
                         $response['success'] = true;
-                        $response['message'] = "URL da NFS-e Nacional obtida com sucesso!";
-                        $response['url'] = $urlRes->urlVisualizacao;
+                        $response['message'] = "URL da NFS-e Nacional vinculada com sucesso!";
+                        $response['url'] = $urlFinal;
                     } else {
                         $response['success'] = false;
                         $response['message'] = $urlRes->message ?: 'URL da NFS-e Nacional não localizada no servidor.';
