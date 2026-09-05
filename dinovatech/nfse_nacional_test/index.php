@@ -335,11 +335,11 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label">Tributação Nacional (`cTribNac`)</label>
-                                <input type="text" class="form-control" name="c_trib_nac" value="010701">
+                                <input type="text" class="form-control" name="c_trib_nac" value="010601">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Tributação Municipal (`cTribMun`)</label>
-                                <input type="text" class="form-control" name="c_trib_mun" value="107">
+                                <input type="text" class="form-control" name="c_trib_mun" value="106">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Código NBS (`cNBS`)</label>
