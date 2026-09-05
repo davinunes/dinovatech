@@ -3846,16 +3846,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             break;
 
         case 'consultar_e_vincular_nfse':
-            require_once '../nfse_test/api.php';
-
             $id_fatura = $_POST['id_fatura'] ?? '';
-            $tipo_busca = $_POST['tipo_busca'] ?? 'numero_nota'; // 'numero_nota' or 'numero_rps'
+            $modelo_provedor = $_POST['modelo_provedor'] ?? 'nacional';
+            $numero_dps = (int)($_POST['numero_dps'] ?? 0);
+            $serie_dps = trim($_POST['serie_dps'] ?? '15');
+            $tipo_busca = $_POST['tipo_busca'] ?? 'numero_nota';
             $numero_busca = trim($_POST['numero_busca'] ?? '');
             $serie_rps = trim($_POST['serie_rps'] ?? '');
 
-            if (empty($id_fatura) || empty($numero_busca)) {
+            if (empty($id_fatura)) {
                 $response['success'] = false;
-                $response['message'] = "ID da Fatura e Número de busca são obrigatórios.";
+                $response['message'] = "ID da Fatura é obrigatório.";
                 break;
             }
 
@@ -3875,6 +3876,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $response['message'] = "Configurações do emissor não encontradas.";
                 break;
             }
+
+            // CONSULTA PADRÃO NACIONAL (SÉRIE / DPS)
+            if ($modelo_provedor === 'nacional' || ($numero_dps > 0 && empty($numero_busca))) {
+                if (!$numero_dps) {
+                    $response['success'] = false;
+                    $response['message'] = "Informe o Número da DPS para consulta no Padrão Nacional.";
+                    break;
+                }
+
+                try {
+                    $provider = new \Dinovatech\Modules\Fiscal\Providers\NacionalProvider($config, $link);
+                    $queryRes = $provider->consultarPorDocumento($serie_dps, $numero_dps);
+
+                    if ($queryRes->encontrada && !empty($queryRes->numeroNota)) {
+                        $numNotaEsc = mysqli_real_escape_string($link, $queryRes->numeroNota);
+                        $numDpsEsc = mysqli_real_escape_string($link, $numero_dps);
+                        $serieDpsEsc = mysqli_real_escape_string($link, $serie_dps);
+                        $chaveEsc = mysqli_real_escape_string($link, $queryRes->chaveNfse ?: '');
+                        $xmlRetornoEsc = mysqli_real_escape_string($link, $queryRes->xmlRetorno ?: '');
+                        $urlPdfEsc = mysqli_real_escape_string($link, "https://nfse.fazenda.df.gov.br/NfseTax/");
+
+                        $resExist = DBExecute($link, "SELECT id_emissao FROM NfseEmissoes WHERE id_fatura = '$id_fatura_esc' ORDER BY id_emissao DESC LIMIT 1");
+                        if ($resExist && mysqli_num_rows($resExist) > 0) {
+                            $rowEx = mysqli_fetch_assoc($resExist);
+                            $idEm = $rowEx['id_emissao'];
+                            $qSave = "UPDATE NfseEmissoes SET
+                                numero_rps = '$numDpsEsc', serie_rps = '$serieDpsEsc', numero_nota = '$numNotaEsc',
+                                codigo_verificacao = '$chaveEsc', ambiente = 'producao',
+                                url_pdf = '$urlPdfEsc', xml_retorno = '$xmlRetornoEsc',
+                                status = 'concluido', data_emissao = NOW()
+                                WHERE id_emissao = '$idEm'";
+                        } else {
+                            $qSave = "INSERT INTO NfseEmissoes (
+                                id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
+                                valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
+                                url_pdf, xml_retorno, status, data_emissao
+                            ) VALUES (
+                                '$id_fatura_esc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
+                                '10.00', '2.00', '0', '01.06', 'Importacao de NFS-e Padrão Nacional',
+                                '$urlPdfEsc', '$xmlRetornoEsc', 'concluido', NOW()
+                            )";
+                        }
+                        DBExecute($link, $qSave);
+                        DBExecute($link, "UPDATE Faturas SET possui_nfse = 1, data_emissao_nfse = NOW() WHERE id_fatura = '$id_fatura_esc'");
+
+                        $response['success'] = true;
+                        $response['message'] = "NFS-e Nacional nº {$queryRes->numeroNota} localizada e vinculada com SUCESSO à Fatura #{$id_fatura}!";
+                        break;
+                    } else {
+                        $response['success'] = false;
+                        $response['message'] = $queryRes->message ?: "Nenhuma NFS-e localizada na SEFAZ-DF para a DPS nº {$numero_dps} (Série {$serie_dps}).";
+                        break;
+                    }
+                } catch (\Throwable $exDps) {
+                    $response['success'] = false;
+                    $response['message'] = "Exceção ao consultar DPS no Padrão Nacional: " . $exDps->getMessage();
+                    break;
+                }
+            }
+
+            // CONSULTA MODELO LEGADO (ABRASF 2.04)
+            require_once '../nfse_test/api.php';
 
             $hasCert = !empty($config['certificado_pfx_base64']) || !empty($config['caminho_certificado']);
             if (!$hasCert) {

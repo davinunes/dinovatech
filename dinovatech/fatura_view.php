@@ -421,11 +421,7 @@ if ($id_fatura) {
 
                                             $html .= '<div class="grid grid-cols-2 gap-2 mt-2">';
                                             $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">XML Assinado</a>';
-                                            $urlPdfShow = $nfse['url_pdf'] ?? '';
-                                            if (empty($urlPdfShow) || strpos($urlPdfShow, 'VisualizarNfse') !== false || strpos($urlPdfShow, 'consultanfse') !== false) {
-                                                $urlPdfShow = 'https://nfse.fazenda.df.gov.br/NfseTax/';
-                                            }
-                                            $html .= '<a href="' . $urlPdfShow . '" target="_blank" class="text-center text-xs bg-red-50 text-red-600 py-1 rounded hover:bg-red-100 border border-red-200">Portal ISS-DF</a>';
+                                            $html .= '<a href="ver_nfse_impressao.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-emerald-50 text-emerald-700 py-1 rounded hover:bg-emerald-100 border border-emerald-200 font-semibold">🖨️ Imprimir DANFSE</a>';
                                             $html .= '</div>';
                                         } elseif ($statusLower !== 'processando') {
                                             $html .= '<div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">';
@@ -899,30 +895,66 @@ if ($id_fatura) {
                         <span class="font-bold">Como funciona:</span> O sistema usará o certificado digital para consultar a nota no ISS DF (ISSNet), baixará os dados fiscais e o XML assinado, vinculando-a diretamente a esta fatura.
                     </div>
 
+                    <div class="bg-cyan-50 p-3 rounded-lg border border-cyan-100 mb-4 text-xs text-cyan-900 leading-relaxed">
+                        <span class="font-bold">Como funciona:</span> O sistema usará o certificado digital para consultar a nota na SEFAZ-DF (Padrão Nacional) ou no ISS-DF (Legado), baixará os dados fiscais e o XML assinado, vinculando-a diretamente a esta fatura.
+                    </div>
+
+                    <!-- Toggle Modelo de Integração -->
                     <div class="mb-4">
-                        <label class="block text-xs font-bold text-gray-700 mb-1">Consultar por:</label>
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Modelo de Integração Fiscal:</label>
                         <div class="grid grid-cols-2 gap-2">
-                            <label class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
-                                <input type="radio" name="tipo_busca" value="numero_nota" checked class="mr-2 text-cyan-600" onchange="toggleTipoBusca(this.value)">
-                                <span>Número da NFS-e</span>
+                            <label class="flex items-center p-2.5 border-2 rounded-lg cursor-pointer hover:bg-cyan-50/50 text-xs font-bold text-cyan-900 border-cyan-500 bg-cyan-50/30" id="lblProvNacional">
+                                <input type="radio" name="modelo_provedor" value="nacional" checked class="mr-2 text-cyan-600" onchange="toggleModeloProvedor(this.value)">
+                                <span>Padrão Nacional (Série / DPS)</span>
                             </label>
-                            <label class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
-                                <input type="radio" name="tipo_busca" value="numero_rps" class="mr-2 text-cyan-600" onchange="toggleTipoBusca(this.value)">
-                                <span>Número do RPS</span>
+                            <label class="flex items-center p-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs font-medium text-gray-700 border-gray-200" id="lblProvLegado">
+                                <input type="radio" name="modelo_provedor" value="legado" class="mr-2 text-cyan-600" onchange="toggleModeloProvedor(this.value)">
+                                <span>Modelo Legado (ABRASF 2.04)</span>
                             </label>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-3 mb-4">
-                        <div class="col-span-2" id="divNumeroBuscaWrapper">
-                            <label id="lblNumeroBusca" class="block text-xs font-medium text-gray-700 mb-1">Número da NFS-e</label>
-                            <input type="number" name="numero_busca" id="inputNumeroBusca" required placeholder="Ex: 53"
+                    <!-- Campos Padrão Nacional -->
+                    <div id="divNacionalFields" class="grid grid-cols-3 gap-3 mb-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Série DPS *</label>
+                            <input type="text" name="serie_dps" value="<?= htmlspecialchars($config_emissor['serie_dps'] ?? '15') ?>"
                                 class="w-full p-2 border rounded-lg text-sm font-semibold">
                         </div>
-                        <div id="divSerieRps" class="hidden">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Série RPS</label>
-                            <input type="text" name="serie_rps" value="<?= htmlspecialchars($config_emissor['serie_rps'] ?? '3') ?>"
-                                class="w-full p-2 border rounded-lg text-sm">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Número da DPS *</label>
+                            <input type="number" name="numero_dps" id="inputNumeroDps" required placeholder="Ex: 1"
+                                class="w-full p-2 border rounded-lg text-sm font-semibold">
+                        </div>
+                    </div>
+
+                    <!-- Campos Modelo Legado (ABRASF) -->
+                    <div id="divLegadoFields" class="hidden">
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Consultar Legado por:</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
+                                    <input type="radio" name="tipo_busca" value="numero_nota" checked class="mr-2 text-cyan-600" onchange="toggleTipoBusca(this.value)">
+                                    <span>Número da NFS-e</span>
+                                </label>
+                                <label class="flex items-center p-2 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs">
+                                    <input type="radio" name="tipo_busca" value="numero_rps" class="mr-2 text-cyan-600" onchange="toggleTipoBusca(this.value)">
+                                    <span>Número do RPS</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3 mb-4">
+                            <div class="col-span-2" id="divNumeroBuscaWrapper">
+                                <label id="lblNumeroBusca" class="block text-xs font-medium text-gray-700 mb-1">Número da NFS-e</label>
+                                <input type="number" name="numero_busca" id="inputNumeroBusca" placeholder="Ex: 53"
+                                    class="w-full p-2 border rounded-lg text-sm font-semibold">
+                            </div>
+                            <div id="divSerieRps" class="hidden">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">Série RPS</label>
+                                <input type="text" name="serie_rps" value="<?= htmlspecialchars($config_emissor['serie_rps'] ?? '3') ?>"
+                                    class="w-full p-2 border rounded-lg text-sm">
+                            </div>
                         </div>
                     </div>
 
@@ -1089,6 +1121,24 @@ if ($id_fatura) {
                 $('#tabBtnConsulta').removeClass('border-cyan-600 text-cyan-600 font-bold').addClass('border-transparent text-gray-500 font-medium');
                 $('#tabContentManual').removeClass('hidden');
                 $('#tabContentConsulta').addClass('hidden');
+            }
+        }
+
+        function toggleModeloProvedor(modelo) {
+            if (modelo === 'nacional') {
+                $('#divNacionalFields').removeClass('hidden');
+                $('#divLegadoFields').addClass('hidden');
+                $('#lblProvNacional').addClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').removeClass('border-gray-200 font-medium text-gray-700 border');
+                $('#lblProvLegado').removeClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').addClass('border-gray-200 font-medium text-gray-700 border');
+                $('#inputNumeroDps').prop('required', true);
+                $('#inputNumeroBusca').prop('required', false);
+            } else {
+                $('#divLegadoFields').removeClass('hidden');
+                $('#divNacionalFields').addClass('hidden');
+                $('#lblProvLegado').addClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').removeClass('border-gray-200 font-medium text-gray-700 border');
+                $('#lblProvNacional').removeClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').addClass('border-gray-200 font-medium text-gray-700 border');
+                $('#inputNumeroDps').prop('required', false);
+                $('#inputNumeroBusca').prop('required', true);
             }
         }
 
