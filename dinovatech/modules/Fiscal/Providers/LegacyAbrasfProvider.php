@@ -7,6 +7,7 @@ use Dinovatech\Modules\Fiscal\DTOs\EmissionResult;
 use Dinovatech\Modules\Fiscal\DTOs\QueryResult;
 use Dinovatech\Modules\Fiscal\DTOs\CancellationResult;
 use Dinovatech\Modules\Fiscal\DTOs\UrlResult;
+use Dinovatech\Modules\Fiscal\DTOs\CadastroResult;
 use Exception;
 
 class LegacyAbrasfProvider implements NfseProviderInterface
@@ -208,6 +209,14 @@ class LegacyAbrasfProvider implements NfseProviderInterface
         $result = new CancellationResult();
         $result->success = false;
         $result->message = "Cancelamento via webservice não disponível no provedor legado ABRASF 2.04.";
+        return $result;
+    }
+
+    public function consultarDadosCadastrais(?string $cnpj = null, ?string $im = null): CadastroResult
+    {
+        $result = new CadastroResult();
+        $result->success = false;
+        $result->message = "Consulta cadastral não suportada via webservice legado ABRASF 2.04.";
         return $result;
     }
 }

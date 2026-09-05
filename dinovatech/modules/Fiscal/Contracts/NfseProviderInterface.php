@@ -6,6 +6,7 @@ use Dinovatech\Modules\Fiscal\DTOs\EmissionResult;
 use Dinovatech\Modules\Fiscal\DTOs\QueryResult;
 use Dinovatech\Modules\Fiscal\DTOs\CancellationResult;
 use Dinovatech\Modules\Fiscal\DTOs\UrlResult;
+use Dinovatech\Modules\Fiscal\DTOs\CadastroResult;
 
 interface NfseProviderInterface
 {
@@ -33,4 +34,10 @@ interface NfseProviderInterface
      * Cancela uma NFS-e emitida
      */
     public function cancelar(string $identificadorNota, int $codigoMotivo, string $justificativa): CancellationResult;
+
+    /**
+     * Consulta os dados cadastrais da empresa no Fisco (SEFAZ-DF)
+     */
+    public function consultarDadosCadastrais(?string $cnpj = null, ?string $im = null): CadastroResult;
 }
+

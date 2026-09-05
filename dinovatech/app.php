@@ -990,6 +990,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'auditar_cadastro_sefaz':
+            require_once __DIR__ . '/modules/Fiscal/bootstrap.php';
+            try {
+                $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
+                $auditData = $nfseService->consultarCadastroEAuditarServicos();
+                if ($auditData['success']) {
+                    $response['success'] = true;
+                    $response['message'] = $auditData['message'];
+                    $response['data'] = $auditData;
+                } else {
+                    $response['success'] = false;
+                    $response['message'] = $auditData['message'];
+                    $response['erros'] = $auditData['erros'] ?? [];
+                }
+            } catch (\Throwable $e) {
+                $response['success'] = false;
+                $response['message'] = "Erro ao auditar cadastro na SEFAZ-DF: " . $e->getMessage();
+            }
+            break;
+
         case 'fazer_backup':
             // 1. Configurações
             $pathEstrutura = '../estrutura.sql';

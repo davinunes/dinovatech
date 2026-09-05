@@ -9,6 +9,7 @@ use Dinovatech\Modules\Fiscal\DTOs\EmissionResult;
 use Dinovatech\Modules\Fiscal\DTOs\QueryResult;
 use Dinovatech\Modules\Fiscal\DTOs\CancellationResult;
 use Dinovatech\Modules\Fiscal\DTOs\UrlResult;
+use Dinovatech\Modules\Fiscal\DTOs\CadastroResult;
 use AppHelper;
 use Exception;
 
@@ -226,5 +227,186 @@ class NfseService
         if ($resCol && mysqli_num_rows($resCol) > 0) {
             DBExecute($this->link, "UPDATE ConfiguracoesEmissor SET {$coluna} = {$numero} WHERE id_config = {$idConfig}");
         }
+    }
+
+    /**
+     * Consulta os dados cadastrais da empresa na SEFAZ-DF e cruza com os serviços ativos
+     */
+    public function consultarCadastroEAuditarServicos(): array
+    {
+        // 1. Consulta dados cadastrais no provedor ativo
+        $cadastro = $this->provider->consultarDadosCadastrais();
+        if (!$cadastro->success) {
+            return [
+                'success' => false,
+                'message' => $cadastro->message,
+                'erros' => $cadastro->erros,
+                'cadastro' => null,
+                'auditoria' => [],
+                'divergencias_empresa' => []
+            ];
+        }
+
+        // 2. Compara dados da empresa com ConfiguracoesEmissor
+        $divergenciasEmpresa = [];
+        if (!empty($cadastro->razaoSocial) && !empty($this->config['razao_social'])) {
+            if (trim(mb_strtoupper($cadastro->razaoSocial)) !== trim(mb_strtoupper($this->config['razao_social']))) {
+                $divergenciasEmpresa[] = [
+                    'campo' => 'Razão Social',
+                    'sistema' => $this->config['razao_social'],
+                    'sefaz' => $cadastro->razaoSocial
+                ];
+            }
+        }
+
+        // 3. Busca serviços ativos no banco
+        $servicosAuditoria = [];
+        $resServ = DBExecute($this->link, "SELECT id_servico, nome_servico, item_lista_servico, codigo_tributacao_nacional, codigo_tributacao_municipio, aliquota_iss, tributacao_issqn, ativo FROM Servicos WHERE ativo = 1 ORDER BY nome_servico ASC");
+
+        $totalConformes = 0;
+        $totalDivergentes = 0;
+        $totalExpirados = 0;
+        $totalNaoEncontrados = 0;
+
+        if ($resServ) {
+            while ($servico = mysqli_fetch_assoc($resServ)) {
+                $idServ = (int)$servico['id_servico'];
+                $nomeServ = $servico['nome_servico'];
+                $itemLista = trim($servico['item_lista_servico'] ?? '');
+                $cTribMun = preg_replace('/\D/', '', $servico['codigo_tributacao_municipio'] ?? '');
+                $cTribNac = preg_replace('/\D/', '', $servico['codigo_tributacao_nacional'] ?? '');
+                $aliqSistema = (float)($servico['aliquota_iss'] ?? 0.0);
+                $tribIssqn = (int)($servico['tributacao_issqn'] ?? 1);
+
+                // Tenta localizar a atividade correspondente na lista retornada pela SEFAZ
+                $atividadeEncontrada = null;
+                $itemLimpo = preg_replace('/^0+/', '', preg_replace('/\D/', '', $itemLista));
+
+                foreach ($cadastro->atividades as $ativ) {
+                    $codSefaz = (string)$ativ['codigo'];
+                    $codSefazLimpo = preg_replace('/^0+/', '', $codSefaz);
+
+                    // 1. Bate exato com codigo_tributacao_municipio
+                    if (!empty($cTribMun) && ($cTribMun === $codSefaz || preg_replace('/^0+/', '', $cTribMun) === $codSefazLimpo)) {
+                        $atividadeEncontrada = $ativ;
+                        break;
+                    }
+
+                    // 2. Bate com item limpo (ex: 107 com 107)
+                    if (!empty($itemLimpo) && ($itemLimpo === $codSefazLimpo || $codSefaz === $itemLimpo)) {
+                        $atividadeEncontrada = $ativ;
+                        break;
+                    }
+
+                    // 3. Checa se o texto da atividade contém o item
+                    if (!empty($itemLista)) {
+                        $itemFormatado = ltrim($itemLista, '0');
+                        if (stripos($ativ['descricao'], " $itemFormatado -") !== false || 
+                            stripos($ativ['descricao'], " $itemLista -") !== false) {
+                            $atividadeEncontrada = $ativ;
+                            break;
+                        }
+                    }
+                }
+
+                $statusAuditoria = 'conforme';
+                $mensagens = [];
+                $aliqSefaz = null;
+                $sugestaoAliquota = null;
+
+                if (!$atividadeEncontrada) {
+                    $statusAuditoria = 'nao_encontrada';
+                    $mensagens[] = "Atividade / Item {$itemLista} não localizada no rol de serviços cadastrados na SEFAZ-DF para este prestador.";
+                    $totalNaoEncontrados++;
+                } else {
+                    $aliqSefaz = (float)$atividadeEncontrada['aliquota'];
+
+                    // Checa se a atividade na SEFAZ já expirou
+                    if (!$atividadeEncontrada['ativa']) {
+                        $statusAuditoria = 'expirada';
+                        $dataFimFormatada = !empty($atividadeEncontrada['data_final']) ? date('d/m/Y', strtotime($atividadeEncontrada['data_final'])) : 'passado';
+                        $mensagens[] = "A atividade {$atividadeEncontrada['codigo']} teve sua vigência encerrada na SEFAZ-DF em {$dataFimFormatada} e não deve mais ser utilizada.";
+                        $totalExpirados++;
+                    }
+
+                    // Checa alíquota
+                    if (abs($aliqSistema - $aliqSefaz) > 0.01) {
+                        if ($statusAuditoria === 'conforme') {
+                            $statusAuditoria = 'divergente';
+                            $totalDivergentes++;
+                        }
+                        $aliqSefazFmt = number_format($aliqSefaz, 2, ',', '.') . '%';
+                        $aliqSisFmt = number_format($aliqSistema, 2, ',', '.') . '%';
+                        $mensagens[] = "Alíquota configurada no sistema ({$aliqSisFmt}) difere da alíquota autorizada na SEFAZ-DF ({$aliqSefazFmt}).";
+                        $sugestaoAliquota = $aliqSefaz;
+                    }
+
+                    // Checa tributações permitidas
+                    if (!empty($cadastro->tributacoesPermitidas) && !in_array($tribIssqn, $cadastro->tributacoesPermitidas)) {
+                        $mensagens[] = "Tributação ISSQN '{$tribIssqn}' não está entre as permitidas pelo Fisco (" . implode(', ', $cadastro->tributacoesPermitidas) . ").";
+                    }
+
+                    if ($statusAuditoria === 'conforme') {
+                        $totalConformes++;
+                        $mensagens[] = "Em conformidade com a SEFAZ-DF (Alíquota " . number_format($aliqSefaz, 2, ',', '.') . "% ativa).";
+                    }
+                }
+
+                $servicosAuditoria[] = [
+                    'id_servico' => $idServ,
+                    'nome_servico' => $nomeServ,
+                    'item_lista_servico' => $itemLista,
+                    'codigo_tributacao_municipio' => $servico['codigo_tributacao_municipio'],
+                    'aliquota_sistema' => $aliqSistema,
+                    'aliquota_sefaz' => $aliqSefaz,
+                    'sugestao_aliquota' => $sugestaoAliquota,
+                    'status' => $statusAuditoria,
+                    'mensagens' => $mensagens,
+                    'atividade_sefaz' => $atividadeEncontrada
+                ];
+            }
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Auditoria cadastral e fiscal realizada com sucesso.',
+            'cadastro' => [
+                'cnpj' => $cadastro->cnpj,
+                'im' => $cadastro->im,
+                'status_cadastro' => $cadastro->statusCadastro,
+                'razao_social' => $cadastro->razaoSocial,
+                'nome_fantasia' => $cadastro->nomeFantasia,
+                'endereco' => [
+                    'logradouro' => $cadastro->logradouro,
+                    'bairro' => $cadastro->bairro,
+                    'codigo_municipio' => $cadastro->codigoMunicipio,
+                    'uf' => $cadastro->uf,
+                    'cep' => $cadastro->cep
+                ],
+                'telefone' => $cadastro->telefone,
+                'email' => $cadastro->email,
+                'emite_nfse' => $cadastro->emiteNfse,
+                'optante_simples' => $cadastro->optanteSimples,
+                'data_simples' => $cadastro->dataSimples,
+                'optante_mei' => $cadastro->optanteMei,
+                'permite_desconto_condicionado' => $cadastro->permiteDescontoCondicionado,
+                'permite_desconto_incondicionado' => $cadastro->permiteDescontoIncondicionado,
+                'tributacoes_permitidas' => $cadastro->tributacoesPermitidas,
+                'atividades' => $cadastro->atividades,
+                'atividades_vigentes' => $cadastro->atividadesVigentes,
+                'total_atividades' => count($cadastro->atividades),
+                'total_atividades_vigentes' => count($cadastro->atividadesVigentes)
+            ],
+            'resumo_auditoria' => [
+                'total_servicos' => count($servicosAuditoria),
+                'conformes' => $totalConformes,
+                'divergentes' => $totalDivergentes,
+                'expirados' => $totalExpirados,
+                'nao_encontrados' => $totalNaoEncontrados,
+                'requer_atencao' => ($totalDivergentes > 0 || $totalExpirados > 0 || $totalNaoEncontrados > 0)
+            ],
+            'auditoria_servicos' => $servicosAuditoria,
+            'divergencias_empresa' => $divergenciasEmpresa
+        ];
     }
 }

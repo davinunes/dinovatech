@@ -7,6 +7,7 @@ use Dinovatech\Modules\Fiscal\DTOs\EmissionResult;
 use Dinovatech\Modules\Fiscal\DTOs\QueryResult;
 use Dinovatech\Modules\Fiscal\DTOs\CancellationResult;
 use Dinovatech\Modules\Fiscal\DTOs\UrlResult;
+use Dinovatech\Modules\Fiscal\DTOs\CadastroResult;
 use Dinovatech\Modules\Fiscal\Formatters\DpsIdGenerator;
 use Dinovatech\Modules\Fiscal\Security\CertificateManager;
 use Dinovatech\Modules\Fiscal\Security\XmlSigner;
@@ -15,6 +16,7 @@ use Dinovatech\Modules\Fiscal\Builders\DpsXmlBuilder;
 use Dinovatech\Modules\Fiscal\Builders\ConsultarDpsXmlBuilder;
 use Dinovatech\Modules\Fiscal\Builders\ConsultarUrlXmlBuilder;
 use Dinovatech\Modules\Fiscal\Builders\CancelarNfseXmlBuilder;
+use Dinovatech\Modules\Fiscal\Builders\ConsultarDadosCadastraisXmlBuilder;
 use Dinovatech\Modules\Fiscal\Parsers\NacionalResponseParser;
 use Exception;
 
@@ -278,6 +280,38 @@ class NacionalProvider implements NfseProviderInterface
             $c = new CancellationResult();
             $c->success = false;
             $c->message = "Erro ao solicitar cancelamento: " . $e->getMessage();
+            return $c;
+        } finally {
+            if (isset($certManager)) {
+                $certManager->cleanup();
+            }
+        }
+    }
+
+    public function consultarDadosCadastrais(?string $cnpj = null, ?string $im = null): CadastroResult
+    {
+        try {
+            $certManager = $this->getCertificateManager();
+            $builder = new ConsultarDadosCadastraisXmlBuilder();
+            $ambiente = $this->config['ambiente_padrao'] ?? 'homologacao';
+            $endpoint = $this->getEndpointUrl($ambiente);
+            $soapClient = new SoapClient($certManager, $endpoint);
+
+            $cnpjFinal = $cnpj ?: ($this->config['cnpj'] ?? '');
+            $imFinal = $im ?: ($this->config['inscricao_municipal'] ?? '');
+
+            $xml = $builder->build($cnpjFinal, $imFinal);
+
+            $versaoDados = ($ambiente === 'producao') ? '1.01' : '1.00';
+            $res = $soapClient->call('ConsultarDadosCadastrais', $xml, $versaoDados);
+
+            $result = $this->parser->parseConsultaCadastro($res['response_body']);
+            $result->envelopeEnvio = $res['request_envelope'] ?? '';
+            return $result;
+        } catch (Exception $e) {
+            $c = new CadastroResult();
+            $c->success = false;
+            $c->message = "Erro ao consultar dados cadastrais: " . $e->getMessage();
             return $c;
         } finally {
             if (isset($certManager)) {

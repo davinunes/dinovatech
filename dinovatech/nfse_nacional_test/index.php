@@ -385,6 +385,9 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                             <button type="button" class="btn btn-outline-warning flex-grow-1 py-2" onclick="executarTeste('consultar_url')">
                                 <i class="bi bi-link-45deg me-2"></i> 5. Consultar URLs da Nota
                             </button>
+                            <button type="button" class="btn btn-outline-light flex-grow-1 py-2" onclick="executarTeste('consultar_cadastro')">
+                                <i class="bi bi-person-badge me-2"></i> 6. Consultar Cadastro SEFAZ
+                            </button>
                         </div>
 
                         <!-- SEÇÃO VINCULAR NOTA A UMA FATURA -->
@@ -533,7 +536,29 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                 Prism.highlightAll();
 
                 let detailsText = res.details || res.message || '';
-                if (res.erros && res.erros.length > 0) {
+                if (res.cadastro) {
+                    let cad = res.cadastro;
+                    detailsText = `=====================================================\n` +
+                                  `          CADASTRO OFICIAL SEFAZ-DF / ISS-DF         \n` +
+                                  `=====================================================\n` +
+                                  `RAZÃO SOCIAL : ${cad.razao_social || '-'}\n` +
+                                  `NOME FANTASIA: ${cad.nome_fantasia || '-'}\n` +
+                                  `CNPJ         : ${cad.cnpj || '-'} | IM: ${cad.im || '-'}\n` +
+                                  `STATUS       : ${cad.status || 'Ativo'}\n` +
+                                  `ENDEREÇO     : ${cad.endereco || '-'}\n` +
+                                  `SIMPLES NAC. : ${cad.optante_simples ? 'Sim (Desde ' + (cad.data_simples || '-') + ')' : 'Não'}\n` +
+                                  `MEI          : ${cad.optante_mei ? 'Sim' : 'Não'}\n` +
+                                  `EMITE NFS-e  : ${cad.emite_nfse ? 'SIM (Autorizado)' : 'NÃO'}\n\n` +
+                                  `-----------------------------------------------------\n` +
+                                  `ROL DE ATIVIDADES CADASTRADAS NO DF (${cad.total_vigentes} ativas de ${cad.total_atividades}):\n` +
+                                  `-----------------------------------------------------\n`;
+                    if (cad.atividades && cad.atividades.length > 0) {
+                        cad.atividades.forEach(a => {
+                            let statusAtiv = a.ativa ? '[ATIVA]' : '[ENCERRADA]';
+                            detailsText += `• [${a.codigo}] ${statusAtiv} ${a.descricao} (Alíquota: ${a.aliquota_formatada})\n`;
+                        });
+                    }
+                } else if (res.erros && res.erros.length > 0) {
                     detailsText += "\n\nErros Retornados:\n" + res.erros.join("\n");
                 }
                 $('#displayDetails').text(detailsText || 'Nenhum detalhe adicional.');

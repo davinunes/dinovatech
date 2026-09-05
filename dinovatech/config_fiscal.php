@@ -208,6 +208,24 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
                             <!-- Fiscal Fields Container -->
                             <div id="containerCamposFiscais" class="hidden space-y-6">
+                                <!-- Banner de Auditoria e Validação Cadastral SEFAZ-DF -->
+                                <div class="bg-gradient-to-r from-indigo-50 to-cyan-50 p-4 rounded-xl border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-xs flex-shrink-0">
+                                            <span class="material-icons text-xl">verified_user</span>
+                                        </div>
+                                        <div>
+                                            <h4 class="text-sm font-bold text-gray-900">Auditoria & Sincronização SEFAZ-DF</h4>
+                                            <p class="text-xs text-gray-600 mt-0.5">Consulte os dados oficiais da empresa e confira se as alíquotas dos seus serviços estão em conformidade com o Fisco.</p>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="executarAuditoriaSefaz()" id="btnAuditoriaSefaz"
+                                        class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition whitespace-nowrap">
+                                        <span class="material-icons text-sm" id="iconAuditoriaSefaz">search</span>
+                                        <span id="txtAuditoriaSefaz">Auditar Cadastro na SEFAZ</span>
+                                    </button>
+                                </div>
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Inscrição Municipal *</label>
@@ -1354,7 +1372,332 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     });
             });
         });
+
+        // Variável global para armazenar dados da última consulta cadastral
+        let dadosSefazUltimaConsulta = null;
+
+        function fecharModalAuditoriaSefaz() {
+            $('#modalAuditoriaSefaz').addClass('hidden');
+        }
+
+        function executarAuditoriaSefaz() {
+            const btn = $('#btnAuditoriaSefaz');
+            const icon = $('#iconAuditoriaSefaz');
+            const txt = $('#txtAuditoriaSefaz');
+
+            btn.prop('disabled', true).addClass('opacity-75 cursor-wait');
+            icon.text('sync').addClass('animate-spin');
+            txt.text('Consultando SEFAZ-DF...');
+
+            $.post('app.php', { action: 'auditar_cadastro_sefaz' }, function (res) {
+                if (res.success && res.data) {
+                    dadosSefazUltimaConsulta = res.data;
+                    renderizarModalAuditoriaSefaz(res.data);
+                    $('#modalAuditoriaSefaz').removeClass('hidden');
+                } else {
+                    let errMsg = res.message || 'Falha ao consultar cadastro na SEFAZ-DF.';
+                    if (res.erros && res.erros.length > 0) {
+                        errMsg += '\n• ' + res.erros.join('\n• ');
+                    }
+                    alert(errMsg);
+                }
+            }, 'json')
+            .fail(function (xhr) {
+                alert('Erro de comunicação ao consultar o WebService da SEFAZ-DF.');
+            })
+            .always(function () {
+                btn.prop('disabled', false).removeClass('opacity-75 cursor-wait');
+                icon.text('search').removeClass('animate-spin');
+                txt.text('Auditar Cadastro na SEFAZ');
+            });
+        }
+
+        function renderizarModalAuditoriaSefaz(data) {
+            const cad = data.cadastro || {};
+            const end = cad.endereco || {};
+            const resAud = data.resumo_auditoria || {};
+            const servicos = data.auditoria_servicos || [];
+            const ativs = cad.atividades || [];
+
+            // 1. Dados da Empresa
+            $('#auditoriaRazaoSocial').text(cad.razao_social || '-');
+            $('#auditoriaNomeFantasia').text(cad.nome_fantasia || '-');
+            $('#auditoriaCnpj').text(cad.cnpj || '-');
+            $('#auditoriaIm').text(cad.im || '-');
+            $('#auditoriaStatus').text(cad.status_cadastro || 'Ativo');
+            
+            const endCompleto = `${end.logradouro || ''}, ${end.bairro || ''} - ${end.codigo_municipio || '5300108'}/${end.uf || 'DF'} - CEP: ${end.cep || ''}`;
+            $('#auditoriaEndereco').text(endCompleto);
+
+            // Badges fiscais
+            $('#badgeOptanteSimples').html(cad.optante_simples ? 
+                `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Simples Nacional Ativo (${cad.data_simples || ''})</span>` : 
+                `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700">Não optante Simples</span>`
+            );
+
+            $('#badgeEmiteNfse').html(cad.emite_nfse ? 
+                `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">Emissão de NFS-e Autorizada</span>` : 
+                `<span class="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800">NFS-e Não Autorizada</span>`
+            );
+
+            // 2. Banner de Resumo da Auditoria de Serviços
+            const bannerContainer = $('#bannerResumoAuditoria');
+            if (resAud.requer_atencao) {
+                bannerContainer.html(`
+                    <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+                        <span class="material-icons text-amber-600 text-2xl flex-shrink-0">warning_amber</span>
+                        <div>
+                            <h4 class="text-sm font-bold text-amber-900">Atenção: Inconsistências Tributárias Detectadas</h4>
+                            <p class="text-xs text-amber-700 mt-0.5">
+                                Foram identificados <strong>${resAud.divergentes} serviço(s) com alíquota divergente</strong> 
+                                ${resAud.expirados > 0 ? ` e <strong>${resAud.expirados} serviço(s) com atividade expirada</strong>` : ''} 
+                                ${resAud.nao_encontrados > 0 ? ` e <strong>${resAud.nao_encontrados} não localizado(s)</strong> no rol do DF` : ''}.
+                                Corrija os serviços abaixo para evitar rejeições ou recolhimento incorreto do imposto.
+                            </p>
+                        </div>
+                    </div>
+                `);
+            } else {
+                bannerContainer.html(`
+                    <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+                        <span class="material-icons text-emerald-600 text-2xl flex-shrink-0">check_circle</span>
+                        <div>
+                            <h4 class="text-sm font-bold text-emerald-900">Tudo em Ordem!</h4>
+                            <p class="text-xs text-emerald-700 mt-0.5">Todos os <strong>${resAud.conformes} serviços ativos</strong> estão com alíquotas e itens 100% em conformidade com as atividades autorizadas pela SEFAZ-DF.</p>
+                        </div>
+                    </div>
+                `);
+            }
+
+            // 3. Tabela de Auditoria dos Serviços
+            const tbodyServicos = $('#tbodyAuditoriaServicos');
+            tbodyServicos.empty();
+
+            if (servicos.length === 0) {
+                tbodyServicos.html(`<tr><td colspan="5" class="py-4 text-center text-xs text-gray-500">Nenhum serviço ativo cadastrado no sistema.</td></tr>`);
+            } else {
+                servicos.forEach(function (s) {
+                    let badgeStatus = '';
+                    if (s.status === 'conforme') {
+                        badgeStatus = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">Conforme</span>`;
+                    } else if (s.status === 'divergente') {
+                        badgeStatus = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">Alíquota Divergente</span>`;
+                    } else if (s.status === 'expirada') {
+                        badgeStatus = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-purple-100 text-purple-800">Atividade Expirada</span>`;
+                    } else {
+                        badgeStatus = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-gray-100 text-gray-700">Não Localizada</span>`;
+                    }
+
+                    const aliqSisFmt = parseFloat(s.aliquota_sistema || 0).toFixed(2).replace('.', ',') + '%';
+                    const aliqSefazFmt = s.aliquota_sefaz !== null ? (parseFloat(s.aliquota_sefaz).toFixed(2).replace('.', ',') + '%') : '-';
+
+                    let msgDiagnostico = s.mensagens.join('<br>');
+
+                    const tr = `
+                        <tr class="border-b border-gray-100 hover:bg-gray-50/70 text-xs">
+                            <td class="py-3 px-3">
+                                <span class="font-bold text-gray-900">${s.nome_servico}</span>
+                                <div class="text-[11px] text-gray-400">Item LC 116: <strong>${s.item_lista_servico || '-'}</strong> | Cód. Mun: <strong>${s.codigo_tributacao_municipio || '-'}</strong></div>
+                            </td>
+                            <td class="py-3 px-2 font-mono font-bold text-gray-800">${aliqSisFmt}</td>
+                            <td class="py-3 px-2 font-mono font-bold ${s.status === 'divergente' ? 'text-rose-600' : 'text-emerald-700'}">${aliqSefazFmt}</td>
+                            <td class="py-3 px-2">
+                                <div class="mb-1">${badgeStatus}</div>
+                                <div class="text-[11px] text-gray-600 leading-tight">${msgDiagnostico}</div>
+                            </td>
+                            <td class="py-3 px-3 text-right">
+                                <a href="servico_form.php?id=${s.id_servico}" target="_blank" 
+                                   class="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs font-semibold transition">
+                                    <span class="material-icons text-[13px]">edit</span>
+                                    <span>Editar</span>
+                                </a>
+                            </td>
+                        </tr>
+                    `;
+                    tbodyServicos.append(tr);
+                });
+            }
+
+            // 4. Rol de Atividades do DF
+            const tbodyAtiv = $('#tbodyAtividadesSefaz');
+            tbodyAtiv.empty();
+            ativs.forEach(function (a) {
+                const badgeVigencia = a.ativa ? 
+                    `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-800">Ativa</span>` : 
+                    `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-800">Encerrada em ${a.data_final || ''}</span>`;
+                
+                const tr = `
+                    <tr class="border-b border-gray-100 text-xs ${!a.ativa ? 'opacity-50 bg-gray-50' : ''}">
+                        <td class="py-2.5 px-3 font-mono font-bold text-gray-700">${a.codigo}</td>
+                        <td class="py-2.5 px-3 text-gray-800">${a.descricao}</td>
+                        <td class="py-2.5 px-3 font-mono font-bold text-cyan-800">${a.aliquota_formatada}</td>
+                        <td class="py-2.5 px-3 text-right">${badgeVigencia}</td>
+                    </tr>
+                `;
+                tbodyAtiv.append(tr);
+            });
+        }
+
+        function preencherDadosSefazNoFormulario() {
+            if (!dadosSefazUltimaConsulta || !dadosSefazUltimaConsulta.cadastro) {
+                alert('Nenhum dado da SEFAZ disponível no momento.');
+                return;
+            }
+            const cad = dadosSefazUltimaConsulta.cadastro;
+            const end = cad.endereco || {};
+
+            if (cad.razao_social) $('#razao_social').val(cad.razao_social);
+            if (cad.nome_fantasia) $('#nome_fantasia').val(cad.nome_fantasia);
+            if (cad.cnpj) $('#cnpj').val(cad.cnpj);
+            if (cad.im) $('#inscricao_municipal').val(cad.im);
+            if (end.logradouro) $('#endereco').val(end.logradouro);
+            if (end.bairro) $('#bairro').val(end.bairro);
+            if (end.cep) $('#cep').val(end.cep);
+            if (end.uf) $('#uf').val(end.uf);
+            if (end.codigo_municipio) $('#codigo_municipio').val(end.codigo_municipio);
+
+            if (cad.optante_simples !== undefined) {
+                $('#optante_simples').prop('checked', cad.optante_simples);
+                if (cad.optante_simples) {
+                    $('#regime_tributario').val('simples');
+                }
+            }
+
+            alert('Dados oficiais da SEFAZ-DF aplicados nos campos do formulário com sucesso!');
+            fecharModalAuditoriaSefaz();
+        }
     </script>
+
+    <!-- MODAL DE AUDITORIA CADASTRAL E FISCAL SEFAZ-DF -->
+    <div id="modalAuditoriaSefaz" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col border border-gray-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-6 py-4 bg-gradient-to-r from-indigo-900 via-indigo-800 to-cyan-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-xs">
+                        <span class="material-icons text-xl text-cyan-300">verified_user</span>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold">Auditoria Cadastral e Tributária - SEFAZ-DF</h3>
+                        <p class="text-xs text-indigo-200">WebService Oficial do Padrão Nacional (Nota Control / ISS-DF)</p>
+                    </div>
+                </div>
+                <button type="button" onclick="fecharModalAuditoriaSefaz()" class="text-white/70 hover:text-white transition">
+                    <span class="material-icons text-2xl">close</span>
+                </button>
+            </div>
+
+            <!-- Body com Scroll -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-1">
+                <!-- 1. Dados da Empresa na SEFAZ-DF -->
+                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-3">
+                        <div>
+                            <span class="text-xs font-bold text-gray-500 uppercase">Razão Social Oficial (SEFAZ-DF)</span>
+                            <h4 id="auditoriaRazaoSocial" class="text-base font-extrabold text-gray-900 leading-tight">-</h4>
+                            <div class="text-xs text-gray-600 mt-0.5">Nome Fantasia: <span id="auditoriaNomeFantasia" class="font-semibold">-</span></div>
+                        </div>
+                        <div class="flex items-center gap-2" id="badgesFiscais">
+                            <span id="badgeOptanteSimples"></span>
+                            <span id="badgeEmiteNfse"></span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div>
+                            <span class="text-gray-500 font-medium">CNPJ:</span>
+                            <div id="auditoriaCnpj" class="font-mono font-bold text-gray-800">-</div>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 font-medium">Inscrição Municipal (IM):</span>
+                            <div id="auditoriaIm" class="font-mono font-bold text-gray-800">-</div>
+                        </div>
+                        <div>
+                            <span class="text-gray-500 font-medium">Status Cadastral:</span>
+                            <div id="auditoriaStatus" class="font-bold text-emerald-700">-</div>
+                        </div>
+                        <div class="sm:col-span-2 md:col-span-4">
+                            <span class="text-gray-500 font-medium">Endereço Cadastrado na SEFAZ-DF:</span>
+                            <div id="auditoriaEndereco" class="font-semibold text-gray-800 mt-0.5">-</div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button type="button" onclick="preencherDadosSefazNoFormulario()"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-indigo-200 hover:bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg shadow-xs transition">
+                            <span class="material-icons text-sm">content_copy</span>
+                            <span>Aplicar Dados Oficiais da SEFAZ no Formulário</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Auditoria dos Serviços Cadastrados -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                            <span class="material-icons text-indigo-600 text-base">rule</span>
+                            <span>Conferência de Alíquotas dos Serviços do Sistema</span>
+                        </h4>
+                        <span class="text-xs text-gray-500">Cruza serviços ativos com o cadastro do DF</span>
+                    </div>
+
+                    <div id="bannerResumoAuditoria"></div>
+
+                    <div class="overflow-x-auto border border-gray-200 rounded-xl">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100/80 text-[11px] font-bold text-gray-700 uppercase border-b border-gray-200">
+                                    <th class="py-2.5 px-3">Serviço no Dinovatech</th>
+                                    <th class="py-2.5 px-2">Alíq. Atual</th>
+                                    <th class="py-2.5 px-2">Alíq. SEFAZ</th>
+                                    <th class="py-2.5 px-2">Diagnóstico</th>
+                                    <th class="py-2.5 px-3 text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyAuditoriaServicos" class="divide-y divide-gray-100">
+                                <tr><td colspan="5" class="py-4 text-center text-xs text-gray-500">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. Rol de Atividades do DF -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                            <span class="material-icons text-cyan-700 text-base">list_alt</span>
+                            <span>Atividades Cadastradas na SEFAZ-DF</span>
+                        </h4>
+                        <span class="text-xs text-gray-500">Total autorizado no Fisco</span>
+                    </div>
+
+                    <div class="overflow-x-auto border border-gray-200 rounded-xl max-h-48 overflow-y-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-100/80 text-[11px] font-bold text-gray-700 uppercase border-b border-gray-200 sticky top-0">
+                                    <th class="py-2 px-3">Cód. Mun</th>
+                                    <th class="py-2 px-3">Descrição da Atividade</th>
+                                    <th class="py-2 px-3">Alíquota</th>
+                                    <th class="py-2 px-3 text-right">Vigência</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyAtividadesSefaz" class="divide-y divide-gray-100">
+                                <tr><td colspan="4" class="py-3 text-center text-xs text-gray-500">Carregando...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-end">
+                <button type="button" onclick="fecharModalAuditoriaSefaz()"
+                    class="px-5 py-2 bg-gray-700 hover:bg-gray-800 text-white text-xs font-bold rounded-xl transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

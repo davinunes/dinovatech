@@ -133,6 +133,50 @@ try {
         exit;
     }
 
+    if ($action === 'consultar_cadastro') {
+        $ambiente = $_POST['ambiente'] ?? ($configEmissor['ambiente_padrao'] ?? 'producao');
+        $endpoint = ($ambiente === 'producao')
+            ? 'https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx'
+            : 'https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx';
+
+        $builder = new \Dinovatech\Modules\Fiscal\Builders\ConsultarDadosCadastraisXmlBuilder();
+        $cnpj = trim($_POST['prest_cnpj'] ?? $configEmissor['cnpj']);
+        $im = trim($_POST['prest_im'] ?? $configEmissor['inscricao_municipal']);
+
+        $xml = $builder->build($cnpj, $im);
+
+        $soapClient = new \Dinovatech\Modules\Fiscal\Http\SoapClient($certManager, $endpoint);
+        $versaoDados = ($ambiente === 'producao') ? '1.01' : '1.00';
+        $soapResponse = $soapClient->call('ConsultarDadosCadastrais', $xml, $versaoDados);
+
+        $cadResult = $parser->parseConsultaCadastro($soapResponse['response_body'] ?? '');
+
+        $response['success'] = $cadResult->success;
+        $response['message'] = $cadResult->message;
+        $response['http_code'] = $soapResponse['http_code'] ?? 0;
+        $response['envelope_soap'] = $soapResponse['request_envelope'] ?? '';
+        $response['response_xml'] = $soapResponse['response_body'] ?? '';
+        $response['erros'] = $cadResult->erros;
+        $response['cadastro'] = [
+            'cnpj' => $cadResult->cnpj,
+            'im' => $cadResult->im,
+            'status' => $cadResult->statusCadastro,
+            'razao_social' => $cadResult->razaoSocial,
+            'nome_fantasia' => $cadResult->nomeFantasia,
+            'endereco' => "{$cadResult->logradouro}, {$cadResult->bairro} - {$cadResult->codigoMunicipio}/{$cadResult->uf} CEP: {$cadResult->cep}",
+            'emite_nfse' => $cadResult->emiteNfse,
+            'optante_simples' => $cadResult->optanteSimples,
+            'data_simples' => $cadResult->dataSimples,
+            'optante_mei' => $cadResult->optanteMei,
+            'atividades' => $cadResult->atividades,
+            'total_atividades' => count($cadResult->atividades),
+            'total_vigentes' => count($cadResult->atividadesVigentes)
+        ];
+
+        echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     // Captura parâmetros da requisição de teste
     $ambiente = $_POST['ambiente'] ?? ($configEmissor['ambiente_padrao'] ?? 'producao'); // homologacao | producao
     $versaoSchema = $_POST['versao_schema'] ?? ($ambiente === 'producao' ? '1.01' : '1.00');

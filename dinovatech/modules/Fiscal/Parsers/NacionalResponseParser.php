@@ -5,6 +5,7 @@ use Dinovatech\Modules\Fiscal\DTOs\EmissionResult;
 use Dinovatech\Modules\Fiscal\DTOs\QueryResult;
 use Dinovatech\Modules\Fiscal\DTOs\CancellationResult;
 use Dinovatech\Modules\Fiscal\DTOs\UrlResult;
+use Dinovatech\Modules\Fiscal\DTOs\CadastroResult;
 use DOMDocument;
 use DOMXPath;
 
@@ -181,6 +182,117 @@ class NacionalResponseParser
         } else {
             $result->success = false;
             $result->message = !empty($erros) ? implode('; ', $erros) : 'Erro ao processar pedido de cancelamento.';
+        }
+
+        return $result;
+    }
+
+    public function parseConsultaCadastro(string $responseXml): CadastroResult
+    {
+        $result = new CadastroResult();
+        $result->xmlRetorno = $responseXml;
+
+        if (empty($responseXml)) {
+            $result->success = false;
+            $result->message = 'Resposta vazia na consulta cadastral da SEFAZ-DF.';
+            return $result;
+        }
+
+        if (stripos($responseXml, 'Fault>') !== false) {
+            $result->success = false;
+            $result->message = 'Erro SOAP na consulta cadastral da SEFAZ-DF.';
+            if (preg_match('/<(?:\w+:)?faultstring\b[^>]*>(.*?)<\/(?:\w+:)?faultstring>/si', $responseXml, $m)) {
+                $result->erros[] = trim(strip_tags(htmlspecialchars_decode($m[1])));
+            }
+            return $result;
+        }
+
+        $erros = $this->extractMessages($responseXml);
+        if (!empty($erros)) {
+            $result->erros = $erros;
+        }
+
+        if (stripos($responseXml, '<Cadastro>') !== false || stripos($responseXml, '<Cadastro ') !== false) {
+            $result->success = true;
+            $result->message = 'Dados cadastrais recuperados com sucesso da SEFAZ-DF.';
+
+            if (preg_match('/<CNPJ\b[^>]*>(.*?)<\/CNPJ>/si', $responseXml, $m)) $result->cnpj = trim($m[1]);
+            if (preg_match('/<IM\b[^>]*>(.*?)<\/IM>/si', $responseXml, $m)) $result->im = trim($m[1]);
+            if (preg_match('/<StatusCadastro\b[^>]*>(.*?)<\/StatusCadastro>/si', $responseXml, $m)) $result->statusCadastro = trim($m[1]);
+            if (preg_match('/<xNome\b[^>]*>(.*?)<\/xNome>/si', $responseXml, $m)) $result->razaoSocial = trim($m[1]);
+            if (preg_match('/<xFant\b[^>]*>(.*?)<\/xFant>/si', $responseXml, $m)) $result->nomeFantasia = trim($m[1]);
+
+            // Endereço
+            if (preg_match('/<xLgr\b[^>]*>(.*?)<\/xLgr>/si', $responseXml, $m)) $result->logradouro = trim($m[1]);
+            if (preg_match('/<xBairro\b[^>]*>(.*?)<\/xBairro>/si', $responseXml, $m)) $result->bairro = trim($m[1]);
+            if (preg_match('/<cMun\b[^>]*>(.*?)<\/cMun>/si', $responseXml, $m)) $result->codigoMunicipio = trim($m[1]);
+            if (preg_match('/<UF\b[^>]*>(.*?)<\/UF>/si', $responseXml, $m)) $result->uf = trim($m[1]);
+            if (preg_match('/<CEP\b[^>]*>(.*?)<\/CEP>/si', $responseXml, $m)) $result->cep = trim($m[1]);
+
+            // Contato
+            if (preg_match('/<fone\b[^>]*>(.*?)<\/fone>/si', $responseXml, $m)) $result->telefone = trim($m[1]);
+            if (preg_match('/<email\b[^>]*>(.*?)<\/email>/si', $responseXml, $m)) $result->email = trim($m[1]);
+
+            // Flags
+            if (preg_match('/<EmiteNfse\b[^>]*>(.*?)<\/EmiteNfse>/si', $responseXml, $m)) $result->emiteNfse = (trim($m[1]) === '1');
+            if (preg_match('/<PermiteDescontoCondicionado\b[^>]*>(.*?)<\/PermiteDescontoCondicionado>/si', $responseXml, $m)) $result->permiteDescontoCondicionado = (trim($m[1]) === '1');
+            if (preg_match('/<PermiteDescontoIncondicionado\b[^>]*>(.*?)<\/PermiteDescontoIncondicionado>/si', $responseXml, $m)) $result->permiteDescontoIncondicionado = (trim($m[1]) === '1');
+
+            // Simples e MEI
+            if (preg_match('/<OptanteSimplesNacional\b[^>]*>(.*?)<\/OptanteSimplesNacional>/si', $responseXml, $m)) {
+                $result->optanteSimples = (trim($m[1]) === '1');
+            }
+            if (preg_match('/<OpcaoSimplesNacional\b[^>]*>.*?<DataInicial\b[^>]*>(.*?)<\/DataInicial>.*?<\/OpcaoSimplesNacional>/si', $responseXml, $m)) {
+                $result->dataSimples = trim($m[1]);
+            }
+            if (preg_match('/<OptanteMei\b[^>]*>(.*?)<\/OptanteMei>/si', $responseXml, $m)) {
+                $result->optanteMei = (trim($m[1]) === '1');
+            }
+
+            // Tributações permitidas (tribISSQN)
+            if (preg_match_all('/<tribISSQN\b[^>]*>(.*?)<\/tribISSQN>/si', $responseXml, $matchesTrib)) {
+                foreach ($matchesTrib[1] as $tVal) {
+                    $result->tributacoesPermitidas[] = (int)trim($tVal);
+                }
+            }
+
+            // Atividades
+            if (preg_match_all('/<Atividade\b[^>]*>(.*?)<\/Atividade>/si', $responseXml, $matchesAtiv)) {
+                $hoje = date('Y-m-d');
+                foreach ($matchesAtiv[1] as $itemAtiv) {
+                    $cTribMun = '';
+                    $xTribMun = '';
+                    $pAliq = 0.0;
+                    $dtIni = null;
+                    $dtFim = null;
+
+                    if (preg_match('/<cTribMun\b[^>]*>(.*?)<\/cTribMun>/si', $itemAtiv, $m)) $cTribMun = trim($m[1]);
+                    if (preg_match('/<xTribMun\b[^>]*>(.*?)<\/xTribMun>/si', $itemAtiv, $m)) $xTribMun = trim($m[1]);
+                    if (preg_match('/<pAliq\b[^>]*>(.*?)<\/pAliq>/si', $itemAtiv, $m)) $pAliq = (float)trim($m[1]);
+                    if (preg_match('/<DataInicial\b[^>]*>(.*?)<\/DataInicial>/si', $itemAtiv, $m)) $dtIni = trim($m[1]);
+                    if (preg_match('/<DataFinal\b[^>]*>(.*?)<\/DataFinal>/si', $itemAtiv, $m)) $dtFim = trim($m[1]);
+
+                    $ativa = empty($dtFim) || ($dtFim >= $hoje);
+
+                    $ativObj = [
+                        'codigo' => $cTribMun,
+                        'descricao' => $xTribMun,
+                        'aliquota' => $pAliq,
+                        'aliquota_formatada' => number_format($pAliq, 2, ',', '.') . '%',
+                        'data_inicial' => $dtIni,
+                        'data_final' => $dtFim,
+                        'ativa' => $ativa
+                    ];
+
+                    $result->atividades[] = $ativObj;
+                    if ($ativa) {
+                        $result->atividadesVigentes[] = $ativObj;
+                    }
+                }
+            }
+        } else {
+            $result->success = false;
+            $result->message = !empty($erros) ? implode('; ', $erros) : 'Dados cadastrais não localizados no retorno da SEFAZ-DF.';
         }
 
         return $result;
