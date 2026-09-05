@@ -226,12 +226,14 @@ class NacionalProvider implements NfseProviderInterface
                 }
             }
 
-            // Fallback de URL pública do DF para a NFS-e
+            // Fallback: quando a SEFAZ retorna L090 (sem autorização de consulta de URL por WS) ou URL não disponível,
+            // disponibiliza as URLs oficiais dos Portais Nacional e do ISS-DF
             $u = new UrlResult();
             if (!empty($cleanNumNota) && $cleanNumNota !== '0') {
                 $u->success = true;
-                $u->urlVisualizacao = "https://nfse.fazenda.df.gov.br/NfseTax/Nfse/VisualizarNfse?numero=" . $cleanNumNota;
-                $u->message = "URL gerada a partir do número da NFS-e.";
+                $u->urlVisualizacao = "https://nfse.fazenda.df.gov.br/NfseTax/";
+                $u->urlVisualizacaoNacional = "https://www.nfse.gov.br/consultanfse/";
+                $u->message = "Consulta WebService restrita pelo Fisco (L090). URLs dos Portais do ISS-DF e SPED Nacional disponibilizadas.";
             } else {
                 $u->success = false;
                 $u->message = "Não foi possível localizar o número da NFS-e para consulta.";

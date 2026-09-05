@@ -284,6 +284,27 @@ XML;
 XML;
         $response['envelope_soap'] = $soapEnvelope;
         $soapAction = "http://www.sped.fazenda.gov.br/nfse/ConsultarDpsDisponivel";
+    } elseif ($action === 'consultar_dps') {
+        $builderDps = new \Dinovatech\Modules\Fiscal\Builders\ConsultarNfseDpsXmlBuilder();
+        $xmlDps = $builderDps->build($prestCnpj, $prestIm, $numDps, $serieDps);
+        $response['raw_xml'] = $xmlDps;
+        $response['signed_xml'] = $xmlDps;
+
+        $methodBlockDps = "<ConsultarNfseDps xmlns=\"http://www.sped.fazenda.gov.br/nfse\">
+      <nfseCabecMsg>{$cabecalhoXml}</nfseCabecMsg>
+      <nfseDadosMsg>{$xmlDps}</nfseDadosMsg>
+    </ConsultarNfseDps>";
+
+        $soapEnvelope = <<<XML
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:nfse="http://www.sped.fazenda.gov.br/nfse">
+  <soapenv:Header/>
+  <soapenv:Body>
+    {$methodBlockDps}
+  </soapenv:Body>
+</soapenv:Envelope>
+XML;
+        $response['envelope_soap'] = $soapEnvelope;
+        $soapAction = "http://www.sped.fazenda.gov.br/nfse/ConsultarNfseDps";
     } elseif ($action === 'consultar_url') {
         $numNota = $_POST['numero_nota'] ?? '54';
         $builderUrl = new \Dinovatech\Modules\Fiscal\Builders\ConsultarUrlXmlBuilder();
@@ -383,6 +404,17 @@ XML;
         $response['message'] = $parsedRes->message;
         $response['erros'] = $parsedRes->erros;
         $response['details'] = !empty($parsedRes->erros) ? implode("\n", $parsedRes->erros) : 'Consulta processada pelo WebService.';
+        if ($parsedRes->encontrada) {
+            $response['numero_nota'] = $parsedRes->numeroNota;
+            $response['chave_nfse'] = $parsedRes->chaveNfse;
+            $response['codigo_verificacao'] = $parsedRes->codigoVerificacao;
+        }
+    } elseif ($action === 'consultar_dps') {
+        $parsedRes = $parser->parseConsultaDps($responseBody);
+        $response['success'] = $parsedRes->success;
+        $response['message'] = $parsedRes->message;
+        $response['erros'] = $parsedRes->erros;
+        $response['details'] = !empty($parsedRes->erros) ? implode("\n", $parsedRes->erros) : ($parsedRes->encontrada ? "NFS-e Localizada!\nNúmero: {$parsedRes->numeroNota}\nChave: {$parsedRes->chaveNfse}\nCód Verificação: {$parsedRes->codigoVerificacao}" : 'NFS-e não encontrada para esta DPS.');
         if ($parsedRes->encontrada) {
             $response['numero_nota'] = $parsedRes->numeroNota;
             $response['chave_nfse'] = $parsedRes->chaveNfse;

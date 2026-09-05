@@ -371,16 +371,19 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                         <!-- ACTION BUTTONS -->
                         <div class="d-flex flex-wrap gap-2 pt-3 border-top border-slate-700">
                             <button type="button" class="btn btn-glow-primary flex-grow-1 py-2" onclick="executarTeste('preview')">
-                                <i class="bi bi-code-slash me-2"></i> 1. Preview (GerarNfse)
+                                <i class="bi bi-code-slash me-2"></i> 1. Preview
                             </button>
                             <button type="button" class="btn btn-glow-success flex-grow-1 py-2" onclick="executarTeste('gerar')">
-                                <i class="bi bi-send-check-fill me-2"></i> 2. Transmitir (GerarNfse)
+                                <i class="bi bi-send-check-fill me-2"></i> 2. Transmitir DPS
+                            </button>
+                            <button type="button" class="btn btn-outline-primary flex-grow-1 py-2" onclick="executarTeste('consultar_dps')">
+                                <i class="bi bi-file-earmark-text me-2"></i> 3. Consultar NFS-e por DPS
                             </button>
                             <button type="button" class="btn btn-outline-info flex-grow-1 py-2" onclick="executarTeste('consultar_disponivel')">
-                                <i class="bi bi-search me-2"></i> 3. DPS Disponível
+                                <i class="bi bi-search me-2"></i> 4. DPS Disponível
                             </button>
                             <button type="button" class="btn btn-outline-warning flex-grow-1 py-2" onclick="executarTeste('consultar_url')">
-                                <i class="bi bi-link-45deg me-2"></i> 4. Consultar URLs da Nota
+                                <i class="bi bi-link-45deg me-2"></i> 5. Consultar URLs da Nota
                             </button>
                         </div>
 
