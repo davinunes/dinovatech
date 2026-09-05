@@ -109,9 +109,9 @@ class DpsXmlBuilder
 
         $ibsCbsXml = '';
         if ($usarIbsCbs) {
-            $cIndOp    = $data->indicadorOperacao ?: '050101';
+            $cIndOp    = (!empty($data->indicadorOperacao) && $data->indicadorOperacao !== '050101') ? $data->indicadorOperacao : '100301';
             $cstIbsCbs = $data->cstIbsCbs ?: '000';
-            $classTrib = $data->classificacaoTribIbsCbs ?: '000000';
+            $classTrib = (!empty($data->classificacaoTribIbsCbs) && $data->classificacaoTribIbsCbs !== '000000') ? $data->classificacaoTribIbsCbs : '000001';
             $ibsCbsXml = "<IBSCBS>
                 <finNFSe>0</finNFSe>
                 <indFinal>0</indFinal>
@@ -127,6 +127,9 @@ class DpsXmlBuilder
                 </valores>
             </IBSCBS>";
         }
+
+        // Regimes tributários adicionais do Simples Nacional
+        $regAnuTriSNXml = ($opSimpNac === '3') ? "<regAnuTriSN>1</regAnuTriSN>" : "";
 
         $xml = <<<XML
 <GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
@@ -145,6 +148,7 @@ class DpsXmlBuilder
                 <IM>{$prestIm}</IM>
                 <regTrib>
                     <opSimpNac>{$opSimpNac}</opSimpNac>
+                    {$regAnuTriSNXml}
                     <regEspTrib>0</regEspTrib>
                 </regTrib>
             </prest>
@@ -170,9 +174,6 @@ class DpsXmlBuilder
                         <tpRetISSQN>{$tpRetISSQN}</tpRetISSQN>
                         <pAliq>{$pAliq}</pAliq>
                     </tribMun>
-                    <totTrib>
-                        <indTotTrib>0</indTotTrib>
-                    </totTrib>
                 </trib>
             </valores>
             {$ibsCbsXml}

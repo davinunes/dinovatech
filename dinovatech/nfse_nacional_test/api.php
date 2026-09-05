@@ -108,9 +108,9 @@ try {
 
     // IBS/CBS
     $usarIbsCbs = isset($_POST['usar_ibs_cbs']) ? ($_POST['usar_ibs_cbs'] == '1') : ($versaoSchema === '1.01');
-    $cIndOp = $_POST['c_ind_op'] ?? '050101';
+    $cIndOp = $_POST['c_ind_op'] ?? '100301';
     $cstIbsCbs = $_POST['cst_ibs_cbs'] ?? '000';
-    $classTrib = $_POST['class_trib'] ?? '000000';
+    $classTrib = $_POST['class_trib'] ?? '000001';
 
     // Monta Objeto NfseData
     $data = new NfseData();
