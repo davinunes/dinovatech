@@ -76,6 +76,14 @@ try {
 
         $link = DBConnect();
         $idFaturaEsc = mysqli_real_escape_string($link, $idFatura);
+
+        // Checa se a fatura existe
+        $resCheckFat = DBExecute($link, "SELECT id_fatura FROM Faturas WHERE id_fatura = '$idFaturaEsc'");
+        if (!$resCheckFat || mysqli_num_rows($resCheckFat) === 0) {
+            DBClose($link);
+            throw new Exception("A Fatura #{$idFatura} NÃO existe no banco de dados.");
+        }
+
         $numNotaEsc = mysqli_real_escape_string($link, $numNota);
         $numDpsEsc = mysqli_real_escape_string($link, $numDps);
         $serieDpsEsc = mysqli_real_escape_string($link, $serieDps);
@@ -83,7 +91,7 @@ try {
         $xmlEnvioEsc = mysqli_real_escape_string($link, $xmlEnvio);
         $xmlRetornoEsc = mysqli_real_escape_string($link, $xmlRetorno);
 
-        $urlPdf = "https://www.nfse.gov.br/consultanfse/visualizar/" . $chaveNfse;
+        $urlPdf = "https://nfse.fazenda.df.gov.br/NfseTax/Nfse/VisualizarNfse?chave=" . $chaveNfse;
         $urlPdfEsc = mysqli_real_escape_string($link, $urlPdf);
 
         $qInsert = "INSERT INTO NfseEmissoes (
@@ -95,7 +103,12 @@ try {
             '10.00', '2.00', '0', '01.06', 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
             '$urlPdfEsc', '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW()
         )";
-        DBExecute($link, $qInsert);
+        $resInsert = DBExecute($link, $qInsert);
+        if (!$resInsert) {
+            $err = mysqli_error($link);
+            DBClose($link);
+            throw new Exception("Erro MySQL ao gravar NfseEmissoes: " . $err);
+        }
 
         DBExecute($link, "UPDATE Faturas SET possui_nfse = 1, data_emissao_nfse = NOW() WHERE id_fatura = '$idFaturaEsc'");
         DBClose($link);

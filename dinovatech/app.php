@@ -3734,7 +3734,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     if ($urlRes->success && !empty($urlRes->urlVisualizacao)) {
                         $urlFinal = $urlRes->urlVisualizacao;
                     } elseif (!empty($emissao['codigo_verificacao']) && strpos($emissao['codigo_verificacao'], 'NFS') === 0) {
-                        $urlFinal = "https://www.nfse.gov.br/consultanfse/visualizar/" . trim($emissao['codigo_verificacao']);
+                        $urlFinal = "https://nfse.fazenda.df.gov.br/NfseTax/Nfse/VisualizarNfse?chave=" . trim($emissao['codigo_verificacao']);
                     }
 
                     if (!empty($urlFinal)) {
