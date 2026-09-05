@@ -3149,7 +3149,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             // Verifica provedor ativo nas configurações
             $resConfProv = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
             $configEmissor = $resConfProv ? mysqli_fetch_assoc($resConfProv) : null;
-            $activeProvider = $configEmissor['nfse_provider'] ?? 'legacy';
+            $activeProvider = $configEmissor['nfse_provider'] ?? 'nacional';
 
             if ($activeProvider === 'nacional') {
                 try {

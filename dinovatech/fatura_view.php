@@ -419,9 +419,14 @@ if ($id_fatura) {
                                             $html .= '<span class="text-[10px] text-gray-400">' . ucfirst($nfse['ambiente']) . '</span>';
                                             $html .= '</div>';
 
-                                            $html .= '<div class="grid grid-cols-2 gap-2 mt-2">';
-                                            $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-blue-50 text-blue-600 py-1 rounded hover:bg-blue-100 border border-blue-200">XML Assinado</a>';
-                                            $html .= '<a href="ver_nfse_impressao.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-xs bg-emerald-50 text-emerald-700 py-1 rounded hover:bg-emerald-100 border border-emerald-200 font-semibold">🖨️ Imprimir DANFSE</a>';
+                                            $html .= '<div class="grid grid-cols-3 gap-1.5 mt-2">';
+                                            $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-[11px] bg-blue-50 text-blue-600 py-1 px-1 rounded hover:bg-blue-100 border border-blue-200 truncate" title="Ver XML Assinado">XML Assinado</a>';
+                                            $urlPdfShow = $nfse['url_pdf'] ?? '';
+                                            if (empty($urlPdfShow) || strpos($urlPdfShow, 'VisualizarNfse') !== false || strpos($urlPdfShow, 'consultanfse') !== false) {
+                                                $urlPdfShow = 'https://nfse.fazenda.df.gov.br/NfseTax/';
+                                            }
+                                            $html .= '<a href="' . $urlPdfShow . '" target="_blank" class="text-center text-[11px] bg-red-50 text-red-600 py-1 px-1 rounded hover:bg-red-100 border border-red-200 truncate" title="Acessar Portal ISS-DF">Portal ISS-DF</a>';
+                                            $html .= '<a href="ver_nfse_impressao.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-[11px] bg-emerald-50 text-emerald-700 py-1 px-1 rounded hover:bg-emerald-100 border border-emerald-200 font-semibold truncate" title="Imprimir Documento Auxiliar DANFSE">🖨️ DANFSE</a>';
                                             $html .= '</div>';
                                         } elseif ($statusLower !== 'processando') {
                                             $html .= '<div class="text-xs text-red-400 mt-1 leading-tight max-h-16 overflow-y-auto">';

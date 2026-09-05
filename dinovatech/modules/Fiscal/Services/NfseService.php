@@ -37,7 +37,7 @@ class NfseService
 
     private function resolveProvider(): NfseProviderInterface
     {
-        $configuredProvider = $this->config['nfse_provider'] ?? 'legacy';
+        $configuredProvider = $this->config['nfse_provider'] ?? 'nacional';
 
         if ($configuredProvider === 'nacional') {
             return new NacionalProvider($this->config, $this->link);
