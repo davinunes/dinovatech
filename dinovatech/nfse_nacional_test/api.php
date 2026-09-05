@@ -84,30 +84,41 @@ try {
             throw new Exception("A Fatura #{$idFatura} NÃO existe no banco de dados.");
         }
 
-        // Remove registros anteriores duplicados de NFS-e para esta mesma fatura
-        DBExecute($link, "DELETE FROM NfseEmissoes WHERE id_fatura = '$idFaturaEsc'");
-
         $numNotaEsc = mysqli_real_escape_string($link, $numNota);
         $numDpsEsc = mysqli_real_escape_string($link, $numDps);
         $serieDpsEsc = mysqli_real_escape_string($link, $serieDps);
         $chaveEsc = mysqli_real_escape_string($link, $chaveNfse);
         $xmlEnvioEsc = mysqli_real_escape_string($link, $xmlEnvio);
         $xmlRetornoEsc = mysqli_real_escape_string($link, $xmlRetorno);
+        $urlPdfEsc = mysqli_real_escape_string($link, "https://nfse.fazenda.df.gov.br/NfseTax/");
 
-        $urlPdf = "https://www.nfse.gov.br/consultanfse/";
-        $urlPdfEsc = mysqli_real_escape_string($link, $urlPdf);
+        // Preserva a id_emissao existente se houver, atualizando os dados in-place
+        $resExist = DBExecute($link, "SELECT id_emissao FROM NfseEmissoes WHERE id_fatura = '$idFaturaEsc' ORDER BY id_emissao DESC LIMIT 1");
+        if ($resExist && mysqli_num_rows($resExist) > 0) {
+            $rowExist = mysqli_fetch_assoc($resExist);
+            $idEmissao = $rowExist['id_emissao'];
+            $qSave = "UPDATE NfseEmissoes SET
+                numero_rps = '$numDpsEsc', serie_rps = '$serieDpsEsc', numero_nota = '$numNotaEsc',
+                codigo_verificacao = '$chaveEsc', ambiente = 'producao', valor_servico = '10.00',
+                aliquota_iss = '2.00', iss_retido = '0', item_lista_servico = '01.06',
+                discriminacao = 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
+                url_pdf = '$urlPdfEsc', xml_envio = '$xmlEnvioEsc', xml_retorno = '$xmlRetornoEsc',
+                status = 'concluido', data_emissao = NOW()
+                WHERE id_emissao = '$idEmissao'";
+        } else {
+            $qSave = "INSERT INTO NfseEmissoes (
+                id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
+                valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
+                url_pdf, xml_envio, xml_retorno, status, data_emissao
+            ) VALUES (
+                '$idFaturaEsc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
+                '10.00', '2.00', '0', '01.06', 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
+                '$urlPdfEsc', '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW()
+            )";
+        }
 
-        $qInsert = "INSERT INTO NfseEmissoes (
-            id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
-            valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
-            url_pdf, xml_envio, xml_retorno, status, data_emissao
-        ) VALUES (
-            '$idFaturaEsc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
-            '10.00', '2.00', '0', '01.06', 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
-            '$urlPdfEsc', '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW()
-        )";
-        $resInsert = DBExecute($link, $qInsert);
-        if (!$resInsert) {
+        $resSave = DBExecute($link, $qSave);
+        if (!$resSave) {
             $err = mysqli_error($link);
             DBClose($link);
             throw new Exception("Erro MySQL ao gravar NfseEmissoes: " . $err);
