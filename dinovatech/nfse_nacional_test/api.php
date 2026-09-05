@@ -287,13 +287,16 @@ XML;
     } elseif ($action === 'consultar_url') {
         $numNota = $_POST['numero_nota'] ?? '54';
         $builderUrl = new \Dinovatech\Modules\Fiscal\Builders\ConsultarUrlXmlBuilder();
-        $xmlUrl = $builderUrl->build($prestCnpj, $prestIm, $numNota, $serieDps, $numDps);
-        $response['raw_xml'] = $xmlUrl;
-        $response['signed_xml'] = $xmlUrl;
+        $reqId = "ConsultarUrl1";
+        $rawXml = $builderUrl->build($prestCnpj, $prestIm, $numNota, $serieDps, $numDps, $reqId);
+        $signedXml = $signer->sign($rawXml, $reqId);
+
+        $response['raw_xml'] = $rawXml;
+        $response['signed_xml'] = $signedXml;
 
         $methodBlockUrl = "<ConsultarUrlNfse xmlns=\"http://www.sped.fazenda.gov.br/nfse\">
       <nfseCabecMsg>{$cabecalhoXml}</nfseCabecMsg>
-      <nfseDadosMsg>{$xmlUrl}</nfseDadosMsg>
+      <nfseDadosMsg>{$signedXml}</nfseDadosMsg>
     </ConsultarUrlNfse>";
 
         $soapEnvelope = <<<XML

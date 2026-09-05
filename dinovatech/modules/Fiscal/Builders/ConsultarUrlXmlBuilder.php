@@ -3,7 +3,7 @@ namespace Dinovatech\Modules\Fiscal\Builders;
 
 class ConsultarUrlXmlBuilder
 {
-    public function build(string $cnpjPrestador, string $imPrestador, ?string $numeroNota = null, ?string $serieDps = null, ?int $numeroDps = null): string
+    public function build(string $cnpjPrestador, string $imPrestador, ?string $numeroNota = null, ?string $serieDps = null, ?int $numeroDps = null, ?string $reqId = null): string
     {
         $cleanCnpj = preg_replace('/\D/', '', $cnpjPrestador);
         $cleanIm = preg_replace('/\D/', '', $imPrestador);
@@ -21,8 +21,10 @@ class ConsultarUrlXmlBuilder
             $identificadorXml = "<NumeroNfse>0</NumeroNfse>";
         }
 
+        $idAttr = !empty($reqId) ? " Id=\"{$reqId}\"" : "";
+
         return <<<XML
-<ConsultarUrlNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
+<ConsultarUrlNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse"{$idAttr}>
     <Prestador>
         <CNPJ>{$cleanCnpj}</CNPJ>
         <IM>{$cleanIm}</IM>

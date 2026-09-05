@@ -185,21 +185,19 @@ class NacionalProvider implements NfseProviderInterface
     public function consultarUrl(string $numeroNota, ?string $serie = null, ?int $numeroDocumento = null): UrlResult
     {
         try {
-            $certManager = $this->getCertificateManager();
-            $builder = new ConsultarUrlXmlBuilder();
-            $ambiente = $this->config['ambiente_padrao'] ?? 'homologacao';
-            $endpoint = $this->getEndpointUrl($ambiente);
-            $soapClient = new SoapClient($certManager, $endpoint);
-
-            $xml = $builder->build(
+            $signer = new XmlSigner($certManager);
+            $reqId = "ConsultarUrl1";
+            $rawXml = $builder->build(
                 $this->config['cnpj'] ?? '',
                 $this->config['inscricao_municipal'] ?? '',
                 $numeroNota,
                 $serie,
-                $numeroDocumento
+                $numeroDocumento,
+                $reqId
             );
 
-            $res = $soapClient->call('ConsultarUrlNfse', $xml, '1.00');
+            $signedXml = $signer->sign($rawXml, $reqId);
+            $res = $soapClient->call('ConsultarUrlNfse', $signedXml, '1.00');
             return $this->parser->parseConsultarUrl($res['response_body']);
         } catch (Exception $e) {
             $u = new UrlResult();
