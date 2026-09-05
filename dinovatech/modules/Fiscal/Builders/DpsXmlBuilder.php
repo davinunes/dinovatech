@@ -129,7 +129,7 @@ class DpsXmlBuilder
         }
 
         // Regimes tributários adicionais do Simples Nacional
-        $regAnuTriSNXml = ($opSimpNac === '3') ? "<regAnuTriSN>1</regAnuTriSN>" : "";
+        $regApTribSNXml = ($opSimpNac === '3') ? "<regApTribSN>1</regApTribSN>" : "";
 
         $xml = <<<XML
 <GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
@@ -148,7 +148,7 @@ class DpsXmlBuilder
                 <IM>{$prestIm}</IM>
                 <regTrib>
                     <opSimpNac>{$opSimpNac}</opSimpNac>
-                    {$regAnuTriSNXml}
+                    {$regApTribSNXml}
                     <regEspTrib>0</regEspTrib>
                 </regTrib>
             </prest>
