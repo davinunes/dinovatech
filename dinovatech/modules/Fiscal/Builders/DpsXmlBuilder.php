@@ -131,6 +131,12 @@ class DpsXmlBuilder
         // Regimes tributários adicionais do Simples Nacional
         $regApTribSNXml = ($opSimpNac === '3') ? "<regApTribSN>1</regApTribSN>" : "";
 
+        // Totais aproximados dos tributos (obrigatório no schema v1.01)
+        // Para ME/EPP (opSimpNac=3), a regra E0712 exige pTotTribSN, vTotTrib ou pTotTrib.
+        $totTribXml = ($opSimpNac === '3')
+            ? "<totTrib><pTotTribSN>{$pAliq}</pTotTribSN></totTrib>"
+            : "<totTrib><indTotTrib>0</indTotTrib></totTrib>";
+
         $xml = <<<XML
 <GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
     <DPS versao="{$versaoDps}">
@@ -174,6 +180,7 @@ class DpsXmlBuilder
                         <tpRetISSQN>{$tpRetISSQN}</tpRetISSQN>
                         <pAliq>{$pAliq}</pAliq>
                     </tribMun>
+                    {$totTribXml}
                 </trib>
             </valores>
             {$ibsCbsXml}

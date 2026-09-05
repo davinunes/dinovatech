@@ -45,9 +45,12 @@ Esta skill orienta o desenvolvimento e a manutenção da integração com o **Pa
     </soapenv:Envelope>
     ```
 
-## 4. Regras de Série da DPS e Regras Cadastrais
+## 4. Regras de Série da DPS e Regras Cadastrais / Fiscais
 1. **Formato da Série (`<serie>`):** Deve ser **obrigatoriamente numérica (1 a 5 dígitos)** (ex: `1`, `3`, `900`). Letras como `"RPS"`, `"NF"`, `"A"` violam o tipo XSD `TSSerieDPS` e resultam em erro `[E160]`.
 2. **Autorização Cadastral (`[E093]`):** O erro `[E093] Série do RPS inválida` indica validação de regra de negócio do DF/Nota Control: a série precisa estar autorizada no cadastro do contribuinte na SEFAZ-DF (via AIDOF ou Portal ISS-DF).
+3. **Simples Nacional ME/EPP (`opSimpNac = 3`):**
+   - A tag do regime de apuração dentro de `<regTrib>` é **`<regApTribSN>`** (valores: `1`, `2` ou `3`).
+   - O grupo `<totTrib>` dentro de `<trib>` é **obrigatoriamente exigido pelo XSD Schema v1.01** (`minOccurs="1"`). Para optantes do Simples Nacional (`opSimpNac = 3`), a regra de negócio `[E0712]` exige a inclusão do percentual aproximado do Simples Nacional em **`<pTotTribSN>`** (ex: `<totTrib><pTotTribSN>2.00</pTotTribSN></totTrib>`).
 
 ## 5. Métodos do Web Service Implementados
 - `GerarNfse`: Emissão síncrona de 1 DPS (`NacionalProvider::emitir`).
