@@ -3914,8 +3914,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $numDpsEsc = mysqli_real_escape_string($link, $numero_dps);
                         $serieDpsEsc = mysqli_real_escape_string($link, $serie_dps);
                         $chaveEsc = mysqli_real_escape_string($link, $queryRes->chaveNfse ?: '');
-                        $xmlRetornoEsc = mysqli_real_escape_string($link, $queryRes->xmlRetorno ?: '');
-                        $urlPdfEsc = mysqli_real_escape_string($link, "https://nfse.fazenda.df.gov.br/NfseTax/");
+                        $rawChave = $queryRes->chaveNfse ?: '';
+                        $cleanChave = preg_replace('/^NFS/i', '', trim($rawChave));
+                        $urlNacional = (!empty($cleanChave) && strlen($cleanChave) >= 40)
+                            ? "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}"
+                            : "https://nfse.fazenda.df.gov.br/NfseTax/";
+                        $urlPdfEsc = mysqli_real_escape_string($link, $urlNacional);
+
+                        // Checa colunas extras do Padrão Nacional
+                        $chkProvCol = DBExecute($link, "SHOW COLUMNS FROM NfseEmissoes LIKE 'provider'");
+                        $hasExtraCols = ($chkProvCol && mysqli_num_rows($chkProvCol) > 0);
+                        $extraUpdate = $hasExtraCols ? ", provider = 'nacional', chave_nfse = '$chaveEsc', url_visualizacao_nacional = '$urlPdfEsc'" : "";
 
                         $resExist = DBExecute($link, "SELECT id_emissao FROM NfseEmissoes WHERE id_fatura = '$id_fatura_esc' ORDER BY id_emissao DESC LIMIT 1");
                         if ($resExist && mysqli_num_rows($resExist) > 0) {
@@ -3926,16 +3935,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 codigo_verificacao = '$chaveEsc', ambiente = 'producao',
                                 url_pdf = '$urlPdfEsc', xml_retorno = '$xmlRetornoEsc',
                                 status = 'concluido', data_emissao = NOW()
+                                {$extraUpdate}
                                 WHERE id_emissao = '$idEm'";
                         } else {
+                            $extraCols = $hasExtraCols ? ", provider, chave_nfse, url_visualizacao_nacional" : "";
+                            $extraVals = $hasExtraCols ? ", 'nacional', '$chaveEsc', '$urlPdfEsc'" : "";
                             $qSave = "INSERT INTO NfseEmissoes (
                                 id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
                                 valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
-                                url_pdf, xml_retorno, status, data_emissao
+                                url_pdf, xml_retorno, status, data_emissao {$extraCols}
                             ) VALUES (
                                 '$id_fatura_esc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
                                 '10.00', '2.00', '0', '01.06', 'Importacao de NFS-e Padrão Nacional',
-                                '$urlPdfEsc', '$xmlRetornoEsc', 'concluido', NOW()
+                                '$urlPdfEsc', '$xmlRetornoEsc', 'concluido', NOW() {$extraVals}
                             )";
                         }
                         DBExecute($link, $qSave);

@@ -98,11 +98,23 @@ class NacionalProvider implements NfseProviderInterface
 
             // 7. Se emitida com sucesso, busca URLs oficiais de visualização
             if ($result->isSuccess()) {
+                if (!empty($result->chaveNfse)) {
+                    $cleanChave = preg_replace('/^NFS/i', '', trim($result->chaveNfse));
+                    if (!empty($cleanChave) && strlen($cleanChave) >= 40) {
+                        $result->urlVisualizacaoNacional = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";
+                        $result->urlVisualizacao = $result->urlVisualizacaoNacional;
+                    }
+                }
+
                 try {
                     $urlRes = $this->consultarUrl($result->numeroNota ?: '0', $data->serie, $data->numero);
                     if ($urlRes->success) {
-                        $result->urlVisualizacao = $urlRes->urlVisualizacao;
-                        $result->urlVisualizacaoNacional = $urlRes->urlVisualizacaoNacional;
+                        if (empty($result->urlVisualizacao)) {
+                            $result->urlVisualizacao = $urlRes->urlVisualizacao;
+                        }
+                        if (empty($result->urlVisualizacaoNacional)) {
+                            $result->urlVisualizacaoNacional = $urlRes->urlVisualizacaoNacional;
+                        }
                     }
                 } catch (Exception $e) {
                     // Prossegue mesmo se a consulta de URL falhar momentaneamente
@@ -233,9 +245,20 @@ class NacionalProvider implements NfseProviderInterface
             $u = new UrlResult();
             if (!empty($cleanNumNota) && $cleanNumNota !== '0') {
                 $u->success = true;
-                $u->urlVisualizacao = "https://nfse.fazenda.df.gov.br/NfseTax/";
-                $u->urlVisualizacaoNacional = "https://www.nfse.gov.br/consultanfse/";
-                $u->message = "Consulta WebService restrita pelo Fisco (L090). URLs dos Portais do ISS-DF e SPED Nacional disponibilizadas.";
+
+                $cleanChave = '';
+                if (!empty($parsedDps) && !empty($parsedDps->chaveNfse)) {
+                    $cleanChave = preg_replace('/^NFS/i', '', trim($parsedDps->chaveNfse));
+                }
+
+                if (!empty($cleanChave) && strlen($cleanChave) >= 40) {
+                    $u->urlVisualizacaoNacional = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";
+                    $u->urlVisualizacao = $u->urlVisualizacaoNacional;
+                } else {
+                    $u->urlVisualizacao = "https://nfse.fazenda.df.gov.br/NfseTax/";
+                    $u->urlVisualizacaoNacional = "https://www.nfse.gov.br/consultanfse/";
+                }
+                $u->message = "Consulta WebService restrita pelo Fisco (L090). URL oficial do Portal Nacional configurada.";
             } else {
                 $u->success = false;
                 $u->message = "Não foi possível localizar o número da NFS-e para consulta.";

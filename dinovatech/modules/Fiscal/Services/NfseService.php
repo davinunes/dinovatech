@@ -183,6 +183,17 @@ class NfseService
         $idDps = mysqli_real_escape_string($this->link, $result->idDps ?: '');
         $urlPdf = mysqli_real_escape_string($this->link, $result->urlVisualizacao ?: '');
         $urlNacional = mysqli_real_escape_string($this->link, $result->urlVisualizacaoNacional ?: '');
+
+        // Formatação da URL do Portal Nacional se for emissão pelo provedor nacional
+        if ($this->provider->getProviderName() === 'nacional') {
+            $rawChave = $result->chaveNfse ?: $result->codigoVerificacao;
+            $cleanChave = preg_replace('/^NFS/i', '', trim($rawChave ?: ''));
+            if (!empty($cleanChave) && strlen($cleanChave) >= 40) {
+                $urlPdf = mysqli_real_escape_string($this->link, "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}");
+                $urlNacional = $urlPdf;
+            }
+        }
+
         $status = mysqli_real_escape_string($this->link, $result->status);
         $msgErro = mysqli_real_escape_string($this->link, $result->details ?: $result->message);
         $xmlEnvio = mysqli_real_escape_string($this->link, $result->xmlEnvio ?: '');

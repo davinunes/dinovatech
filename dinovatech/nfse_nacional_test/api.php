@@ -88,9 +88,17 @@ try {
         $numDpsEsc = mysqli_real_escape_string($link, $numDps);
         $serieDpsEsc = mysqli_real_escape_string($link, $serieDps);
         $chaveEsc = mysqli_real_escape_string($link, $chaveNfse);
+        $cleanChave = preg_replace('/^NFS/i', '', trim($chaveNfse));
+        $urlPdfEsc = mysqli_real_escape_string($link, (!empty($cleanChave) && strlen($cleanChave) >= 40)
+            ? "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}"
+            : "https://nfse.fazenda.df.gov.br/NfseTax/");
         $xmlEnvioEsc = mysqli_real_escape_string($link, $xmlEnvio);
         $xmlRetornoEsc = mysqli_real_escape_string($link, $xmlRetorno);
-        $urlPdfEsc = mysqli_real_escape_string($link, "https://nfse.fazenda.df.gov.br/NfseTax/");
+
+        // Checa colunas extras do Padrão Nacional
+        $chkProvCol = DBExecute($link, "SHOW COLUMNS FROM NfseEmissoes LIKE 'provider'");
+        $hasExtraCols = ($chkProvCol && mysqli_num_rows($chkProvCol) > 0);
+        $extraUpdate = $hasExtraCols ? ", provider = 'nacional', chave_nfse = '$chaveEsc', url_visualizacao_nacional = '$urlPdfEsc'" : "";
 
         // Preserva a id_emissao existente se houver, atualizando os dados in-place
         $resExist = DBExecute($link, "SELECT id_emissao FROM NfseEmissoes WHERE id_fatura = '$idFaturaEsc' ORDER BY id_emissao DESC LIMIT 1");
@@ -104,16 +112,19 @@ try {
                 discriminacao = 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
                 url_pdf = '$urlPdfEsc', xml_envio = '$xmlEnvioEsc', xml_retorno = '$xmlRetornoEsc',
                 status = 'concluido', data_emissao = NOW()
+                {$extraUpdate}
                 WHERE id_emissao = '$idEmissao'";
         } else {
+            $extraCols = $hasExtraCols ? ", provider, chave_nfse, url_visualizacao_nacional" : "";
+            $extraVals = $hasExtraCols ? ", 'nacional', '$chaveEsc', '$urlPdfEsc'" : "";
             $qSave = "INSERT INTO NfseEmissoes (
                 id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
                 valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
-                url_pdf, xml_envio, xml_retorno, status, data_emissao
+                url_pdf, xml_envio, xml_retorno, status, data_emissao {$extraCols}
             ) VALUES (
                 '$idFaturaEsc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
                 '10.00', '2.00', '0', '01.06', 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
-                '$urlPdfEsc', '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW()
+                '$urlPdfEsc', '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW() {$extraVals}
             )";
         }
 

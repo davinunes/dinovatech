@@ -413,19 +413,46 @@ if ($id_fatura) {
                                         $html .= '</div>';
 
                                         if ($statusLower == 'concluido') {
+                                            // Identifica se a emissão pertence ao Padrão Nacional
+                                            $isNacional = (!empty($nfse['provider']) && $nfse['provider'] === 'nacional') ||
+                                                          (!empty($nfse['chave_nfse'])) ||
+                                                          (isset($nfse['codigo_verificacao']) && preg_match('/^NFS[0-9A-Z]{40,}/i', $nfse['codigo_verificacao'])) ||
+                                                          (!empty($nfse['url_visualizacao_nacional']));
+
+                                            $tipoDoc = $isNacional ? 'DPS:' : 'RPS:';
                                             $html .= '<div class="text-xs text-gray-600 mt-1">';
                                             $html .= '<strong>Número:</strong> ' . $numero_nota . '<br>';
-                                            $html .= '<strong>RPS:</strong> ' . $nfse['numero_rps'] . '/' . $nfse['serie_rps'] . '<br>';
+                                            $html .= '<strong>' . $tipoDoc . '</strong> ' . $nfse['numero_rps'] . '/' . $nfse['serie_rps'] . '<br>';
                                             $html .= '<span class="text-[10px] text-gray-400">' . ucfirst($nfse['ambiente']) . '</span>';
                                             $html .= '</div>';
 
                                             $html .= '<div class="grid grid-cols-3 gap-1.5 mt-2">';
                                             $html .= '<a href="ver_nfse_xml.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-[11px] bg-blue-50 text-blue-600 py-1 px-1 rounded hover:bg-blue-100 border border-blue-200 truncate" title="Ver XML Assinado">XML Assinado</a>';
-                                            $urlPdfShow = $nfse['url_pdf'] ?? '';
-                                            if (empty($urlPdfShow) || strpos($urlPdfShow, 'VisualizarNfse') !== false || strpos($urlPdfShow, 'consultanfse') !== false) {
-                                                $urlPdfShow = 'https://nfse.fazenda.df.gov.br/NfseTax/';
+
+                                            if ($isNacional) {
+                                                // Padrão Nacional: formato https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{chaveSemNFS}
+                                                $rawChave = $nfse['chave_nfse'] ?? ($nfse['codigo_verificacao'] ?? '');
+                                                $cleanChave = preg_replace('/^NFS/i', '', trim($rawChave));
+                                                if (!empty($cleanChave) && strlen($cleanChave) >= 40) {
+                                                    $urlPdfShow = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";
+                                                    $labelPortal = "SPED Nacional";
+                                                    $titlePortal = "Visualizar NFS-e no Portal do Emissor Nacional";
+                                                } else {
+                                                    $urlPdfShow = !empty($nfse['url_pdf']) ? $nfse['url_pdf'] : 'https://nfse.fazenda.df.gov.br/NfseTax/';
+                                                    $labelPortal = "Portal ISS-DF";
+                                                    $titlePortal = "Acessar Portal ISS-DF";
+                                                }
+                                            } else {
+                                                // PRESERVA 100% OS LINKS DAS NOTAS ANTERIORES JÁ SALVAS (Legado ABRASF 2.04)
+                                                $urlPdfShow = $nfse['url_pdf'] ?? '';
+                                                if (empty($urlPdfShow) || strpos($urlPdfShow, 'VisualizarNfse') !== false || strpos($urlPdfShow, 'consultanfse') !== false) {
+                                                    $urlPdfShow = 'https://nfse.fazenda.df.gov.br/NfseTax/';
+                                                }
+                                                $labelPortal = "Portal ISS-DF";
+                                                $titlePortal = "Acessar Portal ISS-DF";
                                             }
-                                            $html .= '<a href="' . $urlPdfShow . '" target="_blank" class="text-center text-[11px] bg-red-50 text-red-600 py-1 px-1 rounded hover:bg-red-100 border border-red-200 truncate" title="Acessar Portal ISS-DF">Portal ISS-DF</a>';
+
+                                            $html .= '<a href="' . $urlPdfShow . '" target="_blank" class="text-center text-[11px] bg-red-50 text-red-600 py-1 px-1 rounded hover:bg-red-100 border border-red-200 truncate" title="' . $titlePortal . '">' . $labelPortal . '</a>';
                                             $html .= '<a href="ver_nfse_impressao.php?id=' . $nfse['id_emissao'] . '" target="_blank" class="text-center text-[11px] bg-emerald-50 text-emerald-700 py-1 px-1 rounded hover:bg-emerald-100 border border-emerald-200 font-semibold truncate" title="Imprimir Documento Auxiliar DANFSE">🖨️ DANFSE</a>';
                                             $html .= '</div>';
                                         } elseif ($statusLower !== 'processando') {
