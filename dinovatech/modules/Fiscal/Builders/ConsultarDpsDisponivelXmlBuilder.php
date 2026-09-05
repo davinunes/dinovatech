@@ -18,7 +18,7 @@ class ConsultarDpsDisponivelXmlBuilder
         }
 
         return <<<XML
-<ConsultarDpsDisponivelEnvio xmlns="http://www.sped.fazenda.gov.br/nfse" xmlns:ns2="http://www.w3.org/2000/09/xmldsig#">
+<ConsultarDpsDisponivelEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
     <Prestador>
         <CNPJ>{$cleanCnpj}</CNPJ>
         <IM>{$cleanIm}</IM>
