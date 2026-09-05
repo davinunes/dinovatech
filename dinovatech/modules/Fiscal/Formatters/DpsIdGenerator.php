@@ -15,7 +15,7 @@ class DpsIdGenerator
         $codMun = str_pad(substr(preg_replace('/\D/', '', $codMunIbge), 0, 7), 7, '0', STR_PAD_LEFT);
         $cleanDoc = preg_replace('/\D/', '', $cpfCnpj);
         
-        $tipoInscr = (strlen($cleanDoc) > 11) ? '1' : '2'; // 1=CNPJ, 2=CPF
+        $tipoInscr = (strlen($cleanDoc) > 11) ? '2' : '1'; // 2=CNPJ (14 dígitos), 1=CPF (11 dígitos)
         $inscrFederal = str_pad(substr($cleanDoc, 0, 14), 14, '0', STR_PAD_LEFT);
         
         $cleanSerie = preg_replace('/\D/', '', $serie);

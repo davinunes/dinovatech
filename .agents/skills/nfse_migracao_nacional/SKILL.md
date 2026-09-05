@@ -18,7 +18,7 @@ Esta skill orienta o desenvolvimento e a manutenção da integração com o **Pa
 ## 2. Regras Críticas de Assinatura Digital (XMLDSig)
 1. **Nunca use `URI=""` no novo padrão.**
 2. O identificador da DPS (`Id="DPS..."`) possui exatamente **45 dígitos**:
-   - `"DPS"` (3 chars) + `cLocEmi` (7 dígitos IBGE) + `tipoInscricao` (1 dígito: 1=CNPJ, 2=CPF) + `inscricaoFederal` (14 dígitos com zeros à esquerda) + `serie` (5 dígitos) + `nDPS` (15 dígitos).
+   - `"DPS"` (3 chars) + `cLocEmi` (7 dígitos IBGE) + `tipoInscricao` (1 dígito: 2=CNPJ, 1=CPF) + `inscricaoFederal` (14 dígitos com zeros à esquerda) + `serie` (5 dígitos) + `nDPS` (15 dígitos).
 3. A tag `<Signature>` fica no mesmo nível que `<infDPS>`, filha de `<DPS>`.
 4. O elemento `Reference URI` deve apontar para o ID com `#`:
    - `<Reference URI="#DPS5300108...">`
