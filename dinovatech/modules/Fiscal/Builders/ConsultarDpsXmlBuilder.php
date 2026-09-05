@@ -10,14 +10,14 @@ class ConsultarDpsXmlBuilder
 
         return <<<XML
 <ConsultarNfseDpsEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
-    <Prestador>
-        <CNPJ>{$cleanCnpj}</CNPJ>
-        <IM>{$cleanIm}</IM>
-    </Prestador>
     <IdentificacaoDps>
         <NumDPS>{$numeroDps}</NumDPS>
         <SerieDPS>{$serieDps}</SerieDPS>
     </IdentificacaoDps>
+    <Prestador>
+        <CNPJ>{$cleanCnpj}</CNPJ>
+        <IM>{$cleanIm}</IM>
+    </Prestador>
 </ConsultarNfseDpsEnvio>
 XML;
     }
