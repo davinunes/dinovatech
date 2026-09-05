@@ -25,7 +25,7 @@ class NacionalProvider implements NfseProviderInterface
     private ?CertificateManager $certManager = null;
     private NacionalResponseParser $parser;
 
-    public function __construct(array $config, $link)
+    public function __construct(array $config, $link = null)
     {
         $this->config = $config;
         $this->link = $link;
@@ -185,20 +185,59 @@ class NacionalProvider implements NfseProviderInterface
     public function consultarUrl(string $numeroNota, ?string $serie = null, ?int $numeroDocumento = null): UrlResult
     {
         try {
-            $signer = new XmlSigner($certManager);
-            $reqId = "ConsultarUrl1";
-            $rawXml = $builder->build(
-                $this->config['cnpj'] ?? '',
-                $this->config['inscricao_municipal'] ?? '',
-                $numeroNota,
-                $serie,
-                $numeroDocumento,
-                $reqId
-            );
+            $certManager = $this->getCertificateManager();
+            $ambiente = $this->config['ambiente_padrao'] ?? 'homologacao';
+            $endpoint = $this->getEndpointUrl($ambiente);
+            $soapClient = new SoapClient($certManager, $endpoint);
 
-            $signedXml = $signer->sign($rawXml, $reqId);
-            $res = $soapClient->call('ConsultarUrlNfse', $signedXml, '1.00');
-            return $this->parser->parseConsultarUrl($res['response_body']);
+            $cleanNumNota = preg_replace('/\D/', '', $numeroNota);
+
+            // 1. Se o número da nota não foi informado diretamente, usa ConsultarNfseDps para localizar pelo DPS
+            if (empty($cleanNumNota) || $cleanNumNota === '0') {
+                if (!empty($numeroDocumento) && !empty($serie)) {
+                    $builderDps = new \Dinovatech\Modules\Fiscal\Builders\ConsultarNfseDpsXmlBuilder();
+                    $xmlDps = $builderDps->build(
+                        $this->config['cnpj'] ?? '',
+                        $this->config['inscricao_municipal'] ?? '',
+                        $numeroDocumento,
+                        $serie
+                    );
+                    $resDps = $soapClient->call('ConsultarNfseDps', $xmlDps, '1.00');
+                    $parsedDps = $this->parser->parseConsultaDps($resDps['response_body']);
+                    if ($parsedDps->encontrada && !empty($parsedDps->numeroNota)) {
+                        $cleanNumNota = $parsedDps->numeroNota;
+                    }
+                }
+            }
+
+            // 2. Com o número da NFS-e (ex: 54), executa ConsultarUrlNfse (Prestador + NumeroNfse + Pagina)
+            if (!empty($cleanNumNota) && $cleanNumNota !== '0') {
+                $builderUrl = new ConsultarUrlXmlBuilder();
+                $xmlUrl = $builderUrl->build(
+                    $this->config['cnpj'] ?? '',
+                    $this->config['inscricao_municipal'] ?? '',
+                    $cleanNumNota
+                );
+                $resUrl = $soapClient->call('ConsultarUrlNfse', $xmlUrl, '1.00');
+                $parsedUrl = $this->parser->parseConsultarUrl($resUrl['response_body']);
+
+                if ($parsedUrl->success) {
+                    return $parsedUrl;
+                }
+            }
+
+            // Fallback de URL pública do DF para a NFS-e
+            $u = new UrlResult();
+            if (!empty($cleanNumNota) && $cleanNumNota !== '0') {
+                $u->success = true;
+                $u->urlVisualizacao = "https://nfse.fazenda.df.gov.br/NfseTax/Nfse/VisualizarNfse?numero=" . $cleanNumNota;
+                $u->message = "URL gerada a partir do número da NFS-e.";
+            } else {
+                $u->success = false;
+                $u->message = "Não foi possível localizar o número da NFS-e para consulta.";
+            }
+            return $u;
+
         } catch (Exception $e) {
             $u = new UrlResult();
             $u->success = false;

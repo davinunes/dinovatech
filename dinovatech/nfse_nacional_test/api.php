@@ -287,16 +287,14 @@ XML;
     } elseif ($action === 'consultar_url') {
         $numNota = $_POST['numero_nota'] ?? '54';
         $builderUrl = new \Dinovatech\Modules\Fiscal\Builders\ConsultarUrlXmlBuilder();
-        $reqId = "ConsultarUrl1";
-        $rawXml = $builderUrl->build($prestCnpj, $prestIm, $numNota, $serieDps, $numDps, $reqId);
-        $signedXml = $signer->sign($rawXml, $reqId);
+        $rawXml = $builderUrl->build($prestCnpj, $prestIm, $numNota);
 
         $response['raw_xml'] = $rawXml;
-        $response['signed_xml'] = $signedXml;
+        $response['signed_xml'] = $rawXml;
 
         $methodBlockUrl = "<ConsultarUrlNfse xmlns=\"http://www.sped.fazenda.gov.br/nfse\">
       <nfseCabecMsg>{$cabecalhoXml}</nfseCabecMsg>
-      <nfseDadosMsg>{$signedXml}</nfseDadosMsg>
+      <nfseDadosMsg>{$rawXml}</nfseDadosMsg>
     </ConsultarUrlNfse>";
 
         $soapEnvelope = <<<XML
@@ -390,6 +388,13 @@ XML;
             $response['chave_nfse'] = $parsedRes->chaveNfse;
             $response['codigo_verificacao'] = $parsedRes->codigoVerificacao;
         }
+    } elseif ($action === 'consultar_url') {
+        $parsedRes = $parser->parseConsultarUrl($responseBody);
+        $response['success'] = $parsedRes->success;
+        $response['message'] = $parsedRes->message;
+        $response['details'] = "URL Visualização: " . ($parsedRes->urlVisualizacao ?: 'N/A') . "\n"
+            . "URL Autenticidade: " . ($parsedRes->urlVerificacaoAutenticidade ?: 'N/A') . "\n"
+            . "URL Nacional: " . ($parsedRes->urlVisualizacaoNacional ?: 'N/A');
     } else {
         $parsedRes = $parser->parseEmissao($responseBody, $signedXml, $dpsId);
         $response['success'] = $parsedRes->isSuccess();

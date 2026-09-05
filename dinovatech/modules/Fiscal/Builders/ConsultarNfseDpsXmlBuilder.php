@@ -1,9 +1,9 @@
 <?php
 namespace Dinovatech\Modules\Fiscal\Builders;
 
-class ConsultarDpsXmlBuilder
+class ConsultarNfseDpsXmlBuilder
 {
-    public function build(string $serieDps, int $numeroDps, string $cnpjPrestador, string $imPrestador): string
+    public function build(string $cnpjPrestador, string $imPrestador, int $numeroDps, string $serieDps): string
     {
         $cleanCnpj = preg_replace('/\D/', '', $cnpjPrestador);
         $cleanIm = preg_replace('/\D/', '', $imPrestador);
