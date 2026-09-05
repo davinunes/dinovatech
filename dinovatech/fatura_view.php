@@ -401,9 +401,9 @@ if ($id_fatura) {
                                         // Parsed Info
                                         $numero_nota = 'Pending';
                                         if ($nfse['xml_retorno']) {
-                                            preg_match('/<Numero>(.*?)<\/Numero>/', $nfse['xml_retorno'], $m);
-                                            if (!empty($m[1]))
-                                                $numero_nota = $m[1];
+                                            if (preg_match('/<(?:nNFSe|nDFSe|Numero)>(.*?)<\/(?:nNFSe|nDFSe|Numero)>/', $nfse['xml_retorno'], $m)) {
+                                                $numero_nota = trim($m[1]);
+                                            }
                                         }
 
                                         $html = '<div class="bg-gray-50 p-2 rounded border border-gray-100 mb-2 text-sm">';

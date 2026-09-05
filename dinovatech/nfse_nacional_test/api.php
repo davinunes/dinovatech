@@ -61,6 +61,48 @@ try {
 
     $action = $_POST['action'] ?? $_GET['action'] ?? 'preview';
 
+    if ($action === 'vincular_fatura') {
+        $idFatura = (int)($_POST['id_fatura'] ?? 0);
+        $numNota = trim($_POST['numero_nota'] ?? '54');
+        $numDps = trim($_POST['numero_dps'] ?? '1');
+        $serieDps = trim($_POST['serie_dps'] ?? '15');
+        $chaveNfse = trim($_POST['chave_nfse'] ?? 'NFS53001081261733714000101000000000005426091788568900');
+        $xmlEnvio = $_POST['xml_envio'] ?? '';
+        $xmlRetorno = $_POST['xml_retorno'] ?? '';
+
+        if (!$idFatura) {
+            throw new Exception("Informe o ID da Fatura para vincular a NFS-e.");
+        }
+
+        $link = DBConnect();
+        $idFaturaEsc = mysqli_real_escape_string($link, $idFatura);
+        $numNotaEsc = mysqli_real_escape_string($link, $numNota);
+        $numDpsEsc = mysqli_real_escape_string($link, $numDps);
+        $serieDpsEsc = mysqli_real_escape_string($link, $serieDps);
+        $chaveEsc = mysqli_real_escape_string($link, $chaveNfse);
+        $xmlEnvioEsc = mysqli_real_escape_string($link, $xmlEnvio);
+        $xmlRetornoEsc = mysqli_real_escape_string($link, $xmlRetorno);
+
+        $qInsert = "INSERT INTO NfseEmissoes (
+            id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
+            valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
+            xml_envio, xml_retorno, status, data_emissao
+        ) VALUES (
+            '$idFaturaEsc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
+            '10.00', '2.00', '0', '01.06', 'Consultoria em Tecnologia da Informacao - Teste de Transmissao',
+            '$xmlEnvioEsc', '$xmlRetornoEsc', 'concluido', NOW()
+        )";
+        DBExecute($link, $qInsert);
+
+        DBExecute($link, "UPDATE Faturas SET possui_nfse = 1, data_emissao_nfse = NOW() WHERE id_fatura = '$idFaturaEsc'");
+        DBClose($link);
+
+        $response['success'] = true;
+        $response['message'] = "NFS-e nº {$numNota} vinculada com SUCESSO à Fatura #{$idFatura}!";
+        echo json_encode($response, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     // Captura parâmetros da requisição de teste
     $ambiente = $_POST['ambiente'] ?? ($configEmissor['ambiente_padrao'] ?? 'homologacao'); // homologacao | producao
     $versaoSchema = $_POST['versao_schema'] ?? ($ambiente === 'producao' ? '1.01' : '1.00');
@@ -211,28 +253,10 @@ XML;
         $response['raw_xml'] = $xmlDisp;
         $response['signed_xml'] = $xmlDisp;
 
-        if ($envelopeFormat === 'entities') {
-            $cabecBody = htmlspecialchars($cabecalhoXml, ENT_XML1, 'UTF-8');
-            $dadosBody = htmlspecialchars($xmlDisp, ENT_XML1, 'UTF-8');
-        } elseif ($envelopeFormat === 'raw') {
-            $cabecBody = str_replace(['<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="utf-8"?>'], '', $cabecalhoXml);
-            $dadosBody = str_replace(['<?xml version="1.0" encoding="UTF-8"?>', '<?xml version="1.0" encoding="utf-8"?>'], '', $xmlDisp);
-        } else {
-            $cabecBody = "<![CDATA[{$cabecalhoXml}]]>";
-            $dadosBody = "<![CDATA[{$xmlDisp}]]>";
-        }
-
-        if ($envelopeNamespace === 'prefixed_ns') {
-            $methodBlockDisp = "<nfse:ConsultarDpsDisponivel>
-      <nfse:nfseCabecMsg>{$cabecBody}</nfse:nfseCabecMsg>
-      <nfse:nfseDadosMsg>{$dadosBody}</nfse:nfseDadosMsg>
-    </nfse:ConsultarDpsDisponivel>";
-        } else {
-            $methodBlockDisp = "<ConsultarDpsDisponivel xmlns=\"http://www.sped.fazenda.gov.br/nfse\">
-      <nfseCabecMsg>{$cabecBody}</nfseCabecMsg>
-      <nfseDadosMsg>{$dadosBody}</nfseDadosMsg>
+        $methodBlockDisp = "<ConsultarDpsDisponivel xmlns=\"http://www.sped.fazenda.gov.br/nfse\">
+      <nfseCabecMsg>{$cabecalhoXml}</nfseCabecMsg>
+      <nfseDadosMsg>{$xmlDisp}</nfseDadosMsg>
     </ConsultarDpsDisponivel>";
-        }
 
         $soapEnvelope = <<<XML
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:nfse="http://www.sped.fazenda.gov.br/nfse">
@@ -244,6 +268,28 @@ XML;
 XML;
         $response['envelope_soap'] = $soapEnvelope;
         $soapAction = "http://www.sped.fazenda.gov.br/nfse/ConsultarDpsDisponivel";
+    } elseif ($action === 'consultar_url') {
+        $numNota = $_POST['numero_nota'] ?? '54';
+        $builderUrl = new \Dinovatech\Modules\Fiscal\Builders\ConsultarUrlXmlBuilder();
+        $xmlUrl = $builderUrl->build($prestCnpj, $prestIm, $numNota, $serieDps, $numDps);
+        $response['raw_xml'] = $xmlUrl;
+        $response['signed_xml'] = $xmlUrl;
+
+        $methodBlockUrl = "<ConsultarUrlNfse xmlns=\"http://www.sped.fazenda.gov.br/nfse\">
+      <nfseCabecMsg>{$cabecalhoXml}</nfseCabecMsg>
+      <nfseDadosMsg>{$xmlUrl}</nfseDadosMsg>
+    </ConsultarUrlNfse>";
+
+        $soapEnvelope = <<<XML
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:nfse="http://www.sped.fazenda.gov.br/nfse">
+  <soapenv:Header/>
+  <soapenv:Body>
+    {$methodBlockUrl}
+  </soapenv:Body>
+</soapenv:Envelope>
+XML;
+        $response['envelope_soap'] = $soapEnvelope;
+        $soapAction = "http://www.sped.fazenda.gov.br/nfse/ConsultarUrlNfse";
     } else {
         $response['envelope_soap'] = $soapEnvelope;
         $soapAction = "http://www.sped.fazenda.gov.br/nfse/GerarNfse";

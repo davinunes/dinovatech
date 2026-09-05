@@ -3717,9 +3717,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $status = openssl_pkcs12_read($pfxContent, $certs, $config['senha_certificado']);
             }
 
-            if (!$status) {
-                $response['message'] = "Senha do certificado incorreta.";
-                break;
+            // Se for Padrão Nacional (SPED), usa o NacionalProvider
+            $isNacional = (!empty($emissao['codigo_verificacao']) && strpos($emissao['codigo_verificacao'], 'NFS') === 0)
+                || (is_numeric($emissao['serie_rps'] ?? ''))
+                || (strpos($emissao['xml_retorno'] ?? '', 'http://www.sped.fazenda.gov.br/nfse') !== false);
+
+            if ($isNacional) {
+                try {
+                    $provider = new \Dinovatech\Modules\Fiscal\Providers\NacionalProvider($config);
+                    $urlRes = $provider->consultarUrl(
+                        $emissao['numero_nota'] ?: '0',
+                        $emissao['serie_rps'] ?? null,
+                        (int)($emissao['numero_rps'] ?? 0)
+                    );
+                    if ($urlRes->success && !empty($urlRes->urlVisualizacao)) {
+                        $url_esc = mysqli_real_escape_string($link, $urlRes->urlVisualizacao);
+                        DBExecute($link, "UPDATE NfseEmissoes SET url_pdf = '$url_esc' WHERE id_emissao = '$id_emissao'");
+                        $response['success'] = true;
+                        $response['message'] = "URL da NFS-e Nacional obtida com sucesso!";
+                        $response['url'] = $urlRes->urlVisualizacao;
+                    } else {
+                        $response['success'] = false;
+                        $response['message'] = $urlRes->message ?: 'URL da NFS-e Nacional não localizada no servidor.';
+                    }
+                } catch (\Throwable $exNac) {
+                    $response['success'] = false;
+                    $response['message'] = "Erro ao consultar URL Nacional: " . $exNac->getMessage();
+                }
+                echo json_encode($response);
+                exit;
             }
 
             // Define function to perform request

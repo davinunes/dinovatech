@@ -377,8 +377,29 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                                 <i class="bi bi-send-check-fill me-2"></i> 2. Transmitir (GerarNfse)
                             </button>
                             <button type="button" class="btn btn-outline-info flex-grow-1 py-2" onclick="executarTeste('consultar_disponivel')">
-                                <i class="bi bi-search me-2"></i> 3. Consultar DPS Disponível
+                                <i class="bi bi-search me-2"></i> 3. DPS Disponível
                             </button>
+                            <button type="button" class="btn btn-outline-warning flex-grow-1 py-2" onclick="executarTeste('consultar_url')">
+                                <i class="bi bi-link-45deg me-2"></i> 4. Consultar URLs da Nota
+                            </button>
+                        </div>
+
+                        <!-- SEÇÃO VINCULAR NOTA A UMA FATURA -->
+                        <div class="mt-4 p-3 rounded bg-slate-900 border border-slate-700">
+                            <div class="section-title mb-2 text-sm">
+                                <i class="bi bi-receipt text-indigo-400"></i> Vincular NFS-e Emitida à Fatura do Sistema
+                            </div>
+                            <div class="row g-2 align-items-center">
+                                <div class="col-8">
+                                    <input type="number" id="vincularIdFatura" class="form-control form-control-sm" placeholder="ID da Fatura (ex: 123)">
+                                </div>
+                                <div class="col-4">
+                                    <button type="button" class="btn btn-sm btn-primary w-100" onclick="vincularFatura()">
+                                        <i class="bi bi-paperclip me-1"></i> Vincular #54
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="vincularResultado" class="text-xs mt-2 text-slate-400"></div>
                         </div>
 
                     </div>
@@ -533,6 +554,35 @@ $nowUtc = date('Y-m-d\TH:i:sP');
             navigator.clipboard.writeText(text).then(() => {
                 alert('Conteúdo copiado para a área de transferência!');
             });
+        }
+
+        function vincularFatura() {
+            const idFatura = $('#vincularIdFatura').val();
+            if (!idFatura) {
+                alert('Digite o ID da Fatura.');
+                return;
+            }
+            const rawXml = $('#codeRaw').text();
+            const signedXml = $('#codeDps').text();
+
+            $('#vincularResultado').html('<span class="text-warning"><i class="bi bi-hourglass-split me-1"></i>Vinculando à fatura #' + idFatura + '...</span>');
+
+            $.post('api.php', {
+                action: 'vincular_fatura',
+                id_fatura: idFatura,
+                numero_nota: '54',
+                numero_dps: '1',
+                serie_dps: '15',
+                chave_nfse: 'NFS53001081261733714000101000000000005426091788568900',
+                xml_envio: signedXml,
+                xml_retorno: rawXml
+            }, function(res) {
+                if (res.success) {
+                    $('#vincularResultado').html('<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>' + res.message + '</span>');
+                } else {
+                    $('#vincularResultado').html('<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>' + res.message + '</span>');
+                }
+            }, 'json');
         }
     </script>
 </body>
