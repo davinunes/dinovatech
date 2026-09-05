@@ -73,19 +73,41 @@ DBClose($link);
         }
 
         .tabs-nav {
-            @apply flex space-x-2 bg-gray-100 p-1 rounded-lg mb-6;
+            display: flex;
+            gap: 0.5rem;
+            background-color: #f3f4f6;
+            padding: 0.25rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .tab-btn {
-            @apply flex-1 py-2.5 px-4 text-sm font-medium text-gray-500 rounded-md transition-all duration-200 text-center focus:outline-none;
+            flex: 1;
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            border-radius: 0.375rem;
+            transition: all 0.2s ease-in-out;
+            text-align: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .tab-btn:hover {
-            @apply text-gray-700 bg-gray-200;
+            color: #374151;
+            background-color: #e5e7eb;
         }
 
         .tab-btn.active {
-            @apply text-cyan-700 bg-white shadow-sm font-bold;
+            color: #0e7490;
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            font-weight: 700;
         }
     </style>
     <!-- TinyMCE -->
@@ -407,8 +429,9 @@ DBClose($link);
                                             <p class="text-[10px] text-gray-500 mt-1">Se o cliente deve reter o ISS.</p>
                                     </div>
                                 </div>
+                            </div>
 
-                                <!-- ANOTAÇÕES TÉCNICAS E OPERACIONAIS DO CONTRATO -->
+                            <!-- ANOTAÇÕES TÉCNICAS E OPERACIONAIS DO CONTRATO -->
                                 <div class="border-t pt-6 mt-4">
                                     <div class="flex items-center justify-between mb-2">
                                         <h3 class="text-lg font-bold text-gray-800 flex items-center">
@@ -594,10 +617,19 @@ DBClose($link);
 
         // Tabs Logic
         function openTab(tabName) {
-            $('.tab-content').addClass('hidden');
-            $('#tab-' + tabName).removeClass('hidden');
+            // Oculta todas as abas
+            $('#tab-dados, #tab-documentos').addClass('hidden');
             $('.tab-btn').removeClass('active');
-            $('.tab-btn[onclick="openTab(\'' + tabName + '\')"]').addClass('active');
+
+            // Exibe a aba clicada
+            $('#tab-' + tabName).removeClass('hidden');
+            $('.tab-btn[onclick*="' + tabName + '"]').addClass('active');
+
+            // Ao entrar na aba de documentos, carrega dados e histórico
+            if (tabName === 'documentos' && ID_RECORRENCIA) {
+                carregarModelosDoc();
+                carregarHistoricoDocs();
+            }
         }
 
         // --- DOCUMENTOS MODELOS ---
