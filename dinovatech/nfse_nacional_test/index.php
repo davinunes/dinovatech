@@ -153,23 +153,23 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                             <div class="col-md-6">
                                 <label class="form-label">Ambiente WebService</label>
                                 <select class="form-select" name="ambiente" id="ambiente" onchange="ajustarAmbiente()">
-                                    <option value="homologacao" selected>Homologação (https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx)</option>
-                                    <option value="producao">Produção (https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx)</option>
+                                    <option value="homologacao">Homologação (https://nfse.issnetonline.com.br/wsnfsenacional/homologacao/nfse.asmx)</option>
+                                    <option value="producao" selected>Produção (https://nfse.fazenda.df.gov.br/wsnfsenacional/nfse.asmx)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Versão do Schema (`versaoDados`)</label>
                                 <select class="form-select" name="versao_schema" id="versao_schema">
-                                    <option value="1.00" selected>1.00 (DPS sem grupo IBS/CBS)</option>
-                                    <option value="1.01">1.01 (DPS com grupo IBS/CBS)</option>
+                                    <option value="1.00">1.00 (DPS sem grupo IBS/CBS)</option>
+                                    <option value="1.01" selected>1.01 (DPS com grupo IBS/CBS)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Formato dos Parâmetros SOAP</label>
                                 <select class="form-select" name="envelope_format">
-                                    <option value="cdata" selected>CDATA (<![CDATA[...]]>)</option>
+                                    <option value="raw" selected>XML Direto (Sem CDATA/Entidades)</option>
+                                    <option value="cdata">CDATA (<![CDATA[...]]>)</option>
                                     <option value="entities">HTML Entities (&lt;...&gt;)</option>
-                                    <option value="raw">XML Direto (Sem CDATA/Entidades)</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
@@ -196,7 +196,8 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                             <div class="col-md-4">
                                 <label class="form-label text-warning">Série da DPS (`serie`)</label>
                                 <select class="form-select border-warning" name="serie_dps" id="serie_dps">
-                                    <option value="3" selected>Série 3 (Cadastrada no Portal ISS-DF)</option>
+                                    <option value="15" selected>Série 15 (Produção)</option>
+                                    <option value="3">Série 3 (Cadastrada no Portal ISS-DF)</option>
                                     <option value="1">Série 1 (Padrão)</option>
                                     <option value="7">Série 7</option>
                                     <option value="8">Série 8</option>
@@ -206,7 +207,6 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                                     <option value="12">Série 12</option>
                                     <option value="13">Série 13</option>
                                     <option value="14">Série 14</option>
-                                    <option value="15">Série 15</option>
                                     <option value="16">Série 16</option>
                                     <option value="A">Série A</option>
                                     <option value="RPS">Série RPS</option>
@@ -220,8 +220,8 @@ $nowUtc = date('Y-m-d\TH:i:sP');
                             <div class="col-md-4">
                                 <label class="form-label">Ambiente (`tpAmb`)</label>
                                 <select class="form-select" name="tp_amb">
-                                    <option value="2" selected>2 - Homologação</option>
-                                    <option value="1">1 - Produção</option>
+                                    <option value="1" selected>1 - Produção</option>
+                                    <option value="2">2 - Homologação</option>
                                 </select>
                             </div>
                             <div class="col-md-6">

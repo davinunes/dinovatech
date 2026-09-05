@@ -120,13 +120,13 @@ try {
     }
 
     // Captura parâmetros da requisição de teste
-    $ambiente = $_POST['ambiente'] ?? ($configEmissor['ambiente_padrao'] ?? 'homologacao'); // homologacao | producao
+    $ambiente = $_POST['ambiente'] ?? ($configEmissor['ambiente_padrao'] ?? 'producao'); // homologacao | producao
     $versaoSchema = $_POST['versao_schema'] ?? ($ambiente === 'producao' ? '1.01' : '1.00');
-    $envelopeFormat = $_POST['envelope_format'] ?? 'cdata'; // cdata | entities
+    $envelopeFormat = $_POST['envelope_format'] ?? 'raw'; // cdata | entities | raw
     $envelopeNamespace = $_POST['envelope_namespace'] ?? 'default_ns'; // default_ns | prefixed_ns
 
     // Dados da DPS
-    $serieDps = trim($_POST['serie_dps'] ?? '3');
+    $serieDps = trim($_POST['serie_dps'] ?? '15');
     $numDps = (int)($_POST['numero_dps'] ?? time() % 100000);
     $tpAmb = $_POST['tp_amb'] ?? ($ambiente === 'producao' ? '1' : '2');
     $dCompet = $_POST['d_compet'] ?? date('Y-m-d');
