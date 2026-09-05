@@ -52,12 +52,22 @@ Esta skill orienta o desenvolvimento e a manutenção da integração com o **Pa
    - A tag do regime de apuração dentro de `<regTrib>` é **`<regApTribSN>`** (valores: `1`, `2` ou `3`).
    - O grupo `<totTrib>` dentro de `<trib>` é **obrigatoriamente exigido pelo XSD Schema v1.01** (`minOccurs="1"`). Para optantes do Simples Nacional (`opSimpNac = 3`), a regra de negócio `[E0712]` exige a inclusão do percentual aproximado do Simples Nacional em **`<pTotTribSN>`** (ex: `<totTrib><pTotTribSN>2.00</pTotTribSN></totTrib>`).
 
-## 5. Métodos do Web Service Implementados
-- `GerarNfse`: Emissão síncrona de 1 DPS (`NacionalProvider::emitir`).
-- `ConsultarDpsDisponivel`: Consulta de sequenciais de DPS disponíveis (método 7.2.11 do manual, `NacionalProvider::consultarDpsDisponivel`).
-- `ConsultarNfsePorDps`: Consulta síncrona da nota por DPS (resiliência).
-- `ConsultarUrlNfse`: Consulta links de visualização municipal e nacional.
-- `CancelarNfse`: Solicitação de cancelamento via evento `e101103`.
+## 5. Métodos do Web Service e Pegadinhas Conhecidas
+
+### 5.1. Indisponibilidade de Endpoints do Fisco (ISSNet / Nota Control)
+- **`ConsultarUrlNfse` (Erro `L090 - Usuário não tem autorização para solicitar o serviço`):**
+  > [!WARNING]
+  > **ENDPOINT DESATIVADO NO FISCO!** A ISSNet / Nota Control **não liberou o endpoint `ConsultarUrlNfse`** em produção nem em homologação. Não se trata de falta de permissão do usuário, erro de XML ou parâmetro inválido. O suporte técnico oficial da ISSNet confirmou que o serviço está indisponível sem previsão de liberação.
+  - **Instrução de Desenvolvimento:** Não perder tempo tentando depurar ou enviar requisições para `ConsultarUrlNfse`.
+  - **Solução de Contorno:** Utilize `ConsultarNfsePorDps` (`ConsultarNfseDps`) para obter os dados/XML da NFS-e. Para impressão/PDF da DANFSE, utilize o visualizador nativo (`dinovatech/ver_nfse_impressao.php`) ou redirecione o usuário para o Portal ISS-DF (`https://nfse.fazenda.df.gov.br/NfseTax/`).
+
+### 5.2. Métodos Operacionais do Web Service
+- **`GerarNfse`:** Emissão síncrona de 1 DPS (`NacionalProvider::emitir`).
+- **`ConsultarNfsePorDps` (`ConsultarNfseDps`):** Consulta síncrona da nota por DPS.
+  - **Regra XSD de Sequência:** O XML `<ConsultarNfseDpsEnvio>` exige obrigatoriamente a tag **`<IdentificacaoDps>` PRIMEIRO** e **`<Prestador>` DEPOIS**. Inverter essa sequência dispara rejeição `[E160]`.
+- **`ConsultarDpsDisponivel`:** Consulta de sequenciais de DPS disponíveis (`NacionalProvider::consultarDpsDisponivel`).
+- **`CancelarNfse`:** Solicitação de cancelamento via evento `e101103`.
 
 ## 6. Laboratório de Testes Interativo
 - O painel dedicado em `dinovatech/nfse_nacional_test/index.php` (com `api.php`) é mantido para testar variações de parâmetros SOAP, pré-visualização de XMLDSig e transmissão direta mTLS.
+
