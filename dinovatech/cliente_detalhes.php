@@ -402,11 +402,21 @@ if ($id_cliente) {
                                             <tr
                                                 class="border-b border-gray-50 hover:bg-gray-50 <?= $is_expired ? 'bg-red-50' : '' ?>">
                                                 <td class="p-4 font-medium">
-                                                    <?= htmlspecialchars($contrato['nome_servico']) ?>
-                                                    <?php if ($is_expired): ?>
-                                                        <span
-                                                            class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">EXP</span>
-                                                    <?php endif; ?>
+                                                    <div class="flex items-center gap-2">
+                                                        <span><?= htmlspecialchars($contrato['nome_servico']) ?></span>
+                                                        <?php if ($is_expired): ?>
+                                                            <span
+                                                                class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800">EXP</span>
+                                                        <?php endif; ?>
+                                                        <?php if (!empty(trim(strip_tags($contrato['descricao_personalizada'] ?? '')))): ?>
+                                                            <button type="button" 
+                                                                onclick="verNotasContrato(<?= $contrato['id_recorrencia'] ?>)"
+                                                                class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-cyan-50 text-cyan-700 border border-cyan-200 hover:bg-cyan-100 transition shadow-sm"
+                                                                title="Visualizar Anotações Técnicas deste Contrato">
+                                                                <span class="material-icons text-[13px]">engineering</span> Notas Técnicas
+                                                            </button>
+                                                        <?php endif; ?>
+                                                    </div>
                                                 </td>
                                                 <td class="p-4">R$
                                                     <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?> /
@@ -574,8 +584,67 @@ if ($id_cliente) {
         </div>
     </div>
 
+    <!-- Modal de Anotações Técnicas do Contrato -->
+    <div id="modalNotasContrato" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-fade-in">
+            <div class="p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-cyan-50/50 to-white">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-cyan-600">engineering</span>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800" id="modalNotasTitulo">Anotações Técnicas do Contrato</h3>
+                        <p class="text-xs text-gray-500" id="modalNotasServico">Especificações e instruções de atendimento</p>
+                    </div>
+                </div>
+                <button type="button" onclick="fecharModalNotasContrato()" class="text-gray-400 hover:text-gray-600 rounded-lg p-1 transition">
+                    <span class="material-icons text-xl">close</span>
+                </button>
+            </div>
+            <div class="p-6 max-h-[65vh] overflow-y-auto" id="modalNotasCorpo">
+                <!-- Conteúdo HTML do TinyMCE injetado aqui -->
+            </div>
+            <div class="p-4 border-t border-gray-100 bg-gray-50 flex justify-between items-center">
+                <a id="modalNotasBtnEditar" href="#" class="inline-flex items-center gap-1 text-xs font-semibold text-cyan-700 hover:text-cyan-900">
+                    <span class="material-icons text-sm">edit</span> Editar Contrato
+                </a>
+                <button type="button" onclick="fecharModalNotasContrato()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold rounded-lg transition">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <?php include 'components/layout_scripts.php'; ?>
     <script>
+        // Mapeamento dos contratos com notas técnicas
+        const contratosComNotas = <?= json_encode(array_column($contratos, null, 'id_recorrencia')) ?>;
+
+        function verNotasContrato(idRec) {
+            const c = contratosComNotas[idRec];
+            if (!c) return;
+
+            $('#modalNotasTitulo').text('Anotações Técnicas: ' + (c.nome_servico || 'Contrato'));
+            $('#modalNotasServico').text('Contrato #' + idRec + ' • ' + (c.tipo_periodo || ''));
+            $('#modalNotasBtnEditar').attr('href', 'contrato_form.php?id=' + idRec);
+
+            let rawHtml = c.descricao_personalizada || '';
+            // Se for texto plano antigo sem tags HTML, converte quebras de linha para <br>
+            if (!/<[a-z][\s\S]*>/i.test(rawHtml)) {
+                rawHtml = $('<div/>').text(rawHtml).html().replace(/\n/g, '<br>');
+            }
+
+            $('#modalNotasCorpo').html(`
+                <div class="prose prose-sm max-w-none text-gray-700 text-sm leading-relaxed">
+                    ${rawHtml}
+                </div>
+            `);
+
+            $('#modalNotasContrato').removeClass('hidden');
+        }
+
+        function fecharModalNotasContrato() {
+            $('#modalNotasContrato').addClass('hidden');
+        }
+
         function openNovaFaturaModal() {
             $('#modalNovaFatura').removeClass('hidden');
         }

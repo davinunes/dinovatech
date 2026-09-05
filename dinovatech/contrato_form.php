@@ -405,22 +405,30 @@ DBClose($link);
                                                 <option value="0" <?= ($contrato['iss_retido'] ?? '') === '0' ? 'selected' : '' ?>>Não, Normal</option>
                                             </select>
                                             <p class="text-[10px] text-gray-500 mt-1">Se o cliente deve reter o ISS.</p>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-4">
-                                        <label for="descricao_personalizada" class="block text-sm font-semibold text-gray-700 mb-1">
-                                            Descrição Personalizada da NFS-e
-                                        </label>
-                                        <textarea id="descricao_personalizada" name="descricao_personalizada" rows="3"
-                                            placeholder="Se preenchido, substitui a descrição padrão do serviço na emissão da nota fiscal."
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"><?= $contrato['descricao_personalizada'] ?? '' ?></textarea>
-                                        <p class="text-[11px] text-gray-500 mt-1">Texto discriminatório customizado para as notas fiscais deste cliente.</p>
                                     </div>
                                 </div>
 
+                                <!-- ANOTAÇÕES TÉCNICAS E OPERACIONAIS DO CONTRATO -->
+                                <div class="border-t pt-6 mt-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <h3 class="text-lg font-bold text-gray-800 flex items-center">
+                                            <span class="material-icons mr-2 text-cyan-600">engineering</span> 
+                                            Anotações Técnicas & Operacionais do Contrato
+                                        </h3>
+                                        <span class="text-xs bg-cyan-50 text-cyan-700 font-semibold px-2.5 py-1 rounded-full border border-cyan-200 flex items-center gap-1">
+                                            <span class="material-icons text-[14px]">edit_note</span> Editor WYSIWYG
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mb-3">
+                                        Registre especificações técnicas, mapas de pinagem, credenciais locais, topologia, IPs ou instruções de atendimento. Estas informações ficam disponíveis na ficha do cliente e podem ser injetadas automaticamente ao abrir agendamentos na Agenda.
+                                    </p>
+                                    <div class="rounded-lg overflow-hidden border border-gray-300 shadow-sm">
+                                        <textarea id="descricao_personalizada" name="descricao_personalizada" rows="6"
+                                            class="w-full p-3"><?= $contrato['descricao_personalizada'] ?? '' ?></textarea>
+                                    </div>
+                                </div>
 
-                                <div class="pt-4 flex justify-end">
+                                <div class="pt-6 flex justify-end">
                                     <a href="contratos.php"
                                         class="px-6 py-3 mr-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition">Cancelar</a>
                                     <button type="submit"
@@ -549,7 +557,7 @@ DBClose($link);
                 carregarHistoricoDocs();
             }
 
-            // Init TinyMCE
+            // Init TinyMCE para Documentos
             tinymce.init({
                 selector: '#editor-texto-custom',
                 height: 300,
@@ -565,6 +573,22 @@ DBClose($link);
                     'table hr | code removeformat | help',
                 content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
                 font_size_formats: '8pt 10pt 12pt 14pt 16pt 18pt 24pt 36pt 48pt',
+            });
+
+            // Init TinyMCE para Anotações Técnicas do Contrato
+            tinymce.init({
+                selector: '#descricao_personalizada',
+                height: 260,
+                menubar: 'edit insert view format table tools',
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'table', 'code', 'searchreplace', 'visualblocks', 'wordcount'
+                ],
+                toolbar: 'undo redo | fontfamily fontsize | bold italic underline forecolor backcolor | ' +
+                    'bullist numlist | table | code removeformat',
+                content_style: 'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #1e293b; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #cbd5e1; padding: 6px 8px; } th { background-color: #f1f5f9; font-weight: 600; }',
+                font_size_formats: '9pt 10pt 11pt 12pt 14pt 16pt',
+                branding: false,
+                statusbar: true
             });
         });
 
@@ -779,6 +803,12 @@ DBClose($link);
         // Keep existing save Logic
         $('#contratoForm').on('submit', function (e) {
             e.preventDefault();
+
+            // Sincroniza instâncias do TinyMCE para os textareas antes de serializar
+            if (typeof tinymce !== 'undefined') {
+                tinymce.triggerSave();
+            }
+
             const btn = $(this).find('button[type="submit"]');
             const originalText = btn.text();
             btn.prop('disabled', true).text('Processando...');

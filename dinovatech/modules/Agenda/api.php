@@ -467,6 +467,42 @@ switch ($action) {
         echo json_encode(['success' => true, 'logs' => $logs]);
         break;
 
+    case 'get_cliente_contrato_notas':
+        $idCliente = (int)($_GET['id_cliente'] ?? 0);
+        if ($idCliente <= 0) {
+            echo json_encode(['success' => false, 'notas' => []]);
+            break;
+        }
+
+        $query = "SELECT R.id_recorrencia, R.descricao_personalizada, S.nome_servico 
+                  FROM Recorrencias R
+                  JOIN Servicos S ON R.id_servico = S.id_servico
+                  WHERE R.id_cliente = $idCliente
+                    AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= CURDATE())
+                    AND R.descricao_personalizada IS NOT NULL
+                    AND TRIM(R.descricao_personalizada) != ''
+                  ORDER BY R.id_recorrencia DESC";
+        $res = @DBExecute($link, $query);
+        $notas = [];
+        if ($res && mysqli_num_rows($res) > 0) {
+            while ($r = mysqli_fetch_assoc($res)) {
+                $raw = trim($r['descricao_personalizada']);
+                // Se contiver tags HTML, gera uma versão limpa para textarea mantendo quebras úteis
+                $plain = strip_tags(str_replace(['</p>', '<br>', '<br/>', '<br />', '</tr>', '</td>'], ["\n", "\n", "\n", "\n", "\n", " | "], $raw));
+                $plain = html_entity_decode($plain, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $plain = trim(preg_replace("/\n{3,}/", "\n\n", $plain));
+
+                $notas[] = [
+                    'id_recorrencia' => (int)$r['id_recorrencia'],
+                    'servico' => $r['nome_servico'],
+                    'html' => $raw,
+                    'plain' => $plain
+                ];
+            }
+        }
+        echo json_encode(['success' => true, 'notas' => $notas]);
+        break;
+
     default:
         echo json_encode(['success' => false, 'message' => 'Action required']);
 }

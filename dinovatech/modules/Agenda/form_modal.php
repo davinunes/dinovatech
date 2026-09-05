@@ -104,8 +104,16 @@ DBClose($link);
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700">Descrição/Obs</label>
-                <textarea name="descricao" id="eventDesc" rows="2" class="w-full border rounded-lg p-2"></textarea>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-sm font-medium text-gray-700">Descrição / Obs</label>
+                    <div id="badgeNotasContrato" class="hidden">
+                        <button type="button" onclick="injetarNotasContratoNoAgendamento()" 
+                            class="text-[11px] font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 px-2 py-0.5 rounded-full flex items-center gap-1 transition shadow-sm">
+                            <span class="material-icons text-[13px]">engineering</span> Injetar Notas do Contrato
+                        </button>
+                    </div>
+                </div>
+                <textarea name="descricao" id="eventDesc" rows="3" class="w-full border rounded-lg p-2 text-sm focus:ring-2 focus:ring-cyan-500"></textarea>
             </div>
 
             <div class="flex justify-between items-center pt-4">
@@ -134,6 +142,48 @@ DBClose($link);
     // Store pets for filtering
     const allPets = <?= json_encode($pets) ?>;
 
+    let notasContratosClienteAtual = [];
+
+    function carregarNotasContratosCliente(clientId) {
+        notasContratosClienteAtual = [];
+        $('#badgeNotasContrato').addClass('hidden');
+
+        if (!clientId) return;
+
+        $.get('api.php', {
+            action: 'get_cliente_contrato_notas',
+            id_cliente: clientId
+        }, function (res) {
+            if (res.success && res.notas && res.notas.length > 0) {
+                notasContratosClienteAtual = res.notas;
+                $('#badgeNotasContrato').removeClass('hidden');
+
+                // Se for criação de agendamento e o campo de descrição estiver vazio, injeta automaticamente!
+                const isNew = !$('#eventId').val();
+                const descAtual = $.trim($('#eventDesc').val());
+                if (isNew && !descAtual) {
+                    injetarNotasContratoNoAgendamento();
+                }
+            }
+        }, 'json');
+    }
+
+    function injetarNotasContratoNoAgendamento() {
+        if (!notasContratosClienteAtual || notasContratosClienteAtual.length === 0) return;
+
+        let textoInject = "";
+        notasContratosClienteAtual.forEach(n => {
+            textoInject += `[Contrato: ${n.servico}]\n${n.plain}\n\n`;
+        });
+
+        const descAtual = $.trim($('#eventDesc').val());
+        if (descAtual && descAtual.indexOf('[Contrato:') === -1) {
+            $('#eventDesc').val(descAtual + "\n\n" + $.trim(textoInject));
+        } else {
+            $('#eventDesc').val($.trim(textoInject));
+        }
+    }
+
     function filterPets() {
         const clientId = $('#eventClient').val();
         const petSelect = $('#eventPet');
@@ -145,6 +195,9 @@ DBClose($link);
             }
         });
         petSelect.trigger('change');
+
+        // Dispara busca das notas de contrato do cliente
+        carregarNotasContratosCliente(clientId);
     }
 
     function openEventModal(eventOrDate) {
