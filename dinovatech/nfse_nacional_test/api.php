@@ -1,6 +1,7 @@
 <?php
 // dinovatech/nfse_nacional_test/api.php - Backend de Testes Interativo para NFS-e Padrão Nacional
 header('Content-Type: application/json; charset=utf-8');
+date_default_timezone_set('America/Sao_Paulo');
 
 require_once __DIR__ . '/../../database.php';
 require_once __DIR__ . '/../config.php';
@@ -71,6 +72,9 @@ try {
     $numDps = (int)($_POST['numero_dps'] ?? time() % 100000);
     $tpAmb = $_POST['tp_amb'] ?? ($ambiente === 'producao' ? '1' : '2');
     $dCompet = $_POST['d_compet'] ?? date('Y-m-d');
+    if ($dCompet > date('Y-m-d')) {
+        $dCompet = date('Y-m-d');
+    }
     $dhEmi = $_POST['dh_emi'] ?? date('Y-m-d\TH:i:sP');
     $verAplic = $_POST['ver_aplic'] ?? 'Dinovatech_1.0';
     $tpEmit = $_POST['tp_emit'] ?? '1';
