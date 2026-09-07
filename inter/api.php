@@ -20,11 +20,11 @@ require_once 'config.php';
  */
 function getInterAccessToken($config, $sslCert, $sslKey, $caInfo, $forceRenew = false)
 {
-    $urlToken = $config['url_token'];
-    $scope = $config['scope'];
-    $clientId = $config['client_id'];
-    $clientSecret = $config['client_secret'];
-    $tokenValidity = $config['token_validity_seconds'];
+    $urlToken = trim((string)$config['url_token']);
+    $scope = trim((string)$config['scope']);
+    $clientId = trim((string)$config['client_id']);
+    $clientSecret = trim((string)$config['client_secret']);
+    $tokenValidity = (int)($config['token_validity_seconds'] ?? 3600);
 
     $sessionScopeKey = 'inter_api_scope_' . md5($urlToken);
     $sessionTokenKey = 'inter_api_token_' . md5($urlToken);

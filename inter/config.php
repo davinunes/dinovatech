@@ -27,12 +27,16 @@ if (isset($_ENV['INTER_ENVIRONMENT']) && $_ENV['INTER_ENVIRONMENT'] === 'sandbox
 // Decrypt Secret
 $clientSecret = '';
 if ($dbConfig && !empty($dbConfig['api_inter_client_secret'])) {
+    $rawSecret = trim((string)$dbConfig['api_inter_client_secret']);
     try {
-        $decrypted = EncryptionHelper::decrypt($dbConfig['api_inter_client_secret']);
-        if ($decrypted)
-            $clientSecret = $decrypted;
+        $decrypted = EncryptionHelper::decrypt($rawSecret);
+        if ($decrypted && strlen(trim($decrypted)) > 0) {
+            $clientSecret = trim($decrypted);
+        } else {
+            $clientSecret = $rawSecret;
+        }
     } catch (Exception $e) {
-        // error_log("Erro ao descriptografar secret Inter: " . $e->getMessage());
+        $clientSecret = $rawSecret;
     }
 }
 
