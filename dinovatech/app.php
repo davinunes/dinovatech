@@ -726,9 +726,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
 
                 // Novos Campos de Integração
-                $api_inter_client_id = mysqli_real_escape_string($link, $_POST['api_inter_client_id'] ?? '');
-                $api_inter_chave_pix = mysqli_real_escape_string($link, $_POST['api_inter_chave_pix'] ?? '');
-                $api_inter_conta_corrente = mysqli_real_escape_string($link, $_POST['api_inter_conta_corrente'] ?? '');
+                $api_inter_client_id = mysqli_real_escape_string($link, trim((string)($_POST['api_inter_client_id'] ?? '')));
+                $api_inter_client_secret_raw = trim((string)($_POST['api_inter_client_secret'] ?? ''));
+                $api_inter_chave_pix = mysqli_real_escape_string($link, trim((string)($_POST['api_inter_chave_pix'] ?? '')));
+                $api_inter_conta_corrente = mysqli_real_escape_string($link, trim((string)($_POST['api_inter_conta_corrente'] ?? '')));
 
                 $api_oracle_user = mysqli_real_escape_string($link, $_POST['api_oracle_user'] ?? '');
                 $api_oracle_url = mysqli_real_escape_string($link, $_POST['api_oracle_url'] ?? '');
@@ -883,6 +884,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 } else {
                     $response['message'] = "Erro ao salvar config: " . mysqli_error($link);
                 }
+            }
+            break;
+
+        case 'testar_conexao_inter':
+            require_once __DIR__ . '/../inter/config.php';
+            require_once __DIR__ . '/../inter/api.php';
+
+            try {
+                $clientId = trim((string)($_POST['api_inter_client_id'] ?? ''));
+                $clientSecretRaw = trim((string)($_POST['api_inter_client_secret'] ?? ''));
+                $contaCorrente = trim((string)($_POST['api_inter_conta_corrente'] ?? ''));
+                $chavePix = trim((string)($_POST['api_inter_chave_pix'] ?? ''));
+
+                $qDb = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
+                $rDb = DBExecute($link, $qDb);
+                $dbCfg = ($rDb && mysqli_num_rows($rDb) > 0) ? mysqli_fetch_assoc($rDb) : [];
+
+                if (empty($clientId) && !empty($dbCfg['api_inter_client_id'])) {
+                    $clientId = trim((string)$dbCfg['api_inter_client_id']);
+                }
+
+                if (empty($clientSecretRaw) && !empty($dbCfg['api_inter_client_secret'])) {
+                    try {
+                        $dec = EncryptionHelper::decrypt($dbCfg['api_inter_client_secret']);
+                        $clientSecretRaw = ($dec && strlen(trim($dec)) > 0) ? trim($dec) : trim((string)$dbCfg['api_inter_client_secret']);
+                    } catch (Exception $e) {
+                        $clientSecretRaw = trim((string)$dbCfg['api_inter_client_secret']);
+                    }
+                }
+
+                if (empty($clientId)) {
+                    throw new Exception("Client ID do Banco Inter não foi informado.");
+                }
+                if (empty($clientSecretRaw)) {
+                    throw new Exception("Client Secret do Banco Inter não foi informado.");
+                }
+
+                // Certificados: verifica se foram enviados no request ou se já estão no banco
+                $certContent = null;
+                if (isset($_FILES['arquivo_inter_crt']) && $_FILES['arquivo_inter_crt']['error'] === UPLOAD_ERR_OK) {
+                    $certContent = file_get_contents($_FILES['arquivo_inter_crt']['tmp_name']);
+                } elseif (!empty($dbCfg['api_inter_cert_base64'])) {
+                    $certContent = base64_decode($dbCfg['api_inter_cert_base64']);
+                }
+
+                $keyContent = null;
+                if (isset($_FILES['arquivo_inter_key']) && $_FILES['arquivo_inter_key']['error'] === UPLOAD_ERR_OK) {
+                    $keyContent = file_get_contents($_FILES['arquivo_inter_key']['tmp_name']);
+                } elseif (!empty($dbCfg['api_inter_key_base64'])) {
+                    $keyContent = base64_decode($dbCfg['api_inter_key_base64']);
+                }
+
+                $caContent = null;
+                if (isset($_FILES['arquivo_inter_ca']) && $_FILES['arquivo_inter_ca']['error'] === UPLOAD_ERR_OK) {
+                    $caContent = file_get_contents($_FILES['arquivo_inter_ca']['tmp_name']);
+                } elseif (!empty($dbCfg['api_inter_ca_base64'])) {
+                    $caContent = base64_decode($dbCfg['api_inter_ca_base64']);
+                }
+
+                if (empty($certContent)) {
+                    throw new Exception("Arquivo Certificado (.crt) do Banco Inter não foi enviado ou não está cadastrado.");
+                }
+                if (empty($keyContent)) {
+                    throw new Exception("Arquivo Chave (.key) do Banco Inter não foi enviado ou não está cadastrado.");
+                }
+
+                // Cria arquivos temporários para o teste
+                $tempCert = inter_get_temp_cert_file(base64_encode($certContent), 'test_crt_');
+                $tempKey = inter_get_temp_cert_file(base64_encode($keyContent), 'test_key_');
+                $tempCa = !empty($caContent) ? inter_get_temp_cert_file(base64_encode($caContent), 'test_ca_') : '';
+
+                // Monta config temporária
+                $testConfig = [
+                    'url_token' => 'https://cdpj.partners.bancointer.com.br/oauth/v2/token',
+                    'url_pix_base' => 'https://cdpj.partners.bancointer.com.br/pix/v2',
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecretRaw,
+                    'conta_corrente' => $contaCorrente ?: ($dbCfg['api_inter_conta_corrente'] ?? ''),
+                    'chave_pix' => $chavePix ?: ($dbCfg['api_inter_chave_pix'] ?? ''),
+                    'scope' => 'cob.write cob.read pix.write pix.read cobv.write cobv.read lotecobv.write lotecobv.read rec.write rec.read cobr.write cobr.read webhook.write webhook.read extrato.read boleto-cobranca.read boleto-cobranca.write',
+                    'token_validity_seconds' => 3600
+                ];
+
+                // Testa obtenção de token OAuth2 forçando renovação
+                $token = getInterAccessToken($testConfig, $tempCert, $tempKey, $tempCa, true);
+
+                $response['success'] = true;
+                $response['message'] = "Autenticação OAuth2 no Banco Inter realizada com SUCESSO! Certificados mTLS e credenciais válidos.";
+                $response['token_preview'] = substr($token, 0, 15) . '...';
+            } catch (Exception $e) {
+                $response['success'] = false;
+                $response['message'] = $e->getMessage();
             }
             break;
 

@@ -522,6 +522,13 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                             <span class="material-icons text-gray-400 text-[10px] mr-1">security</span>
                                             <span id="caminho_inter_ca_display" class="font-mono">Nenhum salvo</span>
                                         </div>
+                                    <div class="md:col-span-2 border-t border-gray-200 pt-3 mt-1 flex flex-wrap items-center justify-between gap-3">
+                                        <button type="button" id="btnTestarInter" onclick="testarConexaoInter()"
+                                            class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">
+                                            <span class="material-icons text-sm mr-1.5" id="iconTestarInter">bolt</span>
+                                            <span id="txtTestarInter">Testar Conexão / Autenticação Inter</span>
+                                        </button>
+                                        <div id="interTestStatus" class="text-xs font-medium"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1311,6 +1318,51 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     btn.prop('disabled', false).removeClass('opacity-75').html(origHtml);
                     statusSpan.text('Erro de comunicação.');
                     alert('Erro de comunicação com o servidor.');
+                });
+            };
+
+            window.testarConexaoInter = function() {
+                const form = document.getElementById('formConfigFiscal');
+                const formData = new FormData(form);
+                formData.set('action', 'testar_conexao_inter');
+
+                const btn = $('#btnTestarInter');
+                const icon = $('#iconTestarInter');
+                const txt = $('#txtTestarInter');
+                const statusDiv = $('#interTestStatus');
+
+                btn.prop('disabled', true).addClass('opacity-75 cursor-wait');
+                icon.text('sync').addClass('animate-spin');
+                txt.text('Testando autenticação...');
+                statusDiv.html('<span class="text-gray-500">Conectando ao Banco Inter...</span>');
+
+                $.ajax({
+                    url: 'app.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function(res) {
+                        btn.prop('disabled', false).removeClass('opacity-75 cursor-wait');
+                        icon.text('bolt').removeClass('animate-spin');
+                        txt.text('Testar Conexão / Autenticação Inter');
+
+                        if (res.success) {
+                            statusDiv.html('<span class="text-green-600 font-bold flex items-center"><span class="material-icons text-sm mr-1">check_circle</span> ' + res.message + '</span>');
+                            alert('Sucesso: ' + res.message);
+                        } else {
+                            statusDiv.html('<span class="text-red-600 font-bold flex items-center"><span class="material-icons text-sm mr-1">error</span> ' + (res.message || 'Falha na autenticação') + '</span>');
+                            alert('Erro: ' + (res.message || 'Falha ao testar conexão com Banco Inter.'));
+                        }
+                    },
+                    error: function(xhr) {
+                        btn.prop('disabled', false).removeClass('opacity-75 cursor-wait');
+                        icon.text('bolt').removeClass('animate-spin');
+                        txt.text('Testar Conexão / Autenticação Inter');
+                        statusDiv.html('<span class="text-red-600 font-bold">Erro de comunicação com o servidor.</span>');
+                        alert('Erro de comunicação com o servidor: ' + (xhr.responseText || 'Erro desconhecido.'));
+                    }
                 });
             };
 
