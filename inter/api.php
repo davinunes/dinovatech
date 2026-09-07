@@ -10,8 +10,15 @@ require_once 'config.php';
 
 /**
  * Obtém o token de acesso. Requer certificados.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param bool $forceRenew Se true, limpa cache da sessão e força nova requisição ao Inter
+ * @return string Bearer Access Token
  */
-function getInterAccessToken($config, $sslCert, $sslKey, $caInfo)
+function getInterAccessToken($config, $sslCert, $sslKey, $caInfo, $forceRenew = false)
 {
     $urlToken = $config['url_token'];
     $scope = $config['scope'];
@@ -20,17 +27,19 @@ function getInterAccessToken($config, $sslCert, $sslKey, $caInfo)
     $tokenValidity = $config['token_validity_seconds'];
 
     $sessionScopeKey = 'inter_api_scope_' . md5($urlToken);
-    if (($_SESSION[$sessionScopeKey] ?? '') !== $scope) {
-        unset($_SESSION['inter_api_token_' . md5($urlToken)]);
-        unset($_SESSION['inter_api_token_expiry_' . md5($urlToken)]);
-    }
-
     $sessionTokenKey = 'inter_api_token_' . md5($urlToken);
     $sessionExpiryKey = 'inter_api_token_expiry_' . md5($urlToken);
+
+    if ($forceRenew || ($_SESSION[$sessionScopeKey] ?? '') !== $scope) {
+        unset($_SESSION[$sessionTokenKey]);
+        unset($_SESSION[$sessionExpiryKey]);
+        unset($_SESSION[$sessionScopeKey]);
+    }
+
     $currentToken = $_SESSION[$sessionTokenKey] ?? null;
     $expiresAt = $_SESSION[$sessionExpiryKey] ?? 0;
 
-    if ($currentToken && $expiresAt > (time() + 60)) {
+    if (!$forceRenew && $currentToken && $expiresAt > (time() + 60)) {
         return $currentToken;
     }
 
@@ -51,13 +60,18 @@ function getInterAccessToken($config, $sslCert, $sslKey, $caInfo)
 
     $response = curl_exec($ch);
     $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    if ($error)
+    if ($error) {
         throw new Exception("cURL Error on token fetch: " . $error);
+    }
+    
     $obj = json_decode($response);
-    if (!$obj || !isset($obj->access_token))
-        throw new Exception("Failed to decode token or access_token not found. Response: " . $response);
+    if ($httpCode >= 400 || !$obj || !isset($obj->access_token)) {
+        $msg = $obj->error_description ?? ($obj->error ?? $response);
+        throw new Exception("Falha ao obter Token OAuth2 no Banco Inter (HTTP {$httpCode}): " . $msg);
+    }
 
     $_SESSION[$sessionTokenKey] = $obj->access_token;
     $_SESSION[$sessionExpiryKey] = time() + $tokenValidity;

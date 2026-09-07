@@ -115,7 +115,17 @@ class PixAutomaticoService
         // ==========================================
         // PASSO 1: Criar Location (/locrec)
         // ==========================================
-        $locResponse = criarLocationRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token);
+        try {
+            $locResponse = criarLocationRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token);
+        } catch (Exception $e) {
+            // Se o token em sessão expirou ou não continha os novos escopos, força nova emissão do token e retenta
+            if (strpos($e->getMessage(), '401') !== false || strpos($e->getMessage(), 'scope') !== false) {
+                $token = getInterAccessToken($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, true);
+                $locResponse = criarLocationRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token);
+            } else {
+                throw $e;
+            }
+        }
         $idLocation = (int) $locResponse->id;
 
         // ==========================================

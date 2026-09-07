@@ -504,6 +504,11 @@ try {
             echo json_encode(['success' => true, 'webhookUrl' => $webhookUrl, 'data' => $resWeb]);
             break;
 
+        case 'limpar_token_cache':
+            getInterAccessToken($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, true);
+            echo json_encode(['success' => true, 'message' => 'Cache de token do Banco Inter renovado com sucesso.']);
+            break;
+
         default:
             throw new Exception("Ação inválida ou não especificada.");
     }
