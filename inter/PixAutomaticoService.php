@@ -30,11 +30,14 @@ class PixAutomaticoService
 
         // 1. Busca dados da fatura e cliente
         $qFatura = "SELECT F.*, C.id_cliente, C.nome AS nome_cliente, C.cpf_cnpj, C.email AS email_cliente,
-                           C.endereco, C.numero, C.complemento, C.bairro, C.cep, C.uf, C.cidade
+                           C.endereco, C.numero, C.complemento, C.bairro, C.cep, C.uf, C.codigo_municipio
                     FROM Faturas F
                     JOIN Clientes C ON F.id_cliente = C.id_cliente
                     WHERE F.id_fatura = $idFaturaSafe LIMIT 1";
         $resFatura = DBExecute($link, $qFatura);
+        if (!$resFatura) {
+            throw new Exception("Erro ao consultar dados da fatura #{$idFaturaSafe}: " . mysqli_error($link));
+        }
         $fatura = mysqli_fetch_assoc($resFatura);
 
         if (!$fatura) {
@@ -308,11 +311,14 @@ class PixAutomaticoService
 
         // Busca dados da fatura e cliente
         $qFatura = "SELECT F.*, C.nome AS nome_cliente, C.cpf_cnpj, C.email AS email_cliente,
-                           C.endereco, C.numero, C.complemento, C.bairro, C.cep, C.uf, C.cidade
+                           C.endereco, C.numero, C.complemento, C.bairro, C.cep, C.uf, C.codigo_municipio
                     FROM Faturas F
                     JOIN Clientes C ON F.id_cliente = C.id_cliente
                     WHERE F.id_fatura = $idFatura LIMIT 1";
         $resFatura = DBExecute($link, $qFatura);
+        if (!$resFatura) {
+            throw new Exception("Erro ao consultar dados da fatura #{$idFatura}: " . mysqli_error($link));
+        }
         $fatura = mysqli_fetch_assoc($resFatura);
         if (!$fatura) {
             throw new Exception("Fatura #{$idFatura} não encontrada.");
@@ -329,9 +335,10 @@ class PixAutomaticoService
         $contaRecebedor = preg_replace('/[^0-9]/', '', $emissor['api_inter_conta_corrente'] ?? $ambienteConfig['conta_corrente'] ?? '000000');
 
         $docLimpo = preg_replace('/[^0-9]/', '', $fatura['cpf_cnpj']);
+        $cidadeNome = ($fatura['uf'] === 'DF' || ($fatura['codigo_municipio'] ?? '') === '5300108') ? 'Brasília' : 'Brasília';
         $devedorData = [
             'cep' => preg_replace('/[^0-9]/', '', $fatura['cep'] ?: '70000000'),
-            'cidade' => $fatura['cidade'] ?: 'Brasília',
+            'cidade' => $cidadeNome,
             'email' => $fatura['email_cliente'] ?: 'cliente@dinovatech.com.br',
             'logradouro' => ($fatura['endereco'] ?: 'Endereço') . ($fatura['numero'] ? ', ' . $fatura['numero'] : ''),
             'uf' => $fatura['uf'] ?: 'DF'
