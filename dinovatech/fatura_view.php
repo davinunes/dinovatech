@@ -1687,6 +1687,11 @@ if ($id_fatura) {
                         showToast(res.message || 'Erro ao importar fatura no ContaDev.', 'error');
                     }
                 }, 'json').fail(function() {
+                    btn.prop('disabled', false).removeClass('opacity-75 cursor-wait').html(origHtml);
+                    showToast('Erro de comunicação ao sincronizar com o ContaDev.', 'error');
+                });
+            };
+
             // --- PIX AUTOMÁTICO (JORNADA 4) ADMIN HANDLERS ---
             window.verificarPixRecorrencia = function(idRec) {
                 showToast('Consultando status da recorrência no Banco Inter...', 'info');
