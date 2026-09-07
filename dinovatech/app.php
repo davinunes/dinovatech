@@ -963,7 +963,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     'client_secret' => $clientSecretRaw,
                     'conta_corrente' => $contaCorrente ?: ($dbCfg['api_inter_conta_corrente'] ?? ''),
                     'chave_pix' => $chavePix ?: ($dbCfg['api_inter_chave_pix'] ?? ''),
-                    'scope' => 'cob.write cob.read pix.write pix.read cobv.write cobv.read lotecobv.write lotecobv.read rec.write rec.read cobr.write cobr.read webhook.write webhook.read extrato.read boleto-cobranca.read boleto-cobranca.write',
+                    'scope' => 'cob.write cob.read cobv.write cobv.read lotecobv.write lotecobv.read pix.write pix.read webhook.write webhook.read payloadlocation.write payloadlocation.read rec.write rec.read cobr.write cobr.read boleto-cobranca.read boleto-cobranca.write extrato.read pagamento-pix.read webhook-banking.read webhook-banking.write',
                     'token_validity_seconds' => 3600
                 ];
 
