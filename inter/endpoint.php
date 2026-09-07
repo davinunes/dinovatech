@@ -2,6 +2,7 @@
 header('Content-Type: application/json');
 
 require_once 'api.php';
+require_once 'PixAutomaticoService.php';
 require_once '../database.php';
 require_once '../dinovatech/helpers/AppHelper.php';
 
@@ -354,6 +355,153 @@ try {
             }
 
             echo json_encode(['success' => true, 'data' => base64_encode($rawPdf)]);
+            break;
+
+        case 'obter_ou_criar_pix_jornada4':
+            $idFatura = $requestBody['id_fatura'] ?? $_GET['id_fatura'] ?? null;
+            if (!$idFatura) {
+                throw new Exception("ID da fatura é obrigatório.");
+            }
+
+            $idFaturaSafe = (int) $idFatura;
+
+            // 1. Verifica se já existe um PixRecorrencias pendente ou aprovado com pagamento válido para esta fatura
+            $qCheck = "SELECT P.*, Pag.id_pagamento, Pag.txid, Pag.cod_qrcode, Pag.calendario, Pag.status_pagamento
+                       FROM PixRecorrencias P
+                       LEFT JOIN Pagamentos Pag ON P.txid_inicial = Pag.txid
+                       WHERE P.id_fatura_inicial = $idFaturaSafe AND Pag.status_pagamento = 'Pendente'
+                       ORDER BY P.id_pix_recorrencia DESC LIMIT 1";
+            $resCheck = DBExecute($link, $qCheck);
+
+            if ($resCheck && mysqli_num_rows($resCheck) > 0) {
+                $existente = mysqli_fetch_assoc($resCheck);
+                $cal = json_decode($existente['calendario'] ?? '', true);
+                $valido = false;
+
+                if (!empty($cal['criacao']) && !empty($cal['expiracao'])) {
+                    $dtCriacao = new DateTime($cal['criacao']);
+                    $expiracao = $dtCriacao->getTimestamp() + (int) $cal['expiracao'];
+                    if ($expiracao > time()) {
+                        $valido = true;
+                    }
+                }
+
+                if ($valido && !empty($existente['cod_qrcode'])) {
+                    echo json_encode([
+                        'success' => true,
+                        'reutilizado' => true,
+                        'idRec' => $existente['id_rec'],
+                        'txid' => $existente['txid'],
+                        'pixCopiaECola' => $existente['cod_qrcode'],
+                        'calendario' => $cal,
+                        'valorRecorrente' => $existente['valor_recorrente'],
+                        'status' => $existente['status']
+                    ]);
+                    break;
+                }
+            }
+
+            // Gera novo fluxo Jornada 4 (Passos 1 a 4)
+            $resultadoJornada4 = PixAutomaticoService::gerarJornada4ParaFatura($idFaturaSafe, $link);
+            echo json_encode($resultadoJornada4);
+            break;
+
+        case 'consultar_status_recorrencia':
+            $idRec = $_GET['idRec'] ?? $requestBody['idRec'] ?? null;
+            $idFatura = $_GET['id_fatura'] ?? $requestBody['id_fatura'] ?? null;
+
+            if (empty($idRec) && !empty($idFatura)) {
+                $idFaturaSafe = (int) $idFatura;
+                $qBuscaRec = "SELECT P.id_rec 
+                              FROM PixRecorrencias P
+                              JOIN ItensFatura I ON P.id_recorrencia = I.id_recorrencia
+                              WHERE I.id_fatura = $idFaturaSafe OR P.id_fatura_inicial = $idFaturaSafe
+                              ORDER BY P.id_pix_recorrencia DESC LIMIT 1";
+                $resBuscaRec = DBExecute($link, $qBuscaRec);
+                if ($resBuscaRec && mysqli_num_rows($resBuscaRec) > 0) {
+                    $rowRec = mysqli_fetch_assoc($resBuscaRec);
+                    $idRec = $rowRec['id_rec'];
+                }
+            }
+
+            if (empty($idRec)) {
+                throw new Exception("Identificador idRec ou id_fatura não encontrado.");
+            }
+
+            $resultadoSync = PixAutomaticoService::sincronizarStatusRecorrencia($idRec, $link);
+            echo json_encode($resultadoSync);
+            break;
+
+        case 'cancelar_pix_recorrencia_contrato':
+            $idRec = $_POST['idRec'] ?? $requestBody['idRec'] ?? $_GET['idRec'] ?? null;
+            $motivo = $_POST['motivo'] ?? $requestBody['motivo'] ?? 'Cancelamento solicitado pelo administrador';
+
+            if (empty($idRec)) {
+                $idRecorrencia = (int)($_POST['id_recorrencia'] ?? $requestBody['id_recorrencia'] ?? 0);
+                if ($idRecorrencia > 0) {
+                    $qRec = "SELECT id_rec FROM PixRecorrencias WHERE id_recorrencia = $idRecorrencia AND status != 'CANCELADA' LIMIT 1";
+                    $rRec = DBExecute($link, $qRec);
+                    if ($rRec && mysqli_num_rows($rRec) > 0) {
+                        $idRec = mysqli_fetch_assoc($rRec)['id_rec'];
+                    }
+                }
+            }
+
+            if (empty($idRec)) {
+                throw new Exception("Identificador idRec da recorrência não informado.");
+            }
+
+            $resCancel = PixAutomaticoService::cancelarRecorrenciaContratoService($idRec, $motivo, $link);
+            echo json_encode($resCancel);
+            break;
+
+        case 'cancelar_pix_cobranca_individual':
+            $txid = $_POST['txid'] ?? $requestBody['txid'] ?? $_GET['txid'] ?? null;
+            $idFatura = (int)($_POST['id_fatura'] ?? $requestBody['id_fatura'] ?? $_GET['id_fatura'] ?? 0);
+
+            if (empty($txid)) {
+                throw new Exception("TXID da cobrança é obrigatório para cancelamento individual.");
+            }
+
+            $resCancelCob = PixAutomaticoService::cancelarCobrancaIndividualFaturaService($txid, $idFatura, $link);
+            echo json_encode($resCancelCob);
+            break;
+
+        case 'obter_status_pix_recorrencia_fatura':
+            $idFatura = (int)($_GET['id_fatura'] ?? $requestBody['id_fatura'] ?? 0);
+            if ($idFatura <= 0) {
+                throw new Exception("ID da fatura é obrigatório.");
+            }
+
+            $qInfo = "SELECT P.*, R.id_servico, S.nome_servico, Pag.status_pagamento as status_pagamento_fatura, Pag.txid as txid_fatura
+                      FROM Faturas F
+                      LEFT JOIN ItensFatura I ON F.id_fatura = I.id_fatura
+                      LEFT JOIN Recorrencias R ON I.id_recorrencia = R.id_recorrencia
+                      LEFT JOIN PixRecorrencias P ON (P.id_recorrencia = R.id_recorrencia OR P.id_fatura_inicial = F.id_fatura)
+                      LEFT JOIN Servicos S ON R.id_servico = S.id_servico
+                      LEFT JOIN Pagamentos Pag ON Pag.id_fatura = F.id_fatura AND Pag.status_pagamento = 'Pendente'
+                      WHERE F.id_fatura = $idFatura
+                      ORDER BY P.id_pix_recorrencia DESC LIMIT 1";
+            $resInfo = DBExecute($link, $qInfo);
+            $pixRecInfo = $resInfo ? mysqli_fetch_assoc($resInfo) : null;
+
+            echo json_encode([
+                'success' => true,
+                'hasPixRecorrencia' => !empty($pixRecInfo['id_rec']),
+                'data' => $pixRecInfo
+            ]);
+            break;
+
+        case 'configurar_webhook_rec':
+            $webhookUrl = $requestBody['webhookUrl'] ?? $_GET['webhookUrl'] ?? null;
+            if (empty($webhookUrl)) {
+                $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $host = $_SERVER['HTTP_HOST'] ?? 'app.dinovatech.com.br';
+                $webhookUrl = "{$protocol}://{$host}/inter/webhook_rec.php";
+            }
+
+            $resWeb = configurarWebhookRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $webhookUrl);
+            echo json_encode(['success' => true, 'webhookUrl' => $webhookUrl, 'data' => $resWeb]);
             break;
 
         default:

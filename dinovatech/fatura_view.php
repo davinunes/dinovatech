@@ -67,6 +67,35 @@ if ($id_fatura) {
             $config_emissor = mysqli_fetch_assoc($res_config);
         }
         $isFiscalAtivo = !empty($config_emissor['modulo_fiscal_ativo']) && (int)$config_emissor['modulo_fiscal_ativo'] === 1;
+
+        // Fetch Pix Automático / Recorrência info
+        $id_recorrencia_fatura = null;
+        foreach ($items as $it) {
+            if (!empty($it['id_recorrencia'])) {
+                $id_recorrencia_fatura = (int)$it['id_recorrencia'];
+                break;
+            }
+        }
+        if (!$id_recorrencia_fatura && !empty($fatura['id_cliente'])) {
+            $qHasRec = "SELECT id_recorrencia FROM Recorrencias WHERE id_cliente = '{$fatura['id_cliente']}' ORDER BY id_recorrencia DESC LIMIT 1";
+            $rHasRec = DBExecute($link, $qHasRec);
+            if ($rHasRec && mysqli_num_rows($rHasRec) > 0) {
+                $id_recorrencia_fatura = (int)mysqli_fetch_assoc($rHasRec)['id_recorrencia'];
+            }
+        }
+
+        $pix_recorrencia = null;
+        if ($id_recorrencia_fatura) {
+            $qPixRec = "SELECT P.*, R.nome_servico, R.valor_sugerido_recorrencia 
+                        FROM PixRecorrencias P
+                        JOIN Recorrencias R ON P.id_recorrencia = R.id_recorrencia
+                        WHERE P.id_recorrencia = $id_recorrencia_fatura 
+                        ORDER BY P.id_pix_recorrencia DESC LIMIT 1";
+            $rPixRec = DBExecute($link, $qPixRec);
+            if ($rPixRec && mysqli_num_rows($rPixRec) > 0) {
+                $pix_recorrencia = mysqli_fetch_assoc($rPixRec);
+            }
+        }
     } else {
         $error_msg = "Fatura não encontrada.";
     }
@@ -549,6 +578,91 @@ if ($id_fatura) {
                                 </div>
                             </div>
                             <?php endif; ?>
+
+                            <!-- Card Pix Automático (Banco Inter - Jornada 4) -->
+                            <div class="mt-4 border-t pt-4">
+                                <div class="bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-4 rounded-xl shadow-md border border-purple-800/40 mb-3 relative overflow-hidden">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="material-icons text-yellow-400 text-lg">bolt</span>
+                                            <h3 class="font-bold text-sm text-white">Pix Automático (Jornada 4)</h3>
+                                        </div>
+                                        <?php
+                                        $statusRecLabel = 'Não Cadastrado';
+                                        $badgeRecClass = 'bg-slate-700 text-slate-300';
+                                        if ($pix_recorrencia) {
+                                            $st = strtoupper($pix_recorrencia['status']);
+                                            if ($st === 'APROVADA') {
+                                                $statusRecLabel = 'Ativo / Aprovado';
+                                                $badgeRecClass = 'bg-emerald-950 text-emerald-300 border border-emerald-700/50';
+                                            } elseif ($st === 'PENDENTE') {
+                                                $statusRecLabel = 'Pendente Aceite';
+                                                $badgeRecClass = 'bg-amber-950 text-amber-300 border border-amber-700/50';
+                                            } elseif ($st === 'CANCELADA') {
+                                                $statusRecLabel = 'Cancelado';
+                                                $badgeRecClass = 'bg-red-950 text-red-300 border border-red-700/50';
+                                            } else {
+                                                $statusRecLabel = $st;
+                                                $badgeRecClass = 'bg-purple-950 text-purple-300';
+                                            }
+                                        }
+                                        ?>
+                                        <span id="badge_pix_recorrencia" class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $badgeRecClass ?>">
+                                            <?= $statusRecLabel ?>
+                                        </span>
+                                    </div>
+
+                                    <div id="pix_recorrencia_feedback" class="text-xs text-slate-300 space-y-1 mb-3">
+                                        <?php if ($pix_recorrencia): ?>
+                                            <p class="text-[11px] leading-tight font-mono text-purple-200">ID Rec: <?= htmlspecialchars($pix_recorrencia['id_rec']) ?></p>
+                                            <p class="text-[10px] text-slate-400">Valor Mensal: R$ <?= number_format($pix_recorrencia['valor_recorrente'], 2, ',', '.') ?></p>
+                                            <?php if (!empty($pix_recorrencia['data_aceite'])): ?>
+                                                <p class="text-[10px] text-emerald-400">Aceite em: <?= date('d/m/Y H:i', strtotime($pix_recorrencia['data_aceite'])) ?></p>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <p class="text-[11px] leading-tight text-slate-300">Gere a proposta combinada (Jornada 4) para pagamento da fatura e ativação de débito automático.</p>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div class="space-y-1.5">
+                                        <?php if ($pix_recorrencia && !empty($pix_recorrencia['id_rec'])): ?>
+                                            <button type="button" onclick="verificarPixRecorrencia('<?= $pix_recorrencia['id_rec'] ?>')"
+                                                class="w-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+                                                <span class="material-icons text-sm">sync</span> Verificar Aceite no Inter
+                                            </button>
+
+                                            <?php if ($pix_recorrencia['status'] !== 'CANCELADA'): ?>
+                                                <button type="button" onclick="cancelarPixRecorrenciaContratoAdmin('<?= $pix_recorrencia['id_rec'] ?>')"
+                                                    class="w-full bg-red-900/50 hover:bg-red-800 text-red-200 border border-red-700/50 py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1">
+                                                    <span class="material-icons text-xs">block</span> Cancelar Pix Automático do Contrato
+                                                </button>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <button type="button" onclick="gerarJornada4Admin(<?= $id_fatura ?>)"
+                                                class="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:opacity-95 text-white py-2.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+                                                <span class="material-icons text-sm text-yellow-300">bolt</span> Gerar Proposta Pix Automático
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        // Verifica se há débito agendado para esta fatura em Pagamentos
+                                        $pagamentoDebitoAgendado = null;
+                                        foreach ($pagamentos as $pagItem) {
+                                            if ($pagItem['status_pagamento'] === 'Pendente' && !empty($pagItem['txid']) && strpos($pagItem['observacao'] ?? '', 'Débito Automático') !== false) {
+                                                $pagamentoDebitoAgendado = $pagItem;
+                                                break;
+                                            }
+                                        }
+                                        if ($pagamentoDebitoAgendado):
+                                        ?>
+                                            <button type="button" onclick="cancelarCobrancaIndividualAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>)"
+                                                class="w-full bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700/50 py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1 mt-1">
+                                                <span class="material-icons text-xs">cancel</span> Cancelar Débito Desta Fatura
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
 
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
@@ -1573,8 +1687,95 @@ if ($id_fatura) {
                         showToast(res.message || 'Erro ao importar fatura no ContaDev.', 'error');
                     }
                 }, 'json').fail(function() {
-                    btn.prop('disabled', false).removeClass('opacity-75 cursor-wait').html(origHtml);
-                    showToast('Erro de comunicação com o servidor ao importar.', 'error');
+            // --- PIX AUTOMÁTICO (JORNADA 4) ADMIN HANDLERS ---
+            window.verificarPixRecorrencia = function(idRec) {
+                showToast('Consultando status da recorrência no Banco Inter...', 'info');
+                $.getJSON(`../inter/endpoint.php?action=consultar_status_recorrencia&idRec=${encodeURIComponent(idRec)}&id_fatura=<?= (int)$id_fatura ?>`, function(res) {
+                    if (res.success) {
+                        showToast(`Status no Inter: ${res.status}`, 'success');
+                        setTimeout(() => window.location.reload(), 1200);
+                    } else {
+                        showToast(res.message || 'Erro ao consultar status no Banco Inter.', 'error');
+                    }
+                }).fail(function(xhr) {
+                    let msg = 'Erro ao consultar status no Banco Inter.';
+                    try {
+                        const json = JSON.parse(xhr.responseText);
+                        if (json && json.message) msg = json.message;
+                    } catch(e){}
+                    showToast(msg, 'error');
+                });
+            };
+
+            window.gerarJornada4Admin = function(idFatura) {
+                if (!confirm('Deseja gerar a proposta de Pix Automático (Jornada 4) para esta fatura no Banco Inter?')) return;
+
+                showToast('Gerando proposta Jornada 4 no Banco Inter...', 'info');
+                $.ajax({
+                    url: '../inter/endpoint.php?action=obter_ou_criar_pix_jornada4',
+                    type: 'POST',
+                    data: JSON.stringify({ id_fatura: idFatura }),
+                    contentType: 'application/json',
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res.success) {
+                            showToast('Proposta de Pix Automático gerada com sucesso!', 'success');
+                            setTimeout(() => window.location.reload(), 1200);
+                        } else {
+                            showToast(res.message || 'Erro ao gerar proposta no Banco Inter.', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        let msg = 'Erro ao gerar proposta no Banco Inter.';
+                        try {
+                            const json = JSON.parse(xhr.responseText);
+                            if (json && json.message) msg = json.message;
+                        } catch(e){}
+                        showToast(msg, 'error');
+                    }
+                });
+            };
+
+            window.cancelarPixRecorrenciaContratoAdmin = function(idRec) {
+                const motivo = prompt('Informe o motivo do cancelamento do contrato de Pix Automático:', 'Cancelamento solicitado pelo cliente');
+                if (motivo === null) return;
+
+                showToast('Enviando solicitação de cancelamento ao Banco Inter...', 'info');
+                $.post('../inter/endpoint.php?action=cancelar_pix_recorrencia_contrato', { idRec: idRec, motivo: motivo }, function(res) {
+                    if (res.success) {
+                        showToast('Contrato de Pix Automático cancelado com sucesso no Banco Inter!', 'success');
+                        setTimeout(() => window.location.reload(), 1200);
+                    } else {
+                        showToast(res.message || 'Erro ao cancelar contrato no Banco Inter.', 'error');
+                    }
+                }, 'json').fail(function(xhr) {
+                    let msg = 'Erro ao cancelar contrato no Banco Inter.';
+                    try {
+                        const json = JSON.parse(xhr.responseText);
+                        if (json && json.message) msg = json.message;
+                    } catch(e){}
+                    showToast(msg, 'error');
+                });
+            };
+
+            window.cancelarCobrancaIndividualAdmin = function(txid, idFatura) {
+                if (!confirm('Deseja cancelar a cobrança de débito automático desta fatura no Banco Inter? (Atenção: válido até as 22h do dia anterior ao vencimento)')) return;
+
+                showToast('Cancelando débito automático desta fatura no Banco Inter...', 'info');
+                $.post('../inter/endpoint.php?action=cancelar_pix_cobranca_individual', { txid: txid, id_fatura: idFatura }, function(res) {
+                    if (res.success) {
+                        showToast('Débito automático cancelado com sucesso!', 'success');
+                        setTimeout(() => window.location.reload(), 1200);
+                    } else {
+                        showToast(res.message || 'Erro ao cancelar débito no Banco Inter.', 'error');
+                    }
+                }, 'json').fail(function(xhr) {
+                    let msg = 'Erro ao cancelar débito no Banco Inter.';
+                    try {
+                        const json = JSON.parse(xhr.responseText);
+                        if (json && json.message) msg = json.message;
+                    } catch(e){}
+                    showToast(msg, 'error');
                 });
             };
 

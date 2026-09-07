@@ -1,5 +1,6 @@
 <?php
 // dinovatech/helpers/CronRecorrenciasHelper.php
+require_once __DIR__ . '/../../inter/PixAutomaticoService.php';
 
 class CronRecorrenciasHelper
 {
@@ -134,6 +135,26 @@ class CronRecorrenciasHelper
                         $totalFaturas++;
                         $totalValorGerado += $vlrTotalFatura;
 
+                        $pixAutomaticoInfo = null;
+                        // 6.1 Verifica se este contrato possui Pix Automático APROVADO
+                        $qPixCheck = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = $idRec AND status = 'APROVADA' LIMIT 1";
+                        $rPixCheck = DBExecute($link, $qPixCheck);
+                        if ($rPixCheck && mysqli_num_rows($rPixCheck) > 0) {
+                            try {
+                                $cobrRes = PixAutomaticoService::processarCobrancaSubsequente($newFaturaId, $idRec, $link);
+                                $pixAutomaticoInfo = [
+                                    'status' => 'agendado',
+                                    'txid' => $cobrRes['txid'] ?? null,
+                                    'idRec' => $cobrRes['idRec'] ?? null
+                                ];
+                            } catch (Exception $eCobr) {
+                                $errCobr = "Aviso: Fatura #$newFaturaId criada, mas falhou agendamento do débito automático Pix: " . $eCobr->getMessage();
+                                error_log($errCobr);
+                                $erros[] = $errCobr;
+                                $pixAutomaticoInfo = ['status' => 'erro', 'mensagem' => $eCobr->getMessage()];
+                            }
+                        }
+
                         $faturasCriadas[] = [
                             'id_fatura' => $newFaturaId,
                             'id_recorrencia' => $idRec,
@@ -141,7 +162,8 @@ class CronRecorrenciasHelper
                             'cliente_nome' => $rec['nome_cliente'],
                             'servico_nome' => $rec['nome_servico'],
                             'valor' => $vlrTotalFatura,
-                            'vencimento' => $dataVencimento
+                            'vencimento' => $dataVencimento,
+                            'pix_automatico' => $pixAutomaticoInfo
                         ];
                     } else {
                         // Se falhou ao inserir o item, remove a fatura criada para não deixar fatura vazia
@@ -158,12 +180,24 @@ class CronRecorrenciasHelper
             }
         }
 
-        // 7. Grava log na tabela CronLogs
+        // 7. Higienização Preventiva de Contratos Cancelados no Pix Automático
+        $higienizacaoRes = [];
+        try {
+            $higienizacaoRes = PixAutomaticoService::higienizarContratosCancelados($link);
+            if (!empty($higienizacaoRes['cancelados'])) {
+                $erros = array_merge($erros, $higienizacaoRes['erros'] ?? []);
+            }
+        } catch (Exception $eHig) {
+            error_log("Erro na higienização de Pix Automático: " . $eHig->getMessage());
+        }
+
+        // 8. Grava log na tabela CronLogs
         $statusLog = count($erros) > 0 ? ($totalFaturas > 0 ? 'aviso' : 'erro') : 'sucesso';
         $detalhesJson = json_encode([
             'competencia' => $mesAnoSafe,
             'faturas_criadas' => $faturasCriadas,
             'faturas_ja_existentes_sincronizadas' => $faturasJaExistentesSincronizadas,
+            'higienizacao_pix_automatico' => $higienizacaoRes,
             'erros' => $erros
         ], JSON_UNESCAPED_UNICODE);
 
@@ -191,6 +225,7 @@ class CronRecorrenciasHelper
             'faturas_ja_existentes_sincronizadas' => $faturasJaExistentesSincronizadas,
             'valor_total' => $totalValorGerado,
             'faturas' => $faturasCriadas,
+            'higienizacao_pix_automatico' => $higienizacaoRes,
             'erros' => $erros,
             'message' => $msg
         ];

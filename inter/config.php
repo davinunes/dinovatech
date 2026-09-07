@@ -100,7 +100,7 @@ $configuracoes = [
         'client_secret' => $clientSecret,
         'conta_corrente' => $dbConfig['api_inter_conta_corrente'] ?? '',
         'chave_pix' => $dbConfig['api_inter_chave_pix'] ?? '',
-        'scope' => 'cob.write cob.read pix.write pix.read cobv.write cobv.read lotecobv.write lotecobv.read webhook.write webhook.read boleto-cobranca.read boleto-cobranca.write extrato.read pagamento-pix.write pagamento-pix.read extrato-usend.read pagamento-boleto.read pagamento-boleto.write pagamento-darf.write pagamento-lote.write pagamento-lote.read webhook-banking.read webhook-banking.write',
+        'scope' => 'cob.write cob.read pix.write pix.read cobv.write cobv.read lotecobv.write lotecobv.read rec.write rec.read cobr.write cobr.read webhook.write webhook.read boleto-cobranca.read boleto-cobranca.write extrato.read pagamento-pix.write pagamento-pix.read extrato-usend.read pagamento-boleto.read pagamento-boleto.write pagamento-darf.write pagamento-lote.write pagamento-lote.read webhook-banking.read webhook-banking.write',
         // Certs now come from absolute/relative paths from root
         'cert_path_abs' => $certFile,
         'key_path_abs' => $keyFile,
@@ -116,7 +116,7 @@ $configuracoes = [
         'client_secret' => $clientSecret,
         'conta_corrente' => $dbConfig['api_inter_conta_corrente'] ?? '',
         'chave_pix' => $dbConfig['api_inter_chave_pix'] ?? '',
-        'scope' => 'cob.write cob.read pix.write pix.read extrato.read boleto-cobranca.read boleto-cobranca.write',
+        'scope' => 'cob.write cob.read pix.write pix.read cobv.write cobv.read rec.write rec.read cobr.write cobr.read webhook.write webhook.read extrato.read boleto-cobranca.read boleto-cobranca.write',
         'cert_path_abs' => $certFile,
         'key_path_abs' => $keyFile,
         'ca_path_abs' => $caFile,

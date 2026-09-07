@@ -354,3 +354,490 @@ function exportarExtratoPdf($config, $sslCert, $sslKey, $caInfo, $bearerToken, $
 
     return $response;
 }
+
+/**
+ * ============================================================================
+ * PIX AUTOMÁTICO (RECORRÊNCIA) - BANCO INTER (JORNADA 4 & CICLO DE VIDA)
+ * ============================================================================
+ */
+
+/**
+ * Passo 1 (Jornada 4): Cria uma location de recorrência (/locrec).
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @return object Resposta decodificada contendo o id da location
+ */
+function criarLocationRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerToken)
+{
+    $url = $config['url_pix_base'] . '/locrec';
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(new stdClass()));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on /locrec: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on /locrec: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    $decoded = json_decode($response);
+    if (!$decoded || empty($decoded->id)) {
+        throw new Exception("Resposta inválida do Inter em /locrec: " . $response);
+    }
+
+    return $decoded;
+}
+
+/**
+ * Passo 2 (Jornada 4): Cria uma Cobrança com Vencimento (CobV) vinculada à fatura atual.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $txid Identificador único da cobrança
+ * @param array $data Dados da cobrança com vencimento
+ * @return object Resposta da CobV
+ */
+function criarCobvComVencimento($config, $sslCert, $sslKey, $caInfo, $bearerToken, $txid, $data)
+{
+    $url = $config['url_pix_base'] . '/cobv/' . $txid;
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $jsonData = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on PUT /cobv/{$txid}: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on PUT /cobv/{$txid}: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
+ * Passo 3 (Jornada 4): Cria a Proposta de Recorrência (Contrato Base).
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param array $data Dados da proposta de recorrência (vinculo, calendario, valor, loc, etc.)
+ * @return object Resposta decodificada contendo idRec
+ */
+function criarRecorrenciaContrato($config, $sslCert, $sslKey, $caInfo, $bearerToken, $data)
+{
+    $url = $config['url_pix_base'] . '/rec';
+    $contaCorrenteLimpa = preg_replace('/[^0-9]/', '', $config['conta_corrente'] ?? '');
+
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    if (!empty($contaCorrenteLimpa)) {
+        $headers[] = 'x-conta-corrente: ' . $contaCorrenteLimpa;
+    }
+
+    $jsonData = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on POST /rec: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on POST /rec: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    $decoded = json_decode($response);
+    if (!$decoded || empty($decoded->idRec)) {
+        throw new Exception("Resposta inválida do Inter em POST /rec: " . $response);
+    }
+
+    return $decoded;
+}
+
+/**
+ * Passo 4 (Jornada 4): Gera e consulta o QR Code Combinado (Fatura Atual + Recorrência).
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $idRec Identificador da recorrência (RN...)
+ * @param string $txid TXID da CobV da fatura atual
+ * @return object Resposta com os dados do QR Code Jornada 4 (pixCopiaECola / emv)
+ */
+function consultarRecorrenciaJornada4($config, $sslCert, $sslKey, $caInfo, $bearerToken, $idRec, $txid)
+{
+    $queryParams = http_build_query([
+        'idRec' => $idRec,
+        'txid' => $txid
+    ]);
+    $url = $config['url_pix_base'] . '/rec?' . $queryParams;
+
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on GET /rec?idRec&txid: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on GET /rec?idRec&txid: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
+ * Consulta ativa (Fallback) do status de uma recorrência por idRec.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $idRec Identificador da recorrência (RN...)
+ * @return object Resposta com o status da recorrência
+ */
+function consultarStatusRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerToken, $idRec)
+{
+    $url = $config['url_pix_base'] . '/rec/' . rawurlencode($idRec);
+
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on GET /rec/{$idRec}: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on GET /rec/{$idRec}: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
+ * Cria Cobrança Recorrente Subsequente (POST /cobr) - Débito Automático Mensal.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param array $data Dados da cobrança recorrente
+ * @return object Resposta com txid da instrução de débito
+ */
+function criarCobrancaRecorrenteSubsequente($config, $sslCert, $sslKey, $caInfo, $bearerToken, $data)
+{
+    $url = $config['url_pix_base'] . '/cobr';
+    $contaCorrenteLimpa = preg_replace('/[^0-9]/', '', $config['conta_corrente'] ?? '');
+
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    if (!empty($contaCorrenteLimpa)) {
+        $headers[] = 'x-conta-corrente: ' . $contaCorrenteLimpa;
+    }
+
+    $jsonData = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on POST /cobr: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on POST /cobr: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
+ * Cancela uma recorrência ativa (Contrato de Pix Automático) no Banco Inter.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $idRec Identificador da recorrência (RN...)
+ * @return object Resposta com a recorrência cancelada
+ */
+function cancelarRecorrenciaContrato($config, $sslCert, $sslKey, $caInfo, $bearerToken, $idRec)
+{
+    $url = $config['url_pix_base'] . '/rec/' . rawurlencode($idRec);
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $payload = ['status' => 'CANCELADA'];
+    $jsonData = json_encode($payload);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on PATCH /rec/{$idRec}: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on PATCH /rec/{$idRec}: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
+ * Cancela uma cobrança recorrente individual de uma fatura específica (PATCH /cobr/{txid}).
+ * Respeita a regra Bacen de cancelamento até as 22h00 do dia anterior à liquidação.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $txid Identificador da cobrança
+ * @return object Resposta da cobrança cancelada
+ */
+function cancelarCobrancaIndividual($config, $sslCert, $sslKey, $caInfo, $bearerToken, $txid)
+{
+    $url = $config['url_pix_base'] . '/cobr/' . rawurlencode($txid);
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $payload = ['status' => 'CANCELADA'];
+    $jsonData = json_encode($payload);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on PATCH /cobr/{$txid}: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on PATCH /cobr/{$txid}: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
+ * Configura / Atualiza a URL do Webhook de Recorrência no Banco Inter (PUT /webhookrec).
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $webhookUrl URL de callback pública do webhook
+ * @return mixed Resposta do Inter
+ */
+function configurarWebhookRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerToken, $webhookUrl)
+{
+    $url = $config['url_pix_base'] . '/webhookrec';
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $payload = ['webhookUrl' => $webhookUrl];
+    $jsonData = json_encode($payload, JSON_UNESCAPED_SLASHES);
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonData);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on PUT /webhookrec: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on PUT /webhookrec: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response) ?: true;
+}
+
+/**
+ * Consulta a URL do Webhook de Recorrência cadastrada no Banco Inter (GET /webhookrec).
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @return object Resposta contendo webhookUrl
+ */
+function consultarWebhookRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerToken)
+{
+    $url = $config['url_pix_base'] . '/webhookrec';
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on GET /webhookrec: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on GET /webhookrec: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}

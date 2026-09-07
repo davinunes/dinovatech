@@ -869,6 +869,18 @@ $is_vet = AppHelper::isVetMode();
                         statusClass = 'bg-red-100 text-red-800';
                     }
 
+                    // Pix Automático / Recorrente Badge
+                    const hasPixRecorrente = (rec.pix_recorrencia_status === 'APROVADA');
+                    let pixRecBadge = '';
+                    if (hasPixRecorrente) {
+                        pixRecBadge = `
+                            <div class="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-1 rounded-lg text-[11px] font-bold mt-2 shadow-xs" title="Débito Automático via Pix ativo para este contrato no Banco Inter">
+                                <span class="material-icons text-sm text-emerald-600">bolt</span>
+                                <span>⚡ Débito Automático Pix Ativo</span>
+                            </div>
+                        `;
+                    }
+
                     // Documentos vinculados
                     const documentos = rec.documentos || [];
                     let docsHtml = '';
@@ -907,11 +919,14 @@ $is_vet = AppHelper::isVetMode();
                                             <span class="text-xs text-gray-400">Contrato #${rec.id_recorrencia}</span>
                                         </div>
                                     </div>
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusLabel}</span>
+                                    <div class="text-right flex flex-col items-end gap-1">
+                                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusLabel}</span>
+                                    </div>
                                 </div>
                                 <div class="my-3">
                                     <div class="text-2xl font-bold text-gray-800">${valorFormatado} <span class="text-xs font-normal text-gray-500">/ ${periodo}</span></div>
                                     <div class="text-xs text-gray-500 mt-1">Início: <strong>${dataInicio}</strong> • Fim: <strong class="${isExpirado ? 'text-red-600 font-bold' : ''}">${dataFim}</strong></div>
+                                    ${pixRecBadge}
                                 </div>
                                 ${docsHtml}
                             </div>

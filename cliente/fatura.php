@@ -72,6 +72,35 @@ if ($id_fatura) {
             $config_emissor = mysqli_fetch_assoc($res_config);
         }
 
+        // Verifica vínculo com Contrato / Recorrência
+        $tem_recorrencia = false;
+        $id_recorrencia_fatura = null;
+        foreach ($items as $it) {
+            if (!empty($it['id_recorrencia'])) {
+                $tem_recorrencia = true;
+                $id_recorrencia_fatura = (int)$it['id_recorrencia'];
+                break;
+            }
+        }
+        if (!$tem_recorrencia && !empty($fatura['id_cliente'])) {
+            $qHasRec = "SELECT id_recorrencia FROM Recorrencias WHERE id_cliente = '{$fatura['id_cliente']}' LIMIT 1";
+            $rHasRec = DBExecute($link, $qHasRec);
+            if ($rHasRec && mysqli_num_rows($rHasRec) > 0) {
+                $tem_recorrencia = true;
+                $id_recorrencia_fatura = (int)mysqli_fetch_assoc($rHasRec)['id_recorrencia'];
+            }
+        }
+
+        // Busca status do Pix Automático
+        $pixRecorrenciaAtiva = null;
+        if ($id_recorrencia_fatura) {
+            $qPixRec = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = $id_recorrencia_fatura ORDER BY id_pix_recorrencia DESC LIMIT 1";
+            $rPixRec = DBExecute($link, $qPixRec);
+            if ($rPixRec && mysqli_num_rows($rPixRec) > 0) {
+                $pixRecorrenciaAtiva = mysqli_fetch_assoc($rPixRec);
+            }
+        }
+
     } else {
         $error_msg = "Fatura não encontrada ou acesso negado.";
     }
@@ -337,20 +366,36 @@ if ($id_fatura) {
             <?php if ($saldo_devedor > 0): ?>
                 <div
                     class="bg-gray-50 px-8 py-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center no-print">
-                    <p class="text-gray-600 mb-4 md:mb-0 text-sm">
-                        <span class="material-icons text-base align-middle mr-1">security</span>
-                        Pagamento seguro via PIX
-                    </p>
-                    <div class="flex gap-4 w-full md:w-auto">
+                    <div class="mb-4 md:mb-0">
+                        <p class="text-gray-600 text-sm flex items-center">
+                            <span class="material-icons text-base align-middle mr-1 text-green-600">security</span>
+                            Pagamento seguro via Banco Inter
+                        </p>
+                        <?php if ($pixRecorrenciaAtiva && $pixRecorrenciaAtiva['status'] === 'APROVADA'): ?>
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md mt-1">
+                                <span class="material-icons text-xs">bolt</span> Débito Automático Pix Ativo
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flex flex-wrap gap-3 w-full md:w-auto justify-end">
                         <?php if (($fatura['permitir_pagamento_parcial'] ?? 0) == 1): ?>
                             <button type="button" onclick="$('#modalPagamentoParcial').removeClass('hidden')"
-                                class="flex-1 md:flex-none bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-6 rounded-lg shadow-sm transition">
+                                class="flex-1 md:flex-none bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-5 rounded-lg shadow-sm transition text-sm">
                                 Pagar Outro Valor
                             </button>
                         <?php endif; ?>
+
+                        <?php if ($tem_recorrencia && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                            <button id="btnAtivarPixAutomatico" type="button"
+                                class="flex-1 md:flex-none bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:from-purple-800 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center gap-1.5 text-sm">
+                                <span class="material-icons text-base text-yellow-300">bolt</span>
+                                <span>Ativar Pix Automático</span>
+                            </button>
+                        <?php endif; ?>
+
                         <button id="btnPagarPix"
-                            class="flex-1 md:flex-none w-full md:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg transform transition hover:scale-105 flex items-center justify-center">
-                            <span class="material-icons mr-2">qr_code_2</span>
+                            class="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-7 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center text-sm">
+                            <span class="material-icons mr-1.5 text-base">qr_code_2</span>
                             Pagar Total
                         </button>
                     </div>
@@ -358,7 +403,105 @@ if ($id_fatura) {
             <?php endif; ?>
         </div>
 
-        <!-- Modal PIX -->
+        <!-- Modal PIX Automático (Jornada 4) -->
+        <div id="modalPixAutomatico" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 hidden">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 sm:p-8 text-center relative overflow-hidden">
+                <button onclick="fecharModalPixRec()"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition">
+                    <span class="material-icons">close</span>
+                </button>
+
+                <!-- Etapa 1: Explicação e Benefícios -->
+                <div id="pixRecInfoStep">
+                    <div class="w-14 h-14 bg-gradient-to-tr from-purple-600 to-cyan-500 text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+                        <span class="material-icons text-3xl text-yellow-300">bolt</span>
+                    </div>
+
+                    <h2 class="text-2xl font-bold text-gray-900 mb-1">Pix Automático Mensal</h2>
+                    <p class="text-xs text-gray-500 mb-5">Pague esta fatura e autorize as próximas em débito automático sem burocracia.</p>
+
+                    <div class="bg-gradient-to-br from-purple-50 via-indigo-50 to-cyan-50 border border-purple-100 rounded-xl p-4 text-left space-y-3 mb-6">
+                        <div class="flex items-start gap-3">
+                            <span class="material-icons text-purple-600 text-xl shrink-0 mt-0.5">verified</span>
+                            <div class="text-xs text-gray-700 leading-relaxed">
+                                <strong class="text-purple-950 block text-sm font-bold mb-0.5">Pagamento 2 em 1</strong>
+                                O mesmo QR Code quita esta fatura (R$ <?= number_format($saldo_devedor, 2, ',', '.') ?>) e cadastra o débito automático para os meses seguintes.
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="material-icons text-cyan-600 text-xl shrink-0 mt-0.5">event_repeat</span>
+                            <div class="text-xs text-gray-700 leading-relaxed">
+                                <strong class="text-cyan-950 block text-sm font-bold mb-0.5">Zero Preocupação com Atrasos</strong>
+                                No dia do vencimento das próximas mensalidades, o débito ocorre direto na sua conta do banco participante sem taxas.
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <span class="material-icons text-emerald-600 text-xl shrink-0 mt-0.5">lock_open</span>
+                            <div class="text-xs text-gray-700 leading-relaxed">
+                                <strong class="text-emerald-950 block text-sm font-bold mb-0.5">Controle Total e Cancelamento Fácil</strong>
+                                Você pode cancelar ou pausar a qualquer momento direto no aplicativo do seu banco ou na Central do Cliente.
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="btnConfirmarGerarPixRec" type="button"
+                        class="w-full bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:opacity-95 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+                        <span class="material-icons text-base">qr_code_scanner</span>
+                        Gerar QR Code Pix Automático
+                    </button>
+                </div>
+
+                <!-- Etapa 2: Loading -->
+                <div id="pixRecLoading" class="py-10 hidden">
+                    <div class="animate-spin rounded-full h-14 w-14 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4"></div>
+                    <h3 class="text-lg font-bold text-gray-800">Gerando proposta no Banco Inter...</h3>
+                    <p class="text-xs text-gray-500 mt-1">Criando cobrança combinada (Jornada 4)</p>
+                </div>
+
+                <!-- Etapa 3: Exibição do QR Code Jornada 4 -->
+                <div id="pixRecContent" class="hidden">
+                    <div class="inline-flex items-center gap-1 text-[11px] font-bold text-purple-800 bg-purple-100 px-3 py-1 rounded-full mb-3 uppercase tracking-wider">
+                        <span class="material-icons text-xs text-purple-600">bolt</span> Jornada 4 - Fatura + Recorrência
+                    </div>
+
+                    <h3 class="text-xl font-bold text-gray-800 mb-1">Escaneie o QR Code no seu Banco</h3>
+                    <p class="text-xs text-gray-500 mb-4">Pague a fatura atual e confirme o aceite do Pix Automático na mesma tela.</p>
+
+                    <div id="qrcodeDisplayRec"
+                        class="mx-auto inline-block p-3.5 border-2 border-purple-100 rounded-2xl mb-4 shadow-sm bg-white"></div>
+
+                    <div class="mb-4 text-left">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Pix Copia e Cola Combinado</label>
+                        <div class="flex">
+                            <input type="text" id="pixCopiaColaRecInput" readonly
+                                class="flex-1 p-2.5 bg-gray-50 border border-r-0 border-gray-300 rounded-l-lg text-xs text-gray-600 focus:outline-none select-all">
+                            <button onclick="copiarPixRec()"
+                                class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-r-lg font-bold text-xs transition">Copiar</button>
+                        </div>
+                        <p id="msgCopiaRec" class="text-green-600 text-xs mt-1 hidden font-bold">Código copiado com sucesso!</p>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 text-purple-900 p-3.5 rounded-xl text-xs space-y-1 text-center">
+                        <p class="font-bold flex items-center justify-center gap-1"><span class="material-icons text-sm animate-spin">sync</span> Aguardando confirmação do banco...</p>
+                        <p class="text-[11px] text-purple-700">Assim que você pagar no app do seu banco, a fatura será baixada e o Pix Automático ativado automaticamente.</p>
+                    </div>
+                </div>
+
+                <!-- Etapa 4: Sucesso -->
+                <div id="pixRecSuccess" class="hidden py-8">
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-emerald-100 mb-4">
+                        <span class="material-icons text-emerald-600 text-3xl">check_circle</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-1">Pagamento e Pix Automático Confirmados!</h3>
+                    <p class="text-sm text-gray-600 mb-6">Sua fatura foi liquidada com sucesso e o débito automático via Pix está ativo para os próximos meses.</p>
+                    <button onclick="window.location.reload()"
+                        class="bg-gray-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-black transition shadow">Fechar</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Modal PIX Padrão -->
         <div id="modalPix" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 hidden">
             <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-8 text-center relative">
                 <button onclick="$('#modalPix').addClass('hidden')"
@@ -442,11 +585,102 @@ if ($id_fatura) {
                 carregarAnexos();
 
                 let pollingInterval;
+                let pollingRecInterval;
 
                 $('#btnPagarPix').click(function () {
                     $('#modalPix').removeClass('hidden');
                     generatePix();
                 });
+
+                // Pix Automático Handlers
+                $('#btnAtivarPixAutomatico').click(function () {
+                    $('#modalPixAutomatico').removeClass('hidden');
+                    $('#pixRecInfoStep').removeClass('hidden');
+                    $('#pixRecLoading').addClass('hidden');
+                    $('#pixRecContent').addClass('hidden');
+                    $('#pixRecSuccess').addClass('hidden');
+                });
+
+                window.fecharModalPixRec = function () {
+                    if (pollingRecInterval) clearInterval(pollingRecInterval);
+                    $('#modalPixAutomatico').addClass('hidden');
+                };
+
+                $('#btnConfirmarGerarPixRec').click(function () {
+                    $('#pixRecInfoStep').addClass('hidden');
+                    $('#pixRecLoading').removeClass('hidden');
+
+                    $.ajax({
+                        url: '../inter/endpoint.php?action=obter_ou_criar_pix_jornada4',
+                        type: 'POST',
+                        data: JSON.stringify({ id_fatura: <?= $id_fatura ?> }),
+                        contentType: 'application/json',
+                        dataType: 'json',
+                        success: function (response) {
+                            if (response.success) {
+                                renderPixRec(response);
+                            } else {
+                                alert('Erro ao gerar Pix Automático: ' + (response.message || 'Falha na comunicação com o banco.'));
+                                $('#pixRecLoading').addClass('hidden');
+                                $('#pixRecInfoStep').removeClass('hidden');
+                            }
+                        },
+                        error: function (xhr) {
+                            let msg = 'Erro de comunicação ao gerar proposta.';
+                            try {
+                                const errObj = JSON.parse(xhr.responseText);
+                                if (errObj && errObj.message) msg = errObj.message;
+                            } catch(e){}
+                            alert(msg);
+                            $('#pixRecLoading').addClass('hidden');
+                            $('#pixRecInfoStep').removeClass('hidden');
+                        }
+                    });
+                });
+
+                function renderPixRec(data) {
+                    $('#pixRecLoading').addClass('hidden');
+                    $('#pixRecContent').removeClass('hidden');
+
+                    const pixCode = data.pixCopiaECola || '';
+                    const el = kjua({ text: pixCode, size: 400, fill: '#000', back: '#fff', quiet: 1 });
+                    $(el).css({ 'max-width': '100%', 'height': 'auto' });
+                    $('#qrcodeDisplayRec').html('').append(el);
+                    $('#pixCopiaColaRecInput').val(pixCode);
+
+                    // Inicia Polling duplo: Fatura e Recorrência
+                    startPollingRec(data.idRec, data.txid);
+                }
+
+                function startPollingRec(idRec, txid) {
+                    if (pollingRecInterval) clearInterval(pollingRecInterval);
+                    pollingRecInterval = setInterval(function () {
+                        // 1. Checa pagamento da fatura
+                        if (txid) {
+                            $.getJSON(`../inter/endpoint.php?action=verificar_pagamento_pix&txid=${txid}`, function (res) {
+                                if (res.success && res.data.status === 'CONCLUIDA') {
+                                    clearInterval(pollingRecInterval);
+                                    // Sincroniza recorrência
+                                    if (idRec) {
+                                        $.getJSON(`../inter/endpoint.php?action=consultar_status_recorrencia&idRec=${encodeURIComponent(idRec)}`);
+                                    }
+                                    $('#pixRecContent').addClass('hidden');
+                                    $('#pixRecSuccess').removeClass('hidden');
+                                }
+                            });
+                        }
+                    }, 4000);
+                }
+
+                window.copiarPixRec = function () {
+                    const copyText = document.getElementById("pixCopiaColaRecInput");
+                    copyText.select();
+                    document.execCommand("copy");
+                    if (navigator.clipboard) navigator.clipboard.writeText(copyText.value);
+
+                    $('#msgCopiaRec').removeClass('hidden');
+                    setTimeout(() => $('#msgCopiaRec').addClass('hidden'), 2500);
+                };
 
                 window.iniciarPagamentoParcial = function () {
                     let valor = parseFloat($('#valorParcialInput').val());
@@ -457,11 +691,9 @@ if ($id_fatura) {
                     $('#modalPagamentoParcial').addClass('hidden');
                     $('#modalPix').removeClass('hidden');
                     generatePix(valor);
-                }
+                };
 
                 function generatePix(valor = null) {
-                    // Use existing logic from original index.php but adapted
-                    // We need to call the INTER endpoint logic
                     let payload = { id_fatura: <?= $id_fatura ?> };
                     if (valor) {
                         payload.valor_pagamento = valor;
@@ -475,7 +707,6 @@ if ($id_fatura) {
                         dataType: 'json',
                         success: function (response) {
                             if (response.success) {
-                                console.log(response.data);
                                 renderPix(response.data);
                             } else {
                                 alert('Erro ao gerar PIX: ' + response.message);
@@ -493,14 +724,11 @@ if ($id_fatura) {
                     $('#pixLoading').addClass('hidden');
                     $('#pixContent').removeClass('hidden');
 
-                    // Generate QR
-                    // Generate QR - Higher resolution, scaled down by CSS
                     const el = kjua({ text: data.pixCopiaECola, size: 400, fill: '#000', back: '#fff', quiet: 1 });
-                    // Make responsive
                     $(el).css({ 'max-width': '100%', 'height': 'auto' });
                     $('#qrcodeDisplay').html('').append(el);
                     $('#pixCopiaColaInput').val(data.pixCopiaECola);
-                    // Calculando data de expiração e convertendo para GMT-3
+                    
                     let expirationDate;
                     if (data.expiraEm) {
                         expirationDate = new Date(data.expiraEm);
@@ -524,8 +752,6 @@ if ($id_fatura) {
                         $('#expiraEm').text('');
                     }
 
-
-                    // Start Polling
                     startPolling(data.txid);
                 }
 
@@ -545,23 +771,20 @@ if ($id_fatura) {
                 window.copiarPix = function () {
                     const copyText = document.getElementById("pixCopiaColaInput");
                     copyText.select();
-                    document.execCommand("copy"); // Fallback
-                    // Or Clipboard API
+                    document.execCommand("copy");
                     if (navigator.clipboard) navigator.clipboard.writeText(copyText.value);
 
                     $('#msgCopia').removeClass('hidden');
                     setTimeout(() => $('#msgCopia').addClass('hidden'), 2000);
-                }
+                };
             });
 
             function carregarAnexos() {
-                // Note path to app.php is relative to cliente/fatura.php
                 $.post('../dinovatech/app.php', { action: 'get_fatura_arquivos', id_fatura: <?= $id_fatura ?> }, function (res) {
                     if (res.success) {
                         let html = '';
                         if (res.data.length > 0) {
                             res.data.forEach(arq => {
-                                // Format bytes to KB/MB
                                 let sizeStr = '';
                                 if (arq.tamanho_bytes < 1024) sizeStr = arq.tamanho_bytes + ' B';
                                 else if (arq.tamanho_bytes < 1024 * 1024) sizeStr = (arq.tamanho_bytes / 1024).toFixed(1) + ' KB';

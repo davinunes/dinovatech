@@ -28,6 +28,7 @@ $result_clientes = DBExecute($link, $query_clientes);
 while ($row = mysqli_fetch_assoc($result_clientes))
     $clientes[] = $row;
 
+$pix_recorrencia = null;
 if ($id_recorrencia) {
     $id_safe = mysqli_real_escape_string($link, $id_recorrencia);
     $query = "SELECT * FROM Recorrencias WHERE id_recorrencia = '$id_safe'";
@@ -35,6 +36,13 @@ if ($id_recorrencia) {
     if ($result && mysqli_num_rows($result) > 0) {
         $contrato = mysqli_fetch_assoc($result);
         $is_edit = true;
+
+        // Buscar dados do Pix Automático (PixRecorrencias)
+        $query_pix = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = '$id_safe' ORDER BY id_pix_recorrencia DESC LIMIT 1";
+        $res_pix = DBExecute($link, $query_pix);
+        if ($res_pix && mysqli_num_rows($res_pix) > 0) {
+            $pix_recorrencia = mysqli_fetch_assoc($res_pix);
+        }
     }
 }
 
@@ -139,6 +147,14 @@ DBClose($link);
                         <span class="material-icons text-sm align-middle mr-1">edit_document</span> Dados do Contrato
                     </button>
                     <?php if ($is_edit): ?>
+                        <button type="button" class="tab-btn" onclick="openTab('pix_automatico')">
+                            <span class="material-icons text-sm align-middle mr-1">bolt</span> Pix Automático
+                            <?php if ($pix_recorrencia && $pix_recorrencia['status'] === 'APROVADA'): ?>
+                                <span class="ml-1.5 px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded-full font-bold">Ativo</span>
+                            <?php elseif ($pix_recorrencia && $pix_recorrencia['status'] === 'PENDENTE'): ?>
+                                <span class="ml-1.5 px-2 py-0.5 text-xs bg-yellow-100 text-yellow-800 rounded-full font-bold">Pendente</span>
+                            <?php endif; ?>
+                        </button>
                         <button type="button" class="tab-btn" onclick="openTab('documentos')">
                             <span class="material-icons text-sm align-middle mr-1">description</span> Documentos / Contratos
                         </button>
@@ -465,6 +481,90 @@ DBClose($link);
                     </div>
                 </div>
 
+                <!-- TAB: PIX AUTOMÁTICO -->
+                <?php if ($is_edit): ?>
+                <div id="tab-pix_automatico" class="tab-content hidden">
+                    <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                        <div class="flex items-center justify-between border-b pb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <span class="material-icons text-cyan-600">bolt</span>
+                                    Débito Automático Pix (Banco Inter - Jornada 4)
+                                </h3>
+                                <p class="text-sm text-gray-500 mt-0.5">Gestão da autorização de débito automático recorrente vinculado a este contrato.</p>
+                            </div>
+                            <?php if ($pix_recorrencia): ?>
+                                <?php
+                                $status_badge_classes = [
+                                    'APROVADA' => 'bg-green-100 text-green-800 border-green-200',
+                                    'PENDENTE' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                    'CRIADA' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                    'CANCELADA' => 'bg-red-100 text-red-800 border-red-200',
+                                    'REJEITADA' => 'bg-gray-100 text-gray-800 border-gray-200',
+                                ];
+                                $badge_cls = $status_badge_classes[$pix_recorrencia['status']] ?? 'bg-gray-100 text-gray-700';
+                                ?>
+                                <span class="px-3 py-1 rounded-full text-xs font-bold border <?= $badge_cls ?>">
+                                    <?= htmlspecialchars($pix_recorrencia['status']) ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+
+                        <?php if ($pix_recorrencia): ?>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                                <div>
+                                    <span class="block text-xs font-medium text-gray-500">ID da Recorrência (Banco Inter)</span>
+                                    <span class="text-sm font-semibold text-gray-900 font-mono select-all"><?= htmlspecialchars($pix_recorrencia['id_rec'] ?: 'Não gerado') ?></span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs font-medium text-gray-500">Valor Recorrente Mensal</span>
+                                    <span class="text-sm font-semibold text-gray-900">R$ <?= number_format((float)($pix_recorrencia['valor_recorrente'] ?: $contrato['valor_sugerido_recorrencia']), 2, ',', '.') ?></span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs font-medium text-gray-500">Data de Início das Cobranças</span>
+                                    <span class="text-sm font-semibold text-gray-900"><?= $pix_recorrencia['data_inicio'] ? date('d/m/Y', strtotime($pix_recorrencia['data_inicio'])) : 'N/A' ?></span>
+                                </div>
+                                <div>
+                                    <span class="block text-xs font-medium text-gray-500">Data de Aceite pelo Cliente</span>
+                                    <span class="text-sm font-semibold text-gray-900"><?= $pix_recorrencia['data_aceite'] ? date('d/m/Y H:i', strtotime($pix_recorrencia['data_aceite'])) : 'Aguardando aceite' ?></span>
+                                </div>
+                                <?php if ($pix_recorrencia['status'] === 'CANCELADA' && $pix_recorrencia['data_cancelamento']): ?>
+                                    <div>
+                                        <span class="block text-xs font-medium text-gray-500">Data de Cancelamento</span>
+                                        <span class="text-sm font-semibold text-red-600"><?= date('d/m/Y H:i', strtotime($pix_recorrencia['data_cancelamento'])) ?></span>
+                                    </div>
+                                <?php endif; ?>
+                                <div>
+                                    <span class="block text-xs font-medium text-gray-500">Última Sincronização com Inter</span>
+                                    <span class="text-sm font-semibold text-gray-900"><?= $pix_recorrencia['atualizado_em'] ? date('d/m/Y H:i:s', strtotime($pix_recorrencia['atualizado_em'])) : 'N/A' ?></span>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-3 pt-2">
+                                <button type="button" onclick="verificarStatusPixRecorrenciaContrato('<?= htmlspecialchars($pix_recorrencia['id_rec']) ?>')" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 shadow-sm transition">
+                                    <span class="material-icons text-sm mr-1.5 text-cyan-600">sync</span> Consultar Status no Banco Inter
+                                </button>
+                                <?php if (in_array($pix_recorrencia['status'], ['APROVADA', 'PENDENTE', 'CRIADA'])): ?>
+                                    <button type="button" onclick="cancelarPixRecorrenciaContrato('<?= htmlspecialchars($pix_recorrencia['id_rec']) ?>')" class="inline-flex items-center px-4 py-2 bg-red-50 border border-red-200 rounded-lg text-sm font-medium text-red-700 hover:bg-red-100 shadow-sm transition">
+                                        <span class="material-icons text-sm mr-1.5 text-red-600">block</span> Cancelar Autorização de Débito
+                                    </button>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center space-y-3">
+                                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto">
+                                    <span class="material-icons">info</span>
+                                </div>
+                                <h4 class="text-base font-bold text-blue-900">Nenhum Pix Automático ativado para este contrato</h4>
+                                <p class="text-sm text-blue-700 max-w-lg mx-auto">
+                                    O Débito Automático via Pix (Jornada 4) é proposto ao cliente quando uma fatura é gerada. Ao escanear o QR Code de uma fatura gerada em Jornada 4 ou clicar no botão "Ativar Pix Automático" na central do cliente, a autorização é vinculada automaticamente aqui.
+                                </p>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <!-- TAB 2: DOCUMENTOS (MODELOS) -->
                 <div id="tab-documentos" class="tab-content hidden">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -618,7 +718,7 @@ DBClose($link);
         // Tabs Logic
         function openTab(tabName) {
             // Oculta todas as abas
-            $('#tab-dados, #tab-documentos').addClass('hidden');
+            $('#tab-dados, #tab-documentos, #tab-pix_automatico').addClass('hidden');
             $('.tab-btn').removeClass('active');
 
             // Exibe a aba clicada
@@ -872,6 +972,62 @@ DBClose($link);
                 }
             });
         });
+
+        function verificarStatusPixRecorrenciaContrato(idRec) {
+            if (!idRec) {
+                alert('ID da recorrência não disponível.');
+                return;
+            }
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-icons text-sm mr-1.5 animate-spin">sync</span> Consultando...';
+
+            $.post('../inter/endpoint.php?action=consultar_status_recorrencia', { idRec: idRec }, function(res) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                if (res.success) {
+                    alert('Status da Recorrência atualizado: ' + (res.status || 'OK'));
+                    window.location.reload();
+                } else {
+                    alert('Erro ao consultar: ' + (res.message || 'Falha na comunicação'));
+                }
+            }, 'json').fail(function() {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                alert('Erro de conexão com o servidor.');
+            });
+        }
+
+        function cancelarPixRecorrenciaContrato(idRec) {
+            if (!idRec) {
+                alert('ID da recorrência não disponível.');
+                return;
+            }
+            if (!confirm('Atenção: Deseja realmente cancelar a autorização de Pix Automático deste contrato no Banco Inter?\n\nEsta ação cancelará os futuros débitos automáticos mensais.')) {
+                return;
+            }
+
+            const btn = event.currentTarget;
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-icons text-sm mr-1.5 animate-spin">hourglass_top</span> Cancelando...';
+
+            $.post('../inter/endpoint.php?action=cancelar_pix_recorrencia_contrato', { idRec: idRec }, function(res) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                if (res.success) {
+                    alert('Pix Automático do contrato cancelado com sucesso no Banco Inter.');
+                    window.location.reload();
+                } else {
+                    alert('Erro ao cancelar: ' + (res.message || 'Erro no banco'));
+                }
+            }, 'json').fail(function() {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                alert('Erro de conexão ao cancelar recorrência.');
+            });
+        }
     </script>
 </body>
 

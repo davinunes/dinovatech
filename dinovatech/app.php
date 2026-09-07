@@ -2590,11 +2590,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
             }
 
-            // 4.5. Contratos / Recorrências do Cliente + Documentos Emitidos
+            // 4.5. Contratos / Recorrências do Cliente + Documentos Emitidos + Pix Automático
             $recorrencias = [];
-            $qRec = "SELECT R.*, S.nome_servico 
+            $qRec = "SELECT R.*, S.nome_servico,
+                            P.id_pix_recorrencia, P.id_rec as pix_id_rec, P.status as pix_recorrencia_status, P.data_aceite as pix_recorrencia_data_aceite
                      FROM Recorrencias R 
                      JOIN Servicos S ON R.id_servico = S.id_servico 
+                     LEFT JOIN PixRecorrencias P ON (R.id_recorrencia = P.id_recorrencia AND P.status = 'APROVADA')
                      WHERE R.id_cliente = '$id_cliente_safe' 
                      ORDER BY R.data_inicio_cobranca DESC";
             $rRec = DBExecute($link, $qRec);
