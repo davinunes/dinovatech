@@ -5,15 +5,15 @@ require_once __DIR__ . '/../dinovatech/config.php';
 require_once __DIR__ . '/../dinovatech/helpers/EncryptionHelper.php';
 
 // Fetch Config from DB
-$link = DBConnect();
+$linkInterConfig = DBConnect();
 $dbConfig = null;
-if ($link) {
+if ($linkInterConfig) {
     $q = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
-    $r = DBExecute($link, $q);
+    $r = DBExecute($linkInterConfig, $q);
     if ($r && mysqli_num_rows($r) > 0) {
         $dbConfig = mysqli_fetch_assoc($r);
     }
-    DBClose($link);
+    DBClose($linkInterConfig);
 }
 
 // --- Configuração de Ambientes ---
