@@ -151,7 +151,7 @@ class PixAutomaticoService
                 'original' => $valorCobranca
             ],
             'chave' => $ambienteConfig['chave_pix'],
-            'solicitacaoPagador' => "Fatura #{$idFaturaSafe} - " . substr($contrato['nome_servico'], 0, 50),
+            'solicitacaoPagador' => "Dinovatech Fatura #{$idFaturaSafe}",
             'loc' => [
                 'id' => $idLocation
             ]
@@ -169,11 +169,14 @@ class PixAutomaticoService
 
         $dataFinalRec = null;
         if (!empty($contrato['data_fim_cobranca'])) {
-            $dataFinalRec = date('Y-m-d', strtotime($contrato['data_fim_cobranca']));
+            $dfCandidate = date('Y-m-d', strtotime($contrato['data_fim_cobranca']));
+            // Só envia dataFinal se for no futuro e posterior à data inicial
+            if ($dfCandidate > date('Y-m-d') && $dfCandidate > $dataInicialRec) {
+                $dataFinalRec = $dfCandidate;
+            }
         }
 
-        $objetoDesc = "Mensalidade " . ($contrato['descricao_personalizada'] ?: $contrato['nome_servico']);
-        $objetoDesc = substr(preg_replace('/[^\w\s\-\.]/', '', iconv('UTF-8', 'ASCII//TRANSLIT', $objetoDesc)), 0, 100);
+        $objetoDesc = "Dinovatech Contrato #{$idRecorrencia}";
 
         $dadosRec = [
             'vinculo' => [
