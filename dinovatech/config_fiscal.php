@@ -522,6 +522,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                             <span class="material-icons text-gray-400 text-[10px] mr-1">security</span>
                                             <span id="caminho_inter_ca_display" class="font-mono">Nenhum salvo</span>
                                         </div>
+                                    </div>
                                     <div class="md:col-span-2 border-t border-gray-200 pt-3 mt-1 flex flex-wrap items-center justify-between gap-3">
                                         <button type="button" id="btnTestarInter" onclick="testarConexaoInter()"
                                             class="inline-flex items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold rounded-lg shadow-sm transition">

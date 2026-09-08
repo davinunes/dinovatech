@@ -38,7 +38,7 @@ if ($id_recorrencia) {
         $is_edit = true;
 
         // Buscar dados do Pix Automático (PixRecorrencias)
-        $query_pix = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = '$id_safe' ORDER BY id_pix_recorrencia DESC LIMIT 1";
+        $query_pix = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = '$id_safe' ORDER BY FIELD(status, 'APROVADA', 'PENDENTE', 'CRIADA', 'REJEITADA', 'CANCELADA'), id_pix_recorrencia DESC LIMIT 1";
         $res_pix = DBExecute($link, $query_pix);
         if ($res_pix && mysqli_num_rows($res_pix) > 0) {
             $pix_recorrencia = mysqli_fetch_assoc($res_pix);
@@ -482,7 +482,7 @@ DBClose($link);
                 </div>
 
                 <!-- TAB: PIX AUTOMÁTICO -->
-                <?php if ($is_edit): ?>
+                <?php if ($is_edit && AppHelper::isInterApiActive()): ?>
                 <div id="tab-pix_automatico" class="tab-content hidden">
                     <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
                         <div class="flex items-center justify-between border-b pb-4">
@@ -522,13 +522,13 @@ DBClose($link);
                                 </div>
                                 <div>
                                     <span class="block text-xs font-medium text-gray-500">Data de Início das Cobranças</span>
-                                    <span class="text-sm font-semibold text-gray-900"><?= $pix_recorrencia['data_inicio'] ? date('d/m/Y', strtotime($pix_recorrencia['data_inicio'])) : 'N/A' ?></span>
+                                    <span class="text-sm font-semibold text-gray-900"><?= !empty($pix_recorrencia['data_inicial']) ? date('d/m/Y', strtotime($pix_recorrencia['data_inicial'])) : 'N/A' ?></span>
                                 </div>
                                 <div>
                                     <span class="block text-xs font-medium text-gray-500">Data de Aceite pelo Cliente</span>
-                                    <span class="text-sm font-semibold text-gray-900"><?= $pix_recorrencia['data_aceite'] ? date('d/m/Y H:i', strtotime($pix_recorrencia['data_aceite'])) : 'Aguardando aceite' ?></span>
+                                    <span class="text-sm font-semibold text-gray-900"><?= !empty($pix_recorrencia['data_aceite']) ? date('d/m/Y H:i', strtotime($pix_recorrencia['data_aceite'])) : 'Aguardando aceite' ?></span>
                                 </div>
-                                <?php if ($pix_recorrencia['status'] === 'CANCELADA' && $pix_recorrencia['data_cancelamento']): ?>
+                                <?php if ($pix_recorrencia['status'] === 'CANCELADA' && !empty($pix_recorrencia['data_cancelamento'])): ?>
                                     <div>
                                         <span class="block text-xs font-medium text-gray-500">Data de Cancelamento</span>
                                         <span class="text-sm font-semibold text-red-600"><?= date('d/m/Y H:i', strtotime($pix_recorrencia['data_cancelamento'])) ?></span>
@@ -536,7 +536,7 @@ DBClose($link);
                                 <?php endif; ?>
                                 <div>
                                     <span class="block text-xs font-medium text-gray-500">Última Sincronização com Inter</span>
-                                    <span class="text-sm font-semibold text-gray-900"><?= $pix_recorrencia['atualizado_em'] ? date('d/m/Y H:i:s', strtotime($pix_recorrencia['atualizado_em'])) : 'N/A' ?></span>
+                                    <span class="text-sm font-semibold text-gray-900"><?= !empty($pix_recorrencia['data_ultima_consulta']) ? date('d/m/Y H:i:s', strtotime($pix_recorrencia['data_ultima_consulta'])) : 'N/A' ?></span>
                                 </div>
                             </div>
 

@@ -153,6 +153,41 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             <span class="font-medium">Recorrência</span>
         </a>
 
+        <?php
+        $isInterActive = AppHelper::isInterApiActive();
+        $isVetMode = AppHelper::isVetMode();
+        $hasFerramentas = $isInterActive || !$isVetMode;
+        $isFerramentasActive = ($currentPage == 'pix_recorrencias.php' || strpos($_SERVER['PHP_SELF'], '/tools/') !== false);
+        ?>
+        <?php if ($hasFerramentas): ?>
+            <div>
+                <button type="button" onclick="toggleSubmenuFerramentas()"
+                    class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                    <div class="flex items-center">
+                        <span class="material-icons text-xl mr-3 text-cyan-400">construction</span>
+                        <span class="font-medium">Ferramentas</span>
+                    </div>
+                    <span id="iconExpandFerramentas" class="material-icons text-sm transition-transform duration-200 <?= $isFerramentasActive ? 'rotate-180' : '' ?>">expand_more</span>
+                </button>
+                <div id="submenuFerramentas" class="<?= $isFerramentasActive ? '' : 'hidden' ?> pl-4 pr-2 py-1 space-y-1">
+                    <?php if ($isInterActive): ?>
+                        <a href="<?= $basePath ?>pix_recorrencias.php"
+                            class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'pix_recorrencias.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                            <span class="material-icons text-lg mr-3 text-purple-400">bolt</span>
+                            <span>Pix Automático</span>
+                        </a>
+                    <?php endif; ?>
+                    <?php if (!$isVetMode): ?>
+                        <a href="<?= $basePath ?>../tools/irr-api/irr-manager/" target="_blank"
+                            class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors text-slate-300 hover:bg-slate-800 hover:text-white">
+                            <span class="material-icons text-lg mr-3 text-emerald-400">calculate</span>
+                            <span>IRR Manager</span>
+                        </a>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- Futuro Financeiro 
         <a href="financeiro.php" class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'financeiro.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3">attach_money</span>
@@ -188,6 +223,17 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 </header>
 
 <script>
+    function toggleSubmenuFerramentas() {
+        const submenu = document.getElementById('submenuFerramentas');
+        const icon = document.getElementById('iconExpandFerramentas');
+        if (submenu) {
+            submenu.classList.toggle('hidden');
+            if (icon) {
+                icon.classList.toggle('rotate-180');
+            }
+        }
+    }
+
     function fazerBackup(e) {
         e.preventDefault();
         if (!confirm('Deseja gerar um backup completo do banco de dados?\n\nIsso salvará os arquivos na raiz do sistema e iniciará o download automático.')) return;

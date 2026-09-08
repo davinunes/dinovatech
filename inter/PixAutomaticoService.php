@@ -155,10 +155,19 @@ class PixAutomaticoService
         // ==========================================
         // PASSO 3: Criar Recorrência (/rec)
         // ==========================================
-        // Define data inicial para o próximo mês a partir do vencimento
+        // Obtém o dia de vencimento contratual (dia_vencimento ou dia de data_inicio_cobranca)
+        $diaVencimentoContrato = !empty($contrato['dia_vencimento'])
+            ? (int) $contrato['dia_vencimento']
+            : (int) date('d', strtotime($contrato['data_inicio_cobranca'] ?? $dataVencimentoFatura));
+        $diaVencimentoContrato = min(31, max(1, $diaVencimentoContrato));
+
+        // Define a data inicial da recorrência no mês seguinte, no dia do vencimento do contrato
         $dtVencObj = new DateTime($dataVencimentoFatura);
         $dtVencObj->modify('+1 month');
-        $dataInicialRec = $dtVencObj->format('Y-m-01');
+        $anoMesRec = $dtVencObj->format('Y-m-');
+        $diasNoMes = (int) $dtVencObj->format('t');
+        $diaReal = min($diaVencimentoContrato, $diasNoMes);
+        $dataInicialRec = $anoMesRec . sprintf('%02d', $diaReal);
 
         $dataFinalRec = null;
         if (!empty($contrato['data_fim_cobranca'])) {

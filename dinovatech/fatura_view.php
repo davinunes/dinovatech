@@ -99,9 +99,9 @@ if ($id_fatura) {
 
             $qPixRec = "SELECT P.*, R.nome_servico, R.valor_sugerido_recorrencia 
                         FROM PixRecorrencias P
-                        JOIN Recorrencias R ON P.id_recorrencia = R.id_recorrencia
-                        WHERE P.id_recorrencia = $id_recorrencia_fatura 
-                        ORDER BY P.id_pix_recorrencia DESC LIMIT 1";
+                        LEFT JOIN Recorrencias R ON P.id_recorrencia = R.id_recorrencia
+                        WHERE (P.id_recorrencia = $id_recorrencia_fatura OR P.id_fatura_inicial = $id_safe)
+                        ORDER BY FIELD(P.status, 'APROVADA', 'PENDENTE', 'CRIADA', 'REJEITADA', 'CANCELADA'), P.id_pix_recorrencia DESC LIMIT 1";
             $rPixRec = DBExecute($link, $qPixRec);
             if ($rPixRec && mysqli_num_rows($rPixRec) > 0) {
                 $pix_recorrencia = mysqli_fetch_assoc($rPixRec);
@@ -591,7 +591,7 @@ if ($id_fatura) {
                             <?php endif; ?>
 
                             <!-- Card Pix Automático (Banco Inter - Jornada 4) -->
-                            <?php if ($contrato_elegivel_pix || ($pix_recorrencia && !empty($pix_recorrencia['id_rec']))): ?>
+                            <?php if (AppHelper::isInterApiActive() && ($contrato_elegivel_pix || ($pix_recorrencia && !empty($pix_recorrencia['id_rec'])))): ?>
                             <div class="mt-4 border-t pt-4">
                                 <div class="bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-4 rounded-xl shadow-md border border-purple-800/40 mb-3 relative overflow-hidden">
                                     <div class="flex items-center justify-between mb-2">

@@ -98,7 +98,7 @@ if ($id_fatura) {
                 }
             }
 
-            $qPixRec = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = $id_recorrencia_fatura ORDER BY id_pix_recorrencia DESC LIMIT 1";
+            $qPixRec = "SELECT * FROM PixRecorrencias WHERE (id_recorrencia = $id_recorrencia_fatura OR id_fatura_inicial = $id_safe) ORDER BY FIELD(status, 'APROVADA', 'PENDENTE', 'CRIADA', 'REJEITADA', 'CANCELADA'), id_pix_recorrencia DESC LIMIT 1";
             $rPixRec = DBExecute($link, $qPixRec);
             if ($rPixRec && mysqli_num_rows($rPixRec) > 0) {
                 $pixRecorrenciaAtiva = mysqli_fetch_assoc($rPixRec);
@@ -389,7 +389,7 @@ if ($id_fatura) {
                             </button>
                         <?php endif; ?>
 
-                        <?php if ($tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                        <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
                             <button id="btnAtivarPixAutomatico" type="button"
                                 class="flex-1 md:flex-none bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:from-purple-800 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center gap-1.5 text-sm">
                                 <span class="material-icons text-base text-yellow-300">bolt</span>

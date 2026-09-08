@@ -53,11 +53,12 @@ DBClose($link);
     <?php include 'components/layout_head.php'; ?>
     <title>Pix Automático — Dinovatech Admin</title>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 flex">
 
 <?php include 'components/sidebar.php'; ?>
 
-<div class="main-content p-6">
+<div class="flex-1 flex flex-col lg:ml-64 min-h-screen transition-all duration-300">
+    <main class="flex-1 p-6 mt-16 lg:mt-0">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
@@ -206,8 +207,8 @@ DBClose($link);
         <div class="px-4 py-3 border-t border-gray-100 text-xs text-gray-400 text-right">
             <?= count($registros) ?> registro(s)
         </div>
-        <?php endif; ?>
     </div>
+    </main>
 </div>
 
 <!-- Toast -->
