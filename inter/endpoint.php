@@ -253,13 +253,33 @@ try {
             if (!$txid)
                 throw new Exception("TXID é obrigatório.");
 
-            $pixStatus = consultarPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
+            $txid_safe = mysqli_real_escape_string($link, $txid);
 
-            if ($pixStatus->status === 'CONCLUIDA' && !empty($pixStatus->pix)) {
-                $e2eid = $pixStatus->pix[0]->endToEndId;
+            // Detecta se é CobV (Jornada 4 / Pix Automático) verificando se existe PixRecorrencias com esse txid_inicial
+            $qTipoCob = "SELECT P.id_pix_recorrencia FROM PixRecorrencias P WHERE P.txid_inicial = '$txid_safe' LIMIT 1";
+            $resTipoCob = DBExecute($link, $qTipoCob);
+            $isCobV = ($resTipoCob && mysqli_num_rows($resTipoCob) > 0);
+
+            if ($isCobV) {
+                // Jornada 4: consulta via GET /cobv/{txid}
+                $pixStatus = consultarCobv($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
+                $statusPix = $pixStatus->status ?? 'ATIVA';
+                $pixArr = $pixStatus->pix ?? null;
+                // CobV retorna pix como objeto único, não array
+                if ($pixArr && !is_array($pixArr)) {
+                    $pixArr = [$pixArr];
+                }
+            } else {
+                // Pix imediato: consulta via GET /cob/{txid}
+                $pixStatus = consultarPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
+                $statusPix = $pixStatus->status ?? 'ATIVA';
+                $pixArr = !empty($pixStatus->pix) ? (array) $pixStatus->pix : null;
+            }
+
+            if ($statusPix === 'CONCLUIDA' && !empty($pixArr)) {
+                $e2eid = $pixArr[0]->endToEndId ?? '';
                 $observacao = "E2EID: {$e2eid} - TXID: {$txid}";
                 $e2eid_safe = mysqli_real_escape_string($link, $e2eid);
-                $txid_safe = mysqli_real_escape_string($link, $txid);
                 $observacao_safe = mysqli_real_escape_string($link, $observacao);
 
                 $queryUpdatePagamento = "UPDATE Pagamentos SET status_pagamento = 'Confirmado', e2eid = '{$e2eid_safe}', observacao = '{$observacao_safe}' WHERE txid = '{$txid_safe}' AND status_pagamento = 'Pendente'";
@@ -288,7 +308,7 @@ try {
                 }
             }
 
-            echo json_encode(['success' => true, 'data' => ['status' => $pixStatus->status], 'audit' => $pixStatus]);
+            echo json_encode(['success' => true, 'data' => ['status' => $statusPix], 'audit' => $pixStatus]);
             break;
 
         case 'consultar_extrato_completo':

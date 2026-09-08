@@ -157,6 +157,37 @@ function consultarPix($config, $sslCert, $sslKey, $caInfo, $bearerToken, $txid)
 }
 
 /**
+ * Consulta uma Cobrança com Vencimento (CobV) por txid. Requer certificados.
+ * Usado para verificar pagamento de QR Codes gerados na Jornada 4 do Pix Automático.
+ */
+function consultarCobv($config, $sslCert, $sslKey, $caInfo, $bearerToken, $txid)
+{
+    $urlConsulta = $config['url_pix_base'] . '/cobv/' . $txid;
+    $headers = ['Authorization: Bearer ' . $bearerToken, 'Content-Type: application/json'];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $urlConsulta);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error)
+        throw new Exception("cURL Error on GET /cobv/{$txid}: " . $error . " | HTTP Code: " . $httpCode);
+    if ($httpCode >= 400)
+        throw new Exception("API Error on GET /cobv/{$txid}: " . $response . " | HTTP Code: " . $httpCode);
+
+    return json_decode($response);
+}
+
+/**
  * Paga uma cobrança PIX (Sandbox). NÃO requer certificados.
  */
 function pagarPix($config, $bearerToken, $txid, $valor)
