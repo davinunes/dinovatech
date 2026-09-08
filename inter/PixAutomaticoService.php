@@ -189,9 +189,7 @@ class PixAutomaticoService
                 'valorRec' => $valorRecorrente
             ],
             'politicaRetentativa' => 'PERMITE_3R_7D',
-            'loc' => [
-                'id' => $idLocation
-            ]
+            'loc' => (int) $idLocation
         ];
 
         if (!empty($dataFinalRec)) {
