@@ -152,7 +152,9 @@ class PixAutomaticoService
             ],
             'chave' => $ambienteConfig['chave_pix'],
             'solicitacaoPagador' => "Fatura #{$idFaturaSafe} - " . substr($contrato['nome_servico'], 0, 50),
-            'loc' => $idLocation
+            'loc' => [
+                'id' => $idLocation
+            ]
         ];
 
         $cobvResponse = criarCobvComVencimento($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txidCobv, $dadosCobv);
@@ -187,7 +189,9 @@ class PixAutomaticoService
                 'valorRec' => $valorRecorrente
             ],
             'politicaRetentativa' => 'PERMITE_3R_7D',
-            'loc' => $idLocation
+            'loc' => [
+                'id' => $idLocation
+            ]
         ];
 
         if (!empty($dataFinalRec)) {
