@@ -424,7 +424,7 @@ if ($id_fatura) {
                     <h2 class="text-2xl font-bold text-gray-900 mb-1">Pix Automático Mensal</h2>
                     <p class="text-xs text-gray-500 mb-5">Pague esta fatura e autorize as próximas em débito automático sem burocracia.</p>
 
-                    <div class="bg-gradient-to-br from-purple-50 via-indigo-50 to-cyan-50 border border-purple-100 rounded-xl p-4 text-left space-y-3 mb-6">
+                    <div class="bg-gradient-to-br from-purple-50 via-indigo-50 to-cyan-50 border border-purple-100 rounded-xl p-4 text-left space-y-3 mb-4">
                         <div class="flex items-start gap-3">
                             <span class="material-icons text-purple-600 text-xl shrink-0 mt-0.5">verified</span>
                             <div class="text-xs text-gray-700 leading-relaxed">
@@ -445,6 +445,15 @@ if ($id_fatura) {
                                 <strong class="text-emerald-950 block text-sm font-bold mb-0.5">Controle Total e Cancelamento Fácil</strong>
                                 Você pode cancelar ou pausar a qualquer momento direto no aplicativo do seu banco ou na Central do Cliente.
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerta Passo Importante no Banco -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-left mb-6 flex items-start gap-2.5 shadow-sm">
+                        <span class="material-icons text-amber-600 text-lg shrink-0 mt-0.5">touch_app</span>
+                        <div class="text-xs text-amber-900 leading-relaxed">
+                            <strong class="text-amber-950 block font-bold mb-0.5">⚠️ Passo Importante no App do seu Banco:</strong>
+                            Após concluir o pagamento desta fatura, o próprio banco exibirá em seguida a tela do <strong>Assistente de Contratação do Pix Automático</strong>. Você <strong>deve continuar e confirmar no aplicativo do seu banco</strong> para finalizar a autorização das cobranças recorrentes!
                         </div>
                     </div>
 
@@ -469,10 +478,10 @@ if ($id_fatura) {
                     </div>
 
                     <h3 class="text-xl font-bold text-gray-800 mb-1">Escaneie o QR Code no seu Banco</h3>
-                    <p class="text-xs text-gray-500 mb-4">Pague a fatura atual e confirme o aceite do Pix Automático na mesma tela.</p>
+                    <p class="text-xs text-gray-500 mb-3">Pague a fatura atual e confirme a recorrência no aplicativo do seu banco.</p>
 
                     <div id="qrcodeDisplayRec"
-                        class="mx-auto inline-block p-3.5 border-2 border-purple-100 rounded-2xl mb-4 shadow-sm bg-white"></div>
+                        class="mx-auto inline-block p-3.5 border-2 border-purple-100 rounded-2xl mb-3 shadow-sm bg-white"></div>
 
                     <div class="mb-4 text-left">
                         <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Pix Copia e Cola Combinado</label>
@@ -485,9 +494,27 @@ if ($id_fatura) {
                         <p id="msgCopiaRec" class="text-green-600 text-xs mt-1 hidden font-bold">Código copiado com sucesso!</p>
                     </div>
 
+                    <!-- Instrução de Continuidade no Banco -->
+                    <div class="bg-purple-50/80 border border-purple-200 rounded-xl p-3.5 text-left mb-4 space-y-2">
+                        <div class="flex items-center gap-1.5 text-purple-950 font-bold text-xs">
+                            <span class="material-icons text-purple-600 text-sm">phonelink_setup</span>
+                            <span>COMO CONCLUIR NO APLICATIVO DO SEU BANCO:</span>
+                        </div>
+                        <div class="text-xs text-purple-900 space-y-1.5 leading-snug">
+                            <p class="flex items-start gap-1.5">
+                                <span class="bg-purple-600 text-white rounded-full w-4 h-4 text-[10px] font-bold inline-flex items-center justify-center shrink-0 mt-0.5">1</span>
+                                <span><strong>Pague a fatura atual:</strong> Conclua a transferência do valor da fatura de hoje no app do seu banco.</span>
+                            </p>
+                            <p class="flex items-start gap-1.5">
+                                <span class="bg-purple-600 text-white rounded-full w-4 h-4 text-[10px] font-bold inline-flex items-center justify-center shrink-0 mt-0.5">2</span>
+                                <span><strong>Avance no assistente do banco:</strong> Logo após o pagamento, o app do seu banco abrirá a tela de contratação. <strong>Avance e confirme a autorização no app do seu banco</strong> para ativar as cobranças futuras!</span>
+                            </p>
+                        </div>
+                    </div>
+
                     <div class="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-100 text-purple-900 p-3.5 rounded-xl text-xs space-y-1 text-center">
                         <p class="font-bold flex items-center justify-center gap-1"><span class="material-icons text-sm animate-spin">sync</span> Aguardando confirmação do banco...</p>
-                        <p class="text-[11px] text-purple-700">Assim que você pagar no app do seu banco, a fatura será baixada e o Pix Automático ativado automaticamente.</p>
+                        <p class="text-[11px] text-purple-700">Assim que você concluir a autorização no app do seu banco, a fatura será baixada e o Pix Automático ativado automaticamente.</p>
                     </div>
                 </div>
 
