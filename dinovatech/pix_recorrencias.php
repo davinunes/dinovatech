@@ -207,6 +207,7 @@ DBClose($link);
         <div class="px-4 py-3 border-t border-gray-100 text-xs text-gray-400 text-right">
             <?= count($registros) ?> registro(s)
         </div>
+        <?php endif; ?>
     </div>
     </main>
 </div>
