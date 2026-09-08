@@ -48,39 +48,35 @@ class PixAutomaticoService
             throw new Exception("Fatura já está com status '{$fatura['status']}'.");
         }
 
-        // 2. Localiza o contrato (Recorrencia) vinculado através dos itens da fatura
+        // 2. Localiza o contrato (Recorrencia) vinculado estritamente através dos itens da fatura
         $qItemRec = "SELECT id_recorrencia FROM ItensFatura 
                      WHERE id_fatura = $idFaturaSafe AND id_recorrencia IS NOT NULL AND id_recorrencia > 0 
                      LIMIT 1";
         $resItemRec = DBExecute($link, $qItemRec);
-        $itemRec = mysqli_fetch_assoc($resItemRec);
+        $itemRec = $resItemRec ? mysqli_fetch_assoc($resItemRec) : null;
         $idRecorrencia = !empty($itemRec['id_recorrencia']) ? (int) $itemRec['id_recorrencia'] : null;
 
-        // Se não tiver item com id_recorrencia, tenta buscar o contrato mais recente do cliente
         if (!$idRecorrencia) {
-            $qContratoCliente = "SELECT id_recorrencia FROM Recorrencias 
-                                 WHERE id_cliente = {$fatura['id_cliente']} 
-                                 ORDER BY id_recorrencia DESC LIMIT 1";
-            $resContratoCliente = DBExecute($link, $qContratoCliente);
-            if ($resContratoCliente && mysqli_num_rows($resContratoCliente) > 0) {
-                $rowContrato = mysqli_fetch_assoc($resContratoCliente);
-                $idRecorrencia = (int) $rowContrato['id_recorrencia'];
-            }
+            throw new Exception("Esta fatura é avulsa (não possui vínculo direto com nenhum contrato de recorrência).");
         }
 
-        if (!$idRecorrencia) {
-            throw new Exception("Não foi encontrado nenhum contrato de recorrência vinculado a esta fatura ou cliente.");
-        }
-
-        // Busca dados do contrato
+        // Busca dados do contrato e valida se está ativo e não encerrado
         $qContrato = "SELECT R.*, S.nome_servico 
                       FROM Recorrencias R 
                       JOIN Servicos S ON R.id_servico = S.id_servico 
                       WHERE R.id_recorrencia = $idRecorrencia LIMIT 1";
         $resContrato = DBExecute($link, $qContrato);
-        $contrato = mysqli_fetch_assoc($resContrato);
+        $contrato = $resContrato ? mysqli_fetch_assoc($resContrato) : null;
         if (!$contrato) {
             throw new Exception("Contrato de recorrência #{$idRecorrencia} não encontrado.");
+        }
+
+        $hoje = date('Y-m-d');
+        if (!empty($contrato['data_fim_cobranca']) && $contrato['data_fim_cobranca'] < $hoje) {
+            throw new Exception("O contrato #{$idRecorrencia} vinculado a esta fatura está encerrado (data fim: {$contrato['data_fim_cobranca']}).");
+        }
+        if (isset($contrato['ativo']) && (int)$contrato['ativo'] === 0) {
+            throw new Exception("O contrato #{$idRecorrencia} vinculado a esta fatura está inativo.");
         }
 
         // 3. Calcula o saldo líquido da fatura

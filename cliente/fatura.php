@@ -72,28 +72,32 @@ if ($id_fatura) {
             $config_emissor = mysqli_fetch_assoc($res_config);
         }
 
-        // Verifica vínculo com Contrato / Recorrência
-        $tem_recorrencia = false;
+        // Verifica vínculo com Contrato / Recorrência estritamente através dos itens da fatura
+        $tem_recorrencia_elegivel = false;
         $id_recorrencia_fatura = null;
+        $contrato_fatura = null;
         foreach ($items as $it) {
             if (!empty($it['id_recorrencia'])) {
-                $tem_recorrencia = true;
                 $id_recorrencia_fatura = (int)$it['id_recorrencia'];
                 break;
             }
         }
-        if (!$tem_recorrencia && !empty($fatura['id_cliente'])) {
-            $qHasRec = "SELECT id_recorrencia FROM Recorrencias WHERE id_cliente = '{$fatura['id_cliente']}' LIMIT 1";
-            $rHasRec = DBExecute($link, $qHasRec);
-            if ($rHasRec && mysqli_num_rows($rHasRec) > 0) {
-                $tem_recorrencia = true;
-                $id_recorrencia_fatura = (int)mysqli_fetch_assoc($rHasRec)['id_recorrencia'];
-            }
-        }
 
-        // Busca status do Pix Automático
+        // Busca status do contrato e do Pix Automático
         $pixRecorrenciaAtiva = null;
         if ($id_recorrencia_fatura) {
+            $qContratoFatura = "SELECT * FROM Recorrencias WHERE id_recorrencia = $id_recorrencia_fatura LIMIT 1";
+            $rContratoFatura = DBExecute($link, $qContratoFatura);
+            if ($rContratoFatura && mysqli_num_rows($rContratoFatura) > 0) {
+                $contrato_fatura = mysqli_fetch_assoc($rContratoFatura);
+                $hoje = date('Y-m-d');
+                $isAtivo = !isset($contrato_fatura['ativo']) || (int)$contrato_fatura['ativo'] === 1;
+                $isNaoExpirado = empty($contrato_fatura['data_fim_cobranca']) || $contrato_fatura['data_fim_cobranca'] >= $hoje;
+                if ($isAtivo && $isNaoExpirado) {
+                    $tem_recorrencia_elegivel = true;
+                }
+            }
+
             $qPixRec = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = $id_recorrencia_fatura ORDER BY id_pix_recorrencia DESC LIMIT 1";
             $rPixRec = DBExecute($link, $qPixRec);
             if ($rPixRec && mysqli_num_rows($rPixRec) > 0) {
@@ -385,7 +389,7 @@ if ($id_fatura) {
                             </button>
                         <?php endif; ?>
 
-                        <?php if ($tem_recorrencia && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                        <?php if ($tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
                             <button id="btnAtivarPixAutomatico" type="button"
                                 class="flex-1 md:flex-none bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:from-purple-800 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center gap-1.5 text-sm">
                                 <span class="material-icons text-base text-yellow-300">bolt</span>

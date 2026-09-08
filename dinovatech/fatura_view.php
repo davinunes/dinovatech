@@ -70,22 +70,33 @@ if ($id_fatura) {
 
         // Fetch Pix Automático / Recorrência info
         $id_recorrencia_fatura = null;
+        $contrato_fatura = null;
+        $contrato_elegivel_pix = false;
         foreach ($items as $it) {
             if (!empty($it['id_recorrencia'])) {
                 $id_recorrencia_fatura = (int)$it['id_recorrencia'];
                 break;
             }
         }
-        if (!$id_recorrencia_fatura && !empty($fatura['id_cliente'])) {
-            $qHasRec = "SELECT id_recorrencia FROM Recorrencias WHERE id_cliente = '{$fatura['id_cliente']}' ORDER BY id_recorrencia DESC LIMIT 1";
-            $rHasRec = DBExecute($link, $qHasRec);
-            if ($rHasRec && mysqli_num_rows($rHasRec) > 0) {
-                $id_recorrencia_fatura = (int)mysqli_fetch_assoc($rHasRec)['id_recorrencia'];
-            }
-        }
 
         $pix_recorrencia = null;
         if ($id_recorrencia_fatura) {
+            // Busca dados do contrato para verificar se está ativo e não encerrado
+            $qContratoFatura = "SELECT R.*, S.nome_servico 
+                                FROM Recorrencias R 
+                                JOIN Servicos S ON R.id_servico = S.id_servico 
+                                WHERE R.id_recorrencia = $id_recorrencia_fatura LIMIT 1";
+            $rContratoFatura = DBExecute($link, $qContratoFatura);
+            if ($rContratoFatura && mysqli_num_rows($rContratoFatura) > 0) {
+                $contrato_fatura = mysqli_fetch_assoc($rContratoFatura);
+                $hoje = date('Y-m-d');
+                $isAtivo = !isset($contrato_fatura['ativo']) || (int)$contrato_fatura['ativo'] === 1;
+                $isNaoExpirado = empty($contrato_fatura['data_fim_cobranca']) || $contrato_fatura['data_fim_cobranca'] >= $hoje;
+                if ($isAtivo && $isNaoExpirado) {
+                    $contrato_elegivel_pix = true;
+                }
+            }
+
             $qPixRec = "SELECT P.*, R.nome_servico, R.valor_sugerido_recorrencia 
                         FROM PixRecorrencias P
                         JOIN Recorrencias R ON P.id_recorrencia = R.id_recorrencia
@@ -580,6 +591,7 @@ if ($id_fatura) {
                             <?php endif; ?>
 
                             <!-- Card Pix Automático (Banco Inter - Jornada 4) -->
+                            <?php if ($contrato_elegivel_pix || ($pix_recorrencia && !empty($pix_recorrencia['id_rec']))): ?>
                             <div class="mt-4 border-t pt-4">
                                 <div class="bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 text-white p-4 rounded-xl shadow-md border border-purple-800/40 mb-3 relative overflow-hidden">
                                     <div class="flex items-center justify-between mb-2">
@@ -637,7 +649,7 @@ if ($id_fatura) {
                                                     <span class="material-icons text-xs">block</span> Cancelar Pix Automático do Contrato
                                                 </button>
                                             <?php endif; ?>
-                                        <?php else: ?>
+                                        <?php elseif ($contrato_elegivel_pix && $saldo_devedor > 0): ?>
                                             <button type="button" onclick="gerarJornada4Admin(<?= $id_fatura ?>)"
                                                 class="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:opacity-95 text-white py-2.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
                                                 <span class="material-icons text-sm text-yellow-300">bolt</span> Gerar Proposta Pix Automático
@@ -663,6 +675,7 @@ if ($id_fatura) {
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
 
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
