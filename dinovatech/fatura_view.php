@@ -590,7 +590,6 @@ if ($id_fatura) {
                             </div>
                             <?php endif; ?>
 
-                            <?php /* Pix Automático temporariamente desativado para testes
                             <!-- Card Pix Automático (Banco Inter - Jornada 4) -->
                             <?php if ($contrato_elegivel_pix || ($pix_recorrencia && !empty($pix_recorrencia['id_rec']))): ?>
                             <div class="mt-4 border-t pt-4">
@@ -677,7 +676,6 @@ if ($id_fatura) {
                                 </div>
                             </div>
                             <?php endif; ?>
-                            */ ?>
 
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
