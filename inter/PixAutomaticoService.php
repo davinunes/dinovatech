@@ -109,10 +109,10 @@ class PixAutomaticoService
         }
 
         // ==========================================
-        // PASSO 1: Criar Location (POST /loc com tipoCob: cobv)
+        // PASSO 1: Criar Location de Recorrência (POST /locrec)
         // ==========================================
         try {
-            $locResponse = criarLocationRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, 'cobv');
+            $locResponse = criarLocationRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token);
         } catch (Exception $e) {
             // Se o token em sessão expirou ou não continha os novos escopos, força nova emissão do token e retenta
             if (strpos($e->getMessage(), '401') !== false || strpos($e->getMessage(), 'scope') !== false) {
@@ -147,10 +147,7 @@ class PixAutomaticoService
                 'original' => $valorCobranca
             ],
             'chave' => $ambienteConfig['chave_pix'],
-            'solicitacaoPagador' => "Dinovatech Fatura #{$idFaturaSafe}",
-            'loc' => [
-                'id' => $idLocation
-            ]
+            'solicitacaoPagador' => "Dinovatech Fatura #{$idFaturaSafe}"
         ];
 
         $cobvResponse = criarCobvComVencimento($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txidCobv, $dadosCobv);
