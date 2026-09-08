@@ -113,10 +113,10 @@ class PixAutomaticoService
         }
 
         // ==========================================
-        // PASSO 1: Criar Location (/locrec)
+        // PASSO 1: Criar Location (POST /loc com tipoCob: cobv)
         // ==========================================
         try {
-            $locResponse = criarLocationRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token);
+            $locResponse = criarLocationRecorrencia($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, 'cobv');
         } catch (Exception $e) {
             // Se o token em sessão expirou ou não continha os novos escopos, força nova emissão do token e retenta
             if (strpos($e->getMessage(), '401') !== false || strpos($e->getMessage(), 'scope') !== false) {

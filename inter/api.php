@@ -385,13 +385,15 @@ function exportarExtratoPdf($config, $sslCert, $sslKey, $caInfo, $bearerToken, $
  * @param string $bearerToken Token OAuth2
  * @return object Resposta decodificada contendo o id da location
  */
-function criarLocationRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerToken)
+function criarLocationRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerToken, $tipoCob = 'cobv')
 {
-    $url = $config['url_pix_base'] . '/locrec';
+    $url = $config['url_pix_base'] . '/loc';
     $headers = [
         'Authorization: Bearer ' . $bearerToken,
         'Content-Type: application/json'
     ];
+
+    $payload = json_encode(['tipoCob' => $tipoCob]);
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
@@ -399,7 +401,7 @@ function criarLocationRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerTo
     curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
     curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
     curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(new stdClass()));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -409,18 +411,26 @@ function criarLocationRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerTo
     curl_close($ch);
 
     if ($error) {
-        throw new Exception("cURL Error on /locrec: " . $error . " | HTTP Code: " . $httpCode);
+        throw new Exception("cURL Error on POST /loc: " . $error . " | HTTP Code: " . $httpCode);
     }
     if ($httpCode >= 400) {
-        throw new Exception("API Error on /locrec: " . $response . " | HTTP Code: " . $httpCode);
+        throw new Exception("API Error on POST /loc: " . $response . " | HTTP Code: " . $httpCode);
     }
 
     $decoded = json_decode($response);
     if (!$decoded || empty($decoded->id)) {
-        throw new Exception("Resposta inválida do Inter em /locrec: " . $response);
+        throw new Exception("Resposta inválida do Inter em POST /loc: " . $response);
     }
 
     return $decoded;
+}
+
+/**
+ * Cria location do payload para Pix / CobV (alias para criarLocationRecorrencia).
+ */
+function criarLocationCobv($config, $sslCert, $sslKey, $caInfo, $bearerToken, $tipoCob = 'cobv')
+{
+    return criarLocationRecorrencia($config, $sslCert, $sslKey, $caInfo, $bearerToken, $tipoCob);
 }
 
 /**
