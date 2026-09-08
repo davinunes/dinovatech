@@ -427,8 +427,8 @@ try {
             break;
 
         case 'consultar_status_recorrencia':
-            $idRec = $_GET['idRec'] ?? $requestBody['idRec'] ?? null;
-            $idFatura = $_GET['id_fatura'] ?? $requestBody['id_fatura'] ?? null;
+            $idRec = $_GET['idRec'] ?? $_POST['idRec'] ?? $requestBody['idRec'] ?? null;
+            $idFatura = $_GET['id_fatura'] ?? $_POST['id_fatura'] ?? $requestBody['id_fatura'] ?? null;
 
             if (empty($idRec) && !empty($idFatura)) {
                 $idFaturaSafe = (int) $idFatura;
