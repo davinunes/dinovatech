@@ -542,10 +542,9 @@ function criarRecorrenciaContrato($config, $sslCert, $sslKey, $caInfo, $bearerTo
 function consultarRecorrenciaJornada4($config, $sslCert, $sslKey, $caInfo, $bearerToken, $idRec, $txid)
 {
     $queryParams = http_build_query([
-        'idRec' => $idRec,
         'txid' => $txid
     ]);
-    $url = $config['url_pix_base'] . '/rec?' . $queryParams;
+    $url = $config['url_pix_base'] . '/rec/' . rawurlencode($idRec) . '?' . $queryParams;
 
     $headers = [
         'Authorization: Bearer ' . $bearerToken,

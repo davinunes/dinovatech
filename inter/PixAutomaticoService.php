@@ -196,12 +196,18 @@ class PixAutomaticoService
         $idRec = $recResponse->idRec;
 
         // ==========================================
-        // PASSO 4: Consultar QR Code Jornada 4 (/rec?idRec&txid)
+        // PASSO 4: Consultar QR Code Jornada 4 (GET /rec/{idRec}?txid={txid})
         // ==========================================
         $jornada4Response = consultarRecorrenciaJornada4($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $idRec, $txidCobv);
 
         // Extrai o Pix Copia e Cola / Payload combinado
-        $pixCopiaECola = $jornada4Response->pixCopiaECola ?? ($jornada4Response->emv ?? ($cobvResponse->pixCopiaECola ?? ''));
+        // A resposta do GET /rec/{idRec}?txid pode retornar em dadosQR.pixCopiaECola (Jornada 4)
+        // ou diretamente em pixCopiaECola, emv — depende da versão da API
+        $pixCopiaECola = $jornada4Response->dadosQR->pixCopiaECola
+            ?? $jornada4Response->pixCopiaECola
+            ?? $jornada4Response->emv
+            ?? $cobvResponse->pixCopiaECola
+            ?? '';
         $calendarioCombined = $jornada4Response->calendario ?? ($cobvResponse->calendario ?? []);
 
         // ==========================================
