@@ -389,6 +389,7 @@ if ($id_fatura) {
                             </button>
                         <?php endif; ?>
 
+                        <?php /* Pix Automático temporariamente desativado para testes
                         <?php if ($tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
                             <button id="btnAtivarPixAutomatico" type="button"
                                 class="flex-1 md:flex-none bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:from-purple-800 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center gap-1.5 text-sm">
@@ -396,6 +397,7 @@ if ($id_fatura) {
                                 <span>Ativar Pix Automático</span>
                             </button>
                         <?php endif; ?>
+                        */ ?>
 
                         <button id="btnPagarPix"
                             class="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-7 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center text-sm">
