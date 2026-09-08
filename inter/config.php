@@ -104,7 +104,7 @@ $configuracoes = [
         'client_secret' => $clientSecret,
         'conta_corrente' => $dbConfig['api_inter_conta_corrente'] ?? '',
         'chave_pix' => $dbConfig['api_inter_chave_pix'] ?? '',
-        'scope' => 'cob.write cob.read cobv.write cobv.read lotecobv.write lotecobv.read pix.write pix.read webhook.write webhook.read payloadlocation.write payloadlocation.read rec.write rec.read cobr.write cobr.read boleto-cobranca.read boleto-cobranca.write extrato.read pagamento-pix.read webhook-banking.read webhook-banking.write',
+        'scope' => 'cob.write cob.read cobv.write cobv.read lotecobv.write lotecobv.read pix.write pix.read webhook.write webhook.read payloadlocation.write payloadlocation.read payloadlocationrec.write payloadlocationrec.read rec.write rec.read cobr.write cobr.read boleto-cobranca.read boleto-cobranca.write extrato.read pagamento-pix.read webhook-banking.read webhook-banking.write',
         // Certs now come from absolute/relative paths from root
         'cert_path_abs' => $certFile,
         'key_path_abs' => $keyFile,
@@ -120,7 +120,7 @@ $configuracoes = [
         'client_secret' => $clientSecret,
         'conta_corrente' => $dbConfig['api_inter_conta_corrente'] ?? '',
         'chave_pix' => $dbConfig['api_inter_chave_pix'] ?? '',
-        'scope' => 'cob.write cob.read cobv.write cobv.read lotecobv.write lotecobv.read pix.write pix.read webhook.write webhook.read payloadlocation.write payloadlocation.read rec.write rec.read cobr.write cobr.read boleto-cobranca.read boleto-cobranca.write extrato.read pagamento-pix.read webhook-banking.read webhook-banking.write',
+        'scope' => 'cob.write cob.read cobv.write cobv.read lotecobv.write lotecobv.read pix.write pix.read webhook.write webhook.read payloadlocation.write payloadlocation.read payloadlocationrec.write payloadlocationrec.read rec.write rec.read cobr.write cobr.read boleto-cobranca.read boleto-cobranca.write extrato.read pagamento-pix.read webhook-banking.read webhook-banking.write',
         'cert_path_abs' => $certFile,
         'key_path_abs' => $keyFile,
         'ca_path_abs' => $caFile,
