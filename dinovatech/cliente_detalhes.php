@@ -118,14 +118,42 @@ if ($id_cliente) {
                 </div>
             <?php else: ?>
 
+                <?php
+                // Formatar Endereço Completo com IBGE
+                $end_parts = [];
+                if (!empty($cliente['endereco'])) {
+                    $logradouro = $cliente['endereco'];
+                    if (!empty($cliente['numero'])) {
+                        $logradouro .= ', ' . $cliente['numero'];
+                    }
+                    if (!empty($cliente['complemento'])) {
+                        $logradouro .= ' (' . $cliente['complemento'] . ')';
+                    }
+                    $end_parts[] = $logradouro;
+                }
+                if (!empty($cliente['bairro'])) {
+                    $end_parts[] = $cliente['bairro'];
+                }
+                $cidade_ibge = !empty($cliente['codigo_municipio']) ? AppHelper::getCidadePorCodigo($cliente['codigo_municipio']) : '';
+                if ($cidade_ibge) {
+                    $end_parts[] = $cidade_ibge;
+                } elseif (!empty($cliente['uf'])) {
+                    $end_parts[] = $cliente['uf'];
+                }
+                if (!empty($cliente['cep'])) {
+                    $end_parts[] = 'CEP ' . $cliente['cep'];
+                }
+                $endereco_formatado = implode(' • ', $end_parts);
+                ?>
+
                 <!-- Client Info Card -->
                 <div
                     class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div class="flex items-center gap-4">
+                    <div class="flex items-start md:items-center gap-4">
                         <?php if (!empty($cliente['foto_url'])): ?>
-                            <img src="<?= htmlspecialchars($cliente['foto_url']) ?>" class="w-16 h-16 rounded-full object-cover shadow-md border-2 border-white shrink-0" alt="Avatar">
+                            <img src="<?= htmlspecialchars($cliente['foto_url']) ?>" class="w-16 h-16 rounded-full object-cover shadow-md border-2 border-white shrink-0 mt-1 md:mt-0" alt="Avatar">
                         <?php else: ?>
-                            <div class="w-16 h-16 rounded-full bg-cyan-100 text-cyan-800 font-extrabold text-2xl flex items-center justify-center shrink-0 border-2 border-white shadow-sm">
+                            <div class="w-16 h-16 rounded-full bg-cyan-100 text-cyan-800 font-extrabold text-2xl flex items-center justify-center shrink-0 border-2 border-white shadow-sm mt-1 md:mt-0">
                                 <?= mb_strtoupper(mb_substr($cliente['nome'], 0, 1)) ?>
                             </div>
                         <?php endif; ?>
@@ -138,10 +166,17 @@ if ($id_cliente) {
                                     <?= htmlspecialchars($cliente['cpf_cnpj']) ?>
                                 </p>
                                 <p><span class="font-medium text-gray-700">Email:</span>
-                                    <?= htmlspecialchars($cliente['email']) ?>
+                                    <?= htmlspecialchars($cliente['email'] ?: 'Não informado') ?>
                                 </p>
                                 <p><span class="font-medium text-gray-700">Telefone:</span>
-                                    <?= htmlspecialchars($cliente['telefone']) ?>
+                                    <?= htmlspecialchars($cliente['telefone'] ?: 'Não informado') ?>
+                                </p>
+                                <p class="flex items-start gap-1 mt-1 text-slate-600">
+                                    <span class="material-icons text-sm text-cyan-600 mt-0.5 shrink-0">place</span>
+                                    <span>
+                                        <span class="font-medium text-gray-700">Endereço:</span>
+                                        <?= $endereco_formatado ? htmlspecialchars($endereco_formatado) : '<span class="text-gray-400 italic">Não informado</span>' ?>
+                                    </span>
                                 </p>
                             </div>
                         </div>
