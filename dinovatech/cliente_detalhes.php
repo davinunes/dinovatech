@@ -120,21 +120,30 @@ if ($id_cliente) {
 
                 <!-- Client Info Card -->
                 <div
-                    class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center">
-                    <div>
-                        <h3 class="text-2xl font-bold text-gray-800 mb-1">
-                            <?= htmlspecialchars($cliente['nome']) ?>
-                        </h3>
-                        <div class="text-gray-500 space-y-1">
-                            <p><span class="font-medium text-gray-700">CPF/CNPJ:</span>
-                                <?= htmlspecialchars($cliente['cpf_cnpj']) ?>
-                            </p>
-                            <p><span class="font-medium text-gray-700">Email:</span>
-                                <?= htmlspecialchars($cliente['email']) ?>
-                            </p>
-                            <p><span class="font-medium text-gray-700">Telefone:</span>
-                                <?= htmlspecialchars($cliente['telefone']) ?>
-                            </p>
+                    class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center gap-4">
+                        <?php if (!empty($cliente['foto_url'])): ?>
+                            <img src="<?= htmlspecialchars($cliente['foto_url']) ?>" class="w-16 h-16 rounded-full object-cover shadow-md border-2 border-white shrink-0" alt="Avatar">
+                        <?php else: ?>
+                            <div class="w-16 h-16 rounded-full bg-cyan-100 text-cyan-800 font-extrabold text-2xl flex items-center justify-center shrink-0 border-2 border-white shadow-sm">
+                                <?= mb_strtoupper(mb_substr($cliente['nome'], 0, 1)) ?>
+                            </div>
+                        <?php endif; ?>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1">
+                                <?= htmlspecialchars($cliente['nome']) ?>
+                            </h3>
+                            <div class="text-gray-500 space-y-1 text-sm">
+                                <p><span class="font-medium text-gray-700">CPF/CNPJ:</span>
+                                    <?= htmlspecialchars($cliente['cpf_cnpj']) ?>
+                                </p>
+                                <p><span class="font-medium text-gray-700">Email:</span>
+                                    <?= htmlspecialchars($cliente['email']) ?>
+                                </p>
+                                <p><span class="font-medium text-gray-700">Telefone:</span>
+                                    <?= htmlspecialchars($cliente['telefone']) ?>
+                                </p>
+                            </div>
                         </div>
                     </div>
                     <div class="mt-4 md:mt-0 flex flex-col gap-2">

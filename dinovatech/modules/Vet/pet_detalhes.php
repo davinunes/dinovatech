@@ -111,11 +111,20 @@ function calcularIdade($data_nasc)
                     <!-- Pet Profile Card -->
                     <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                         <div class="p-6 flex flex-col sm:flex-row gap-6">
-                            <!-- Avatar Placeholder -->
-                            <div
-                                class="flex-shrink-0 flex items-center justify-center w-32 h-32 bg-cyan-100 rounded-full text-cyan-500">
-                                <span class="material-icons text-6xl">pets</span>
-                            </div>
+                            <!-- Avatar Pet -->
+                            <?php
+                            $foto_prontuario_url = $pet['foto_url'] ?? '';
+                            if (!empty($foto_prontuario_url) && !preg_match('~^(https?://|/)~i', $foto_prontuario_url)) {
+                                $foto_prontuario_url = '../../' . $foto_prontuario_url;
+                            }
+                            ?>
+                            <?php if (!empty($foto_prontuario_url)): ?>
+                                <img src="<?= htmlspecialchars($foto_prontuario_url) ?>" class="flex-shrink-0 w-32 h-32 rounded-full object-cover shadow-md border-4 border-white" alt="Foto de <?= htmlspecialchars($pet['nome']) ?>">
+                            <?php else: ?>
+                                <div class="flex-shrink-0 flex items-center justify-center w-32 h-32 bg-cyan-100 rounded-full text-cyan-500 shadow-inner">
+                                    <span class="material-icons text-6xl">pets</span>
+                                </div>
+                            <?php endif; ?>
 
                             <!-- Info -->
                             <div class="flex-1">

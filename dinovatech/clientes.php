@@ -47,7 +47,7 @@ if ($link) {
         $total_pages = ceil($total_records / $limit);
     }
 
-    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email, telefone, ativo FROM Clientes $where_clause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
+    $query_clientes = "SELECT id_cliente, nome, cpf_cnpj, email, telefone, ativo, foto_url FROM Clientes $where_clause ORDER BY nome ASC LIMIT $limit OFFSET $offset";
     $result_clientes = DBExecute($link, $query_clientes);
     if ($result_clientes) {
         while ($row = mysqli_fetch_assoc($result_clientes)) {
@@ -143,12 +143,24 @@ if ($link) {
                         <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
                             <?php foreach ($clientes as $cliente): ?>
                                 <tr class="hover:bg-gray-50 transition">
-                                    <td class="p-4 font-medium text-gray-900">
-                                        <?= htmlspecialchars($cliente['nome']) ?>
-                                        <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
-                                            <span
-                                                class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Inativo</span>
-                                        <?php endif; ?>
+                                    <td class="p-4">
+                                        <div class="flex items-center gap-3">
+                                            <?php if (!empty($cliente['foto_url'])): ?>
+                                                <img src="<?= htmlspecialchars($cliente['foto_url']) ?>" class="w-8 h-8 rounded-full object-cover shadow-sm shrink-0 border border-gray-200" alt="Avatar">
+                                            <?php else: ?>
+                                                <div class="w-8 h-8 rounded-full bg-cyan-100 text-cyan-800 font-bold text-xs flex items-center justify-center shrink-0 border border-cyan-200">
+                                                    <?= mb_strtoupper(mb_substr($cliente['nome'], 0, 1)) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div>
+                                                <div class="font-medium text-gray-900 leading-tight">
+                                                    <?= htmlspecialchars($cliente['nome']) ?>
+                                                    <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                                        <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-800">Inativo</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></td>
                                     <td class="p-4"><?= htmlspecialchars($cliente['email']) ?></td>
@@ -170,15 +182,23 @@ if ($link) {
                     <?php foreach ($clientes as $cliente): ?>
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                             <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="font-bold text-gray-900 flex items-center gap-2">
-                                        <?= htmlspecialchars($cliente['nome']) ?>
-                                        <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
-                                            <span
-                                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Inativo</span>
-                                        <?php endif; ?>
-                                    </h3>
-                                    <p class="text-sm text-gray-500"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></p>
+                                <div class="flex items-center gap-3">
+                                    <?php if (!empty($cliente['foto_url'])): ?>
+                                        <img src="<?= htmlspecialchars($cliente['foto_url']) ?>" class="w-9 h-9 rounded-full object-cover shadow-sm shrink-0 border border-gray-200" alt="Avatar">
+                                    <?php else: ?>
+                                        <div class="w-9 h-9 rounded-full bg-cyan-100 text-cyan-800 font-bold text-xs flex items-center justify-center shrink-0 border border-cyan-200">
+                                            <?= mb_strtoupper(mb_substr($cliente['nome'], 0, 1)) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 flex items-center gap-2">
+                                            <?= htmlspecialchars($cliente['nome']) ?>
+                                            <?php if (isset($cliente['ativo']) && $cliente['ativo'] == 0): ?>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Inativo</span>
+                                            <?php endif; ?>
+                                        </h3>
+                                        <p class="text-sm text-gray-500"><?= htmlspecialchars($cliente['cpf_cnpj']) ?></p>
+                                    </div>
                                 </div>
                                 <a href="cliente_detalhes.php?id=<?= $cliente['id_cliente'] ?>"
                                     class="text-cyan-600 hover:text-cyan-800 p-2">

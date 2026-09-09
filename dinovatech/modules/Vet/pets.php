@@ -124,14 +124,30 @@ if ($link) {
                             </tr>
                         </thead>
                         <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
-                            <?php foreach ($pets as $pet): ?>
+                            <?php foreach ($pets as $pet): 
+                                $foto_pet_url = $pet['foto_url'] ?? '';
+                                if (!empty($foto_pet_url) && !preg_match('~^(https?://|/)~i', $foto_pet_url)) {
+                                    $foto_pet_url = '../../' . $foto_pet_url;
+                                }
+                            ?>
                                 <tr class="hover:bg-gray-50 transition">
                                     <td class="p-4">
-                                        <div class="font-bold text-gray-900">
-                                            <?= htmlspecialchars($pet['nome']) ?>
-                                        </div>
-                                        <div class="text-xs text-gray-500 uppercase">
-                                            <?= htmlspecialchars($pet['especie']) ?>
+                                        <div class="flex items-center gap-3">
+                                            <?php if (!empty($foto_pet_url)): ?>
+                                                <img src="<?= htmlspecialchars($foto_pet_url) ?>" class="w-8 h-8 rounded-full object-cover shadow-sm shrink-0 border border-gray-200" alt="Pet">
+                                            <?php else: ?>
+                                                <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                                                    <span class="material-icons text-base">pets</span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div>
+                                                <div class="font-bold text-gray-900 leading-tight">
+                                                    <?= htmlspecialchars($pet['nome']) ?>
+                                                </div>
+                                                <div class="text-[10px] text-gray-500 uppercase">
+                                                    <?= htmlspecialchars($pet['especie']) ?>
+                                                </div>
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="p-4 font-medium text-cyan-700">
@@ -163,17 +179,31 @@ if ($link) {
 
                 <!-- Mobile Cards -->
                 <div class="md:hidden space-y-4">
-                    <?php foreach ($pets as $pet): ?>
+                    <?php foreach ($pets as $pet): 
+                        $foto_pet_url = $pet['foto_url'] ?? '';
+                        if (!empty($foto_pet_url) && !preg_match('~^(https?://|/)~i', $foto_pet_url)) {
+                            $foto_pet_url = '../../' . $foto_pet_url;
+                        }
+                    ?>
                         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
                             <div class="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 class="font-bold text-gray-900 text-lg">
-                                        <?= htmlspecialchars($pet['nome']) ?>
-                                    </h3>
-                                    <span
-                                        class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded uppercase font-semibold">
-                                        <?= htmlspecialchars($pet['especie']) ?>
-                                    </span>
+                                <div class="flex items-center gap-3">
+                                    <?php if (!empty($foto_pet_url)): ?>
+                                        <img src="<?= htmlspecialchars($foto_pet_url) ?>" class="w-10 h-10 rounded-full object-cover shadow-sm shrink-0 border border-gray-200" alt="Pet">
+                                    <?php else: ?>
+                                        <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                                            <span class="material-icons text-lg">pets</span>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div>
+                                        <h3 class="font-bold text-gray-900 text-lg leading-tight">
+                                            <?= htmlspecialchars($pet['nome']) ?>
+                                        </h3>
+                                        <span
+                                            class="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded uppercase font-semibold">
+                                            <?= htmlspecialchars($pet['especie']) ?>
+                                        </span>
+                                    </div>
                                 </div>
                                 <a href="pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
                                     class="text-cyan-600 hover:text-cyan-800 p-2">
