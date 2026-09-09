@@ -343,7 +343,7 @@ if ($id_fatura) {
 
                             <!-- Seção de Pagamento Online (Visão do Cliente na Fatura) -->
                             <?php 
-                            $isInfinitePayAtivo = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1 && !empty($config_emissor['infinitepay_handle']);
+                            $isInfinitePayAtivo = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1;
                             $isInterAtivo = AppHelper::isInterApiActive();
                             if ($saldo_devedor > 0 && ($isInfinitePayAtivo || $isInterAtivo)): 
                             ?>
@@ -428,7 +428,6 @@ if ($id_fatura) {
                             <button onclick="openAddItemModal()"
                                 class="bg-gray-800 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-900 transition flex items-center inline-flex">
                                 <span class="material-icons text-sm mr-2">add</span> Adicionar Item
-                            </button>
                             </button>
                             <button onclick="openIncorporarModal()"
                                 class="bg-cyan-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-cyan-700 transition flex items-center inline-flex ml-2">
@@ -758,34 +757,7 @@ if ($id_fatura) {
                             </div>
                             <?php endif; ?>
 
-                            <!-- Card InfinitePay (Checkout & PIX/Cartão) -->
-                            <?php 
-                            $isInfinitePayAtivo = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1 && !empty($config_emissor['infinitepay_handle']);
-                            if ($isInfinitePayAtivo && $saldo_devedor > 0):
-                            ?>
-                            <div class="mt-4 border-t pt-4">
-                                <div class="bg-gray-900 text-white p-4 rounded-xl shadow-md border border-gray-800 mb-3">
-                                    <div class="flex items-center justify-between mb-2">
-                                        <div class="flex items-center space-x-2">
-                                            <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg" 
-                                                 alt="InfinitePay" class="h-4 bg-white p-1 rounded">
-                                            <h3 class="font-bold text-sm text-white">InfinitePay</h3>
-                                        </div>
-                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700/50">
-                                            PIX / Cartão
-                                        </span>
-                                    </div>
-                                    <p class="text-[11px] text-gray-300 mb-3">
-                                        Pague sua fatura online via PIX ou Cartão de Crédito com segurança.
-                                    </p>
-                                    <button type="button" onclick="abrirModalInfinitePay()"
-                                        class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-2.5 px-4 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 shadow-xs">
-                                        <span class="material-icons text-sm text-white">credit_card</span>
-                                        <span>Pagar com InfinitePay</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <?php endif; ?>
+
 
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
