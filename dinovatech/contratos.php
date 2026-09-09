@@ -264,15 +264,15 @@ foreach ($contratos as $c) {
                     <?php if (!empty($expirados)): ?>
                         <?php foreach ($expirados as $contrato): ?>
                             <div class="bg-gray-50 p-4 rounded-xl shadow-sm border border-gray-200 opacity-80">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div>
-                                        <h3 class="font-bold text-gray-700"><?= htmlspecialchars($contrato['nome_cliente']) ?>
+                                <div class="flex justify-between items-start gap-2 mb-3">
+                                    <div class="min-w-0 flex-1">
+                                        <h3 class="font-bold text-gray-700 leading-snug truncate"><?= htmlspecialchars($contrato['nome_cliente']) ?>
                                         </h3>
-                                        <p class="text-sm text-gray-500"><?= htmlspecialchars($contrato['nome_servico']) ?></p>
+                                        <p class="text-sm text-gray-500 truncate"><?= htmlspecialchars($contrato['nome_servico']) ?></p>
                                         <span
-                                            class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Vencido</span>
+                                            class="mt-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 shrink-0 whitespace-nowrap">Vencido</span>
                                     </div>
-                                    <div class="text-right">
+                                    <div class="text-right shrink-0">
                                         <span class="block font-bold text-gray-700">R$
                                             <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
                                     </div>

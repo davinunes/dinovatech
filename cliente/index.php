@@ -1366,34 +1366,49 @@ $nome_inicial = strtok($nome_cliente, ' ');
                     if (documentos.length > 0) {
                         docsHtml = '<div class="space-y-2 mt-3 pt-3 border-t border-gray-100"><span class="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Documentos & Termos:</span>';
                         documentos.forEach(doc => {
-                            docsHtml += `<div class="p-2.5 bg-purple-50/60 rounded-lg border border-purple-100 flex items-center justify-between text-xs">
-                                <div class="flex items-center gap-2 truncate mr-2"><span class="material-icons-round text-purple-700 text-base">description</span><span class="font-semibold text-purple-950 truncate">${escapeHtml(doc.titulo)}</span></div>
-                                <a href="../dinovatech/modules/Vet/documento_view.php?id=${doc.id_documento_emitido}" target="_blank" class="px-2.5 py-1 bg-white border border-purple-200 rounded hover:bg-purple-100 text-purple-800 font-bold transition shrink-0 flex items-center gap-1 shadow-sm">
-                                    <span class="material-icons-round text-xs">visibility</span> Ver</a></div>`;
+                            docsHtml += `<div class="p-2.5 bg-purple-50/60 rounded-xl border border-purple-100 flex items-center justify-between gap-2 text-xs">
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="material-icons-round text-purple-600 text-base shrink-0">description</span>
+                                    <span class="font-semibold text-purple-950 truncate">${escapeHtml(doc.titulo)}</span>
+                                </div>
+                                <a href="../dinovatech/modules/Vet/documento_view.php?id=${doc.id_documento_emitido}" target="_blank" class="px-2.5 py-1 bg-white border border-purple-200 rounded-lg hover:bg-purple-100 text-purple-800 font-bold transition shrink-0 flex items-center gap-1 shadow-sm text-[11px]">
+                                    <span class="material-icons-round text-xs">visibility</span> Ver</a>
+                            </div>`;
                         });
                         docsHtml += '</div>';
                     }
 
                     htmlContent += `
-                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition p-5 flex flex-col justify-between">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition p-5 flex flex-col justify-between overflow-hidden animate-fadeInUp">
                             <div>
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="flex items-center gap-2">
-                                        <div class="p-2 rounded-lg ${isExpirado ? 'bg-red-100 text-red-600' : 'bg-purple-100 text-purple-600'}">
-                                            <span class="material-icons-round">auto_renew</span>
+                                <!-- Header do Card -->
+                                <div class="flex justify-between items-start gap-2 mb-3">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="p-2 rounded-xl shrink-0 ${isExpirado ? 'bg-red-50 text-red-600' : (isCancelado ? 'bg-gray-100 text-gray-500' : 'bg-purple-50 text-purple-600')}">
+                                            <span class="material-icons-round text-xl">auto_renew</span>
                                         </div>
-                                        <div>
-                                            <h4 class="font-bold text-gray-800">${servicoNome}</h4>
-                                            <span class="text-xs text-gray-400">Contrato #${rec.id_recorrencia}</span>
+                                        <div class="min-w-0">
+                                            <h4 class="font-extrabold text-gray-800 text-sm leading-snug truncate" title="${servicoNome}">${servicoNome}</h4>
+                                            <span class="text-[11px] text-gray-400 font-medium">Contrato #${rec.id_recorrencia}</span>
                                         </div>
                                     </div>
-                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${statusClass}">${statusLabel}</span>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold shrink-0 whitespace-nowrap ${statusClass}">${statusLabel}</span>
                                 </div>
-                                <div class="my-3">
-                                    <div class="text-2xl font-bold text-gray-800">${formatCurrency(valorTotal)} <span class="text-xs font-normal text-gray-400">/ ${periodo}</span></div>
-                                    <div class="text-xs text-gray-400 mt-1">Início: <strong class="text-gray-600">${dataInicio}</strong> • Fim: <strong class="${isExpirado ? 'text-red-600' : 'text-gray-600'}">${dataFim}</strong></div>
+
+                                <!-- Valor e Período -->
+                                <div class="my-3 py-2.5 px-3 bg-gray-50/70 rounded-xl border border-gray-100">
+                                    <div class="text-xl font-extrabold text-gray-900 flex flex-wrap items-baseline gap-1">
+                                        <span>${formatCurrency(valorTotal)}</span>
+                                        <span class="text-xs font-normal text-gray-500">/ ${periodo}</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                                        <span>Início: <strong class="text-gray-700">${dataInicio}</strong></span>
+                                        <span>•</span>
+                                        <span>Fim: <strong class="${isExpirado ? 'text-red-600 font-bold' : 'text-gray-700'}">${dataFim}</strong></span>
+                                    </div>
                                     ${pixBadge}
                                 </div>
+
                                 ${docsHtml}
                             </div>
                         </div>`;

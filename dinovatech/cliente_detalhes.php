@@ -473,12 +473,13 @@ if ($id_cliente) {
                                     $card_class = $is_expired ? 'bg-red-50 border-red-200' : 'bg-white border-gray-100';
                                     ?>
                                     <div class="<?= $card_class ?> p-4 rounded-xl shadow-sm border mb-3">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <h4 class="font-bold text-gray-800"><?= htmlspecialchars($contrato['nome_servico']) ?>
+                                        <div class="flex justify-between items-start gap-2 mb-2">
+                                            <h4 class="font-bold text-gray-800 text-sm leading-snug truncate flex-1 min-w-0" title="<?= htmlspecialchars($contrato['nome_servico']) ?>">
+                                                <?= htmlspecialchars($contrato['nome_servico']) ?>
                                             </h4>
                                             <?php if ($is_expired): ?>
                                                 <span
-                                                    class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800">Vencido</span>
+                                                    class="px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-800 shrink-0 whitespace-nowrap">Vencido</span>
                                             <?php endif; ?>
                                         </div>
                                         <div class="text-sm text-gray-600 mb-3">
