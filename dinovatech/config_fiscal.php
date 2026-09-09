@@ -480,12 +480,20 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
                         <!-- Banco Inter -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
-                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                <img src="https://api-financeiro.agilize.com.br/api/image/inter-ce9e01981d.png"
-                                    alt="Inter" class="h-6 mr-3">
-                                <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança / PIX)</h4>
+                            <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+                                <div class="flex items-center">
+                                    <img src="https://api-financeiro.agilize.com.br/api/image/inter-ce9e01981d.png"
+                                        alt="Inter" class="h-6 mr-3">
+                                    <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança / PIX)</h4>
+                                </div>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="api_inter_ativo" id="api_inter_ativo" value="1"
+                                        onchange="toggleInterCard()" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600 relative"></div>
+                                    <span class="ml-2 text-xs font-semibold text-gray-700" id="lbl_inter_status">Inativo</span>
+                                </label>
                             </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div id="inter_details_container" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
                                 <div class="md:col-span-2">
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Client ID</label>
                                     <input type="text" name="api_inter_client_id" id="api_inter_client_id"
@@ -562,12 +570,20 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         </div>
 
                         <!-- Oracle -->
-                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                <span class="material-icons text-red-600 mr-2">cloud</span>
-                                <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+                            <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-red-600 mr-2">cloud</span>
+                                    <h4 class="font-bold text-gray-800">Oracle OCI (Object Storage)</h4>
+                                </div>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="api_oracle_ativo" id="api_oracle_ativo" value="1"
+                                        onchange="toggleOracleCard()" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600 relative"></div>
+                                    <span class="ml-2 text-xs font-semibold text-gray-700" id="lbl_oracle_status">Inativo</span>
+                                </label>
                             </div>
-                            <div class="space-y-4">
+                            <div id="oracle_details_container" class="space-y-4 hidden">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">URL Bucket
                                         (Pre-Authenticated)</label>
@@ -599,26 +615,36 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
                         <!-- Google Service Account -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
-                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                <span class="material-icons text-blue-600 mr-2">event</span>
-                                <h4 class="font-bold text-gray-800">Google Calendar (Service Account)</h4>
+                            <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-blue-600 mr-2">event</span>
+                                    <h4 class="font-bold text-gray-800">Google Calendar (Service Account)</h4>
+                                </div>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="google_calendar_ativo" id="google_calendar_ativo" value="1"
+                                        onchange="toggleCalendarCard()" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 relative"></div>
+                                    <span class="ml-2 text-xs font-semibold text-gray-700" id="lbl_calendar_status">Inativo</span>
+                                </label>
                             </div>
-                            <p class="text-sm text-gray-600 mb-4">Upload do arquivo JSON da conta de serviço para
-                                sincronização com Google Agenda.</p>
+                            <div id="calendar_details_container" class="space-y-4 hidden">
+                                <p class="text-sm text-gray-600 mb-4">Upload do arquivo JSON da conta de serviço para
+                                    sincronização com Google Agenda.</p>
 
-                            <div class="grid grid-cols-1 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo JSON (Service
-                                        Account)</label>
-                                    <input type="file" name="arquivo_google_json" id="arquivo_google_json"
-                                        accept=".json"
-                                        class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg">
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Arquivo JSON (Service
+                                            Account)</label>
+                                        <input type="file" name="arquivo_google_json" id="arquivo_google_json"
+                                            accept=".json"
+                                            class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-gray-300 rounded-lg">
 
-                                    <div class="text-xs text-gray-500 mt-2" id="current_google_json_info">
-                                        <div class="flex items-center">
-                                            <span class="material-icons text-gray-400 text-sm mr-1">check_circle</span>
-                                            <span id="google_json_status" class="font-medium text-gray-600">Não
-                                                configurado</span>
+                                        <div class="text-xs text-gray-500 mt-2" id="current_google_json_info">
+                                            <div class="flex items-center">
+                                                <span class="material-icons text-gray-400 text-sm mr-1">check_circle</span>
+                                                <span id="google_json_status" class="font-medium text-gray-600">Não
+                                                    configurado</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -627,59 +653,69 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
                         <!-- Google Gmail OAuth 2.0 -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
-                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                <span class="material-icons text-cyan-600 mr-2">email</span>
-                                <h4 class="font-bold text-gray-800">Google Gmail (OAuth 2.0 - Envio de Faturas)</h4>
+                            <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-cyan-600 mr-2">email</span>
+                                    <h4 class="font-bold text-gray-800">Google Gmail (OAuth 2.0 - Envio de Faturas)</h4>
+                                </div>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="google_gmail_ativo" id="google_gmail_ativo" value="1"
+                                        onchange="toggleGmailCard()" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-600 relative"></div>
+                                    <span class="ml-2 text-xs font-semibold text-gray-700" id="lbl_gmail_status">Inativo</span>
+                                </label>
                             </div>
-                            <p class="text-sm text-gray-600 mb-4">Configuração para enviar faturas, NFS-e e arquivos anexados diretamente por e-mail.</p>
+                            <div id="gmail_details_container" class="space-y-4 hidden">
+                                <p class="text-sm text-gray-600 mb-4">Configuração para enviar faturas, NFS-e e arquivos anexados diretamente por e-mail.</p>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Google Client ID</label>
-                                    <input type="text" name="google_oauth_client_id" id="google_oauth_client_id"
-                                        placeholder="Ex: 12345678-abcde.apps.googleusercontent.com"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border">
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Google Client Secret</label>
-                                    <div class="relative">
-                                        <input type="password" name="google_oauth_client_secret" id="google_oauth_client_secret"
-                                            placeholder="Preencha apenas para alterar ou cadastrar"
-                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border pr-10">
-                                        <button type="button" onclick="togglePass('google_oauth_client_secret')"
-                                            class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                                            <span class="material-icons text-sm">visibility</span>
-                                        </button>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Google Client ID</label>
+                                        <input type="text" name="google_oauth_client_id" id="google_oauth_client_id"
+                                            placeholder="Ex: 12345678-abcde.apps.googleusercontent.com"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border">
                                     </div>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">URI de Redirecionamento Autorizada</label>
-                                    <div class="bg-white p-3 rounded-lg text-xs font-mono select-all border border-gray-200" id="google_redirect_uri_display">
-                                        <!-- Preenchido via JavaScript -->
-                                    </div>
-                                    <p class="text-[10px] text-gray-500 mt-1">Copie esta URI e cadastre-na no console de credenciais do Google Cloud para este app.</p>
-                                </div>
-
-                                <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">Template de E-mail de Fatura (Modelo de Documento)</label>
-                                    <select name="email_fatura_template_id" id="email_fatura_template_id"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 p-2.5 border bg-white">
-                                        <option value="">(Recomendado) Usar Modelo Premium Padrão da Dinovatech</option>
-                                        <!-- Preenchido via JavaScript -->
-                                    </select>
-                                    <p class="text-[10px] text-gray-500 mt-1">Escolha um modelo de documento cadastrado para servir de corpo do e-mail. Utilize tags como {{NOME_CLIENTE}}, {{VALOR_FATURA}}, {{DATA_VENCIMENTO}}, {{LINK_PAGAMENTO}}, {{BLOCO_NFSE}}, {{ITENS_FATURA}}.</p>
-                                </div>
-
-                                <!-- OAuth Bind Status -->
-                                <div class="md:col-span-2 bg-blue-50 border border-blue-100 rounded-lg p-4 mt-2">
-                                    <h5 class="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">Vínculo de Conta de Envio</h5>
-                                    <div id="gmail_connection_status" class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div class="flex items-center text-sm text-blue-800">
-                                            <span class="material-icons mr-2 text-blue-600 text-base" id="gmail_status_icon">help_outline</span>
-                                            <span id="gmail_status_text">Carregando status de vinculação...</span>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Google Client Secret</label>
+                                        <div class="relative">
+                                            <input type="password" name="google_oauth_client_secret" id="google_oauth_client_secret"
+                                                placeholder="Preencha apenas para alterar ou cadastrar"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border pr-10">
+                                            <button type="button" onclick="togglePass('google_oauth_client_secret')"
+                                                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                                <span class="material-icons text-sm">visibility</span>
+                                            </button>
                                         </div>
-                                        <div id="gmail_action_buttons">
-                                            <!-- Renderizado via JavaScript -->
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">URI de Redirecionamento Autorizada</label>
+                                        <div class="bg-white p-3 rounded-lg text-xs font-mono select-all border border-gray-200" id="google_redirect_uri_display">
+                                            <!-- Preenchido via JavaScript -->
+                                        </div>
+                                        <p class="text-[10px] text-gray-500 mt-1">Copie esta URI e cadastre-na no console de credenciais do Google Cloud para este app.</p>
+                                    </div>
+
+                                    <div class="md:col-span-2 border-t border-gray-200 pt-4 mt-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Template de E-mail de Fatura (Modelo de Documento)</label>
+                                        <select name="email_fatura_template_id" id="email_fatura_template_id"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 p-2.5 border bg-white">
+                                            <option value="">(Recomendado) Usar Modelo Premium Padrão da Dinovatech</option>
+                                            <!-- Preenchido via JavaScript -->
+                                        </select>
+                                        <p class="text-[10px] text-gray-500 mt-1">Escolha um modelo de documento cadastrado para servir de corpo do e-mail. Utilize tags como {{NOME_CLIENTE}}, {{VALOR_FATURA}}, {{DATA_VENCIMENTO}}, {{LINK_PAGAMENTO}}, {{BLOCO_NFSE}}, {{ITENS_FATURA}}.</p>
+                                    </div>
+
+                                    <!-- OAuth Bind Status -->
+                                    <div class="md:col-span-2 bg-blue-50 border border-blue-100 rounded-lg p-4 mt-2">
+                                        <h5 class="text-xs font-bold text-blue-900 uppercase tracking-wider mb-2">Vínculo de Conta de Envio</h5>
+                                        <div id="gmail_connection_status" class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                            <div class="flex items-center text-sm text-blue-800">
+                                                <span class="material-icons mr-2 text-blue-600 text-base" id="gmail_status_icon">help_outline</span>
+                                                <span id="gmail_status_text">Carregando status de vinculação...</span>
+                                            </div>
+                                            <div id="gmail_action_buttons">
+                                                <!-- Renderizado via JavaScript -->
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -688,60 +724,71 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
                         <!-- ContaDev-Contabilidade Integration -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
-                            <div class="flex items-center mb-4 border-b border-gray-200 pb-2">
-                                <span class="material-icons text-emerald-600 mr-2">account_balance</span>
-                                <h4 class="font-bold text-gray-800">ContaDev-Contabilidade</h4>
+                            <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+                                <div class="flex items-center">
+                                    <span class="material-icons text-emerald-600 mr-2">account_balance</span>
+                                    <h4 class="font-bold text-gray-800">ContaDev-Contabilidade</h4>
+                                </div>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="contadev_ativo" id="contadev_ativo" value="1"
+                                        onchange="toggleContaDevCard()" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 relative"></div>
+                                    <span class="ml-2 text-xs font-semibold text-gray-700" id="lbl_contadev_status">Inativo</span>
+                                </label>
                             </div>
-                            <p class="text-sm text-gray-600 mb-4">Sincronização e importação direta de notas fiscais emitidas (PDF e XML) para o ContaDev.</p>
+                            <div id="contadev_details_container" class="space-y-4 hidden">
+                                <p class="text-sm text-gray-600 mb-4">Sincronização e importação direta de notas fiscais emitidas (PDF e XML) para o ContaDev.</p>
 
-                            <div id="contadev_form_container" class="space-y-4">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail do Usuário ContaDev</label>
-                                        <input type="email" id="contadev_email_input" placeholder="seu-email@dominio.com"
-                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border">
+                                <div id="contadev_form_container" class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">E-mail do Usuário ContaDev</label>
+                                            <input type="email" id="contadev_email_input" placeholder="seu-email@dominio.com"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Senha do ContaDev</label>
+                                            <div class="relative">
+                                                <input type="password" id="contadev_password_input" placeholder="••••••••••••"
+                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border pr-10">
+                                                <button type="button" onclick="togglePass('contadev_password_input')"
+                                                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                                    <span class="material-icons text-sm">visibility</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Senha do ContaDev</label>
-                                        <div class="relative">
-                                            <input type="password" id="contadev_password_input" placeholder="••••••••••••"
-                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5 border pr-10">
-                                            <button type="button" onclick="togglePass('contadev_password_input')"
-                                                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
-                                                <span class="material-icons text-sm">visibility</span>
+                                    <div class="text-right">
+                                        <button type="button" onclick="loginContaDev()" id="btn_login_contadev"
+                                            class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors shadow-sm inline-flex items-center">
+                                            <span class="material-icons text-sm mr-1">login</span> Conectar ContaDev
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Vínculo Ativo Status Card -->
+                                <div id="contadev_status_container" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div>
+                                            <div class="flex items-center text-sm text-emerald-900 font-bold mb-1">
+                                                <span class="material-icons text-emerald-600 text-base mr-1">check_circle</span>
+                                                ContaDev Conectado e Ativo
+                                            </div>
+                                            <div class="text-xs text-emerald-800 space-y-0.5">
+                                                <p><strong>E-mail:</strong> <span id="contadev_status_email">...</span></p>
+                                                <p><strong>Usuário:</strong> <span id="contadev_status_user">...</span></p>
+                                                <p><strong>Empresa Vinculada:</strong> <span id="contadev_status_company">...</span></p>
+                                                <p class="text-[10px] text-emerald-600 font-mono"><strong>CNPJ ID:</strong> <span id="contadev_status_cnpj_id">...</span></p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <button type="button" onclick="desconectarContaDev()"
+                                                class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+                                                Desconectar
                                             </button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-right">
-                                    <button type="button" onclick="loginContaDev()" id="btn_login_contadev"
-                                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition-colors shadow-sm inline-flex items-center">
-                                        <span class="material-icons text-sm mr-1">login</span> Conectar ContaDev
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Vínculo Ativo Status Card -->
-                            <div id="contadev_status_container" class="hidden bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <div>
-                                        <div class="flex items-center text-sm text-emerald-900 font-bold mb-1">
-                                            <span class="material-icons text-emerald-600 text-base mr-1">check_circle</span>
-                                            ContaDev Conectado e Ativo
-                                        </div>
-                                        <div class="text-xs text-emerald-800 space-y-0.5">
-                                            <p><strong>E-mail:</strong> <span id="contadev_status_email">...</span></p>
-                                            <p><strong>Usuário:</strong> <span id="contadev_status_user">...</span></p>
-                                            <p><strong>Empresa Vinculada:</strong> <span id="contadev_status_company">...</span></p>
-                                            <p class="text-[10px] text-emerald-600 font-mono"><strong>CNPJ ID:</strong> <span id="contadev_status_cnpj_id">...</span></p>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <button type="button" onclick="desconectarContaDev()"
-                                            class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
-                                            Desconectar
-                                        </button>
-                                    </div>
                             </div>
                         </div>
 
@@ -841,6 +888,15 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                     <div>
                                         <strong>Nota sobre Repasse de Taxas:</strong> O repasse de taxas aos clientes (se ativado) pode ser configurado diretamente no aplicativo mobile da InfinitePay.
                                     </div>
+                                </div>
+
+                                <!-- Referral Link -->
+                                <div class="mt-4 pt-3 border-t border-gray-200 text-xs text-gray-600 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                    <span>Ainda não possui conta na InfinitePay?</span>
+                                    <a href="https://infinitepay.onelink.me/IGWD/dinovatech" target="_blank" rel="noopener noreferrer"
+                                        class="inline-flex items-center text-emerald-700 hover:text-emerald-800 font-bold bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200 transition">
+                                        <span class="material-icons text-sm mr-1">open_in_new</span> Abra sua conta InfinitePay
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -1315,6 +1371,22 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         $('#banho_capacidade_simultanea').val(2);
                     }
 
+                    // Toggles das Integrações
+                    $('#api_inter_ativo').prop('checked', d.api_inter_ativo == 1 || d.api_inter_ativo === undefined || d.api_inter_ativo === null);
+                    toggleInterCard();
+
+                    $('#api_oracle_ativo').prop('checked', d.api_oracle_ativo == 1 || d.api_oracle_ativo === undefined || d.api_oracle_ativo === null);
+                    toggleOracleCard();
+
+                    $('#google_calendar_ativo').prop('checked', d.google_calendar_ativo == 1 || d.google_calendar_ativo === undefined || d.google_calendar_ativo === null);
+                    toggleCalendarCard();
+
+                    $('#google_gmail_ativo').prop('checked', d.google_gmail_ativo == 1 || d.google_gmail_ativo === undefined || d.google_gmail_ativo === null);
+                    toggleGmailCard();
+
+                    $('#contadev_ativo').prop('checked', d.contadev_ativo == 1);
+                    toggleContaDevCard();
+
                     // InfinitePay Settings
                     $('#infinitepay_ativo').prop('checked', d.infinitepay_ativo == 1);
                     $('#infinitepay_handle').val(d.infinitepay_handle || '');
@@ -1462,6 +1534,62 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                 } else {
                     body.addClass('hidden');
                     icon.text('expand_more');
+                }
+            };
+
+            // --- INTEGRATION CARDS TOGGLES ---
+            window.toggleInterCard = function () {
+                const isAtivo = $('#api_inter_ativo').is(':checked');
+                if (isAtivo) {
+                    $('#inter_details_container').removeClass('hidden');
+                    $('#lbl_inter_status').text('Ativo').addClass('text-emerald-700').removeClass('text-gray-700');
+                } else {
+                    $('#inter_details_container').addClass('hidden');
+                    $('#lbl_inter_status').text('Inativo').removeClass('text-emerald-700').addClass('text-gray-700');
+                }
+            };
+
+            window.toggleOracleCard = function () {
+                const isAtivo = $('#api_oracle_ativo').is(':checked');
+                if (isAtivo) {
+                    $('#oracle_details_container').removeClass('hidden');
+                    $('#lbl_oracle_status').text('Ativo').addClass('text-emerald-700').removeClass('text-gray-700');
+                } else {
+                    $('#oracle_details_container').addClass('hidden');
+                    $('#lbl_oracle_status').text('Inativo').removeClass('text-emerald-700').addClass('text-gray-700');
+                }
+            };
+
+            window.toggleCalendarCard = function () {
+                const isAtivo = $('#google_calendar_ativo').is(':checked');
+                if (isAtivo) {
+                    $('#calendar_details_container').removeClass('hidden');
+                    $('#lbl_calendar_status').text('Ativo').addClass('text-emerald-700').removeClass('text-gray-700');
+                } else {
+                    $('#calendar_details_container').addClass('hidden');
+                    $('#lbl_calendar_status').text('Inativo').removeClass('text-emerald-700').addClass('text-gray-700');
+                }
+            };
+
+            window.toggleGmailCard = function () {
+                const isAtivo = $('#google_gmail_ativo').is(':checked');
+                if (isAtivo) {
+                    $('#gmail_details_container').removeClass('hidden');
+                    $('#lbl_gmail_status').text('Ativo').addClass('text-emerald-700').removeClass('text-gray-700');
+                } else {
+                    $('#gmail_details_container').addClass('hidden');
+                    $('#lbl_gmail_status').text('Inativo').removeClass('text-emerald-700').addClass('text-gray-700');
+                }
+            };
+
+            window.toggleContaDevCard = function () {
+                const isAtivo = $('#contadev_ativo').is(':checked');
+                if (isAtivo) {
+                    $('#contadev_details_container').removeClass('hidden');
+                    $('#lbl_contadev_status').text('Ativo').addClass('text-emerald-700').removeClass('text-gray-700');
+                } else {
+                    $('#contadev_details_container').addClass('hidden');
+                    $('#lbl_contadev_status').text('Inativo').removeClass('text-emerald-700').addClass('text-gray-700');
                 }
             };
 

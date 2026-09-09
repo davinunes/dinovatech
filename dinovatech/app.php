@@ -800,7 +800,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     $ssh_key_sql_part = ", ssh_key_pem = '$encSshKeySafe'";
                 }
 
-                // --- CONFIGURAÇÃO INFINITEPAY ---
+                // --- CONFIGURAÇÃO INFINITEPAY E DEMAIS INTEGRAÇÕES ---
                 $chkInfCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'infinitepay_ativo'");
                 if ($chkInfCol && mysqli_num_rows($chkInfCol) == 0) {
                     @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_ativo TINYINT DEFAULT 0");
@@ -812,6 +812,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_enviar_endereco TINYINT DEFAULT 1");
                 }
 
+                $chkIntegCols = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'api_inter_ativo'");
+                if ($chkIntegCols && mysqli_num_rows($chkIntegCols) == 0) {
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN api_inter_ativo TINYINT DEFAULT 1");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN api_oracle_ativo TINYINT DEFAULT 1");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN google_calendar_ativo TINYINT DEFAULT 1");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN google_gmail_ativo TINYINT DEFAULT 1");
+                }
+
+                $chkContaDevCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'contadev_ativo'");
+                if ($chkContaDevCol && mysqli_num_rows($chkContaDevCol) == 0) {
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN contadev_ativo TINYINT DEFAULT 0");
+                }
+
                 $infinitepay_ativo = isset($_POST['infinitepay_ativo']) ? 1 : 0;
                 $infinitepay_handle_raw = trim((string)($_POST['infinitepay_handle'] ?? ''));
                 $infinitepay_handle = mysqli_real_escape_string($link, ltrim($infinitepay_handle_raw, '$'));
@@ -820,6 +833,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $infinitepay_detalhar_itens = isset($_POST['infinitepay_detalhar_itens']) ? 1 : 0;
                 $infinitepay_enviar_cliente = isset($_POST['infinitepay_enviar_cliente']) ? 1 : 0;
                 $infinitepay_enviar_endereco = isset($_POST['infinitepay_enviar_endereco']) ? 1 : 0;
+
+                $api_inter_ativo = isset($_POST['api_inter_ativo']) ? 1 : 0;
+                $api_oracle_ativo = isset($_POST['api_oracle_ativo']) ? 1 : 0;
+                $google_calendar_ativo = isset($_POST['google_calendar_ativo']) ? 1 : 0;
+                $google_gmail_ativo = isset($_POST['google_gmail_ativo']) ? 1 : 0;
+                $contadev_ativo = isset($_POST['contadev_ativo']) ? 1 : 0;
 
                 if (!empty($id_config)) {
                     // Update
@@ -855,7 +874,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 infinitepay_usar_redirect='$infinitepay_usar_redirect',
                                 infinitepay_detalhar_itens='$infinitepay_detalhar_itens',
                                 infinitepay_enviar_cliente='$infinitepay_enviar_cliente',
-                                infinitepay_enviar_endereco='$infinitepay_enviar_endereco'
+                                infinitepay_enviar_endereco='$infinitepay_enviar_endereco',
+                                api_inter_ativo='$api_inter_ativo',
+                                api_oracle_ativo='$api_oracle_ativo',
+                                google_calendar_ativo='$google_calendar_ativo',
+                                google_gmail_ativo='$google_gmail_ativo',
+                                contadev_ativo='$contadev_ativo'
                                 $ssh_key_sql_part
                                 $nacional_sql_part
                                 $senha_sql_part
@@ -903,7 +927,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                api_oracle_user, api_oracle_password, api_oracle_url, google_service_account_json,
                                google_oauth_client_id, google_oauth_client_secret, email_fatura_template_id,
                                infinitepay_ativo, infinitepay_handle, infinitepay_usar_webhook, infinitepay_usar_redirect,
-                               infinitepay_detalhar_itens, infinitepay_enviar_cliente, infinitepay_enviar_endereco)
+                               infinitepay_detalhar_itens, infinitepay_enviar_cliente, infinitepay_enviar_endereco,
+                               api_inter_ativo, api_oracle_ativo, google_calendar_ativo, google_gmail_ativo, contadev_ativo)
                                VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$modulo_fiscal_ativo', '$permitir_cadastro_sem_cpf', '$ambiente_padrao', '$serie_rps', 
@@ -917,7 +942,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                '$api_oracle_user', $oracle_pass_val, '$api_oracle_url', $google_json_val,
                                '$google_oauth_client_id', $google_oauth_secret_val, $email_fatura_template_id_val,
                                '$infinitepay_ativo', '$infinitepay_handle', '$infinitepay_usar_webhook', '$infinitepay_usar_redirect',
-                               '$infinitepay_detalhar_itens', '$infinitepay_enviar_cliente', '$infinitepay_enviar_endereco')";
+                               '$infinitepay_detalhar_itens', '$infinitepay_enviar_cliente', '$infinitepay_enviar_endereco',
+                               '$api_inter_ativo', '$api_oracle_ativo', '$google_calendar_ativo', '$google_gmail_ativo', '$contadev_ativo')";
                 }
 
                 if (DBExecute($link, $query)) {

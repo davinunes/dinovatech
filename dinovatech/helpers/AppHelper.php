@@ -439,13 +439,14 @@ class AppHelper
             return false;
         }
 
-        $query = "SELECT api_inter_client_id, api_inter_cert_base64, api_inter_cert_path FROM ConfiguracoesEmissor LIMIT 1";
+        $query = "SELECT api_inter_client_id, api_inter_cert_base64, api_inter_cert_path, api_inter_ativo FROM ConfiguracoesEmissor LIMIT 1";
         $res = mysqli_query($link, $query);
         $active = false;
         if ($res && $row = mysqli_fetch_assoc($res)) {
+            $isToggleAtivo = !isset($row['api_inter_ativo']) || (int)$row['api_inter_ativo'] === 1;
             $hasClientId = !empty(trim($row['api_inter_client_id'] ?? ''));
             $hasCert = !empty($row['api_inter_cert_base64']) || (!empty($row['api_inter_cert_path']) && file_exists(dirname(__DIR__, 2) . '/' . $row['api_inter_cert_path']));
-            if ($hasClientId && $hasCert) {
+            if ($isToggleAtivo && $hasClientId && $hasCert) {
                 $active = true;
             }
         }
