@@ -115,129 +115,171 @@ if ($id_fatura) {
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <title>Fatura #
-        <?= $id_fatura ?> - Área do Cliente
-    </title>
+    <title>Fatura #<?= $id_fatura ?> — <?= ($config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? 'Portal do Cliente') ?></title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <?php
+    $is_vet_fatura = AppHelper::isVetMode();
+    $empresa_nome_fatura = $config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? '';
+    $empresa_logo_fatura = $config_emissor['logo_url'] ?? '';
+    ?>
+    <meta name="theme-color" content="<?= $is_vet_fatura ? '#065f46' : '#0c4a6e' ?>">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        :root {
+            --font: 'Inter', sans-serif;
+            <?php if ($is_vet_fatura): ?>
+            --brand:      #059669;
+            --brand-dark: #065f46;
+            --brand-light:#d1fae5;
+            --header-from:#064e3b;
+            --header-to:  #065f46;
+            --btn-primary:#059669;
+            --btn-hover:  #047857;
+            <?php else: ?>
+            --brand:      #0284c7;
+            --brand-dark: #0c4a6e;
+            --brand-light:#e0f2fe;
+            --header-from:#0c4a6e;
+            --header-to:  #0369a1;
+            --btn-primary:#0284c7;
+            --btn-hover:  #0369a1;
+            <?php endif; ?>
+        }
+        * { box-sizing: border-box; }
+        body { font-family: var(--font); }
+
+        #app-header { background: linear-gradient(135deg, var(--header-from), var(--header-to)); }
+
+        .btn-brand { background: var(--btn-primary); color:#fff; transition: background .2s, transform .15s; }
+        .btn-brand:hover { background: var(--btn-hover); transform: translateY(-1px); }
+
+        /* Sticky bottom action bar no mobile */
+        @media (max-width: 767px) {
+            body { padding-bottom: 80px; }
+            #stickyPayBar { display: flex !important; }
+        }
+        @media (min-width: 768px) {
+            #stickyPayBar { display: none !important; }
         }
 
+        /* Animação fade */
+        @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        .animate-fadeInUp { animation: fadeInUp .4s ease both; }
+
         @media print {
-            body * {
-                visibility: hidden;
-            }
-
-            #printableArea,
-            #printableArea * {
-                visibility: visible;
-            }
-
-            #printableArea {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                margin: 0;
-                padding: 20px;
-            }
-
-            .no-print {
-                display: none !important;
-            }
+            body * { visibility: hidden; }
+            #printableArea, #printableArea * { visibility: visible; }
+            #printableArea { position: absolute; left:0; top:0; width:100%; margin:0; padding:20px; }
+            .no-print { display: none !important; }
+            #app-header, #stickyPayBar { display: none !important; }
         }
     </style>
 </head>
+<body class="bg-gray-100 min-h-screen">
 
-<body class="bg-gray-100 min-h-screen py-8">
-
-    <div class="container mx-auto px-4 max-w-4xl">
-
-        <div class="mb-6 no-print flex justify-between items-center">
-            <a href="index.php" class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
-                <span class="material-icons mr-2">arrow_back</span>
-                Voltar para Minhas Faturas
-            </a>
-            <?php if (!$error_msg): ?>
-                <div>
-                    <button onclick="window.print()"
-                        class="bg-white border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg shadow-sm hover:bg-gray-50 transition-colors mr-2">
-                        Imprimir / PDF
-                    </button>
+    <!-- ====== HEADER UNIFICADO ====== -->
+    <header id="app-header" class="sticky top-0 z-30 shadow-lg no-print">
+        <div class="container mx-auto px-4 h-14 flex justify-between items-center gap-3">
+            <a href="index.php" class="flex items-center gap-2.5 min-w-0">
+                <?php if (!empty($empresa_logo_fatura)): ?>
+                    <img src="<?= htmlspecialchars($empresa_logo_fatura) ?>" alt="Logo" class="h-8 w-auto object-contain shrink-0">
+                <?php else: ?>
+                    <div class="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+                        <span class="material-icons-round text-white text-xl"><?= $is_vet_fatura ? 'pets' : 'computer' ?></span>
+                    </div>
+                <?php endif; ?>
+                <div class="min-w-0">
+                    <p class="text-white/80 text-xs font-medium truncate leading-none"><?= $is_vet_fatura ? 'Portal do Tutor' : 'Área do Cliente' ?></p>
+                    <?php if ($empresa_nome_fatura): ?>
+                    <p class="text-white font-bold text-sm truncate leading-tight"><?= htmlspecialchars($empresa_nome_fatura) ?></p>
+                    <?php endif; ?>
                 </div>
-            <?php endif; ?>
+            </a>
+            <div class="flex items-center gap-2">
+                <?php if (!$error_msg): ?>
+                <button onclick="window.print()"
+                    class="text-xs font-semibold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                    <span class="material-icons-round text-base">print</span>
+                    <span class="hidden sm:inline">Imprimir</span>
+                </button>
+                <?php endif; ?>
+                <a href="index.php"
+                    class="text-xs font-semibold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
+                    <span class="material-icons-round text-base">arrow_back</span>
+                    <span class="hidden sm:inline">Voltar</span>
+                </a>
+            </div>
         </div>
+    </header>
+
+    <div class="container mx-auto px-3 sm:px-4 max-w-4xl py-5 sm:py-7">
 
         <?php if ($error_msg): ?>
-            <div class="bg-white border-l-4 border-red-500 p-8 rounded-lg shadow-sm text-center">
-                <h2 class="text-xl font-bold text-gray-800 mb-2">Ops!</h2>
-                <p class="text-gray-600">
-                    <?= $error_msg ?>
-                </p>
-                <a href="index.php"
-                    class="inline-block mt-4 bg-cyan-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-cyan-700">Voltar</a>
+            <div class="bg-white border border-red-100 p-8 rounded-2xl shadow-sm text-center animate-fadeInUp">
+                <div class="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+                    <span class="material-icons-round text-red-500 text-3xl">error_outline</span>
+                </div>
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Acesso Negado</h2>
+                <p class="text-gray-500 text-sm"><?= htmlspecialchars($error_msg) ?></p>
+                <a href="index.php" class="inline-flex mt-5 items-center gap-2 text-white font-bold px-6 py-2.5 rounded-xl btn-brand text-sm">
+                    <span class="material-icons-round text-base">arrow_back</span> Voltar ao Portal
+                </a>
             </div>
         <?php else: ?>
 
-            <div id="printableArea" class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden relative">
+            <?php
+            $hoje = date('Y-m-d');
+            $isVencida = ($fatura['status'] == 'Em Aberto' && $fatura['data_vencimento'] < $hoje);
+            $statusLabel = $fatura['status'];
+            $statusBgClass = 'bg-gray-100 text-gray-600';
+            if ($fatura['status'] == 'Liquidada') { $statusBgClass = 'bg-emerald-100 text-emerald-700 border border-emerald-200'; }
+            elseif ($isVencida) { $statusLabel = 'Atrasada'; $statusBgClass = 'bg-red-100 text-red-700 border border-red-200'; }
+            else { $statusBgClass = 'bg-amber-100 text-amber-700 border border-amber-200'; }
+            ?>
+
+            <div id="printableArea" class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden relative animate-fadeInUp">
 
                 <!-- Status Badge -->
-                <div class="absolute top-0 right-0 p-8 no-print">
-                    <?php
-                    $hoje = date('Y-m-d');
-                    $isVencida = ($fatura['status'] == 'Em Aberto' && $fatura['data_vencimento'] < $hoje);
-                    $statusLabel = $fatura['status'];
-                    $statusClass = 'bg-gray-100 text-gray-600';
-
-                    if ($fatura['status'] == 'Liquidada') {
-                        $statusClass = 'bg-green-100 text-green-700 border border-green-200';
-                    } elseif ($isVencida) {
-                        $statusLabel = 'Atrasada';
-                        $statusClass = 'bg-red-100 text-red-700 border border-red-200';
-                    } else {
-                        $statusClass = 'bg-yellow-100 text-yellow-700 border border-yellow-200';
-                    }
-                    ?>
-                    <span class="px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide <?= $statusClass ?>">
+                <div class="absolute top-0 right-0 p-5 no-print z-10">
+                    <span class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest <?= $statusBgClass ?>">
                         <?= $statusLabel ?>
                     </span>
                 </div>
 
-                <div class="p-8 md:p-12">
-                    <!-- Watermark/Stamp if Paid -->
+                <div class="p-6 sm:p-8 md:p-10">
+                    <!-- Watermark PAGO -->
                     <?php if ($fatura['status'] === 'Liquidada'): ?>
-                        <div
-                            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-[6px] border-green-600 text-green-600 font-bold text-8xl px-8 py-2 rounded-xl opacity-20 rotate-[-15deg] pointer-events-none select-none z-0 whitespace-nowrap">
-                            PAGO
+                        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none z-0 whitespace-nowrap">
+                            <span style="border: 6px solid #059669; color:#059669; font-weight:900; font-size:5rem; padding:.5rem 2rem; border-radius:1rem; opacity:.12; transform:rotate(-15deg); display:inline-block; letter-spacing:.05em; font-family:var(--font);">PAGO</span>
                         </div>
                     <?php endif; ?>
 
                     <!-- Invoice Header -->
-                    <div class="border-b border-gray-100 pb-8 mb-8 relative z-10">
-                        <div class="w-full">
-                            <?php
-                            $empresaNome = $config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? 'Minha Empresa';
-                            $empresaCnpj = $config_emissor['cnpj'] ?? '00.000.000/0000-00';
-                            $empresaEndereco = $config_emissor['endereco'] . ', ' . $config_emissor['numero'];
-                            if (!empty($config_emissor['complemento']))
-                                $empresaEndereco .= ' - ' . $config_emissor['complemento'];
-                            $empresaEndereco .= ' - ' . $config_emissor['bairro'];
-                            ?>
-                            <h1 class="text-3xl font-bold text-gray-900 mb-1"><?= htmlspecialchars($empresaNome) ?></h1>
-                            <p class="text-gray-500 text-sm mb-2">CNPJ: <?= htmlspecialchars($empresaCnpj) ?></p>
-                            <p class="text-gray-500 text-sm mb-2"><?= htmlspecialchars($empresaEndereco) ?></p>
-                            <p class="text-gray-400 text-xs uppercase tracking-wide">Fatura #
-                                <?= $id_fatura ?>
-                            </p>
+                    <?php
+                    $empresaNome = $config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? 'Minha Empresa';
+                    $empresaCnpj = $config_emissor['cnpj'] ?? '00.000.000/0000-00';
+                    $empresaEndereco = ($config_emissor['endereco'] ?? '') . (($config_emissor['numero'] ?? '') ? ', '.$config_emissor['numero'] : '');
+                    if (!empty($config_emissor['complemento'])) $empresaEndereco .= ' - '.$config_emissor['complemento'];
+                    if (!empty($config_emissor['bairro'])) $empresaEndereco .= ' — '.$config_emissor['bairro'];
+                    ?>
+                    <div class="border-b border-gray-100 pb-6 mb-6 relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                        <div>
+                            <?php if (!empty($empresa_logo_fatura)): ?>
+                                <img src="<?= htmlspecialchars($empresa_logo_fatura) ?>" alt="Logo" class="h-10 object-contain mb-2">
+                            <?php endif; ?>
+                            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-0.5"><?= htmlspecialchars($empresaNome) ?></h1>
+                            <p class="text-gray-400 text-xs">CNPJ: <?= htmlspecialchars($empresaCnpj) ?></p>
+                            <?php if ($empresaEndereco): ?><p class="text-gray-400 text-xs mt-0.5"><?= htmlspecialchars($empresaEndereco) ?></p><?php endif; ?>
+                        </div>
+                        <div class="text-left sm:text-right shrink-0">
+                            <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Fatura</p>
+                            <p class="text-3xl font-extrabold" style="color: var(--brand)">#<?= $id_fatura ?></p>
                         </div>
                     </div>
 
@@ -366,41 +408,56 @@ if ($id_fatura) {
 
             </div>
 
-            <!-- Payment Action Bar (Bottom) -->
+            <!-- Desktop Payment Action Bar -->
             <?php if ($saldo_devedor > 0): ?>
-                <div
-                    class="bg-gray-50 px-8 py-6 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center no-print">
-                    <div class="mb-4 md:mb-0">
-                        <p class="text-gray-600 text-sm flex items-center">
-                            <span class="material-icons text-base align-middle mr-1 text-green-600">security</span>
+                <div class="bg-gray-50/80 px-6 sm:px-8 py-5 border-t border-gray-100 hidden md:flex flex-row justify-between items-center no-print">
+                    <div>
+                        <p class="text-gray-500 text-xs flex items-center gap-1.5">
+                            <span class="material-icons-round text-emerald-500 text-sm">lock</span>
                             Pagamento seguro via Banco Inter
                         </p>
                         <?php if ($pixRecorrenciaAtiva && $pixRecorrenciaAtiva['status'] === 'APROVADA'): ?>
-                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md mt-1">
-                                <span class="material-icons text-xs">bolt</span> Débito Automático Pix Ativo
+                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full mt-1.5">
+                                <span class="material-icons-round text-xs">bolt</span> Débito Automático Pix Ativo
                             </span>
                         <?php endif; ?>
                     </div>
-                    <div class="flex flex-wrap gap-3 w-full md:w-auto justify-end">
+                    <div class="flex flex-wrap gap-3">
                         <?php if (($fatura['permitir_pagamento_parcial'] ?? 0) == 1): ?>
                             <button type="button" onclick="$('#modalPagamentoParcial').removeClass('hidden')"
-                                class="flex-1 md:flex-none bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 px-5 rounded-lg shadow-sm transition text-sm">
+                                class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-5 rounded-xl shadow-sm transition text-sm">
                                 Pagar Outro Valor
                             </button>
                         <?php endif; ?>
-
                         <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
                             <button id="btnAtivarPixAutomatico" type="button"
-                                class="flex-1 md:flex-none bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:from-purple-800 hover:to-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center gap-1.5 text-sm">
-                                <span class="material-icons text-base text-yellow-300">bolt</span>
-                                <span>Ativar Pix Automático</span>
+                                class="bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:opacity-90 text-white font-bold py-2.5 px-5 rounded-xl shadow-md transition flex items-center gap-1.5 text-sm">
+                                <span class="material-icons-round text-base text-yellow-300">bolt</span> Ativar Pix Automático
                             </button>
                         <?php endif; ?>
-
                         <button id="btnPagarPix"
-                            class="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-7 rounded-lg shadow-md transform transition hover:scale-105 flex items-center justify-center text-sm">
-                            <span class="material-icons mr-1.5 text-base">qr_code_2</span>
-                            Pagar Total
+                            class="btn-brand font-extrabold py-2.5 px-7 rounded-xl shadow-md flex items-center gap-2 text-sm">
+                            <span class="material-icons-round text-base">qr_code_2</span> Pagar Total
+                        </button>
+                    </div>
+                </div>
+
+                <!-- STICKY BOTTOM BAR (Mobile) -->
+                <div id="stickyPayBar" class="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-200 shadow-xl no-print p-3 flex flex-col gap-2" style="padding-bottom: env(safe-area-inset-bottom, 12px);">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500 text-xs font-medium">Saldo a pagar</span>
+                        <span class="font-extrabold text-lg text-gray-900">R$ <?= number_format($saldo_devedor, 2, ',', '.') ?></span>
+                    </div>
+                    <div class="flex gap-2">
+                        <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                        <button id="btnAtivarPixAutomaticoMobile" type="button"
+                            class="flex-1 bg-gradient-to-r from-purple-700 to-cyan-600 text-white font-bold py-3 rounded-xl shadow-md text-xs flex items-center justify-center gap-1">
+                            <span class="material-icons-round text-sm text-yellow-300">bolt</span> Pix Automático
+                        </button>
+                        <?php endif; ?>
+                        <button id="btnPagarPixMobile"
+                            class="btn-brand flex-1 font-extrabold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm">
+                            <span class="material-icons-round text-base">qr_code_2</span> Pagar Agora
                         </button>
                     </div>
                 </div>
@@ -852,6 +909,19 @@ if ($id_fatura) {
 
     <?php endif; ?>
     </div>
-</body>
 
+    <script>
+    // Conecta botões duplicados (mobile) aos mesmos handlers do desktop
+    $(document).ready(function(){
+        $('#btnPagarPixMobile').click(function(){
+            $('#modalPix').removeClass('hidden');
+            generatePix();
+        });
+        $('#btnAtivarPixAutomaticoMobile').click(function(){
+            $('#btnAtivarPixAutomatico').trigger('click');
+        });
+    });
+    </script>
+
+</body>
 </html>

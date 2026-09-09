@@ -3218,6 +3218,108 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'upload_foto_pet':
+            // Permite que o tutor envie foto do pet pelo Portal do Cliente
+            $id_cliente = $_SESSION['cliente_id'] ?? '';
+            $id_pet_foto = $_POST['id_pet'] ?? '';
+
+            if (empty($id_cliente)) {
+                $response['message'] = 'Sessão de cliente inválida.';
+                break;
+            }
+            if (empty($id_pet_foto)) {
+                $response['message'] = 'ID do pet não fornecido.';
+                break;
+            }
+            if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
+                $response['message'] = 'Nenhum arquivo enviado ou erro no upload.';
+                break;
+            }
+
+            // Valida que o pet pertence ao cliente logado
+            $idClienteSafe = mysqli_real_escape_string($link, $id_cliente);
+            $idPetSafe = mysqli_real_escape_string($link, $id_pet_foto);
+            $qVerifyPet = "SELECT id_pet FROM Pets WHERE id_pet = '$idPetSafe' AND id_cliente = '$idClienteSafe' LIMIT 1";
+            $rVerifyPet = DBExecute($link, $qVerifyPet);
+            if (!$rVerifyPet || mysqli_num_rows($rVerifyPet) === 0) {
+                $response['message'] = 'Pet não encontrado ou acesso negado.';
+                break;
+            }
+
+            $tmpPath = $_FILES['foto']['tmp_name'];
+            $origName = $_FILES['foto']['name'];
+            $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
+
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
+                $response['message'] = 'Apenas imagens (JPG, PNG, WEBP, GIF) são permitidas.';
+                break;
+            }
+
+            $fotoUrl = '';
+
+            // Tenta Oracle Object Storage
+            $qConf = "SELECT api_oracle_url FROM ConfiguracoesEmissor LIMIT 1";
+            $resConf = DBExecute($link, $qConf);
+            $urlOracle = '';
+            if ($resConf && $rC = mysqli_fetch_assoc($resConf)) {
+                $urlOracle = $rC['api_oracle_url'] ?? '';
+            }
+
+            if (!empty($urlOracle)) {
+                if (substr($urlOracle, -1) !== '/') $urlOracle .= '/';
+                $bucketFileName = 'pets/pet_' . $idPetSafe . '_' . time() . '_' . substr(md5(uniqid()), 0, 6) . '.' . $ext;
+                $urlUpload = $urlOracle . $bucketFileName;
+
+                $content = file_get_contents($tmpPath);
+                $finfo = new finfo(FILEINFO_MIME_TYPE);
+                $mimeType = $finfo->file($tmpPath);
+
+                $ch = curl_init($urlUpload);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: ' . $mimeType,
+                    'Content-Length: ' . strlen($content)
+                ]);
+                curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($httpCode >= 200 && $httpCode < 300) {
+                    $fotoUrl = $urlUpload;
+                }
+            }
+
+            // Fallback: armazenamento local
+            if (empty($fotoUrl)) {
+                $uploadDir = __DIR__ . '/uploads/pets/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $localName = 'pet_' . $idPetSafe . '_' . time() . '.' . $ext;
+                if (move_uploaded_file($tmpPath, $uploadDir . $localName)) {
+                    $fotoUrl = 'uploads/pets/' . $localName;
+                }
+            }
+
+            if (empty($fotoUrl)) {
+                $response['message'] = 'Falha ao salvar a foto do pet. Tente novamente.';
+                break;
+            }
+
+            // Salva a URL na tabela Pets
+            $fotoUrlSafe = mysqli_real_escape_string($link, $fotoUrl);
+            $qUpdate = "UPDATE Pets SET foto_url = '$fotoUrlSafe' WHERE id_pet = '$idPetSafe' AND id_cliente = '$idClienteSafe'";
+            if (DBExecute($link, $qUpdate)) {
+                $response['success'] = true;
+                $response['url'] = $fotoUrl;
+                $response['message'] = 'Foto do pet atualizada com sucesso!';
+            } else {
+                $response['message'] = 'Erro ao salvar a URL da foto no banco de dados.';
+            }
+            break;
+
         case 'get_atendimento_detalhes_cliente':
             $id_cliente = $_SESSION['cliente_id'] ?? '';
             $id_atendimento = $_POST['id_atendimento'] ?? '';
