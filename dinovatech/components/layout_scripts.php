@@ -1,5 +1,6 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="helpers/ibge_helper.js"></script>
 <script>
     // Toggle Sidebar Mobile
     function toggleSidebar() {

@@ -282,6 +282,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Cód. Município (IBGE)</label>
                                         <input type="text" name="codigo_municipio" id="codigo_municipio" value="5300108"
                                             class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        <div id="ibge_cidade_display" class="mt-1.5 min-h-[22px]"></div>
                                     </div>
                                     <div>
                                         <label class="block text-xs font-medium text-gray-700 mb-1">Regime Tributário</label>
@@ -298,6 +299,12 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                         <label for="optante_simples" class="ml-2 block text-xs font-medium text-gray-900">
                                             Optante pelo Simples Nacional
                                         </label>
+                                    </div>
+                                    <div class="col-span-1 md:col-span-3 mt-1">
+                                        <label class="block text-xs font-medium text-gray-500 mb-1">Selecionar Município pela UF</label>
+                                        <select id="select_municipio_helper" class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-xs bg-slate-50" disabled>
+                                            <option value="">-- Selecione uma UF para listar as cidades --</option>
+                                        </select>
                                     </div>
                                 </div>
 
@@ -1066,6 +1073,10 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
     <script>
         $(document).ready(function () {
+            if (window.AppIbge) {
+                AppIbge.bindForm();
+            }
+
             // Carregar dados existentes
             $.post('app.php', {
                 action: 'get_config_fiscal'
@@ -1097,6 +1108,10 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     $('#bairro').val(d.bairro);
                     $('#cep').val(d.cep);
                     $('#uf').val(d.uf);
+
+                    if (window.AppIbge) {
+                        AppIbge.bindForm();
+                    }
 
                     $('#regime_tributario').val(d.regime_tributario);
                     $('#ambiente_padrao').val(d.ambiente_padrao);

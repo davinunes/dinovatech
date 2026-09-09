@@ -1198,6 +1198,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'get_ibge_cidade':
+            $codigo = $_POST['codigo'] ?? $_GET['codigo'] ?? '';
+            $nomeCidade = AppHelper::getCidadePorCodigo($codigo);
+            if ($nomeCidade) {
+                $response['success'] = true;
+                $response['cidade'] = $nomeCidade;
+            } else {
+                $response['success'] = false;
+                $response['message'] = "Município não encontrado.";
+            }
+            break;
+
         case 'git_ssh_action':
             $gitAction = $_POST['git_action'] ?? 'status'; // status, pull, push
             $commitMsg = trim($_POST['commit_msg'] ?? '');

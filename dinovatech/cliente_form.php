@@ -164,7 +164,7 @@ if ($id_cliente) {
                                             <label for="uf"
                                                 class="block text-sm font-medium text-gray-700 mb-1">UF</label>
                                             <input type="text" id="uf" name="uf" value="<?= $cliente['uf'] ?? '' ?>"
-                                                maxlength="2"
+                                                maxlength="2" placeholder="Ex: DF"
                                                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition uppercase">
                                         </div>
                                         <div>
@@ -174,6 +174,15 @@ if ($id_cliente) {
                                             <input type="text" id="codigo_municipio" name="codigo_municipio"
                                                 value="<?= $cliente['codigo_municipio'] ?? '5300108' ?>"
                                                 class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            <div id="ibge_cidade_display" class="mt-1.5 min-h-[22px]"></div>
+                                        </div>
+                                        <div class="col-span-2 mt-1">
+                                            <label for="select_municipio_helper" class="block text-xs font-medium text-gray-500 mb-1">
+                                                Selecionar Município pela UF
+                                            </label>
+                                            <select id="select_municipio_helper" class="w-full p-2.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-50 transition" disabled>
+                                                <option value="">-- Selecione uma UF para listar as cidades --</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -199,6 +208,11 @@ if ($id_cliente) {
     <?php include 'components/layout_scripts.php'; ?>
     <script>
         $(document).ready(function () {
+            // Inicializar IBGE e ViaCEP Helper nos campos de endereço
+            if (window.AppIbge) {
+                AppIbge.bindForm();
+            }
+
             // Check config for optional CPF
             $.post('app.php', { action: 'get_config_fiscal' }, function (res) {
                 if (res.success && res.data && res.data.permitir_cadastro_sem_cpf == 1) {
