@@ -546,6 +546,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $senha_certificado = $_POST['senha_certificado'] ?? '';
             $landing_page_theme = $_POST['landing_page_theme'] ?? 'default';
             $landing_page_path = $_POST['landing_page_path'] ?? '';
+            $banho_checkin_foto_ativo = isset($_POST['banho_checkin_foto_ativo']) ? 1 : 0;
+            $banho_capacidade_simultanea = (isset($_POST['banho_capacidade_simultanea']) && $_POST['banho_capacidade_simultanea'] !== '') ? (int)$_POST['banho_capacidade_simultanea'] : 2;
+            $nacional_sql_part = ", nfse_provider = '$nfse_provider', serie_dps = '$serie_dps', ultimo_dps_homologacao = '$ultimo_dps_homologacao', ultimo_dps_producao = '$ultimo_dps_producao'";
 
             if (empty($razao_social) || empty($cnpj) || ($modulo_fiscal_ativo == 1 && empty($inscricao_municipal))) {
                 $response['message'] = "Razão Social, CNPJ e Inscrição Municipal são obrigatórios para emissão fiscal.";
@@ -609,6 +612,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                             $logo_url_update = 'assets/logo_empresa.' . $ext;
                         }
                     }
+                }
+
+                $logo_sql_part = "";
+                if (!empty($logo_url_update)) {
+                    $logo_url_update_safe = mysqli_real_escape_string($link, $logo_url_update);
+                    $logo_sql_part = ", logo_url = '$logo_url_update_safe'";
                 }
 
                 // --- FILE UPLOAD (PFX - BASE64) ---
@@ -798,6 +807,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     $encSshKey = EncryptionHelper::encrypt($ssh_key_pem_raw);
                     $encSshKeySafe = mysqli_real_escape_string($link, $encSshKey);
                     $ssh_key_sql_part = ", ssh_key_pem = '$encSshKeySafe'";
+                }
+
+                // --- VERIFICAÇÃO E CRIAÇÃO AUTOMÁTICA DE COLUNAS ---
+                $chkBanhoCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'banho_checkin_foto_ativo'");
+                if ($chkBanhoCol && mysqli_num_rows($chkBanhoCol) == 0) {
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN banho_checkin_foto_ativo TINYINT DEFAULT 0");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN banho_capacidade_simultanea INT DEFAULT 2");
+                }
+
+                $chkNacCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'nfse_provider'");
+                if ($chkNacCol && mysqli_num_rows($chkNacCol) == 0) {
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN nfse_provider VARCHAR(20) DEFAULT 'legacy'");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN serie_dps VARCHAR(10) DEFAULT '1'");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ultimo_dps_homologacao INT DEFAULT 0");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ultimo_dps_producao INT DEFAULT 0");
                 }
 
                 // --- CONFIGURAÇÃO INFINITEPAY E DEMAIS INTEGRAÇÕES ---
