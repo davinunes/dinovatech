@@ -743,118 +743,35 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                             </div>
                         </div>
 
-                        <!-- CARD 1: CONFIGURAÇÃO DE ACESSO SSH DO HOST -->
+                        <!-- 1. MIGRAÇÕES DE BANCO DE DADOS (MARIADB) -->
                         <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                            <h4 class="text-base font-bold text-gray-800 mb-1 flex items-center">
-                                <span class="material-icons mr-2 text-cyan-600">terminal</span>
-                                Parâmetros do Host & Autenticação SSH
-                            </h4>
-                            <p class="text-xs text-gray-500 mb-4">
-                                O container PHP se conecta diretamente ao Host da VPS via SSH. Utilize o IP da interface bridge Docker (Gateway padrão: <code>172.17.0.1</code>).
-                            </p>
-
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">IP do Host / Gateway Docker *</label>
-                                    <input type="text" name="ssh_host" id="ssh_host" value="172.17.0.1" required
-                                        placeholder="Ex: 172.17.0.1"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                                </div>
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3 mb-4">
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Porta SSH *</label>
-                                    <input type="number" name="ssh_port" id="ssh_port" value="22" required
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Usuário no Host *</label>
-                                    <input type="text" name="ssh_user" id="ssh_user" value="root" required
-                                        placeholder="Ex: root ou ubuntu"
-                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block text-xs font-semibold text-gray-700 mb-1">Diretório do Projeto no Host (Workdir) *</label>
-                                <input type="text" name="ssh_workdir" id="ssh_workdir" value="/var/www/html" required
-                                    placeholder="Ex: /var/www/html ou /home/ubuntu/dinovatech"
-                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
-                                <p class="text-[11px] text-gray-500 mt-1">Caminho da pasta do repositório Git no Host da VPS onde os comandos serão executados.</p>
-                            </div>
-
-                            <!-- CAMPO DE CHAVE RSA .PEM -->
-                            <div class="border-t border-gray-100 pt-4 mt-4 space-y-3">
-                                <label class="block text-xs font-bold text-gray-700">Chave Privada RSA (.pem)</label>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-[11px] text-gray-600 mb-1">Enviar Arquivo .pem:</label>
-                                        <input type="file" name="arquivo_ssh_key" id="arquivo_ssh_key" accept=".pem,.key,.rsa"
-                                            class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 cursor-pointer border border-gray-300 rounded-lg">
-                                    </div>
-                                    <div>
-                                        <label class="block text-[11px] text-gray-600 mb-1">Ou cole a Chave Privada PEM abaixo:</label>
-                                        <textarea name="ssh_key_pem" id="ssh_key_pem" rows="3"
-                                            placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
-                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5"></textarea>
-                                    </div>
-                                </div>
-                                <p class="text-[11px] text-gray-500 flex items-center gap-1">
-                                    <span class="material-icons text-xs text-green-600">lock</span>
-                                    A chave é criptografada no banco de dados e enviada em memória ao Python via <code>stdin</code> durante a execução dos comandos.
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- CARD 2: COMANDO SUGESTIVO PARA CONFIGURAÇÃO NO DEBIAN / HOST (AUTHORIZED_KEYS) -->
-                        <div id="cardDebianSetup" class="hidden bg-slate-900 text-slate-100 p-6 rounded-2xl border border-slate-800 shadow-md space-y-4">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-1.5">
-                                        <span class="material-icons text-lg">vpn_key</span>
-                                        Autorizar Chave no Servidor Host (Debian / Ubuntu)
+                                    <h4 class="text-base font-bold text-gray-800 flex items-center">
+                                        <span class="material-icons mr-2 text-purple-600">storage</span>
+                                        Atualizações de Banco de Dados (Migrações MariaDB)
                                     </h4>
-                                    <p class="text-xs text-slate-300 mt-1">
-                                        Para permitir que o container PHP acesse a VPS sem senha, execute o comando abaixo no terminal da sua VPS (como usuário informado):
+                                    <p class="text-xs text-gray-500 mt-0.5">
+                                        Verifique e aplique migrações pendentes do MariaDB para manter o esquema de dados sincronizado.
                                     </p>
                                 </div>
-                                <button type="button" onclick="copiarComandoDebian()" id="btnCopiarCmdDebian"
-                                    class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
-                                    <span class="material-icons text-sm">content_copy</span>
-                                    <span id="txtCopiarCmdDebian">Copiar Comando</span>
+                                <button type="button" id="btnRunMigrations"
+                                    class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-sm transition flex items-center text-xs whitespace-nowrap">
+                                    <span class="material-icons text-sm mr-1.5">play_arrow</span> Verificar e Executar Migrações
                                 </button>
                             </div>
 
-                            <!-- Comando Bash de Importação -->
-                            <div>
-                                <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">Comando de Importação Automática (Rodar no Host Debian):</label>
-                                <div class="bg-black/80 p-4 rounded-xl border border-slate-700/80 font-mono text-xs text-green-400 select-all overflow-x-auto whitespace-pre-wrap break-all shadow-inner leading-relaxed" id="ssh_debian_cmd_text">
-                                    <!-- Comando gerado via JS -->
-                                </div>
-                            </div>
-
-                            <!-- Fingerprints e Hash da Chave -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80 text-xs">
-                                <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
-                                    <span class="text-[11px] font-bold text-slate-400 block mb-0.5">Hash SHA-256 Fingerprint:</span>
-                                    <span class="font-mono text-cyan-300 select-all text-xs break-all" id="ssh_fingerprint_sha256">Carregando...</span>
-                                </div>
-                                <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
-                                    <span class="text-[11px] font-bold text-slate-400 block mb-0.5">Hash MD5 Fingerprint:</span>
-                                    <span class="font-mono text-emerald-300 select-all text-xs break-all" id="ssh_fingerprint_md5">Carregando...</span>
-                                </div>
-                            </div>
-
-                            <!-- Chave Pública Completa em Texto -->
-                            <div class="pt-2 border-t border-slate-800/80">
-                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Chave Pública OpenSSH (Formato ssh-rsa):</label>
-                                <div class="font-mono text-[11px] text-slate-300 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 select-all overflow-x-auto break-all" id="ssh_pubkey_text">
-                                    <!-- Chave pública preenchida via JS -->
+                            <div id="migrationLogsContainer" class="hidden">
+                                <h5 class="text-xs font-bold text-gray-700 mb-1">Log de Migrações:</h5>
+                                <div id="migrationLogs"
+                                    class="bg-gray-900 text-green-400 font-mono text-xs p-3.5 rounded-xl h-48 overflow-y-auto whitespace-pre-wrap border border-gray-700">
                                 </div>
                             </div>
                         </div>
 
-                        <!-- CARD 3: PAINEL DE CONTROLE GIT DEPLOY -->
-                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                            <h4 class="text-base font-bold text-gray-800 mb-4 flex items-center">
+                        <!-- 2. PAINEL DE CONTROLE GIT DEPLOY & TERMINAL -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                            <h4 class="text-base font-bold text-gray-800 flex items-center">
                                 <span class="material-icons mr-2 text-indigo-600">cloud_sync</span>
                                 Operações GIT Deploy (VPS Host)
                             </h4>
@@ -886,48 +803,153 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                     </button>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- CARD 4: TERMINAL / CONSOLE DE SAÍDA EM TEMPO REAL -->
-                        <div class="bg-gray-900 text-gray-100 rounded-2xl border border-gray-800 shadow-md overflow-hidden">
-                            <div class="bg-gray-800/90 px-4 py-2.5 border-b border-gray-700 flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                                    <span class="text-xs font-mono text-gray-400 ml-2">Console Git & SSH Terminal</span>
+                            <!-- TERMINAL CONSOLE DE SAÍDA EM TEMPO REAL -->
+                            <div class="bg-gray-900 text-gray-100 rounded-2xl border border-gray-800 shadow-md overflow-hidden pt-1">
+                                <div class="bg-gray-800/90 px-4 py-2 border-b border-gray-700 flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                        <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <span class="text-xs font-mono text-gray-400 ml-2">Console Terminal SSH</span>
+                                    </div>
+                                    <button type="button" onclick="limparTerminalGit()" class="text-[11px] text-gray-400 hover:text-white flex items-center gap-1">
+                                        <span class="material-icons text-xs">clear_all</span> Limpar Console
+                                    </button>
                                 </div>
-                                <button type="button" onclick="limparTerminalGit()" class="text-[11px] text-gray-400 hover:text-white flex items-center gap-1">
-                                    <span class="material-icons text-xs">clear_all</span> Limpar Console
-                                </button>
-                            </div>
 
-                            <div id="gitConsoleOutput"
-                                class="bg-gray-950 text-green-400 font-mono text-xs p-4 h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                                > Aguardando execução de comando SSH...
+                                <div id="gitConsoleOutput"
+                                    class="bg-gray-950 text-green-400 font-mono text-xs p-4 h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                    > Aguardando execução de comando SSH...
+                                </div>
                             </div>
                         </div>
 
-                        <!-- CARD 5: MIGRAÇÕES DE BANCO DE DADOS (MARIADB) -->
-                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-                            <h4 class="text-base font-bold text-gray-800 mb-2 flex items-center">
-                                <span class="material-icons mr-2 text-purple-600">storage</span>
-                                Atualizações de Banco de Dados (Migrações MariaDB)
-                            </h4>
-                            <p class="text-xs text-gray-500 mb-4">
-                                Verifique e aplique migrações pendentes do MariaDB para manter o esquema de dados atualizado com a aplicação.
-                            </p>
-
-                            <button type="button" id="btnRunMigrations"
-                                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-sm transition flex items-center text-xs">
-                                <span class="material-icons text-sm mr-1.5">play_arrow</span> Verificar e Executar Migrações
+                        <!-- 3. CONFIGURAÇÃO DE ACESSO SSH DO HOST (ACCORDION COLAPSÁVEL POR ÚLTIMO) -->
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <button type="button" onclick="toggleAccordionSsh()"
+                                class="w-full p-6 text-left flex items-center justify-between bg-white hover:bg-slate-50/80 transition-colors focus:outline-none">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600">
+                                        <span class="material-icons text-xl">settings</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                                            Parâmetros do Host & Autenticação SSH
+                                        </h4>
+                                        <p class="text-xs text-gray-500 mt-0.5">
+                                            Configuração de IP do Gateway Docker, porta, usuário no host e chave RSA privada (.pem).
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-medium text-gray-400">Configurações SSH</span>
+                                    <span class="material-icons text-gray-500 transition-transform duration-200" id="iconToggleSshConfig">expand_more</span>
+                                </div>
                             </button>
 
-                            <div id="migrationLogsContainer" class="hidden mt-4">
-                                <h5 class="text-xs font-bold text-gray-700 mb-1">Log de Migrações:</h5>
-                                <div id="migrationLogs"
-                                    class="bg-gray-900 text-green-400 font-mono text-xs p-3.5 rounded-lg h-48 overflow-y-auto whitespace-pre-wrap border border-gray-700">
+                            <!-- CORPO DO ACCORDION -->
+                            <div id="containerConfigSshBody" class="hidden p-6 border-t border-gray-100 bg-slate-50/40 space-y-6">
+                                <div>
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">IP do Host / Gateway Docker *</label>
+                                            <input type="text" name="ssh_host" id="ssh_host" value="172.17.0.1" required
+                                                placeholder="Ex: 172.17.0.1"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Porta SSH *</label>
+                                            <input type="number" name="ssh_port" id="ssh_port" value="22" required
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Usuário no Host *</label>
+                                            <input type="text" name="ssh_user" id="ssh_user" value="ubuntu" required
+                                                placeholder="Ex: ubuntu ou root"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-4">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Diretório do Projeto no Host (Workdir) *</label>
+                                        <input type="text" name="ssh_workdir" id="ssh_workdir" value="/var/www/html" required
+                                            placeholder="Ex: /var/www/html ou /home/ubuntu/dinovatech"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                        <p class="text-[11px] text-gray-500 mt-1">Caminho da pasta do repositório Git no Host da VPS onde os comandos serão executados.</p>
+                                    </div>
+
+                                    <!-- CAMPO DE CHAVE RSA .PEM -->
+                                    <div class="border-t border-gray-200/60 pt-4 mt-4 space-y-3">
+                                        <label class="block text-xs font-bold text-gray-700">Chave Privada RSA (.pem)</label>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-[11px] text-gray-600 mb-1">Enviar Arquivo .pem:</label>
+                                                <input type="file" name="arquivo_ssh_key" id="arquivo_ssh_key" accept=".pem,.key,.rsa"
+                                                    class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 cursor-pointer border border-gray-300 rounded-lg">
+                                            </div>
+                                            <div>
+                                                <label class="block text-[11px] text-gray-600 mb-1">Ou cole a Chave Privada PEM abaixo:</label>
+                                                <textarea name="ssh_key_pem" id="ssh_key_pem" rows="3"
+                                                    placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
+                                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5"></textarea>
+                                            </div>
+                                        </div>
+                                        <p class="text-[11px] text-gray-500 flex items-center gap-1">
+                                            <span class="material-icons text-xs text-green-600">lock</span>
+                                            A chave é criptografada no banco de dados e enviada em memória ao Python via <code>stdin</code> durante a execução dos comandos.
+                                        </p>
+                                    </div>
                                 </div>
+
+                                <!-- CARD DEBIAN SETUP (AUTORIZAÇÃO HOST) -->
+                                <div id="cardDebianSetup" class="hidden bg-slate-900 text-slate-100 p-6 rounded-2xl border border-slate-800 shadow-md space-y-4">
+                                    <div class="flex items-start justify-between gap-4">
+                                        <div>
+                                            <h4 class="text-base font-bold text-cyan-400 flex items-center gap-1.5">
+                                                <span class="material-icons text-lg">vpn_key</span>
+                                                Autorizar Chave no Servidor Host (Debian / Ubuntu)
+                                            </h4>
+                                            <p class="text-xs text-slate-300 mt-1">
+                                                Para permitir que o container PHP acesse a VPS sem senha, execute o comando abaixo no terminal da sua VPS (como usuário informado):
+                                            </p>
+                                        </div>
+                                        <button type="button" onclick="copiarComandoDebian()" id="btnCopiarCmdDebian"
+                                            class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
+                                            <span class="material-icons text-sm">content_copy</span>
+                                            <span id="txtCopiarCmdDebian">Copiar Comando</span>
+                                        </button>
+                                    </div>
+
+                                    <!-- Comando Bash de Importação -->
+                                    <div>
+                                        <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">Comando de Importação Automática (Rodar no Host Debian):</label>
+                                        <div class="bg-black/80 p-4 rounded-xl border border-slate-700/80 font-mono text-xs text-green-400 select-all overflow-x-auto whitespace-pre-wrap break-all shadow-inner leading-relaxed" id="ssh_debian_cmd_text">
+                                            <!-- Comando gerado via JS -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Fingerprints e Hash da Chave -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80 text-xs">
+                                        <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                                            <span class="text-[11px] font-bold text-slate-400 block mb-0.5">Hash SHA-256 Fingerprint:</span>
+                                            <span class="font-mono text-cyan-300 select-all text-xs break-all" id="ssh_fingerprint_sha256">Carregando...</span>
+                                        </div>
+                                        <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                                            <span class="text-[11px] font-bold text-slate-400 block mb-0.5">Hash MD5 Fingerprint:</span>
+                                            <span class="font-mono text-emerald-300 select-all text-xs break-all" id="ssh_fingerprint_md5">Carregando...</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Chave Pública Completa em Texto -->
+                                    <div class="pt-2 border-t border-slate-800/80">
+                                        <label class="block text-[11px] font-semibold text-slate-400 mb-1">Chave Pública OpenSSH (Formato ssh-rsa):</label>
+                                        <div class="font-mono text-[11px] text-slate-300 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 select-all overflow-x-auto break-all" id="ssh_pubkey_text">
+                                            <!-- Chave pública preenchida via JS -->
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
 
@@ -1244,16 +1266,21 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     if (d.ssh_status) {
                         $('#ssh_host').val(d.ssh_status.host || '172.17.0.1');
                         $('#ssh_port').val(d.ssh_status.port || 22);
-                        $('#ssh_user').val(d.ssh_user || d.ssh_status.user || 'root');
+                        $('#ssh_user').val(d.ssh_user || d.ssh_status.user || 'ubuntu');
                         $('#ssh_workdir').val(d.ssh_workdir || d.ssh_status.workdir || '/var/www/html');
 
                         if (d.ssh_status.has_key) {
                             $('#ssh_key_status_badge').html('<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-900/80 text-green-300 border border-green-700/60 shadow-xs"><span class="w-2 h-2 mr-1.5 bg-green-400 rounded-full animate-pulse"></span> Chave SSH Cadastrada</span>');
                             $('#cardDebianSetup').removeClass('hidden');
 
+                            // Configuração por último fica colapsada por padrão quando salva
+                            $('#containerConfigSshBody').addClass('hidden');
+                            $('#iconToggleSshConfig').text('expand_more');
+
                             const pubKey = d.ssh_status.public_key || '';
                             if (pubKey) {
-                                const fullCmd = `mkdir -p ~/.ssh && echo "${pubKey}" >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh`;
+                                const pubKeyBody = pubKey.split(' ')[1] || pubKey;
+                                const fullCmd = `mkdir -p ~/.ssh && grep -qF "${pubKeyBody}" ~/.ssh/authorized_keys 2>/dev/null || echo "${pubKey}" >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh`;
                                 $('#ssh_pubkey_text').text(pubKey);
                                 $('#ssh_debian_cmd_text').text(fullCmd);
                             } else {
@@ -1267,6 +1294,10 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         } else {
                             $('#ssh_key_status_badge').html('<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-900/80 text-amber-300 border border-amber-700/60 shadow-xs"><span class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full"></span> Chave Não Cadastrada</span>');
                             $('#cardDebianSetup').addClass('hidden');
+
+                            // Expande a seção se não houver chave
+                            $('#containerConfigSshBody').removeClass('hidden');
+                            $('#iconToggleSshConfig').text('expand_less');
                         }
                     }
 
@@ -1278,7 +1309,20 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                 }
             }, 'json');
 
-            // --- FUNÇÕES JS GIT SSH DEPLOY & TERMINAL ---
+            // --- TOGGLE ACCORDION CONFIG SSH ---
+            window.toggleAccordionSsh = function () {
+                const body = $('#containerConfigSshBody');
+                const icon = $('#iconToggleSshConfig');
+                if (body.hasClass('hidden')) {
+                    body.removeClass('hidden');
+                    icon.text('expand_less');
+                } else {
+                    body.addClass('hidden');
+                    icon.text('expand_more');
+                }
+            };
+
+            // --- FUNÇÕES JS GIT SSH DEPLOY & TERMINAL (SEM MODAIS DE POPUP) ---
             window.logTerminalGit = function (msg) {
                 const time = new Date().toLocaleTimeString();
                 const terminal = $('#gitConsoleOutput');
@@ -1298,31 +1342,15 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     setTimeout(function () {
                         $('#txtCopiarCmdDebian').text('Copiar Comando');
                     }, 2000);
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            toast: true,
-                            position: 'top-end',
-                            icon: 'success',
-                            title: 'Comando copiado com sucesso!',
-                            showConfirmButton: false,
-                            timer: 2500
-                        });
-                    } else {
-                        alert('Comando copiado com sucesso!');
-                    }
                 }).catch(function (err) {
-                    alert('Erro ao copiar comando: ' + err);
+                    logTerminalGit('Erro ao copiar comando: ' + err);
                 });
             };
 
             window.executarGitSshAction = function (gitAction) {
                 const commitMsg = $('#git_commit_msg').val().trim();
                 if (gitAction === 'push' && !commitMsg) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire('Atenção', 'Informe uma mensagem de commit antes de enviar o push!', 'warning');
-                    } else {
-                        alert('Informe uma mensagem de commit antes de enviar o push!');
-                    }
+                    logTerminalGit('ATENÇÃO: Informe uma mensagem de commit antes de enviar o push!');
                     return;
                 }
 
@@ -1351,30 +1379,11 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         if (gitAction === 'push' || gitAction === 'pull') {
                             $('#git_commit_msg').val('');
                         }
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Git Deploy Executado!',
-                                text: res.output ? 'Comando finalizado. Veja os detalhes no console.' : 'Comando finalizado com sucesso.',
-                                timer: 3000,
-                                showConfirmButton: false
-                            });
-                        }
                     } else {
                         logTerminalGit(`ERRO na execução da ação ${gitAction.toUpperCase()}: ${res.message || 'Falha ao executar.'}`);
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire('Erro no Git Deploy', res.message || 'Ocorreu um erro durante a execução.', 'error');
-                        } else {
-                            alert(res.message || 'Erro no Git Deploy');
-                        }
                     }
                 }, 'json').fail(function (xhr) {
                     logTerminalGit(`ERRO de Comunicação HTTP (${xhr.status}).`);
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire('Erro', 'Falha na comunicação com o servidor.', 'error');
-                    } else {
-                        alert('Falha na comunicação com o servidor.');
-                    }
                 }).always(function () {
                     btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed').html(origHtml);
                 });
