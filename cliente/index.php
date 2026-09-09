@@ -1383,14 +1383,9 @@ $nome_inicial = strtok($nome_cliente, ' ');
                             <div>
                                 <!-- Header do Card -->
                                 <div class="flex justify-between items-start gap-2 mb-3">
-                                    <div class="flex items-center gap-2.5 min-w-0">
-                                        <div class="p-2 rounded-xl shrink-0 ${isExpirado ? 'bg-red-50 text-red-600' : (isCancelado ? 'bg-gray-100 text-gray-500' : 'bg-purple-50 text-purple-600')}">
-                                            <span class="material-icons-round text-xl">auto_renew</span>
-                                        </div>
-                                        <div class="min-w-0">
-                                            <h4 class="font-extrabold text-gray-800 text-sm leading-snug truncate" title="${servicoNome}">${servicoNome}</h4>
-                                            <span class="text-[11px] text-gray-400 font-medium">Contrato #${rec.id_recorrencia}</span>
-                                        </div>
+                                    <div class="min-w-0 flex-1 pr-1">
+                                        <h4 class="font-extrabold text-gray-900 text-sm sm:text-base leading-snug break-words" title="${servicoNome}">${servicoNome}</h4>
+                                        <div class="text-[11px] text-gray-400 font-medium mt-0.5">Contrato #${rec.id_recorrencia}</div>
                                     </div>
                                     <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold shrink-0 whitespace-nowrap ${statusClass}">${statusLabel}</span>
                                 </div>
