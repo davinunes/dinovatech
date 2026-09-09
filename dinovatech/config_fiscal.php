@@ -482,8 +482,12 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6">
                             <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
                                 <div class="flex items-center">
-                                    <img src="https://api-financeiro.agilize.com.br/api/image/inter-ce9e01981d.png"
-                                        alt="Inter" class="h-6 mr-3">
+                                    <svg class="h-6 w-auto mr-3" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <rect width="32" height="32" rx="8" fill="#F27321"/>
+                                        <path d="M10 9H16V23H10V9Z" fill="white"/>
+                                        <path d="M19 14H24V23H19V14Z" fill="white"/>
+                                        <text x="38" y="22" fill="#1E293B" font-family="sans-serif" font-weight="800" font-size="18" letter-spacing="-0.5">inter</text>
+                                    </svg>
                                     <h4 class="font-bold text-gray-800">Banco Inter (API Cobrança / PIX)</h4>
                                 </div>
                                 <label class="inline-flex items-center cursor-pointer">

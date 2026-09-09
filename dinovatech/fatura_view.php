@@ -340,6 +340,87 @@ if ($id_fatura) {
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Seção de Pagamento Online (Visão do Cliente na Fatura) -->
+                            <?php 
+                            $isInfinitePayAtivo = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1 && !empty($config_emissor['infinitepay_handle']);
+                            $isInterAtivo = AppHelper::isInterApiActive();
+                            if ($saldo_devedor > 0 && ($isInfinitePayAtivo || $isInterAtivo)): 
+                            ?>
+                                <div class="mt-8 border-t border-gray-200 pt-6 no-print">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                                            <span class="material-icons text-cyan-600 text-base">payment</span>
+                                            Opções de Pagamento Online
+                                        </h3>
+                                        <span class="text-xs text-gray-500 font-medium">Escolha como deseja pagar</span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <!-- Opção 1: InfinitePay (PIX / Cartão) -->
+                                        <?php if ($isInfinitePayAtivo): ?>
+                                            <div class="bg-gray-50/80 border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-emerald-300 hover:bg-emerald-50/20 transition shadow-xs">
+                                                <div>
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <div class="flex items-center gap-2">
+                                                            <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg" 
+                                                                 alt="InfinitePay" class="h-4">
+                                                        </div>
+                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                            PIX / Cartão
+                                                        </span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600 mb-4 leading-relaxed">
+                                                        Pagamento instantâneo via QR Code PIX ou parcelamento no Cartão de Crédito.
+                                                    </p>
+                                                </div>
+                                                <button type="button" onclick="abrirModalInfinitePay()"
+                                                    class="w-full bg-slate-900 hover:bg-slate-800 active:bg-black text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
+                                                    <span class="material-icons text-sm text-emerald-400">credit_card</span>
+                                                    <span>Pagar com InfinitePay</span>
+                                                </button>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <!-- Opção 2: Banco Inter (PIX / Boleto) -->
+                                        <?php if ($isInterAtivo): ?>
+                                            <div class="bg-gray-50/80 border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-orange-300 hover:bg-orange-50/20 transition shadow-xs">
+                                                <div>
+                                                    <div class="flex items-center justify-between mb-2">
+                                                        <div class="flex items-center gap-2">
+                                                            <svg class="h-5 w-auto" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                <rect width="32" height="32" rx="8" fill="#F27321"/>
+                                                                <path d="M10 9H16V23H10V9Z" fill="white"/>
+                                                                <path d="M19 14H24V23H19V14Z" fill="white"/>
+                                                                <text x="38" y="22" fill="#1E293B" font-family="sans-serif" font-weight="800" font-size="18" letter-spacing="-0.5">inter</text>
+                                                            </svg>
+                                                        </div>
+                                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                                                            PIX / Boleto
+                                                        </span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-600 mb-4 leading-relaxed">
+                                                        Pagamento direto via PIX Copia e Cola, Boleto Bancário ou Débito Direto.
+                                                    </p>
+                                                </div>
+                                                <?php if (!empty($contrato_elegivel_pix)): ?>
+                                                    <button type="button" onclick="gerarJornada4Admin(<?= $id_fatura ?>)"
+                                                        class="w-full bg-slate-900 hover:bg-slate-800 active:bg-black text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
+                                                        <span class="material-icons text-sm text-amber-400">bolt</span>
+                                                        <span>Pagar com Banco Inter</span>
+                                                    </button>
+                                                <?php else: ?>
+                                                    <button type="button" onclick="openPagamentoModal()"
+                                                        class="w-full bg-slate-900 hover:bg-slate-800 active:bg-black text-white font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-2 shadow-xs">
+                                                        <span class="material-icons text-sm text-orange-400">qr_code_2</span>
+                                                        <span>Pagar com Banco Inter</span>
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <!-- Add Item Button (No Print) -->
@@ -698,8 +779,9 @@ if ($id_fatura) {
                                         Pague sua fatura online via PIX ou Cartão de Crédito com segurança.
                                     </p>
                                     <button type="button" onclick="abrirModalInfinitePay()"
-                                        class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-2.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow">
-                                        <span class="material-icons text-sm">payment</span> Pagar com InfinitePay
+                                        class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-2.5 px-4 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-2 shadow-xs">
+                                        <span class="material-icons text-sm text-white">credit_card</span>
+                                        <span>Pagar com InfinitePay</span>
                                     </button>
                                 </div>
                             </div>
