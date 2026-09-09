@@ -742,6 +742,105 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                             Desconectar
                                         </button>
                                     </div>
+                            </div>
+                        </div>
+
+                        <!-- InfinitePay Card -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+                            <div class="flex items-center justify-between border-b border-gray-200 pb-3 mb-4">
+                                <div class="flex items-center">
+                                    <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg"
+                                        alt="InfinitePay" class="h-6 mr-3">
+                                    <h4 class="font-bold text-gray-800">InfinitePay (Checkout & PIX/Cartão)</h4>
+                                </div>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="infinitepay_ativo" id="infinitepay_ativo" value="1"
+                                        onchange="toggleInfinitePayCard()" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 relative"></div>
+                                    <span class="ml-2 text-xs font-semibold text-gray-700" id="lbl_infinitepay_status">Inativo</span>
+                                </label>
+                            </div>
+
+                            <div id="infinitepay_details_container" class="space-y-4 hidden">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">InfiniteTag / Handle do Vendedor</label>
+                                    <div class="relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 font-bold">
+                                            $
+                                        </div>
+                                        <input type="text" name="infinitepay_handle" id="infinitepay_handle"
+                                            placeholder="sua-tag"
+                                            oninput="filterInfinitePayHandle(this)"
+                                            onblur="filterInfinitePayHandle(this)"
+                                            class="w-full pl-7 rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Sua InfiniteTag cadastrada no App InfinitePay (digite sem o $).</p>
+                                </div>
+
+                                <!-- Toggles de Payload -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 pt-4 mt-2">
+                                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                        <div>
+                                            <span class="block text-xs font-bold text-gray-800">Usar Webhook Automático</span>
+                                            <span class="block text-[11px] text-gray-500">Notifica o sistema em tempo real sobre os pagamentos efetuados.</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer ml-2">
+                                            <input type="checkbox" name="infinitepay_usar_webhook" id="infinitepay_usar_webhook" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                        <div>
+                                            <span class="block text-xs font-bold text-gray-800">Redirecionamento Pós-Pagamento</span>
+                                            <span class="block text-[11px] text-gray-500">Redireciona o cliente diretamente de volta para a fatura.</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer ml-2">
+                                            <input type="checkbox" name="infinitepay_usar_redirect" id="infinitepay_usar_redirect" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                        <div>
+                                            <span class="block text-xs font-bold text-gray-800">Detalhar Itens da Fatura</span>
+                                            <span class="block text-[11px] text-gray-500">Envia item a item da fatura local (ou resumido se inativo).</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer ml-2">
+                                            <input type="checkbox" name="infinitepay_detalhar_itens" id="infinitepay_detalhar_itens" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                        <div>
+                                            <span class="block text-xs font-bold text-gray-800">Enviar Dados do Cliente</span>
+                                            <span class="block text-[11px] text-gray-500">Preenche Nome, E-mail e Telefone do comprador.</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer ml-2">
+                                            <input type="checkbox" name="infinitepay_enviar_cliente" id="infinitepay_enviar_cliente" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 md:col-span-2">
+                                        <div>
+                                            <span class="block text-xs font-bold text-gray-800">Enviar Endereço de Entrega</span>
+                                            <span class="block text-[11px] text-gray-500">Envia dados de endereço do cliente cadastrado para a InfinitePay.</span>
+                                        </div>
+                                        <label class="relative inline-flex items-center cursor-pointer ml-2">
+                                            <input type="checkbox" name="infinitepay_enviar_endereco" id="infinitepay_enviar_endereco" value="1" checked class="sr-only peer">
+                                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-cyan-600"></div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Note about Fees -->
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800 flex items-start gap-2 mt-3">
+                                    <span class="material-icons text-amber-600 text-base">info</span>
+                                    <div>
+                                        <strong>Nota sobre Repasse de Taxas:</strong> O repasse de taxas aos clientes (se ativado) pode ser configurado diretamente no aplicativo mobile da InfinitePay.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1216,6 +1315,16 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         $('#banho_capacidade_simultanea').val(2);
                     }
 
+                    // InfinitePay Settings
+                    $('#infinitepay_ativo').prop('checked', d.infinitepay_ativo == 1);
+                    $('#infinitepay_handle').val(d.infinitepay_handle || '');
+                    $('#infinitepay_usar_webhook').prop('checked', d.infinitepay_usar_webhook == 1 || d.infinitepay_usar_webhook === undefined);
+                    $('#infinitepay_usar_redirect').prop('checked', d.infinitepay_usar_redirect == 1 || d.infinitepay_usar_redirect === undefined);
+                    $('#infinitepay_detalhar_itens').prop('checked', d.infinitepay_detalhar_itens == 1 || d.infinitepay_detalhar_itens === undefined);
+                    $('#infinitepay_enviar_cliente').prop('checked', d.infinitepay_enviar_cliente == 1 || d.infinitepay_enviar_cliente === undefined);
+                    $('#infinitepay_enviar_endereco').prop('checked', d.infinitepay_enviar_endereco == 1 || d.infinitepay_enviar_endereco === undefined);
+                    toggleInfinitePayCard();
+
                     // Google JSON Status
                     const gStatus = $('#google_json_status');
                     const gInfo = $('#current_google_json_info');
@@ -1353,6 +1462,27 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                 } else {
                     body.addClass('hidden');
                     icon.text('expand_more');
+                }
+            };
+
+            // --- INFINITEPAY FUNCTIONS ---
+            window.toggleInfinitePayCard = function () {
+                const isAtivo = $('#infinitepay_ativo').is(':checked');
+                if (isAtivo) {
+                    $('#infinitepay_details_container').removeClass('hidden');
+                    $('#lbl_infinitepay_status').text('Ativo').addClass('text-emerald-700').removeClass('text-gray-700');
+                } else {
+                    $('#infinitepay_details_container').addClass('hidden');
+                    $('#lbl_infinitepay_status').text('Inativo').removeClass('text-emerald-700').addClass('text-gray-700');
+                }
+            };
+
+            window.filterInfinitePayHandle = function (input) {
+                if (!input) return;
+                let val = input.value || '';
+                val = val.replace(/^\$+/, '').trim();
+                if (input.value !== val) {
+                    input.value = val;
                 }
             };
 

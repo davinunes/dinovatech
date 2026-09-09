@@ -677,6 +677,34 @@ if ($id_fatura) {
                             </div>
                             <?php endif; ?>
 
+                            <!-- Card InfinitePay (Checkout & PIX/Cartão) -->
+                            <?php 
+                            $isInfinitePayAtivo = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1 && !empty($config_emissor['infinitepay_handle']);
+                            if ($isInfinitePayAtivo && $saldo_devedor > 0):
+                            ?>
+                            <div class="mt-4 border-t pt-4">
+                                <div class="bg-gray-900 text-white p-4 rounded-xl shadow-md border border-gray-800 mb-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center space-x-2">
+                                            <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg" 
+                                                 alt="InfinitePay" class="h-4 bg-white p-1 rounded">
+                                            <h3 class="font-bold text-sm text-white">InfinitePay</h3>
+                                        </div>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700/50">
+                                            PIX / Cartão
+                                        </span>
+                                    </div>
+                                    <p class="text-[11px] text-gray-300 mb-3">
+                                        Pague sua fatura online via PIX ou Cartão de Crédito com segurança.
+                                    </p>
+                                    <button type="button" onclick="abrirModalInfinitePay()"
+                                        class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-2.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow">
+                                        <span class="material-icons text-sm">payment</span> Pagar com InfinitePay
+                                    </button>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
                             <button onclick="window.print()"
                                 class="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-50 transition">Imprimir
                                 / PDF</button>
@@ -1190,6 +1218,40 @@ if ($id_fatura) {
         </div>
     </div>
 
+    <!-- Modal InfinitePay -->
+    <div id="modalInfinitePay" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-100 relative animate-fadeIn">
+            <button type="button" onclick="$('#modalInfinitePay').addClass('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <span class="material-icons">close</span>
+            </button>
+            <div class="flex items-center space-x-3 mb-4">
+                <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg" 
+                     alt="InfinitePay" class="h-6">
+                <h3 class="text-lg font-bold text-gray-800">Pagamento via InfinitePay</h3>
+            </div>
+            
+            <div id="infinitePayModalBody" class="space-y-4">
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    Ao prosseguir, você será redirecionado para o ambiente seguro da <strong>InfinitePay</strong> para concluir o pagamento via PIX ou Cartão de Crédito.
+                </p>
+                <div class="bg-gray-50 rounded-xl p-3 border border-gray-200 text-xs text-gray-700 space-y-1">
+                    <p><strong>Fatura:</strong> #<?= $id_fatura ?></p>
+                    <p><strong>Valor a Pagar:</strong> R$ <?= number_format($saldo_devedor, 2, ',', '.') ?></p>
+                </div>
+                <div class="pt-2 flex flex-col gap-2">
+                    <button type="button" id="btnGerarCheckoutInfinite" onclick="gerarCheckoutInfinitePay(<?= $id_fatura ?>)"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
+                        <span class="material-icons text-base">link</span> Gerar Link de Checkout
+                    </button>
+                    <button type="button" onclick="$('#modalInfinitePay').addClass('hidden')"
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Container -->
     <div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 
@@ -1232,6 +1294,47 @@ if ($id_fatura) {
         function openAddItemModal() { $('#modalAddItem').removeClass('hidden'); }
         function openPagamentoModal() {
             $('#modalPagamento').removeClass('hidden');
+        }
+
+        function abrirModalInfinitePay() {
+            $('#modalInfinitePay').removeClass('hidden');
+        }
+
+        function gerarCheckoutInfinitePay(idFatura) {
+            const btn = $('#btnGerarCheckoutInfinite');
+            btn.prop('disabled', true).html('<span class="material-icons animate-spin text-base mr-1">sync</span> Gerando Link...');
+
+            $.post('app.php', { action: 'gerar_checkout_infinitepay', id_fatura: idFatura }, function(res) {
+                btn.prop('disabled', false).html('<span class="material-icons text-base">link</span> Gerar Link de Checkout');
+                if (res.success && res.checkout_url) {
+                    const checkoutUrl = res.checkout_url;
+                    $('#infinitePayModalBody').html(`
+                        <div class="text-center py-2 space-y-3">
+                            <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                                <span class="material-icons text-2xl">check_circle</span>
+                            </div>
+                            <h4 class="font-bold text-gray-800 text-base">Link de Checkout Gerado!</h4>
+                            <p class="text-xs text-gray-600">Clique no botão abaixo para ser direcionado à página segura de pagamento da InfinitePay:</p>
+                            <a href="${checkoutUrl}" target="_blank" class="block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow text-center">
+                                Pagar com InfinitePay
+                            </a>
+                            <button type="button" onclick="navigator.clipboard.writeText('${checkoutUrl}'); alert('Link copiado para a área de transferência!');" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-1.5">
+                                <span class="material-icons text-sm">content_copy</span> Copiar Link
+                            </button>
+                        </div>
+                    `);
+                } else {
+                    const err = res.message || 'Erro ao gerar link de checkout.';
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Erro InfinitePay', err, 'error');
+                    } else {
+                        alert(err);
+                    }
+                }
+            }, 'json').fail(function() {
+                btn.prop('disabled', false).html('<span class="material-icons text-base">link</span> Gerar Link de Checkout');
+                alert('Falha na comunicação com o servidor ao gerar o checkout.');
+            });
         }
 
         function verificarPix(txid) {

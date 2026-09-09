@@ -800,31 +800,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     $ssh_key_sql_part = ", ssh_key_pem = '$encSshKeySafe'";
                 }
 
-                // Garantia de estrutura das colunas SSH em ConfiguracoesEmissor
-                $chkSshCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'ssh_host'");
-                if ($chkSshCol && mysqli_num_rows($chkSshCol) == 0) {
-                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_host VARCHAR(255) DEFAULT '172.17.0.1'");
-                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_port INT DEFAULT 22");
-                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_user VARCHAR(100) DEFAULT 'root'");
-                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_workdir VARCHAR(255) DEFAULT '/var/www/html'");
-                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_key_pem TEXT DEFAULT NULL");
+                // --- CONFIGURAÇÃO INFINITEPAY ---
+                $chkInfCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'infinitepay_ativo'");
+                if ($chkInfCol && mysqli_num_rows($chkInfCol) == 0) {
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_ativo TINYINT DEFAULT 0");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_handle VARCHAR(100) DEFAULT NULL");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_usar_webhook TINYINT DEFAULT 1");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_usar_redirect TINYINT DEFAULT 1");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_detalhar_itens TINYINT DEFAULT 1");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_enviar_cliente TINYINT DEFAULT 1");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN infinitepay_enviar_endereco TINYINT DEFAULT 1");
                 }
 
-                // Logo URL SQL (Update only if present)
-                $logo_sql_part = "";
-                if (!empty($logo_url_update)) {
-                    $logo_url_update_safe = mysqli_real_escape_string($link, $logo_url_update);
-                    $logo_sql_part = ", logo_url = '$logo_url_update_safe'";
-                }
-
-                $banho_checkin_foto_ativo = isset($_POST['banho_checkin_foto_ativo']) ? 1 : 0;
-                $banho_capacidade_simultanea = isset($_POST['banho_capacidade_simultanea']) ? max(1, (int)$_POST['banho_capacidade_simultanea']) : 2;
-
-                $nacional_sql_part = "";
-                $chkNacCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'nfse_provider'");
-                if ($chkNacCol && mysqli_num_rows($chkNacCol) > 0) {
-                    $nacional_sql_part = ", nfse_provider='$nfse_provider', serie_dps='$serie_dps', ultimo_dps_homologacao='$ultimo_dps_homologacao', ultimo_dps_producao='$ultimo_dps_producao'";
-                }
+                $infinitepay_ativo = isset($_POST['infinitepay_ativo']) ? 1 : 0;
+                $infinitepay_handle_raw = trim((string)($_POST['infinitepay_handle'] ?? ''));
+                $infinitepay_handle = mysqli_real_escape_string($link, ltrim($infinitepay_handle_raw, '$'));
+                $infinitepay_usar_webhook = isset($_POST['infinitepay_usar_webhook']) ? 1 : 0;
+                $infinitepay_usar_redirect = isset($_POST['infinitepay_usar_redirect']) ? 1 : 0;
+                $infinitepay_detalhar_itens = isset($_POST['infinitepay_detalhar_itens']) ? 1 : 0;
+                $infinitepay_enviar_cliente = isset($_POST['infinitepay_enviar_cliente']) ? 1 : 0;
+                $infinitepay_enviar_endereco = isset($_POST['infinitepay_enviar_endereco']) ? 1 : 0;
 
                 if (!empty($id_config)) {
                     // Update
@@ -853,7 +848,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 ssh_host='$ssh_host',
                                 ssh_port='$ssh_port',
                                 ssh_user='$ssh_user',
-                                ssh_workdir='$ssh_workdir'
+                                ssh_workdir='$ssh_workdir',
+                                infinitepay_ativo='$infinitepay_ativo',
+                                infinitepay_handle='$infinitepay_handle',
+                                infinitepay_usar_webhook='$infinitepay_usar_webhook',
+                                infinitepay_usar_redirect='$infinitepay_usar_redirect',
+                                infinitepay_detalhar_itens='$infinitepay_detalhar_itens',
+                                infinitepay_enviar_cliente='$infinitepay_enviar_cliente',
+                                infinitepay_enviar_endereco='$infinitepay_enviar_endereco'
                                 $ssh_key_sql_part
                                 $nacional_sql_part
                                 $senha_sql_part
@@ -899,8 +901,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                api_inter_chave_pix, api_inter_conta_corrente,
                                api_inter_cert_base64, api_inter_key_base64, api_inter_ca_base64,
                                api_oracle_user, api_oracle_password, api_oracle_url, google_service_account_json,
-                               google_oauth_client_id, google_oauth_client_secret, email_fatura_template_id)
-                              VALUES 
+                               google_oauth_client_id, google_oauth_client_secret, email_fatura_template_id,
+                               infinitepay_ativo, infinitepay_handle, infinitepay_usar_webhook, infinitepay_usar_redirect,
+                               infinitepay_detalhar_itens, infinitepay_enviar_cliente, infinitepay_enviar_endereco)
+                               VALUES 
                               ('$razao_social', '$nome_fantasia', '$cnpj', '$inscricao_municipal', '$inscricao_estadual', '$codigo_municipio',
                                '$regime_tributario', '$optante_simples', '$modulo_fiscal_ativo', '$permitir_cadastro_sem_cpf', '$ambiente_padrao', '$serie_rps', 
                                '$ultimo_rps_homologacao', '$ultimo_rps_producao', 
@@ -911,7 +915,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                '$api_inter_chave_pix', '$api_inter_conta_corrente',
                                $api_inter_cert_val, $api_inter_key_val, $api_inter_ca_val,
                                '$api_oracle_user', $oracle_pass_val, '$api_oracle_url', $google_json_val,
-                               '$google_oauth_client_id', $google_oauth_secret_val, $email_fatura_template_id_val)";
+                               '$google_oauth_client_id', $google_oauth_secret_val, $email_fatura_template_id_val,
+                               '$infinitepay_ativo', '$infinitepay_handle', '$infinitepay_usar_webhook', '$infinitepay_usar_redirect',
+                               '$infinitepay_detalhar_itens', '$infinitepay_enviar_cliente', '$infinitepay_enviar_endereco')";
                 }
 
                 if (DBExecute($link, $query)) {
@@ -921,6 +927,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     $response['message'] = "Erro ao salvar config: " . mysqli_error($link);
                 }
             }
+            break;
+
+        case 'gerar_checkout_infinitepay':
+            require_once __DIR__ . '/helpers/InfinitePayHelper.php';
+            $id_fatura = $_POST['id_fatura'] ?? $_GET['id_fatura'] ?? null;
+            $res = InfinitePayHelper::gerarLinkCheckout($link, $id_fatura);
+            echo json_encode($res);
             break;
 
         case 'testar_conexao_inter':
