@@ -121,69 +121,73 @@ if ($id_cliente) {
                             </div>
 
                             <!-- Endereço Cliente -->
-                            <div class="border-t pt-4 mt-2">
-                                <h4 class="text-sm font-semibold text-gray-600 mb-3">Endereço (Obrigatório para NFSe)
+                            <div class="border-t border-gray-200 pt-5 mt-4">
+                                <h4 class="text-base font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                    <span class="material-icons text-cyan-600 text-lg">place</span>
+                                    Endereço & Localização (Obrigatório para NFS-e)
                                 </h4>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <!-- Linha 1: CEP, UF, Cód. IBGE -->
+                                    <div class="md:col-span-1">
+                                        <label for="cep" class="block text-xs font-semibold text-gray-700 mb-1">CEP</label>
+                                        <input type="text" id="cep" name="cep" value="<?= $cliente['cep'] ?? '' ?>"
+                                            placeholder="00000-000"
+                                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                    </div>
+                                    <div class="md:col-span-1">
+                                        <label for="uf" class="block text-xs font-semibold text-gray-700 mb-1">UF</label>
+                                        <input type="text" id="uf" name="uf" value="<?= $cliente['uf'] ?? '' ?>"
+                                            maxlength="2" placeholder="Ex: DF"
+                                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition uppercase">
+                                    </div>
                                     <div class="md:col-span-2">
-                                        <label for="endereco"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Logradouro</label>
+                                        <label for="codigo_municipio" class="block text-xs font-semibold text-gray-700 mb-1">Cód. Mun. (IBGE)</label>
+                                        <input type="text" id="codigo_municipio" name="codigo_municipio"
+                                            value="<?= $cliente['codigo_municipio'] ?? '5300108' ?>"
+                                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <div id="ibge_cidade_display" class="mt-1 min-h-[22px]"></div>
+                                    </div>
+
+                                    <!-- Linha 2: Seletor Auxiliar por UF -->
+                                    <div class="md:col-span-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                        <label for="select_municipio_helper" class="block text-xs font-medium text-slate-600 mb-1 flex items-center gap-1">
+                                            <span class="material-icons text-sm text-cyan-600">search</span>
+                                            Buscar e Selecionar Município pela UF
+                                        </label>
+                                        <select id="select_municipio_helper" class="w-full p-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white transition" disabled>
+                                            <option value="">-- Informe uma UF para listar as cidades --</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Linha 3: Logradouro & Número -->
+                                    <div class="md:col-span-3">
+                                        <label for="endereco" class="block text-xs font-semibold text-gray-700 mb-1">Logradouro / Rua</label>
                                         <input type="text" id="endereco" name="endereco"
                                             value="<?= $cliente['endereco'] ?? '' ?>"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            placeholder="Rua, Avenida, Quadra..."
+                                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
-                                    <div>
-                                        <label for="numero"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                                    <div class="md:col-span-1">
+                                        <label for="numero" class="block text-xs font-semibold text-gray-700 mb-1">Número</label>
                                         <input type="text" id="numero" name="numero"
                                             value="<?= $cliente['numero'] ?? '' ?>"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            placeholder="123 / SN"
+                                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
-                                    <div>
-                                        <label for="complemento"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
-                                        <input type="text" id="complemento" name="complemento"
-                                            value="<?= $cliente['complemento'] ?? '' ?>"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                    </div>
-                                    <div>
-                                        <label for="bairro"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+
+                                    <!-- Linha 4: Bairro & Complemento -->
+                                    <div class="md:col-span-2">
+                                        <label for="bairro" class="block text-xs font-semibold text-gray-700 mb-1">Bairro</label>
                                         <input type="text" id="bairro" name="bairro"
                                             value="<?= $cliente['bairro'] ?? '' ?>"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
-                                    <div>
-                                        <label for="cep"
-                                            class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
-                                        <input type="text" id="cep" name="cep" value="<?= $cliente['cep'] ?? '' ?>"
-                                            class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label for="uf"
-                                                class="block text-sm font-medium text-gray-700 mb-1">UF</label>
-                                            <input type="text" id="uf" name="uf" value="<?= $cliente['uf'] ?? '' ?>"
-                                                maxlength="2" placeholder="Ex: DF"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition uppercase">
-                                        </div>
-                                        <div>
-                                            <label for="codigo_municipio"
-                                                class="block text-sm font-medium text-gray-700 mb-1">Cód. Mun.
-                                                (IBGE)</label>
-                                            <input type="text" id="codigo_municipio" name="codigo_municipio"
-                                                value="<?= $cliente['codigo_municipio'] ?? '5300108' ?>"
-                                                class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
-                                            <div id="ibge_cidade_display" class="mt-1.5 min-h-[22px]"></div>
-                                        </div>
-                                        <div class="col-span-2 mt-1">
-                                            <label for="select_municipio_helper" class="block text-xs font-medium text-gray-500 mb-1">
-                                                Selecionar Município pela UF
-                                            </label>
-                                            <select id="select_municipio_helper" class="w-full p-2.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-slate-50 transition" disabled>
-                                                <option value="">-- Selecione uma UF para listar as cidades --</option>
-                                            </select>
-                                        </div>
+                                    <div class="md:col-span-2">
+                                        <label for="complemento" class="block text-xs font-semibold text-gray-700 mb-1">Complemento</label>
+                                        <input type="text" id="complemento" name="complemento"
+                                            value="<?= $cliente['complemento'] ?? '' ?>"
+                                            placeholder="Bloco, Apt, Sala..."
+                                            class="w-full p-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                 </div>
                             </div>

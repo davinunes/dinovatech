@@ -240,71 +240,90 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                 </div>
 
                                 <!-- Endereço Fiscal -->
-                                <div class="border-t border-gray-100 pt-4">
-                                    <h4 class="text-sm font-semibold text-gray-700 mb-3">Endereço da Empresa (Obrigatório para NFS-e)</h4>
-                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="border-t border-gray-100 pt-5 mt-4">
+                                    <h4 class="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                                        <span class="material-icons text-cyan-600 text-base">place</span>
+                                        Endereço da Empresa (Obrigatório para NFS-e)
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <!-- Linha 1: CEP, UF, Cód. IBGE -->
+                                        <div class="md:col-span-1">
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">CEP</label>
+                                            <input type="text" name="cep" id="cep" placeholder="00000-000"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                        </div>
+                                        <div class="md:col-span-1">
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">UF</label>
+                                            <input type="text" name="uf" id="uf" maxlength="2" placeholder="Ex: DF"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 uppercase text-sm">
+                                        </div>
                                         <div class="md:col-span-2">
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Logradouro</label>
-                                            <input type="text" name="endereco" id="endereco"
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Cód. Município (IBGE)</label>
+                                            <input type="text" name="codigo_municipio" id="codigo_municipio" value="5300108"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                            <div id="ibge_cidade_display" class="mt-1 min-h-[22px]"></div>
+                                        </div>
+
+                                        <!-- Linha 2: Seletor Auxiliar por UF -->
+                                        <div class="md:col-span-4 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                            <label for="select_municipio_helper" class="block text-xs font-medium text-slate-600 mb-1 flex items-center gap-1">
+                                                <span class="material-icons text-sm text-cyan-600">search</span>
+                                                Buscar e Selecionar Município pela UF
+                                            </label>
+                                            <select id="select_municipio_helper" class="w-full p-2 text-xs border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white transition" disabled>
+                                                <option value="">-- Informe uma UF para listar as cidades --</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Linha 3: Logradouro & Número -->
+                                        <div class="md:col-span-3">
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Logradouro / Rua</label>
+                                            <input type="text" name="endereco" id="endereco" placeholder="Rua, Avenida, Quadra..."
                                                 class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Número</label>
-                                            <input type="text" name="numero" id="numero"
+                                        <div class="md:col-span-1">
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Número</label>
+                                            <input type="text" name="numero" id="numero" placeholder="123 / SN"
                                                 class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Complemento</label>
-                                            <input type="text" name="complemento" id="complemento"
-                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">Bairro</label>
+
+                                        <!-- Linha 4: Bairro & Complemento -->
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Bairro</label>
                                             <input type="text" name="bairro" id="bairro"
                                                 class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
                                         </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">CEP</label>
-                                            <input type="text" name="cep" id="cep"
+                                        <div class="md:col-span-2">
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Complemento</label>
+                                            <input type="text" name="complemento" id="complemento" placeholder="Bloco, Apt, Sala..."
                                                 class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
-                                        </div>
-                                        <div>
-                                            <label class="block text-xs font-medium text-gray-700 mb-1">UF</label>
-                                            <input type="text" name="uf" id="uf" maxlength="2"
-                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 uppercase text-sm">
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Tributação -->
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-gray-100 pt-4">
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">Cód. Município (IBGE)</label>
-                                        <input type="text" name="codigo_municipio" id="codigo_municipio" value="5300108"
-                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
-                                        <div id="ibge_cidade_display" class="mt-1.5 min-h-[22px]"></div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">Regime Tributário</label>
-                                        <select name="regime_tributario" id="regime_tributario"
-                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
-                                            <option value="simples">Simples Nacional</option>
-                                            <option value="lucro_presumido">Lucro Presumido</option>
-                                            <option value="lucro_real">Lucro Real</option>
-                                        </select>
-                                    </div>
-                                    <div class="flex items-center pt-5">
-                                        <input type="checkbox" name="optante_simples" id="optante_simples" value="1"
-                                            class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
-                                        <label for="optante_simples" class="ml-2 block text-xs font-medium text-gray-900">
-                                            Optante pelo Simples Nacional
-                                        </label>
-                                    </div>
-                                    <div class="col-span-1 md:col-span-3 mt-1">
-                                        <label class="block text-xs font-medium text-gray-500 mb-1">Selecionar Município pela UF</label>
-                                        <select id="select_municipio_helper" class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-xs bg-slate-50" disabled>
-                                            <option value="">-- Selecione uma UF para listar as cidades --</option>
-                                        </select>
+                                <div class="border-t border-gray-100 pt-5 mt-4">
+                                    <h4 class="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                                        <span class="material-icons text-cyan-600 text-base">receipt_long</span>
+                                        Regime Tributário
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-gray-700 mb-1">Regime Tributário</label>
+                                            <select name="regime_tributario" id="regime_tributario"
+                                                class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm">
+                                                <option value="simples">Simples Nacional</option>
+                                                <option value="lucro_presumido">Lucro Presumido</option>
+                                                <option value="lucro_real">Lucro Real</option>
+                                            </select>
+                                        </div>
+                                        <div class="flex items-center pt-5">
+                                            <input type="checkbox" name="optante_simples" id="optante_simples" value="1"
+                                                class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded">
+                                            <label for="optante_simples" class="ml-2 block text-xs font-medium text-gray-900">
+                                                Optante pelo Simples Nacional
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
 
