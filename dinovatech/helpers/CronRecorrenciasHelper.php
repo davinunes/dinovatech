@@ -136,7 +136,20 @@ class CronRecorrenciasHelper
                         $totalValorGerado += $vlrTotalFatura;
 
                         $pixAutomaticoInfo = null;
-                        // 6.1 Verifica se este contrato possui Pix Automático APROVADO
+                        // 6.1 Sincroniza status preventivo se o contrato estiver PENDENTE no banco local (caso o webhook não tenha chegado)
+                        $qPixPend = "SELECT id_rec FROM PixRecorrencias WHERE id_recorrencia = $idRec AND status = 'PENDENTE' LIMIT 1";
+                        $rPixPend = DBExecute($link, $qPixPend);
+                        if ($rPixPend && $rowPend = mysqli_fetch_assoc($rPixPend)) {
+                            if (!empty($rowPend['id_rec'])) {
+                                try {
+                                    PixAutomaticoService::sincronizarStatusRecorrencia($rowPend['id_rec'], $link);
+                                } catch (Exception $eSync) {
+                                    error_log("Aviso ao sincronizar PixRecorrencia pendente ID {$rowPend['id_rec']}: " . $eSync->getMessage());
+                                }
+                            }
+                        }
+
+                        // 6.2 Verifica se este contrato possui Pix Automático APROVADO
                         $qPixCheck = "SELECT * FROM PixRecorrencias WHERE id_recorrencia = $idRec AND status = 'APROVADA' LIMIT 1";
                         $rPixCheck = DBExecute($link, $qPixCheck);
                         if ($rPixCheck && mysqli_num_rows($rPixCheck) > 0) {

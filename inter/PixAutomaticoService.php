@@ -360,12 +360,18 @@ class PixAutomaticoService
         $docLimpo = preg_replace('/[^0-9]/', '', $fatura['cpf_cnpj']);
         $cidadeNome = ($fatura['uf'] === 'DF' || ($fatura['codigo_municipio'] ?? '') === '5300108') ? 'Brasília' : 'Brasília';
         $devedorData = [
+            'nome' => $fatura['nome_cliente'],
             'cep' => preg_replace('/[^0-9]/', '', $fatura['cep'] ?: '70000000'),
             'cidade' => $cidadeNome,
             'email' => $fatura['email_cliente'] ?: 'cliente@dinovatech.com.br',
             'logradouro' => ($fatura['endereco'] ?: 'Endereço') . ($fatura['numero'] ? ', ' . $fatura['numero'] : ''),
             'uf' => $fatura['uf'] ?: 'DF'
         ];
+        if (strlen($docLimpo) === 11) {
+            $devedorData['cpf'] = $docLimpo;
+        } elseif (strlen($docLimpo) === 14) {
+            $devedorData['cnpj'] = $docLimpo;
+        }
 
         $payloadCobr = [
             'idRec' => $pixRec['id_rec'],
