@@ -25,7 +25,7 @@ if ($id_pet) {
         $id_safe = mysqli_real_escape_string($link, $id_pet);
 
         // Fetch Pet + Tutor Info
-        $query = "SELECT p.*, c.id_cliente, c.nome as nome_tutor, c.telefone as tel_tutor, c.email as email_tutor 
+        $query = "SELECT p.*, c.id_cliente, c.nome as nome_tutor, c.telefone as tel_tutor, c.email as email_tutor, c.foto_url as foto_tutor 
                   FROM Pets p 
                   JOIN Clientes c ON p.id_cliente = c.id_cliente 
                   WHERE p.id_pet = '$id_safe'";
@@ -217,10 +217,19 @@ function calcularIdade($data_nasc)
                         </div>
                         <div class="p-6 flex-1 flex flex-col justify-center">
                             <div class="text-center mb-4">
-                                <div
-                                    class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto text-gray-500 mb-2">
-                                    <span class="material-icons text-3xl">person</span>
-                                </div>
+                                <?php
+                                $foto_tutor_url = $pet['foto_tutor'] ?? '';
+                                if (!empty($foto_tutor_url) && !preg_match('~^(https?://|/)~i', $foto_tutor_url)) {
+                                    $foto_tutor_url = '../../' . $foto_tutor_url;
+                                }
+                                ?>
+                                <?php if (!empty($foto_tutor_url)): ?>
+                                    <img src="<?= htmlspecialchars($foto_tutor_url) ?>" class="w-16 h-16 rounded-full object-cover shadow-sm mx-auto mb-2 border-2 border-white" alt="Tutor">
+                                <?php else: ?>
+                                    <div class="w-16 h-16 bg-cyan-100 text-cyan-800 font-extrabold text-xl rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner border-2 border-white">
+                                        <?= mb_strtoupper(mb_substr($pet['nome_tutor'], 0, 1)) ?>
+                                    </div>
+                                <?php endif; ?>
                                 <h4 class="text-lg font-bold text-gray-800">
                                     <?= htmlspecialchars($pet['nome_tutor']) ?>
                                 </h4>

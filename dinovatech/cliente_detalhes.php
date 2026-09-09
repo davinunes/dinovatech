@@ -213,11 +213,20 @@ if ($id_cliente) {
                                             ?>
                                             <tr class="hover:bg-gray-50 transition">
                                                 <td class="p-4 pl-6">
-                                                    <div class="font-bold text-gray-900 text-base"><?= htmlspecialchars($pet['nome']) ?>
-                                                    </div>
-                                                    <div class="flex items-center mt-1">
-                                                        <span
-                                                            class="text-xs uppercase font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded mr-2"><?= htmlspecialchars($pet['especie']) ?></span>
+                                                    <div class="flex items-center gap-3">
+                                                        <?php if (!empty($pet['foto_url'])): ?>
+                                                            <img src="<?= htmlspecialchars($pet['foto_url']) ?>" class="w-8 h-8 rounded-full object-cover shadow-sm border border-gray-200 shrink-0" alt="Pet">
+                                                        <?php else: ?>
+                                                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                                                                <span class="material-icons text-base">pets</span>
+                                                            </div>
+                                                        <?php endif; ?>
+                                                        <div>
+                                                            <div class="font-bold text-gray-900 text-base leading-tight"><?= htmlspecialchars($pet['nome']) ?></div>
+                                                            <div class="flex items-center mt-1">
+                                                                <span class="text-xs uppercase font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded mr-2"><?= htmlspecialchars($pet['especie']) ?></span>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 <td class="p-4">
@@ -246,17 +255,25 @@ if ($id_cliente) {
                             <!-- Mobile Cards -->
                             <div class="md:hidden grid grid-cols-1 gap-4 p-4 bg-gray-50">
                                 <?php foreach ($pets as $pet): ?>
-                                    <div
-                                        class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                                        <div>
-                                            <h4 class="font-bold text-gray-800 text-lg"><?= htmlspecialchars($pet['nome']) ?></h4>
-                                            <div class="text-sm text-gray-500 mt-1">
-                                                <?= htmlspecialchars($pet['especie']) ?> • <?= htmlspecialchars($pet['raca']) ?>
+                                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center gap-3">
+                                        <div class="flex items-center gap-3 min-w-0">
+                                            <?php if (!empty($pet['foto_url'])): ?>
+                                                <img src="<?= htmlspecialchars($pet['foto_url']) ?>" class="w-10 h-10 rounded-full object-cover shadow-sm border border-gray-200 shrink-0" alt="Pet">
+                                            <?php else: ?>
+                                                <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+                                                    <span class="material-icons text-lg">pets</span>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="min-w-0">
+                                                <h4 class="font-bold text-gray-800 text-base leading-tight truncate"><?= htmlspecialchars($pet['nome']) ?></h4>
+                                                <div class="text-xs text-gray-500 truncate mt-0.5">
+                                                    <?= htmlspecialchars($pet['especie']) ?> • <?= htmlspecialchars($pet['raca'] ?: '-') ?>
+                                                </div>
                                             </div>
                                         </div>
                                         <a href="modules/Vet/pet_detalhes.php?id=<?= $pet['id_pet'] ?>"
-                                            class="bg-gray-100 text-cyan-600 p-2 rounded-full">
-                                            <span class="material-icons">arrow_forward</span>
+                                            class="bg-gray-100 text-cyan-600 p-2 rounded-full shrink-0">
+                                            <span class="material-icons text-base">arrow_forward</span>
                                         </a>
                                     </div>
                                 <?php endforeach; ?>
