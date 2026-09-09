@@ -723,39 +723,195 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     </div>
 
                     <!-- TAB: ATUALIZAÇÕES -->
-                    <div id="content-atualizacoes" class="tab-content hidden">
-                        <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
-                            <span class="material-icons mr-2 text-cyan-600">system_update</span> Atualizações de Banco
-                            de Dados
-                        </h3>
+                    <div id="content-atualizacoes" class="tab-content hidden space-y-6">
 
-                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <span class="material-icons text-blue-500">info</span>
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-blue-700">
-                                        Use esta área para aplicar atualizações de esquema do banco de dados (migrações)
-                                        que podem ser necessárias após uma atualização de código.
+                        <!-- CABEÇALHO DA ABA -->
+                        <div class="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 rounded-2xl text-white shadow-md">
+                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div>
+                                    <h3 class="text-xl font-bold flex items-center gap-2 text-white">
+                                        <span class="material-icons text-cyan-400">system_update</span>
+                                        Central de Atualizações & Deploy Remoto (Git / SSH)
+                                    </h3>
+                                    <p class="text-slate-300 text-xs mt-1">
+                                        Gerencie o código da VPS Host via SSH em Python (Paramiko), execute rotinas Git (Status, Pull, Push) e atualize esquemas do MariaDB.
                                     </p>
                                 </div>
+                                <div id="ssh_key_status_badge">
+                                    <!-- Preenchido via JS -->
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-6">
+                        <!-- CARD 1: CONFIGURAÇÃO DE ACESSO SSH DO HOST -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                            <h4 class="text-base font-bold text-gray-800 mb-1 flex items-center">
+                                <span class="material-icons mr-2 text-cyan-600">terminal</span>
+                                Parâmetros do Host & Autenticação SSH
+                            </h4>
+                            <p class="text-xs text-gray-500 mb-4">
+                                O container PHP se conecta diretamente ao Host da VPS via SSH. Utilize o IP da interface bridge Docker (Gateway padrão: <code>172.17.0.1</code>).
+                            </p>
+
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">IP do Host / Gateway Docker *</label>
+                                    <input type="text" name="ssh_host" id="ssh_host" value="172.17.0.1" required
+                                        placeholder="Ex: 172.17.0.1"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Porta SSH *</label>
+                                    <input type="number" name="ssh_port" id="ssh_port" value="22" required
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Usuário no Host *</label>
+                                    <input type="text" name="ssh_user" id="ssh_user" value="root" required
+                                        placeholder="Ex: root ou ubuntu"
+                                        class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Diretório do Projeto no Host (Workdir) *</label>
+                                <input type="text" name="ssh_workdir" id="ssh_workdir" value="/var/www/html" required
+                                    placeholder="Ex: /var/www/html ou /home/ubuntu/dinovatech"
+                                    class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-sm">
+                                <p class="text-[11px] text-gray-500 mt-1">Caminho da pasta do repositório Git no Host da VPS onde os comandos serão executados.</p>
+                            </div>
+
+                            <!-- CAMPO DE CHAVE RSA .PEM -->
+                            <div class="border-t border-gray-100 pt-4 mt-4 space-y-3">
+                                <label class="block text-xs font-bold text-gray-700">Chave Privada RSA (.pem)</label>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[11px] text-gray-600 mb-1">Enviar Arquivo .pem:</label>
+                                        <input type="file" name="arquivo_ssh_key" id="arquivo_ssh_key" accept=".pem,.key,.rsa"
+                                            class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 cursor-pointer border border-gray-300 rounded-lg">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] text-gray-600 mb-1">Ou cole a Chave Privada PEM abaixo:</label>
+                                        <textarea name="ssh_key_pem" id="ssh_key_pem" rows="3"
+                                            placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
+                                            class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 font-mono text-xs p-2.5"></textarea>
+                                    </div>
+                                </div>
+                                <p class="text-[11px] text-gray-500 flex items-center gap-1">
+                                    <span class="material-icons text-xs text-green-600">lock</span>
+                                    A chave é criptografada no banco de dados e enviada em memória ao Python via <code>stdin</code> durante a execução dos comandos.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- CARD 2: COMANDO SUGESTIVO PARA CONFIGURAÇÃO NO DEBIAN / HOST (AUTHORIZED_KEYS) -->
+                        <div id="cardDebianSetup" class="hidden bg-slate-900 text-slate-100 p-6 rounded-2xl border border-slate-800 shadow-md">
+                            <div class="flex items-start justify-between gap-4 mb-3">
+                                <div>
+                                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
+                                        <span class="material-icons text-base">vpn_key</span>
+                                        Autorizar Chave no Servidor Host (Debian / Ubuntu)
+                                    </h4>
+                                    <p class="text-xs text-slate-300 mt-1">
+                                        Para permitir que o container PHP acesse a VPS sem senha, execute o comando abaixo no terminal da sua VPS (como usuário informado):
+                                    </p>
+                                </div>
+                                <button type="button" onclick="copiarComandoDebian()" id="btnCopiarCmdDebian"
+                                    class="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
+                                    <span class="material-icons text-sm">content_copy</span>
+                                    <span id="txtCopiarCmdDebian">Copiar Comando</span>
+                                </button>
+                            </div>
+
+                            <div class="bg-black/70 p-3.5 rounded-xl border border-slate-700/80 font-mono text-xs text-green-400 select-all overflow-x-auto whitespace-pre-wrap break-all" id="ssh_debian_cmd_text">
+                                <!-- Comando gerado via JS -->
+                            </div>
+
+                            <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex flex-wrap justify-between items-center gap-2">
+                                <span>Chave Pública Identificada:</span>
+                                <span class="font-mono text-slate-300 select-all" id="ssh_pubkey_text">ssh-rsa ...</span>
+                            </div>
+                        </div>
+
+                        <!-- CARD 3: PAINEL DE CONTROLE GIT DEPLOY -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                            <h4 class="text-base font-bold text-gray-800 mb-4 flex items-center">
+                                <span class="material-icons mr-2 text-indigo-600">cloud_sync</span>
+                                Operações GIT Deploy (VPS Host)
+                            </h4>
+
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                                <!-- Input Mensagem do Commit -->
+                                <div class="md:col-span-6">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Mensagem do Commit (para Enviar / Push)</label>
+                                    <input type="text" id="git_commit_msg" placeholder="Ex: Atualização automática via Painel Dinovatech"
+                                        class="w-full rounded-lg border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 text-sm">
+                                </div>
+
+                                <!-- Botões de Ação -->
+                                <div class="md:col-span-6 flex flex-wrap gap-2">
+                                    <button type="button" onclick="executarGitSshAction('status')" id="btnGitStatus"
+                                        class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-3 rounded-lg text-xs transition flex items-center justify-center gap-1">
+                                        <span class="material-icons text-sm text-slate-600">info</span>
+                                        <span>Status (git status)</span>
+                                    </button>
+                                    <button type="button" onclick="executarGitSshAction('pull')" id="btnGitPull"
+                                        class="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs shadow-sm transition flex items-center justify-center gap-1">
+                                        <span class="material-icons text-sm">download</span>
+                                        <span>Atualizar (git pull)</span>
+                                    </button>
+                                    <button type="button" onclick="executarGitSshAction('push')" id="btnGitPush"
+                                        class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-3 rounded-lg text-xs shadow-sm transition flex items-center justify-center gap-1">
+                                        <span class="material-icons text-sm">upload</span>
+                                        <span>Enviar (git push)</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CARD 4: TERMINAL / CONSOLE DE SAÍDA EM TEMPO REAL -->
+                        <div class="bg-gray-900 text-gray-100 rounded-2xl border border-gray-800 shadow-md overflow-hidden">
+                            <div class="bg-gray-800/90 px-4 py-2.5 border-b border-gray-700 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                    <span class="text-xs font-mono text-gray-400 ml-2">Console Git & SSH Terminal</span>
+                                </div>
+                                <button type="button" onclick="limparTerminalGit()" class="text-[11px] text-gray-400 hover:text-white flex items-center gap-1">
+                                    <span class="material-icons text-xs">clear_all</span> Limpar Console
+                                </button>
+                            </div>
+
+                            <div id="gitConsoleOutput"
+                                class="bg-gray-950 text-green-400 font-mono text-xs p-4 h-64 overflow-y-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                                > Aguardando execução de comando SSH...
+                            </div>
+                        </div>
+
+                        <!-- CARD 5: MIGRAÇÕES DE BANCO DE DADOS (MARIADB) -->
+                        <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+                            <h4 class="text-base font-bold text-gray-800 mb-2 flex items-center">
+                                <span class="material-icons mr-2 text-purple-600">storage</span>
+                                Atualizações de Banco de Dados (Migrações MariaDB)
+                            </h4>
+                            <p class="text-xs text-gray-500 mb-4">
+                                Verifique e aplique migrações pendentes do MariaDB para manter o esquema de dados atualizado com a aplicação.
+                            </p>
+
                             <button type="button" id="btnRunMigrations"
-                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition-colors flex items-center">
-                                <span class="material-icons mr-2">play_arrow</span> Verificar e Executar Migrações
+                                class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-sm transition flex items-center text-xs">
+                                <span class="material-icons text-sm mr-1.5">play_arrow</span> Verificar e Executar Migrações
                             </button>
-                        </div>
 
-                        <div id="migrationLogsContainer" class="hidden">
-                            <h4 class="text-sm font-bold text-gray-700 mb-2">Log de Execução:</h4>
-                            <div id="migrationLogs"
-                                class="bg-gray-900 text-green-400 font-mono text-xs p-4 rounded-lg h-64 overflow-y-auto whitespace-pre-wrap shadow-inner border border-gray-700">
+                            <div id="migrationLogsContainer" class="hidden mt-4">
+                                <h5 class="text-xs font-bold text-gray-700 mb-1">Log de Migrações:</h5>
+                                <div id="migrationLogs"
+                                    class="bg-gray-900 text-green-400 font-mono text-xs p-3.5 rounded-lg h-48 overflow-y-auto whitespace-pre-wrap border border-gray-700">
+                                </div>
                             </div>
                         </div>
+
                     </div>
 
                     <!-- TAB: USUÁRIOS -->
@@ -1064,8 +1220,140 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         : (!!d.caminho_certificado || !!d.inscricao_municipal);
                     $('#toggle_modulo_fiscal').prop('checked', isFiscalAtivo);
                     toggleCardFiscal();
+
+                    // Preenchimento dos Parâmetros SSH & Status da Chave
+                    if (d.ssh_status) {
+                        $('#ssh_host').val(d.ssh_status.host || '172.17.0.1');
+                        $('#ssh_port').val(d.ssh_status.port || 22);
+                        $('#ssh_user').val(d.ssh_user || d.ssh_status.user || 'root');
+                        $('#ssh_workdir').val(d.ssh_workdir || d.ssh_status.workdir || '/var/www/html');
+
+                        if (d.ssh_status.has_key) {
+                            $('#ssh_key_status_badge').html('<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-900/80 text-green-300 border border-green-700/60 shadow-xs"><span class="w-2 h-2 mr-1.5 bg-green-400 rounded-full animate-pulse"></span> Chave SSH Ativa</span>');
+
+                            if (d.ssh_status.public_key) {
+                                const pubKey = d.ssh_status.public_key;
+                                const fullCmd = `mkdir -p ~/.ssh && echo "${pubKey}" >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh`;
+
+                                $('#ssh_pubkey_text').text(pubKey);
+                                $('#ssh_debian_cmd_text').text(fullCmd);
+                                $('#cardDebianSetup').removeClass('hidden');
+                            }
+                        } else {
+                            $('#ssh_key_status_badge').html('<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-900/80 text-amber-300 border border-amber-700/60 shadow-xs"><span class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full"></span> Chave Não Cadastrada</span>');
+                            $('#cardDebianSetup').addClass('hidden');
+                        }
+                    }
+
+                    // Ativa aba via parâmetro da URL (ex: ?tab=atualizacoes)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('tab')) {
+                        switchTab(urlParams.get('tab'));
+                    }
                 }
             }, 'json');
+
+            // --- FUNÇÕES JS GIT SSH DEPLOY & TERMINAL ---
+            window.logTerminalGit = function (msg) {
+                const time = new Date().toLocaleTimeString();
+                const terminal = $('#gitConsoleOutput');
+                terminal.append('\n[' + time + '] ' + msg);
+                terminal.scrollTop(terminal[0].scrollHeight);
+            };
+
+            window.limparTerminalGit = function () {
+                $('#gitConsoleOutput').html('> Console limpo.');
+            };
+
+            window.copiarComandoDebian = function () {
+                const cmdText = $('#ssh_debian_cmd_text').text().trim();
+                if (!cmdText) return;
+                navigator.clipboard.writeText(cmdText).then(function () {
+                    $('#txtCopiarCmdDebian').text('Copiado!');
+                    setTimeout(function () {
+                        $('#txtCopiarCmdDebian').text('Copiar Comando');
+                    }, 2000);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'success',
+                            title: 'Comando copiado com sucesso!',
+                            showConfirmButton: false,
+                            timer: 2500
+                        });
+                    } else {
+                        alert('Comando copiado com sucesso!');
+                    }
+                }).catch(function (err) {
+                    alert('Erro ao copiar comando: ' + err);
+                });
+            };
+
+            window.executarGitSshAction = function (gitAction) {
+                const commitMsg = $('#git_commit_msg').val().trim();
+                if (gitAction === 'push' && !commitMsg) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Atenção', 'Informe uma mensagem de commit antes de enviar o push!', 'warning');
+                    } else {
+                        alert('Informe uma mensagem de commit antes de enviar o push!');
+                    }
+                    return;
+                }
+
+                if (gitAction === 'push' && !confirm('Deseja realmente disparar o deploy para produção via Git Push?')) {
+                    return;
+                }
+
+                const btn = $('#btnGit' + gitAction.charAt(0).toUpperCase() + gitAction.slice(1));
+                const origHtml = btn.html();
+                btn.prop('disabled', true).addClass('opacity-50 cursor-not-allowed').html('<span class="material-icons text-sm animate-spin">sync</span> Executando...');
+
+                logTerminalGit(`Iniciando ação Git: ${gitAction.toUpperCase()}...`);
+
+                $.post('app.php', {
+                    action: 'git_ssh_action',
+                    git_action: gitAction,
+                    commit_msg: commitMsg
+                }, function (res) {
+                    if (res.output) {
+                        $('#gitConsoleOutput').append('\n' + res.output);
+                        $('#gitConsoleOutput').scrollTop($('#gitConsoleOutput')[0].scrollHeight);
+                    }
+
+                    if (res.success) {
+                        logTerminalGit(`Ação ${gitAction.toUpperCase()} finalizada com SUCESSO (Exit code ${res.exit_code || 0}).`);
+                        if (gitAction === 'push' || gitAction === 'pull') {
+                            $('#git_commit_msg').val('');
+                        }
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Git Deploy Executado!',
+                                text: res.output ? 'Comando finalizado. Veja os detalhes no console.' : 'Comando finalizado com sucesso.',
+                                timer: 3000,
+                                showConfirmButton: false
+                            });
+                        }
+                    } else {
+                        logTerminalGit(`ERRO na execução da ação ${gitAction.toUpperCase()}: ${res.message || 'Falha ao executar.'}`);
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire('Erro no Git Deploy', res.message || 'Ocorreu um erro durante a execução.', 'error');
+                        } else {
+                            alert(res.message || 'Erro no Git Deploy');
+                        }
+                    }
+                }, 'json').fail(function (xhr) {
+                    logTerminalGit(`ERRO de Comunicação HTTP (${xhr.status}).`);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire('Erro', 'Falha na comunicação com o servidor.', 'error');
+                    } else {
+                        alert('Falha na comunicação com o servidor.');
+                    }
+                }).always(function () {
+                    btn.prop('disabled', false).removeClass('opacity-50 cursor-not-allowed').html(origHtml);
+                });
+            };
 
             // Toggle Fiscal Card display
             window.toggleCardFiscal = function () {

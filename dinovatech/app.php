@@ -779,6 +779,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     }
                 }
 
+                // --- CONFIGURAÇÃO SSH DEPLOY ---
+                $ssh_host = mysqli_real_escape_string($link, trim((string)($_POST['ssh_host'] ?? '172.17.0.1')));
+                $ssh_port = (int)($_POST['ssh_port'] ?? 22);
+                $ssh_user = mysqli_real_escape_string($link, trim((string)($_POST['ssh_user'] ?? 'root')));
+                $ssh_workdir = mysqli_real_escape_string($link, trim((string)($_POST['ssh_workdir'] ?? '/var/www/html')));
+                $ssh_key_pem_raw = trim((string)($_POST['ssh_key_pem'] ?? ''));
+
+                if (isset($_FILES['arquivo_ssh_key']) && $_FILES['arquivo_ssh_key']['error'] === UPLOAD_ERR_OK) {
+                    $uploadedSshKey = file_get_contents($_FILES['arquivo_ssh_key']['tmp_name']);
+                    if (!empty($uploadedSshKey)) {
+                        $ssh_key_pem_raw = trim($uploadedSshKey);
+                    }
+                }
+
+                $ssh_key_sql_part = "";
+                if (!empty($ssh_key_pem_raw)) {
+                    $encSshKey = EncryptionHelper::encrypt($ssh_key_pem_raw);
+                    $encSshKeySafe = mysqli_real_escape_string($link, $encSshKey);
+                    $ssh_key_sql_part = ", ssh_key_pem = '$encSshKeySafe'";
+                }
+
+                // Garantia de estrutura das colunas SSH em ConfiguracoesEmissor
+                $chkSshCol = DBExecute($link, "SHOW COLUMNS FROM ConfiguracoesEmissor LIKE 'ssh_host'");
+                if ($chkSshCol && mysqli_num_rows($chkSshCol) == 0) {
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_host VARCHAR(255) DEFAULT '172.17.0.1'");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_port INT DEFAULT 22");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_user VARCHAR(100) DEFAULT 'root'");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_workdir VARCHAR(255) DEFAULT '/var/www/html'");
+                    @DBExecute($link, "ALTER TABLE ConfiguracoesEmissor ADD COLUMN ssh_key_pem TEXT DEFAULT NULL");
+                }
+
                 // Logo URL SQL (Update only if present)
                 $logo_sql_part = "";
                 if (!empty($logo_url_update)) {
@@ -818,7 +849,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 api_oracle_user='$api_oracle_user',
                                 api_oracle_url='$api_oracle_url',
                                 google_oauth_client_id='$google_oauth_client_id',
-                                email_fatura_template_id=$email_fatura_template_id_val
+                                email_fatura_template_id=$email_fatura_template_id_val,
+                                ssh_host='$ssh_host',
+                                ssh_port='$ssh_port',
+                                ssh_user='$ssh_user',
+                                ssh_workdir='$ssh_workdir'
+                                $ssh_key_sql_part
                                 $nacional_sql_part
                                 $senha_sql_part
                                 $pfx_sql_part
@@ -1073,6 +1109,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
                 $row['templates_list'] = $templates;
 
+                // --- STATUS E EXTRAÇÃO DA CHAVE PÚBLICA SSH ---
+                $sshStatus = [
+                    'has_key' => false,
+                    'host' => $row['ssh_host'] ?? '172.17.0.1',
+                    'port' => (int)($row['ssh_port'] ?? 22),
+                    'user' => $row['ssh_user'] ?? 'root',
+                    'workdir' => $row['ssh_workdir'] ?? '/var/www/html',
+                    'public_key' => ''
+                ];
+
+                if (!empty($row['ssh_key_pem'])) {
+                    try {
+                        $pemDecrypted = EncryptionHelper::decrypt($row['ssh_key_pem']);
+                        if (!empty($pemDecrypted)) {
+                            $sshStatus['has_key'] = true;
+
+                            $descriptorspec = [
+                                0 => ["pipe", "r"], // stdin
+                                1 => ["pipe", "w"], // stdout
+                                2 => ["pipe", "w"]  // stderr
+                            ];
+                            $pythonCmd = "python3 " . escapeshellarg(__DIR__ . "/py/ssh.py") . " --get-pubkey";
+                            $process = proc_open($pythonCmd, $descriptorspec, $pipes);
+                            if (is_resource($process)) {
+                                fwrite($pipes[0], $pemDecrypted);
+                                fclose($pipes[0]);
+                                $pubKeyOutput = stream_get_contents($pipes[1]);
+                                fclose($pipes[1]);
+                                fclose($pipes[2]);
+                                proc_close($process);
+                                $sshStatus['public_key'] = trim($pubKeyOutput);
+                            }
+                        }
+                    } catch (Exception $e) {
+                    }
+                }
+                $row['ssh_status'] = $sshStatus;
+                unset($row['ssh_key_pem']);
+
                 unset($row['google_service_account_json']);
 
                 $response['success'] = true;
@@ -1081,6 +1156,92 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $response['success'] = true;
                 $response['data'] = null; // Vazio, formulário em branco
             }
+            break;
+
+        case 'git_ssh_action':
+            $gitAction = $_POST['git_action'] ?? 'status'; // status, pull, push
+            $commitMsg = trim($_POST['commit_msg'] ?? '');
+
+            $query = "SELECT ssh_host, ssh_port, ssh_user, ssh_workdir, ssh_key_pem FROM ConfiguracoesEmissor LIMIT 1";
+            $resConf = DBExecute($link, $query);
+            if (!$resConf || mysqli_num_rows($resConf) == 0) {
+                $response['success'] = false;
+                $response['message'] = "Configurações do emissor não encontradas.";
+                break;
+            }
+
+            $config = mysqli_fetch_assoc($resConf);
+            $sshHost = !empty($config['ssh_host']) ? $config['ssh_host'] : '172.17.0.1';
+            $sshPort = !empty($config['ssh_port']) ? (int)$config['ssh_port'] : 22;
+            $sshUser = !empty($config['ssh_user']) ? $config['ssh_user'] : 'root';
+            $sshWorkdir = !empty($config['ssh_workdir']) ? $config['ssh_workdir'] : '/var/www/html';
+            $sshKeyPemEnc = $config['ssh_key_pem'] ?? '';
+
+            if (empty($sshKeyPemEnc)) {
+                $response['success'] = false;
+                $response['message'] = "Nenhuma chave RSA SSH cadastrada. Cadastre a chave (.pem) na aba Atualizações.";
+                break;
+            }
+
+            $pemDecrypted = EncryptionHelper::decrypt($sshKeyPemEnc);
+            if (empty($pemDecrypted)) {
+                $response['success'] = false;
+                $response['message'] = "Erro ao descriptografar a chave RSA SSH.";
+                break;
+            }
+
+            // Monta o comando Git remoto a ser executado na VPS Host
+            if ($gitAction === 'status') {
+                $gitCmd = "cd " . escapeshellarg($sshWorkdir) . " && git status 2>&1";
+            } elseif ($gitAction === 'pull') {
+                $gitCmd = "cd " . escapeshellarg($sshWorkdir) . " && git pull 2>&1";
+            } elseif ($gitAction === 'push') {
+                if (empty($commitMsg)) {
+                    $commitMsg = "Atualização automática via Painel Dinovatech";
+                }
+                $safeMsg = addslashes($commitMsg);
+                $gitCmd = "cd " . escapeshellarg($sshWorkdir) . " && git pull 2>&1 && git add . && git commit -m \"$safeMsg\" 2>&1 && git push 2>&1";
+            } else {
+                $response['success'] = false;
+                $response['message'] = "Ação Git inválida.";
+                break;
+            }
+
+            $pythonScript = __DIR__ . '/py/ssh.py';
+            $cmd = "python3 " . escapeshellarg($pythonScript) . " --host " . escapeshellarg($sshHost) . " --port " . (int)$sshPort . " --user " . escapeshellarg($sshUser) . " --cmd " . escapeshellarg($gitCmd);
+
+            $descriptorspec = [
+                0 => ["pipe", "r"], // stdin
+                1 => ["pipe", "w"], // stdout
+                2 => ["pipe", "w"]  // stderr
+            ];
+
+            $process = proc_open($cmd, $descriptorspec, $pipes);
+            if (!is_resource($process)) {
+                $response['success'] = false;
+                $response['message'] = "Falha ao executar o script Python SSH.";
+                break;
+            }
+
+            fwrite($pipes[0], $pemDecrypted);
+            fclose($pipes[0]);
+
+            $stdout = stream_get_contents($pipes[1]);
+            fclose($pipes[1]);
+
+            $stderr = stream_get_contents($pipes[2]);
+            fclose($pipes[2]);
+
+            $exitCode = proc_close($process);
+
+            $output = $stdout;
+            if (!empty($stderr)) {
+                $output .= "\n" . $stderr;
+            }
+
+            $response['success'] = ($exitCode === 0);
+            $response['output'] = $output ?: 'Nenhuma resposta retornada.';
+            $response['exit_code'] = $exitCode;
             break;
 
         case 'auditar_cadastro_sefaz':
