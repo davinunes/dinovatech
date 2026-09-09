@@ -19,6 +19,22 @@ if ($rCfg && $cfg = mysqli_fetch_assoc($rCfg)) {
     if (strlen($cnpj_raw) === 14) { // CNPJ válido
         $empresa_nome = $cfg['nome_fantasia'] ?: $cfg['razao_social'] ?: '';
         $empresa_logo = $cfg['logo_url'] ?? '';
+        if (!empty($empresa_logo) && !preg_match('~^(https?://|/)~i', $empresa_logo)) {
+            $empresa_logo = '../dinovatech/' . $empresa_logo;
+        }
+    }
+}
+
+// Busca foto do perfil do cliente logado
+$foto_cliente = '';
+if ($cliente_logado) {
+    $id_cli_safe = (int)$_SESSION['cliente_id'];
+    $rCli = DBExecute($link_cfg, "SELECT foto_url FROM Clientes WHERE id_cliente = '$id_cli_safe' LIMIT 1");
+    if ($rCli && $cli = mysqli_fetch_assoc($rCli)) {
+        $foto_cliente = $cli['foto_url'] ?? '';
+        if (!empty($foto_cliente) && !preg_match('~^(https?://|/)~i', $foto_cliente)) {
+            $foto_cliente = '../dinovatech/' . $foto_cliente;
+        }
     }
 }
 DBClose($link_cfg);
@@ -326,16 +342,24 @@ $nome_inicial = strtok($nome_cliente, ' ');
             <!-- User info + logout -->
             <div class="flex items-center gap-2 sm:gap-3 shrink-0">
                 <!-- Greeting (desktop) -->
-                <span class="hidden md:flex items-center gap-1.5 text-white/90 text-sm">
-                    <span class="inline-flex w-8 h-8 rounded-full bg-white/15 items-center justify-center font-bold text-white text-sm shrink-0">
-                        <?= mb_strtoupper(mb_substr($nome_inicial ?: 'C', 0, 1)) ?>
-                    </span>
+                <span class="hidden md:flex items-center gap-2 text-white/90 text-sm">
+                    <?php if (!empty($foto_cliente)): ?>
+                        <img src="<?= htmlspecialchars($foto_cliente) ?>" id="headerAvatarImgDesktop" class="w-8 h-8 rounded-full object-cover border border-white/30 shadow-sm shrink-0" alt="Avatar">
+                    <?php else: ?>
+                        <span id="headerAvatarInitialDesktop" class="inline-flex w-8 h-8 rounded-full bg-white/15 items-center justify-center font-bold text-white text-sm shrink-0">
+                            <?= mb_strtoupper(mb_substr($nome_inicial ?: 'C', 0, 1)) ?>
+                        </span>
+                    <?php endif; ?>
                     Olá, <strong><?= htmlspecialchars($nome_inicial ?: $nome_cliente) ?></strong>! 👋
                 </span>
                 <!-- Avatar (mobile) -->
-                <span class="flex md:hidden w-8 h-8 rounded-full bg-white/20 items-center justify-center font-bold text-white text-sm shrink-0">
-                    <?= mb_strtoupper(mb_substr($nome_inicial ?: 'C', 0, 1)) ?>
-                </span>
+                <?php if (!empty($foto_cliente)): ?>
+                    <img src="<?= htmlspecialchars($foto_cliente) ?>" id="headerAvatarImgMobile" class="flex md:hidden w-8 h-8 rounded-full object-cover border border-white/30 shadow-sm shrink-0" alt="Avatar">
+                <?php else: ?>
+                    <span id="headerAvatarInitialMobile" class="flex md:hidden w-8 h-8 rounded-full bg-white/20 items-center justify-center font-bold text-white text-sm shrink-0">
+                        <?= mb_strtoupper(mb_substr($nome_inicial ?: 'C', 0, 1)) ?>
+                    </span>
+                <?php endif; ?>
                 <button id="btnLogout"
                     class="text-xs sm:text-sm font-semibold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg transition flex items-center gap-1">
                     <span class="material-icons-round text-base">logout</span>
@@ -640,6 +664,28 @@ $nome_inicial = strtok($nome_cliente, ' ');
 
             <!-- ===== TAB: MEUS DADOS ===== -->
             <div id="meusdados" class="tab-content hidden max-w-3xl mx-auto space-y-5">
+
+                <!-- Avatar / Foto de Perfil -->
+                <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+                    <div class="relative group shrink-0">
+                        <div id="containerPerfilAvatarCliente" class="w-20 h-20 rounded-full overflow-hidden border-4 border-white shadow-md flex items-center justify-center" style="background: var(--brand)">
+                            <?php if (!empty($foto_cliente)): ?>
+                                <img src="<?= htmlspecialchars($foto_cliente) ?>" id="imgPerfilCliente" class="w-full h-full object-cover" alt="Foto de Perfil">
+                            <?php else: ?>
+                                <span id="initialPerfilCliente" class="text-white font-extrabold text-3xl"><?= mb_strtoupper(mb_substr($nome_inicial ?: 'C', 0, 1)) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <label for="inputFotoPerfilCliente" class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white text-gray-700 shadow-md border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition" title="Alterar Foto de Perfil">
+                            <span class="material-icons-round text-sm" style="color: var(--brand)">photo_camera</span>
+                        </label>
+                        <input type="file" id="inputFotoPerfilCliente" class="hidden" accept="image/jpeg,image/png,image/webp">
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800"><?= htmlspecialchars($nome_cliente) ?></h3>
+                        <p class="text-xs text-gray-400 mt-0.5">Clique no ícone de câmera para enviar uma nova foto de perfil</p>
+                        <span id="msgUploadFotoCliente" class="text-xs font-bold mt-1 block"></span>
+                    </div>
+                </div>
 
                 <!-- Dados de Contato -->
                 <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100">
@@ -1535,7 +1581,10 @@ $nome_inicial = strtok($nome_cliente, ' ');
                     }
 
                     // Avatar
-                    const fotoUrl = pet.foto_url || '';
+                    let fotoUrl = pet.foto_url || '';
+                    if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('/')) {
+                        fotoUrl = '../dinovatech/' + fotoUrl;
+                    }
                     const avatarHtml = fotoUrl
                         ? `<img src="${fotoUrl}" class="pet-avatar" alt="Foto de ${escapeHtml(pet.nome)}">`
                         : `<div class="pet-avatar-placeholder" style="background: var(--brand)">
@@ -1647,43 +1696,149 @@ $nome_inicial = strtok($nome_cliente, ' ');
                 }, 150);
             };
 
-            // ── Upload Foto Pet ──
+            // ── Compressão de Imagens Client-Side (JS Canvas) ──
+            function compressImage(file, maxWidth, maxHeight, quality, callback) {
+                if (!file || !file.type || !file.type.startsWith('image/')) {
+                    callback(file);
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth || height > maxHeight) {
+                            if (width / height > maxWidth / maxHeight) {
+                                height = Math.round((height * maxWidth) / width);
+                                width = maxWidth;
+                            } else {
+                                width = Math.round((width * maxHeight) / height);
+                                height = maxHeight;
+                            }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        canvas.toBlob(function(blob) {
+                            if (blob) {
+                                const compressedFile = new File([blob], file.name || 'image.jpg', {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now()
+                                });
+                                callback(compressedFile);
+                            } else {
+                                callback(file);
+                            }
+                        }, 'image/jpeg', quality);
+                    };
+                    img.onerror = function() { callback(file); };
+                    img.src = e.target.result;
+                };
+                reader.onerror = function() { callback(file); };
+                reader.readAsDataURL(file);
+            }
+
+            // ── Upload Foto Pet (Comprimido no navegador) ──
             $(document).on('change', '.foto-pet-input', function () {
-                const file = this.files[0];
+                const rawFile = this.files[0];
                 const idPet = $(this).data('pet-id');
-                if (!file || !idPet) return;
-
-                if (file.size > 5 * 1024 * 1024) { alert('A imagem deve ter no máximo 5MB.'); return; }
-
-                const formData = new FormData();
-                formData.append('action', 'upload_foto_pet');
-                formData.append('id_pet', idPet);
-                formData.append('foto', file);
+                if (!rawFile || !idPet) return;
 
                 const label = $(this).prev('.upload-foto-pet-btn');
                 label.html('<span class="material-icons-round animate-spin text-[11px]">sync</span>');
 
-                $.ajax({
-                    url: '../dinovatech/app.php', type: 'POST',
-                    data: formData, processData: false, contentType: false,
-                    success: function (res) {
-                        label.html('<span class="material-icons-round text-[11px]">photo_camera</span>');
-                        if (res.success && res.url) {
-                            // Atualiza avatar na tela
-                            const wrapperRelative = label.closest('.relative');
-                            wrapperRelative.find('img.pet-avatar').remove();
-                            wrapperRelative.find('.pet-avatar-placeholder').remove();
-                            wrapperRelative.prepend(`<img src="${res.url}?t=${Date.now()}" class="pet-avatar" alt="Foto do pet">`);
-                            // Atualiza dados globais
-                            if (globalDashboardData && globalDashboardData.pets) {
-                                const p = globalDashboardData.pets.find(p => p.id_pet == idPet);
-                                if (p) p.foto_url = res.url;
+                compressImage(rawFile, 800, 800, 0.8, function(file) {
+                    const formData = new FormData();
+                    formData.append('action', 'upload_foto_pet');
+                    formData.append('id_pet', idPet);
+                    formData.append('foto', file);
+
+                    $.ajax({
+                        url: '../dinovatech/app.php', type: 'POST',
+                        data: formData, processData: false, contentType: false,
+                        success: function (res) {
+                            label.html('<span class="material-icons-round text-[11px]">photo_camera</span>');
+                            if (res.success && res.url) {
+                                let finalUrl = res.url;
+                                if (!finalUrl.startsWith('http') && !finalUrl.startsWith('/')) {
+                                    finalUrl = '../dinovatech/' + finalUrl;
+                                }
+                                const wrapperRelative = label.closest('.relative');
+                                wrapperRelative.find('img.pet-avatar').remove();
+                                wrapperRelative.find('.pet-avatar-placeholder').remove();
+                                wrapperRelative.prepend(`<img src="${finalUrl}?t=${Date.now()}" class="pet-avatar" alt="Foto do pet">`);
+                                if (globalDashboardData && globalDashboardData.pets) {
+                                    const p = globalDashboardData.pets.find(p => p.id_pet == idPet);
+                                    if (p) p.foto_url = res.url;
+                                }
+                            } else {
+                                alert(res.message || 'Erro ao enviar foto.');
                             }
-                        } else {
-                            alert(res.message || 'Erro ao enviar foto.');
-                        }
-                    },
-                    dataType: 'json'
+                        },
+                        error: function() {
+                            label.html('<span class="material-icons-round text-[11px]">photo_camera</span>');
+                            alert('Erro de comunicação.');
+                        },
+                        dataType: 'json'
+                    });
+                });
+            });
+
+            // ── Upload Foto Perfil Cliente (Comprimido no navegador) ──
+            $(document).on('change', '#inputFotoPerfilCliente', function () {
+                const rawFile = this.files[0];
+                if (!rawFile) return;
+
+                const msgEl = $('#msgUploadFotoCliente');
+                msgEl.attr('class', 'text-xs font-bold text-blue-600 animate-pulse').text('Processando e comprimindo foto...');
+
+                compressImage(rawFile, 800, 800, 0.8, function(file) {
+                    const formData = new FormData();
+                    formData.append('action', 'upload_foto_cliente');
+                    formData.append('foto', file);
+
+                    $.ajax({
+                        url: '../dinovatech/app.php', type: 'POST',
+                        data: formData, processData: false, contentType: false,
+                        success: function (res) {
+                            if (res.success && res.url) {
+                                msgEl.attr('class', 'text-xs font-bold text-emerald-600').text('Foto de perfil atualizada!');
+                                setTimeout(() => msgEl.text(''), 4000);
+
+                                let finalUrl = res.url;
+                                if (!finalUrl.startsWith('http') && !finalUrl.startsWith('/')) {
+                                    finalUrl = '../dinovatech/' + finalUrl;
+                                }
+                                const cacheBustUrl = finalUrl + '?t=' + Date.now();
+
+                                // Atualiza avatar na tab Meus Dados
+                                $('#containerPerfilAvatarCliente').html(`<img src="${cacheBustUrl}" id="imgPerfilCliente" class="w-full h-full object-cover" alt="Foto de Perfil">`);
+
+                                // Atualiza avatar no Header
+                                if ($('#headerAvatarImgDesktop').length) {
+                                    $('#headerAvatarImgDesktop').attr('src', cacheBustUrl);
+                                } else if ($('#headerAvatarInitialDesktop').length) {
+                                    $('#headerAvatarInitialDesktop').replaceWith(`<img src="${cacheBustUrl}" id="headerAvatarImgDesktop" class="w-8 h-8 rounded-full object-cover border border-white/30 shadow-sm shrink-0" alt="Avatar">`);
+                                }
+
+                                if ($('#headerAvatarImgMobile').length) {
+                                    $('#headerAvatarImgMobile').attr('src', cacheBustUrl);
+                                } else if ($('#headerAvatarInitialMobile').length) {
+                                    $('#headerAvatarInitialMobile').replaceWith(`<img src="${cacheBustUrl}" id="headerAvatarImgMobile" class="flex md:hidden w-8 h-8 rounded-full object-cover border border-white/30 shadow-sm shrink-0" alt="Avatar">`);
+                                }
+                            } else {
+                                msgEl.attr('class', 'text-xs font-bold text-red-600').text(res.message || 'Erro ao atualizar foto.');
+                            }
+                        },
+                        error: function () {
+                            msgEl.attr('class', 'text-xs font-bold text-red-600').text('Erro de comunicação.');
+                        },
+                        dataType: 'json'
+                    });
                 });
             });
 
@@ -1806,7 +1961,10 @@ $nome_inicial = strtok($nome_cliente, ' ');
                 pets.forEach(pet => {
                     const petVacinas = vacinas.filter(v => v.id_pet == pet.id_pet);
                     const hoje = new Date().toISOString().split('T')[0];
-                    const fotoUrl = pet.foto_url || '';
+                    let fotoUrl = pet.foto_url || '';
+                    if (fotoUrl && !fotoUrl.startsWith('http') && !fotoUrl.startsWith('/')) {
+                        fotoUrl = '../dinovatech/' + fotoUrl;
+                    }
                     const avatarSmall = fotoUrl
                         ? `<img src="${fotoUrl}" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm" alt="${escapeHtml(pet.nome)}">`
                         : `<div class="w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-sm" style="background: var(--brand)"><span class="material-icons-round text-white text-xl">pets</span></div>`;

@@ -123,6 +123,9 @@ if ($id_fatura) {
     $is_vet_fatura = AppHelper::isVetMode();
     $empresa_nome_fatura = $config_emissor['nome_fantasia'] ?? $config_emissor['razao_social'] ?? '';
     $empresa_logo_fatura = $config_emissor['logo_url'] ?? '';
+    if (!empty($empresa_logo_fatura) && !preg_match('~^(https?://|/)~i', $empresa_logo_fatura)) {
+        $empresa_logo_fatura = '../dinovatech/' . $empresa_logo_fatura;
+    }
     ?>
     <meta name="theme-color" content="<?= $is_vet_fatura ? '#065f46' : '#0c4a6e' ?>">
     <script src="https://cdn.tailwindcss.com"></script>
