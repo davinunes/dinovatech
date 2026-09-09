@@ -3317,6 +3317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $response['message'] = 'Foto do pet atualizada com sucesso!';
             } else {
                 $response['message'] = 'Erro ao salvar a URL da foto no banco de dados.';
+            }
             break;
 
         case 'upload_foto_cliente':
