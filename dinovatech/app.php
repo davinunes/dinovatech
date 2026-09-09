@@ -1116,7 +1116,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     'port' => (int)($row['ssh_port'] ?? 22),
                     'user' => $row['ssh_user'] ?? 'root',
                     'workdir' => $row['ssh_workdir'] ?? '/var/www/html',
-                    'public_key' => ''
+                    'public_key' => '',
+                    'fingerprint_sha256' => '',
+                    'fingerprint_md5' => ''
                 ];
 
                 if (!empty($row['ssh_key_pem'])) {
@@ -1124,22 +1126,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $pemDecrypted = EncryptionHelper::decrypt($row['ssh_key_pem']);
                         if (!empty($pemDecrypted)) {
                             $sshStatus['has_key'] = true;
+                            $pubKeyStr = "";
 
-                            $descriptorspec = [
-                                0 => ["pipe", "r"], // stdin
-                                1 => ["pipe", "w"], // stdout
-                                2 => ["pipe", "w"]  // stderr
-                            ];
-                            $pythonCmd = "python3 " . escapeshellarg(__DIR__ . "/py/ssh.py") . " --get-pubkey";
-                            $process = proc_open($pythonCmd, $descriptorspec, $pipes);
-                            if (is_resource($process)) {
-                                fwrite($pipes[0], $pemDecrypted);
-                                fclose($pipes[0]);
-                                $pubKeyOutput = stream_get_contents($pipes[1]);
-                                fclose($pipes[1]);
-                                fclose($pipes[2]);
-                                proc_close($process);
-                                $sshStatus['public_key'] = trim($pubKeyOutput);
+                            // 1. Tenta extração nativa em PHP puro via OpenSSL
+                            $resKey = @openssl_pkey_get_private(trim($pemDecrypted));
+                            if ($resKey) {
+                                $details = openssl_pkey_get_details($resKey);
+                                if ($details && isset($details['rsa'])) {
+                                    $e = $details['rsa']['e'];
+                                    $n = $details['rsa']['n'];
+
+                                    if (ord($e[0]) & 0x80) $e = "\x00" . $e;
+                                    if (ord($n[0]) & 0x80) $n = "\x00" . $n;
+
+                                    $type = "ssh-rsa";
+                                    $blob = pack("N", strlen($type)) . $type .
+                                            pack("N", strlen($e)) . $e .
+                                            pack("N", strlen($n)) . $n;
+
+                                    $pubKeyStr = "ssh-rsa " . base64_encode($blob) . " dinovatech-deploy";
+                                }
+                            }
+
+                            // 2. Se PHP OpenSSL não converteu (ex: formato OPENSSH PRIVATE KEY novo), chama py/ssh.py --get-pubkey
+                            if (empty($pubKeyStr)) {
+                                $descriptorspec = [
+                                    0 => ["pipe", "r"],
+                                    1 => ["pipe", "w"],
+                                    2 => ["pipe", "w"]
+                                ];
+                                $pythonCmd = "python3 " . escapeshellarg(__DIR__ . "/py/ssh.py") . " --get-pubkey";
+                                $process = @proc_open($pythonCmd, $descriptorspec, $pipes);
+                                if (is_resource($process)) {
+                                    fwrite($pipes[0], $pemDecrypted);
+                                    fclose($pipes[0]);
+                                    $pubKeyOutput = stream_get_contents($pipes[1]);
+                                    fclose($pipes[1]);
+                                    fclose($pipes[2]);
+                                    proc_close($process);
+                                    $pubKeyStr = trim($pubKeyOutput);
+                                }
+                            }
+
+                            $sshStatus['public_key'] = $pubKeyStr;
+
+                            // 3. Calcula os Hashes / Fingerprints SSH (SHA256 e MD5)
+                            if (!empty($pubKeyStr)) {
+                                $parts = explode(' ', $pubKeyStr);
+                                if (count($parts) >= 2) {
+                                    $rawBlob = base64_decode($parts[1]);
+                                    if ($rawBlob) {
+                                        $sshStatus['fingerprint_sha256'] = "SHA256:" . rtrim(base64_encode(hash('sha256', $rawBlob, true)), '=');
+                                        $sshStatus['fingerprint_md5'] = "MD5:" . implode(':', str_split(md5($rawBlob), 2));
+                                    }
+                                }
                             }
                         }
                     } catch (Exception $e) {

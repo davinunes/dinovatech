@@ -805,11 +805,11 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         </div>
 
                         <!-- CARD 2: COMANDO SUGESTIVO PARA CONFIGURAÇÃO NO DEBIAN / HOST (AUTHORIZED_KEYS) -->
-                        <div id="cardDebianSetup" class="hidden bg-slate-900 text-slate-100 p-6 rounded-2xl border border-slate-800 shadow-md">
-                            <div class="flex items-start justify-between gap-4 mb-3">
+                        <div id="cardDebianSetup" class="hidden bg-slate-900 text-slate-100 p-6 rounded-2xl border border-slate-800 shadow-md space-y-4">
+                            <div class="flex items-start justify-between gap-4">
                                 <div>
-                                    <h4 class="text-sm font-bold text-cyan-400 flex items-center gap-1.5">
-                                        <span class="material-icons text-base">vpn_key</span>
+                                    <h4 class="text-base font-bold text-cyan-400 flex items-center gap-1.5">
+                                        <span class="material-icons text-lg">vpn_key</span>
                                         Autorizar Chave no Servidor Host (Debian / Ubuntu)
                                     </h4>
                                     <p class="text-xs text-slate-300 mt-1">
@@ -817,19 +817,38 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                     </p>
                                 </div>
                                 <button type="button" onclick="copiarComandoDebian()" id="btnCopiarCmdDebian"
-                                    class="px-3.5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
+                                    class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center gap-1.5 whitespace-nowrap">
                                     <span class="material-icons text-sm">content_copy</span>
                                     <span id="txtCopiarCmdDebian">Copiar Comando</span>
                                 </button>
                             </div>
 
-                            <div class="bg-black/70 p-3.5 rounded-xl border border-slate-700/80 font-mono text-xs text-green-400 select-all overflow-x-auto whitespace-pre-wrap break-all" id="ssh_debian_cmd_text">
-                                <!-- Comando gerado via JS -->
+                            <!-- Comando Bash de Importação -->
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">Comando de Importação Automática (Rodar no Host Debian):</label>
+                                <div class="bg-black/80 p-4 rounded-xl border border-slate-700/80 font-mono text-xs text-green-400 select-all overflow-x-auto whitespace-pre-wrap break-all shadow-inner leading-relaxed" id="ssh_debian_cmd_text">
+                                    <!-- Comando gerado via JS -->
+                                </div>
                             </div>
 
-                            <div class="mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400 flex flex-wrap justify-between items-center gap-2">
-                                <span>Chave Pública Identificada:</span>
-                                <span class="font-mono text-slate-300 select-all" id="ssh_pubkey_text">ssh-rsa ...</span>
+                            <!-- Fingerprints e Hash da Chave -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-slate-800/80 text-xs">
+                                <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                                    <span class="text-[11px] font-bold text-slate-400 block mb-0.5">Hash SHA-256 Fingerprint:</span>
+                                    <span class="font-mono text-cyan-300 select-all text-xs break-all" id="ssh_fingerprint_sha256">Carregando...</span>
+                                </div>
+                                <div class="bg-slate-950/60 p-3 rounded-lg border border-slate-800">
+                                    <span class="text-[11px] font-bold text-slate-400 block mb-0.5">Hash MD5 Fingerprint:</span>
+                                    <span class="font-mono text-emerald-300 select-all text-xs break-all" id="ssh_fingerprint_md5">Carregando...</span>
+                                </div>
+                            </div>
+
+                            <!-- Chave Pública Completa em Texto -->
+                            <div class="pt-2 border-t border-slate-800/80">
+                                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Chave Pública OpenSSH (Formato ssh-rsa):</label>
+                                <div class="font-mono text-[11px] text-slate-300 bg-slate-950/80 p-2.5 rounded-lg border border-slate-800 select-all overflow-x-auto break-all" id="ssh_pubkey_text">
+                                    <!-- Chave pública preenchida via JS -->
+                                </div>
                             </div>
                         </div>
 
@@ -1229,16 +1248,22 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                         $('#ssh_workdir').val(d.ssh_workdir || d.ssh_status.workdir || '/var/www/html');
 
                         if (d.ssh_status.has_key) {
-                            $('#ssh_key_status_badge').html('<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-900/80 text-green-300 border border-green-700/60 shadow-xs"><span class="w-2 h-2 mr-1.5 bg-green-400 rounded-full animate-pulse"></span> Chave SSH Ativa</span>');
+                            $('#ssh_key_status_badge').html('<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-900/80 text-green-300 border border-green-700/60 shadow-xs"><span class="w-2 h-2 mr-1.5 bg-green-400 rounded-full animate-pulse"></span> Chave SSH Cadastrada</span>');
+                            $('#cardDebianSetup').removeClass('hidden');
 
-                            if (d.ssh_status.public_key) {
-                                const pubKey = d.ssh_status.public_key;
+                            const pubKey = d.ssh_status.public_key || '';
+                            if (pubKey) {
                                 const fullCmd = `mkdir -p ~/.ssh && echo "${pubKey}" >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh`;
-
                                 $('#ssh_pubkey_text').text(pubKey);
                                 $('#ssh_debian_cmd_text').text(fullCmd);
-                                $('#cardDebianSetup').removeClass('hidden');
+                            } else {
+                                const placeholderCmd = `mkdir -p ~/.ssh && echo "<SUA_CHAVE_PUBLICA_RSA>" >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys && chmod 700 ~/.ssh`;
+                                $('#ssh_pubkey_text').text('Chave privada RSA cadastrada.');
+                                $('#ssh_debian_cmd_text').text(placeholderCmd);
                             }
+
+                            $('#ssh_fingerprint_sha256').text(d.ssh_status.fingerprint_sha256 || 'Não disponível');
+                            $('#ssh_fingerprint_md5').text(d.ssh_status.fingerprint_md5 || 'Não disponível');
                         } else {
                             $('#ssh_key_status_badge').html('<span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-900/80 text-amber-300 border border-amber-700/60 shadow-xs"><span class="w-2 h-2 mr-1.5 bg-amber-400 rounded-full"></span> Chave Não Cadastrada</span>');
                             $('#cardDebianSetup').addClass('hidden');
@@ -1403,10 +1428,27 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                     contentType: false, // Set content type to false as jQuery will tell the server its a query string request
                     success: function (response) {
                         if (response.success) {
-                            alert(response.message);
-                            location.reload();
+                            const activeTab = $('.tab-content.active').attr('id')?.replace('content-', '') || 'atualizacoes';
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Configurações Salvas!',
+                                    text: response.message,
+                                    timer: 1800,
+                                    showConfirmButton: false
+                                }).then(function () {
+                                    window.location.href = 'config_fiscal.php?tab=' + activeTab;
+                                });
+                            } else {
+                                alert(response.message);
+                                window.location.href = 'config_fiscal.php?tab=' + activeTab;
+                            }
                         } else {
-                            alert(response.message);
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire('Erro', response.message, 'error');
+                            } else {
+                                alert(response.message);
+                            }
                         }
                     },
                     error: function (xhr) {
