@@ -575,7 +575,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $logo_url_update = "";
                 if (isset($_FILES['arquivo_logo']) && $_FILES['arquivo_logo']['error'] === UPLOAD_ERR_OK) {
                     $ext = strtolower(pathinfo($_FILES['arquivo_logo']['name'], PATHINFO_EXTENSION));
-                    if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                    if (in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp'])) {
                         $uploadLogoDir = __DIR__ . '/assets/';
                         if (!is_dir($uploadLogoDir))
                             mkdir($uploadLogoDir, 0755, true);
@@ -3161,8 +3161,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $tmpPath = $_FILES['foto']['tmp_name'];
             $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
-                $response['message'] = "Apenas imagens (JPG, PNG, WEBP, GIF) são permitidas.";
+            if (!in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp', 'gif'])) {
+                $response['message'] = "Apenas imagens (JPG, PNG, WEBP, GIF, JFIF) são permitidas.";
                 break;
             }
 
@@ -3250,8 +3250,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $origName = $_FILES['foto']['name'];
             $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
-                $response['message'] = 'Apenas imagens (JPG, PNG, WEBP, GIF) são permitidas.';
+            if (!in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp', 'gif'])) {
+                $response['message'] = 'Apenas imagens (JPG, PNG, WEBP, GIF, JFIF) são permitidas.';
                 break;
             }
 
@@ -3338,8 +3338,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $origName = $_FILES['foto']['name'];
             $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'])) {
-                $response['message'] = 'Apenas imagens (JPG, PNG, WEBP, GIF) são permitidas.';
+            if (!in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp', 'gif'])) {
+                $response['message'] = 'Apenas imagens (JPG, PNG, WEBP, GIF, JFIF) são permitidas.';
                 break;
             }
 
@@ -6403,7 +6403,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                             $origName = $_FILES['fotos_checkin']['name'][$i];
                             $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-                            if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                            if (in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp'])) {
                                 $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
                                 $destPath = $uploadDir . $newFileName;
                                 if (move_uploaded_file($tmpName, $destPath)) {
@@ -6518,7 +6518,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $origName = $_FILES['fotos_checkin']['name'][$i];
                         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
-                        if (in_array($ext, ['jpg', 'jpeg', 'png', 'webp'])) {
+                        if (in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp'])) {
                             $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
                             $destPath = $uploadDir . $newFileName;
                             if (move_uploaded_file($tmpName, $destPath)) {

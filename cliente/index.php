@@ -678,7 +678,7 @@ $nome_inicial = strtok($nome_cliente, ' ');
                         <label for="inputFotoPerfilCliente" class="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-white text-gray-700 shadow-md border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition" title="Alterar Foto de Perfil">
                             <span class="material-icons-round text-sm" style="color: var(--brand)">photo_camera</span>
                         </label>
-                        <input type="file" id="inputFotoPerfilCliente" class="hidden" accept="image/jpeg,image/png,image/webp">
+                        <input type="file" id="inputFotoPerfilCliente" class="hidden" accept="image/jpeg,image/jfif,image/pjpeg,image/png,image/webp,.jfif">
                     </div>
                     <div>
                         <h3 class="text-lg font-bold text-gray-800"><?= htmlspecialchars($nome_cliente) ?></h3>
@@ -1637,7 +1637,7 @@ $nome_inicial = strtok($nome_cliente, ' ');
                                             <span class="material-icons-round text-[11px]">photo_camera</span>
                                         </label>
                                         <input type="file" id="inputFotoPet_${pet.id_pet}" class="hidden foto-pet-input"
-                                               accept="image/jpeg,image/png,image/webp" data-pet-id="${pet.id_pet}">
+                                               accept="image/jpeg,image/jfif,image/pjpeg,image/png,image/webp,.jfif" data-pet-id="${pet.id_pet}">
                                     </div>
                                     <div>
                                         <h4 class="text-lg font-bold text-gray-800">${escapeHtml(pet.nome)}</h4>

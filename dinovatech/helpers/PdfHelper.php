@@ -84,6 +84,7 @@ class PdfHelper
                     'png' => 'image/png',
                     'jpg' => 'image/jpeg',
                     'jpeg' => 'image/jpeg',
+                    'jfif' => 'image/jpeg',
                     'gif' => 'image/gif',
                     'svg' => 'image/svg+xml',
                     'webp' => 'image/webp'

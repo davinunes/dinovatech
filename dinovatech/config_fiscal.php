@@ -117,7 +117,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                     </div>
                                     <div class="flex-1">
                                         <input type="file" name="arquivo_logo" id="arquivo_logo"
-                                            accept=".png, .jpg, .jpeg, .webp"
+                                            accept=".png, .jpg, .jpeg, .jfif, .webp"
                                             class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 transition-colors">
                                         <p class="text-xs text-gray-500 mt-1">Recomendado: 200x200px (PNG ou JPG).</p>
                                     </div>
