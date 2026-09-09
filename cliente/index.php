@@ -563,12 +563,12 @@ $nome_inicial = strtok($nome_cliente, ' ');
                 <!-- GRID 2 COL: Agendamentos + (Atendimentos/Faturas) -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fadeInUp delay-2">
 
-                    <!-- Próximos Agendamentos -->
+                    <!-- Eventos -->
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
                         <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                             <div class="flex items-center gap-2">
                                 <span class="material-icons-round text-blue-500">calendar_month</span>
-                                <h3 class="font-bold text-gray-800 text-sm">Próximos Agendamentos</h3>
+                                <h3 class="font-bold text-gray-800 text-sm">Eventos</h3>
                             </div>
                             <?php if ($is_vet): ?>
                             <button type="button" onclick="abrirModalAgendarBanhoCliente()"
@@ -1418,7 +1418,7 @@ $nome_inicial = strtok($nome_cliente, ' ');
                 const container = $('#dashListaAgendamentos');
                 container.empty();
                 if (agendamentos.length === 0) {
-                    container.html('<p class="text-center text-gray-400 py-4 text-sm italic">Nenhum agendamento encontrado.</p>');
+                    container.html('<p class="text-center text-gray-400 py-4 text-sm italic">Nenhum evento encontrado.</p>');
                     return;
                 }
                 agendamentos.forEach(ag => {
