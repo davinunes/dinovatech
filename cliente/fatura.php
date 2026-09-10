@@ -1086,6 +1086,9 @@ if ($id_fatura) {
         $('#infinitePayStepInitial').addClass('hidden');
         $('#infinitePayStepLoading').removeClass('hidden');
 
+        // Inicia o polling automático de 5s assim que o cliente clica para gerar/abrir o checkout
+        startPollingInfinitePay(idFatura);
+
         $.ajax({
             url: '../dinovatech/app.php',
             type: 'POST',
@@ -1167,9 +1170,12 @@ if ($id_fatura) {
         });
     }
 
-    // Conecta botões duplicados (mobile) e inicia polling de segurança se InfinitePay ativo
+    // Conecta botões duplicados (mobile) e inicia polling de segurança se InfinitePay ativo e já existir checkout gerado
     $(document).ready(function(){
-        <?php if ($isInfinitePayAtivo && $saldo_devedor > 0): ?>
+        <?php 
+        $temCheckoutCadastrado = !empty($fatura['infinitepay_checkout_url']) || !empty($fatura['infinitepay_slug']) || !empty($fatura['infinitepay_nsu']);
+        if ($isInfinitePayAtivo && $saldo_devedor > 0 && $temCheckoutCadastrado): 
+        ?>
             startPollingInfinitePay(<?= $id_fatura ?>);
         <?php endif; ?>
 

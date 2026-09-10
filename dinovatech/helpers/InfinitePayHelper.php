@@ -524,6 +524,13 @@ class InfinitePayHelper
         $qCheck = "SELECT id_pagamento FROM Pagamentos WHERE id_fatura = '$idSafe' AND txid = '$txidSafe' AND status_pagamento = 'Confirmado' LIMIT 1";
         $rCheck = DBExecute($link, $qCheck);
         if ($rCheck && mysqli_num_rows($rCheck) > 0) {
+            $calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
+            $valorLiquido = (float)($calcTotals['valor_liquido'] ?? 0);
+            $rSum = DBExecute($link, "SELECT SUM(valor_pago) AS total_pago FROM Pagamentos WHERE id_fatura = '$idSafe' AND status_pagamento = 'Confirmado'");
+            $totalPago = ($rSum && $rowSum = mysqli_fetch_assoc($rSum)) ? (float)($rowSum['total_pago'] ?? 0) : 0;
+            if ($totalPago >= ($valorLiquido - 0.01)) {
+                DBExecute($link, "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '$idSafe'");
+            }
             return ['success' => true, 'already_processed' => true, 'message' => 'Pagamento já processado anteriormente.'];
         }
 
@@ -532,7 +539,7 @@ class InfinitePayHelper
                  VALUES ('$idSafe', '$dataHoje', '$valorPagoDecimal', 'Confirmado', '$txidSafe', '$obsSafe')";
         DBExecute($link, $qIns);
 
-        // Atualiza status da Fatura se valor total atingido
+        // Atualiza status da Fatura se valor total atingido (status 'Liquidada')
         $calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
         $valorLiquido = (float)($calcTotals['valor_liquido'] ?? 0);
 
@@ -542,8 +549,8 @@ class InfinitePayHelper
             $totalPago = (float)($rowSum['total_pago'] ?? 0);
         }
 
-        if ($totalPago >= $valorLiquido) {
-            DBExecute($link, "UPDATE Faturas SET status = 'Pago' WHERE id_fatura = '$idSafe'");
+        if ($totalPago >= ($valorLiquido - 0.01)) {
+            DBExecute($link, "UPDATE Faturas SET status = 'Liquidada' WHERE id_fatura = '$idSafe'");
         }
 
         return ['success' => true, 'already_processed' => false, 'message' => 'Pagamento liquidado com sucesso!'];
