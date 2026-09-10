@@ -1027,8 +1027,9 @@ if ($id_fatura) {
                         class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md">
                         <span class="material-icons-round">open_in_new</span> Ir para Checkout InfinitePay
                     </button>
-                    <button type="button" onclick="verificarPagamentoInfinitePayCliente(<?= $id_fatura ?>)"
-                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-gray-200">
+                    <?php $temDadosConsultaInfinitePay = !empty($fatura['infinitepay_slug']) || !empty($fatura['infinitepay_nsu']) || !empty($fatura['infinitepay_checkout_url']); ?>
+                    <button type="button" onclick="verificarPagamentoInfinitePayCliente(<?= $id_fatura ?>)" id="btnVerificarInfinitePayCliente"
+                        class="<?= $temDadosConsultaInfinitePay ? '' : 'hidden' ?> w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-gray-200">
                         <span class="material-icons-round text-sm text-emerald-600">sync</span> Já realizei o pagamento (Verificar Status)
                     </button>
                 </div>
@@ -1037,6 +1038,23 @@ if ($id_fatura) {
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent mb-3"></div>
                     <p class="text-xs font-semibold text-gray-600">Consultando status do pagamento...</p>
                 </div>
+
+                <div id="infinitePayMsgContainer" class="hidden text-center mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Modal Sucesso Non-Blocking InfinitePay -->
+        <div id="modalSucessoInfinitePay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden p-4 no-print">
+            <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center border border-emerald-100 transform transition-all scale-100">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-icons-round text-3xl">check_circle</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-1">Pagamento Confirmado!</h3>
+                <p class="text-xs text-gray-600 mb-5">Sua fatura foi liquidada com sucesso via InfinitePay.</p>
+                <button type="button" onclick="window.location.href='fatura.php?id=<?= $id_fatura ?>'"
+                    class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-sm transition shadow-md flex items-center justify-center gap-2">
+                    <span class="material-icons-round text-sm">refresh</span> Atualizar Fatura
+                </button>
             </div>
         </div>
 
@@ -1047,6 +1065,14 @@ if ($id_fatura) {
         console.log('[InfinitePay] Abrindo modal de pagamento...');
         $('#modalInfinitePayCliente').removeClass('hidden');
         startPollingInfinitePay(<?= $id_fatura ?>);
+    }
+
+    function mostrarSucessoInfinitePay(idFatura) {
+        $('#modalInfinitePayCliente').addClass('hidden');
+        $('#modalSucessoInfinitePay').removeClass('hidden');
+        setTimeout(function() {
+            window.location.href = 'fatura.php?id=' + idFatura;
+        }, 1200);
     }
 
     function startPollingInfinitePay(idFatura) {
@@ -1066,8 +1092,7 @@ if ($id_fatura) {
                     if (res.success && res.paid) {
                         clearInterval(infinitePayPollingInterval);
                         console.log('%c[InfinitePay Polling] %cPagamento CONFIRMADO!', 'color: #10b981; font-weight: bold; font-size: 14px;', 'color: #047857;');
-                        alert('🎉 Pagamento via InfinitePay confirmado com sucesso!');
-                        window.location.reload();
+                        mostrarSucessoInfinitePay(idFatura);
                     }
                 },
                 error: function(err) {
@@ -1081,6 +1106,7 @@ if ($id_fatura) {
         console.log('[InfinitePay] Solicitando link de checkout para fatura #', idFatura);
         $('#infinitePayStepInitial').addClass('hidden');
         $('#infinitePayStepLoading').removeClass('hidden');
+        $('#infinitePayMsgContainer').addClass('hidden').html('');
 
         // Inicia o polling automático de 5s assim que o cliente clica para gerar/abrir o checkout
         startPollingInfinitePay(idFatura);
@@ -1102,18 +1128,19 @@ if ($id_fatura) {
                     window.open(checkoutUrl, '_blank');
                     $('#infinitePayStepLoading').addClass('hidden');
                     $('#infinitePayStepInitial').removeClass('hidden');
+                    $('#btnVerificarInfinitePayCliente').removeClass('hidden');
                 } else {
                     console.error('[InfinitePay] Falha ao gerar checkout:', res);
-                    alert('Erro ao gerar checkout: ' + (res.message || 'Tente novamente.'));
                     $('#infinitePayStepLoading').addClass('hidden');
                     $('#infinitePayStepInitial').removeClass('hidden');
+                    $('#infinitePayMsgContainer').removeClass('hidden').html('<p class="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium">' + (res.message || 'Erro ao gerar checkout.') + '</p>');
                 }
             },
             error: function(err) {
                 console.error('[InfinitePay] Erro cURL/AJAX:', err);
-                alert('Erro de comunicação ao gerar checkout.');
                 $('#infinitePayStepLoading').addClass('hidden');
                 $('#infinitePayStepInitial').removeClass('hidden');
+                $('#infinitePayMsgContainer').removeClass('hidden').html('<p class="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium">Erro de comunicação ao gerar checkout.</p>');
             }
         });
     }
@@ -1123,6 +1150,7 @@ if ($id_fatura) {
         if (!silent) {
             $('#infinitePayStepInitial').addClass('hidden');
             $('#infinitePayStepLoading').removeClass('hidden');
+            $('#infinitePayMsgContainer').addClass('hidden').html('');
         }
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -1143,24 +1171,21 @@ if ($id_fatura) {
             success: function(res) {
                 console.log('[InfinitePay] Resultado da verificação:', res);
                 if (res.success && res.paid) {
-                    if (!silent) {
-                        alert('🎉 Pagamento confirmado com sucesso!');
-                    }
-                    window.location.href = 'fatura.php?id=' + idFatura;
+                    mostrarSucessoInfinitePay(idFatura);
                 } else {
                     if (!silent) {
-                        alert(res.message || 'Pagamento ainda não foi identificado.');
                         $('#infinitePayStepLoading').addClass('hidden');
                         $('#infinitePayStepInitial').removeClass('hidden');
+                        $('#infinitePayMsgContainer').removeClass('hidden').html('<p class="text-xs text-amber-700 bg-amber-50 p-2.5 rounded-lg border border-amber-200 font-medium">' + (res.message || 'Pagamento ainda não foi identificado.') + '</p>');
                     }
                 }
             },
             error: function(err) {
                 console.error('[InfinitePay] Erro ao verificar pagamento:', err);
                 if (!silent) {
-                    alert('Erro de comunicação ao verificar status.');
                     $('#infinitePayStepLoading').addClass('hidden');
                     $('#infinitePayStepInitial').removeClass('hidden');
+                    $('#infinitePayMsgContainer').removeClass('hidden').html('<p class="text-xs text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100 font-medium">Erro de comunicação ao verificar status.</p>');
                 }
             }
         });
