@@ -1331,23 +1331,24 @@ $nome_inicial = strtok($nome_cliente, ' ');
                 const fullContainer = $('#listaRecorrenciasFull');
                 dashContainer.empty();
                 if (fullContainer.length) fullContainer.empty();
-                $('#dashCountRecorrenciasTag').text(`${recorrencias.length} contrato(s)`);
 
-                if (recorrencias.length === 0) {
-                    const emptyMsg = '<p class="col-span-full text-center text-gray-400 py-6 text-sm italic">Nenhuma assinatura ou contrato ativo encontrado.</p>';
-                    dashContainer.html(emptyMsg);
-                    if (fullContainer.length) fullContainer.html(emptyMsg);
-                    return;
-                }
+                const hojeStr = new Date().toISOString().split('T')[0];
 
-                let htmlContent = '';
-                recorrencias.forEach(rec => {
+                // Filtro para o card da aba Início: somente ativos e não vencidos
+                const contratosAtivosInicio = recorrencias.filter(rec => {
+                    const isExpirado = rec.data_fim_cobranca && rec.data_fim_cobranca < hojeStr;
+                    const isCancelado = rec.status && /cancelad|inativ/i.test(rec.status);
+                    return !isCancelado && !isExpirado;
+                });
+
+                $('#dashCountRecorrenciasTag').text(`${contratosAtivosInicio.length} contrato(s)`);
+
+                function buildRecCardHtml(rec) {
                     const servicoNome = escapeHtml(rec.nome_servico || rec.descricao_personalizada || 'Assinatura');
                     const valorTotal = (parseFloat(rec.valor_sugerido_recorrencia || 0) * (parseInt(rec.quantidade) || 1));
                     const periodo = escapeHtml(rec.tipo_periodo || 'Mês').toLowerCase();
                     const dataInicio = formatDate(rec.data_inicio_cobranca);
                     const dataFim = rec.data_fim_cobranca ? formatDate(rec.data_fim_cobranca) : 'Indeterminado';
-                    const hojeStr = new Date().toISOString().split('T')[0];
                     const isExpirado = rec.data_fim_cobranca && rec.data_fim_cobranca < hojeStr;
                     const isCancelado = rec.status && /cancelad|inativ/i.test(rec.status);
 
@@ -1378,7 +1379,7 @@ $nome_inicial = strtok($nome_cliente, ' ');
                         docsHtml += '</div>';
                     }
 
-                    htmlContent += `
+                    return `
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition p-5 flex flex-col justify-between overflow-hidden animate-fadeInUp">
                             <div>
                                 <!-- Header do Card -->
@@ -1407,10 +1408,31 @@ $nome_inicial = strtok($nome_cliente, ' ');
                                 ${docsHtml}
                             </div>
                         </div>`;
-                });
+                }
 
-                dashContainer.html(htmlContent);
-                if (fullContainer.length) fullContainer.html(htmlContent);
+                // Renderiza card da aba Início (somente ativos e não vencidos)
+                if (contratosAtivosInicio.length === 0) {
+                    dashContainer.html('<p class="col-span-full text-center text-gray-400 py-6 text-sm italic">Nenhuma assinatura ou contrato ativo encontrado.</p>');
+                } else {
+                    let dashHtml = '';
+                    contratosAtivosInicio.forEach(rec => {
+                        dashHtml += buildRecCardHtml(rec);
+                    });
+                    dashContainer.html(dashHtml);
+                }
+
+                // Renderiza container completo (aba Meus Dados)
+                if (fullContainer.length) {
+                    if (recorrencias.length === 0) {
+                        fullContainer.html('<p class="col-span-full text-center text-gray-400 py-6 text-sm italic">Nenhuma assinatura ou contrato encontrado.</p>');
+                    } else {
+                        let fullHtml = '';
+                        recorrencias.forEach(rec => {
+                            fullHtml += buildRecCardHtml(rec);
+                        });
+                        fullContainer.html(fullHtml);
+                    }
+                }
             }
 
             // ── Agendamentos ──
