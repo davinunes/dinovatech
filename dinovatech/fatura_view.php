@@ -818,27 +818,59 @@ if ($id_fatura) {
                                             }
                                         }
 
-                                        $statusColor = $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600' :
+                                        $statusColor = $pag['status_pagamento'] == 'Confirmado' ? 'text-green-600 font-bold' :
                                             ($pag['status_pagamento'] == 'Expirado' ? 'text-gray-400' :
-                                                ($pag['status_pagamento'] == 'Cancelado' ? 'text-red-400' : 'text-yellow-600'));
+                                                ($pag['status_pagamento'] == 'Cancelado' ? 'text-red-400' : 'text-yellow-600 font-semibold'));
 
-                                        $html = '<li class="text-sm bg-gray-50 p-2 rounded border border-gray-100">';
-                                        $html .= '<div class="flex justify-between mb-1">';
-                                        $html .= '<span class="font-medium text-gray-800">R$ ' . number_format($pag['valor_pago'], 2, ',', '.') . '</span>';
+                                        $html = '<li class="text-sm bg-gray-50 p-2.5 rounded-lg border border-gray-200/80 space-y-1.5 shadow-2xs">';
+                                        $html .= '<div class="flex justify-between items-center mb-1">';
+                                        $html .= '<span class="font-bold text-gray-800 text-sm">R$ ' . number_format($pag['valor_pago'], 2, ',', '.') . '</span>';
                                         $html .= '<div class="text-right">';
-                                        $html .= '<span class="text-gray-500 text-xs block">' . date('d/m', strtotime($pag['data_pagamento'])) . '</span>';
+                                        $html .= '<span class="text-gray-500 text-xs block font-medium">' . date('d/m/Y H:i', strtotime($pag['data_pagamento'])) . '</span>';
                                         $html .= $expInfo;
                                         $html .= '</div></div>';
 
-                                        $html .= '<div class="flex justify-between items-center text-xs">';
+                                        // Dados Técnicos (TXID / E2E ID)
+                                        $techDetails = [];
+                                        if (!empty($pag['txid'])) {
+                                            $techDetails[] = '<span class="font-medium text-gray-500">TXID:</span> <code class="text-[11px] bg-gray-100 text-gray-800 px-1 py-0.5 rounded font-mono break-all">' . htmlspecialchars($pag['txid']) . '</code>';
+                                        }
+                                        if (!empty($pag['e2eid'])) {
+                                            $techDetails[] = '<span class="font-medium text-gray-500">E2E ID:</span> <code class="text-[11px] bg-gray-100 text-gray-800 px-1 py-0.5 rounded font-mono break-all">' . htmlspecialchars($pag['e2eid']) . '</code>';
+                                        }
+
+                                        if (!empty($techDetails)) {
+                                            $html .= '<div class="text-[11px] text-gray-600 bg-white p-1.5 rounded border border-gray-200/60 space-y-0.5">';
+                                            foreach ($techDetails as $detail) {
+                                                $html .= '<div class="truncate">' . $detail . '</div>';
+                                            }
+                                            $html .= '</div>';
+                                        }
+
+                                        // Observação / Detalhes salvos
+                                        if (!empty($pag['observacao'])) {
+                                            $obsText = htmlspecialchars($pag['observacao']);
+                                            $obsFormatted = preg_replace(
+                                                '~(https?://[^\s<]+)~i',
+                                                '<a href="$1" target="_blank" class="text-blue-600 hover:underline font-medium inline-flex items-center gap-0.5"><span class="material-icons text-[12px]">open_in_new</span> Comprovante</a>',
+                                                $obsText
+                                            );
+                                            $html .= '<div class="text-[11px] text-gray-600 bg-gray-100/80 p-1.5 rounded border border-gray-200/60 break-words">';
+                                            $html .= '<span class="font-semibold text-gray-700">Obs:</span> ' . $obsFormatted;
+                                            $html .= '</div>';
+                                        }
+
+                                        $html .= '<div class="flex justify-between items-center text-xs pt-1 border-t border-gray-100">';
                                         $html .= '<span class="' . $statusColor . '">' . $pag['status_pagamento'] . '</span>';
 
+                                        $actionsHtml = '';
                                         if (($pag['status_pagamento'] == 'Pendente' || $pag['status_pagamento'] == 'Expirado') && !empty($pag['txid'])) {
-                                            $html .= '<button onclick="verificarPix(\'' . $pag['txid'] . '\')" class="ml-2 text-blue-500 hover:text-blue-700" title="Verificar Pagamento na API"><span class="material-icons text-sm">search</span></button>';
+                                            $actionsHtml .= '<button onclick="verificarPix(\'' . $pag['txid'] . '\')" class="ml-2 text-blue-600 hover:text-blue-800 font-medium inline-flex items-center text-xs" title="Verificar Pagamento na API Inter"><span class="material-icons text-sm mr-0.5">search</span> Consultar Inter</button>';
                                         }
                                         if ($pag['status_pagamento'] == 'Confirmado') {
-                                            $html .= '<button onclick="estornarPagamento(' . $pag['id_pagamento'] . ')" class="text-red-400 hover:underline">Estornar</button>';
+                                            $actionsHtml .= '<button onclick="estornarPagamento(' . $pag['id_pagamento'] . ')" class="text-red-500 hover:text-red-700 hover:underline text-xs font-medium">Estornar</button>';
                                         }
+                                        $html .= '<div class="flex items-center gap-2">' . $actionsHtml . '</div>';
                                         $html .= '</div></li>';
                                         return $html;
                                     }
