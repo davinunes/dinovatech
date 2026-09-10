@@ -30,23 +30,9 @@ $paidAmountCents = (int)($data['paid_amount'] ?? $data['amount'] ?? 0);
 $captureMethod = strtolower((string)($data['capture_method'] ?? 'infinitepay'));
 $receiptUrl = $data['receipt_url'] ?? '';
 
-if (empty($orderNsu)) {
+if (empty($orderNsu) && empty($transactionNsu)) {
     http_response_code(400);
-    echo json_encode(['error' => 'order_nsu é obrigatório']);
-    exit();
-}
-
-// Extrai id_fatura de order_nsu (ex: "fatura#84" ou "84")
-$idFatura = null;
-if (preg_match('/fatura#(\d+)/i', $orderNsu, $matches)) {
-    $idFatura = (int)$matches[1];
-} elseif (is_numeric($orderNsu)) {
-    $idFatura = (int)$orderNsu;
-}
-
-if (!$idFatura) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Fatura não identificada']);
+    echo json_encode(['error' => 'order_nsu ou transaction_nsu é obrigatório']);
     exit();
 }
 
@@ -62,6 +48,38 @@ $link = DBConnect();
 if (!$link) {
     http_response_code(500);
     echo json_encode(['error' => 'Falha de banco de dados']);
+    exit();
+}
+
+// 1º Meio de identificação: Extração por expressão regular em order_nsu (ex: "fatura#84", "FATURA-84", "84")
+$idFatura = null;
+if (!empty($orderNsu)) {
+    if (preg_match('/(?:fatura|fat)[#\-_]?(\d+)/i', $orderNsu, $matches)) {
+        $idFatura = (int)$matches[1];
+    } elseif (is_numeric($orderNsu)) {
+        $idFatura = (int)$orderNsu;
+    }
+}
+
+// 2º Meio de identificação (Redundância/Dobra): Busca na tabela Faturas por infinitepay_nsu ou infinitepay_slug
+if (!$idFatura) {
+    $nsuEsc = mysqli_real_escape_string($link, (string)$orderNsu);
+    $slugEsc = mysqli_real_escape_string($link, (string)$transactionNsu);
+    
+    $qFind = "SELECT id_fatura FROM Faturas 
+              WHERE (infinitepay_nsu IS NOT NULL AND infinitepay_nsu != '' AND infinitepay_nsu = '$nsuEsc') 
+                 OR (infinitepay_slug IS NOT NULL AND infinitepay_slug != '' AND infinitepay_slug = '$slugEsc') 
+              LIMIT 1";
+    $rFind = DBExecute($link, $qFind);
+    if ($rFind && $rowFind = mysqli_fetch_assoc($rFind)) {
+        $idFatura = (int)$rowFind['id_fatura'];
+    }
+}
+
+if (!$idFatura) {
+    DBClose($link);
+    http_response_code(400);
+    echo json_encode(['error' => 'Fatura não identificada nos registros']);
     exit();
 }
 
@@ -82,7 +100,8 @@ if ($result['success']) {
     echo json_encode([
         'success' => true,
         'message' => $result['message'],
-        'already_processed' => $result['already_processed'] ?? false
+        'already_processed' => $result['already_processed'] ?? false,
+        'id_fatura' => $idFatura
     ]);
 } else {
     http_response_code(400);
