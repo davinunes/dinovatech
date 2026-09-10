@@ -2017,8 +2017,10 @@ if ($id_fatura) {
                         }
                         $btn.prop('disabled', false).html(originalText);
                         if (res.success && (res.checkout_url || res.url)) {
-                            showToast('✅ Link de checkout gerado com sucesso!', 'success');
-                            setTimeout(() => window.location.reload(), 1200);
+                            const checkoutUrl = res.checkout_url || res.url;
+                            showToast('✅ Link de checkout gerado! Abrindo em nova aba...', 'success');
+                            window.open(checkoutUrl, '_blank');
+                            setTimeout(() => window.location.reload(), 1500);
                         } else {
                             showToast('Erro ao gerar checkout: ' + (res.message || 'Tente novamente.'), 'error');
                         }

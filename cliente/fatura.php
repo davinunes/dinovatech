@@ -1081,8 +1081,10 @@ if ($id_fatura) {
                 }
                 const checkoutUrl = res.checkout_url || res.url;
                 if (res.success && checkoutUrl) {
-                    console.log('[InfinitePay] Redirecionando para:', checkoutUrl);
-                    window.location.href = checkoutUrl;
+                    console.log('%c[InfinitePay] Abrindo checkout em nova aba:', 'color: #10b981; font-weight: bold;', checkoutUrl);
+                    window.open(checkoutUrl, '_blank');
+                    $('#infinitePayStepLoading').addClass('hidden');
+                    $('#infinitePayStepInitial').removeClass('hidden');
                 } else {
                     console.error('[InfinitePay] Falha ao gerar checkout:', res);
                     alert('Erro ao gerar checkout: ' + (res.message || 'Tente novamente.'));

@@ -306,7 +306,8 @@ class InfinitePayHelper
         }
 
         $orderNsu = !empty($fatura['infinitepay_nsu']) ? $fatura['infinitepay_nsu'] : "fatura-{$id_fatura}";
-        $slug = $fatura['infinitepay_slug'] ?? '';
+        $slug = !empty($fatura['infinitepay_slug']) ? $fatura['infinitepay_slug'] : (string)($_REQUEST['slug'] ?? '');
+        $reqTxNsu = (string)($_REQUEST['transaction_nsu'] ?? '');
 
         $payloadCheck = [
             'handle' => $handle,
@@ -314,6 +315,9 @@ class InfinitePayHelper
         ];
         if (!empty($slug)) {
             $payloadCheck['slug'] = $slug;
+        }
+        if (!empty($reqTxNsu)) {
+            $payloadCheck['transaction_nsu'] = $reqTxNsu;
         }
 
         $apiUrl = 'https://api.checkout.infinitepay.io/payment_check';
@@ -343,16 +347,21 @@ class InfinitePayHelper
 
         $resData = json_decode($response, true);
 
-        // Fallback: Se não encontrou paid com order_nsu atual, tenta formatos alternativos ("fatura-84", "fatura#84", "84")
+        // Fallback: Se não encontrou paid com order_nsu atual, tenta formatos alternativos ("fatura-84", "fatura#84", "84", reqTxNsu, slug)
         if (is_array($resData) && empty($resData['paid'])) {
-            $altNsus = array_unique([
+            $altNsus = array_filter(array_unique([
                 "fatura-{$id_fatura}",
                 "fatura#{$id_fatura}",
-                (string)$id_fatura
-            ]);
+                (string)$id_fatura,
+                $reqTxNsu,
+                $slug
+            ]));
             foreach ($altNsus as $altNsu) {
-                if ($altNsu === $orderNsu) continue;
+                if (empty($altNsu) || $altNsu === $orderNsu) continue;
                 $payloadCheck2 = ['handle' => $handle, 'order_nsu' => $altNsu];
+                if (!empty($slug)) $payloadCheck2['slug'] = $slug;
+                if (!empty($reqTxNsu)) $payloadCheck2['transaction_nsu'] = $reqTxNsu;
+
                 $ch2 = curl_init($apiUrl);
                 curl_setopt_array($ch2, [
                     CURLOPT_POST => true,
