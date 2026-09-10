@@ -28,6 +28,7 @@ if (!is_array($data)) {
 
 $orderNsu = $data['order_nsu'] ?? '';
 $transactionNsu = $data['transaction_nsu'] ?? ($data['invoice_slug'] ?? null);
+$amountCents = (int)($data['amount'] ?? 0);
 $paidAmountCents = (int)($data['paid_amount'] ?? $data['amount'] ?? 0);
 $captureMethod = strtolower((string)($data['capture_method'] ?? 'infinitepay'));
 $receiptUrl = $data['receipt_url'] ?? '';
@@ -105,7 +106,8 @@ $result = InfinitePayHelper::processarPagamentoConfirmado(
     $captureMethod,
     $transactionNsu,
     $receiptUrl,
-    'Webhook Postback'
+    'Webhook Postback',
+    $amountCents
 );
 
 DBClose($link);

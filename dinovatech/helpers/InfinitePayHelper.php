@@ -418,6 +418,7 @@ class InfinitePayHelper
 
         if (is_array($resData) && !empty($resData['paid'])) {
             $paidAmountCents = (int)($resData['paid_amount'] ?? $resData['amount'] ?? 0);
+            $amountCents = (int)($resData['amount'] ?? 0);
             $captureMethod = strtolower((string)($resData['capture_method'] ?? 'infinitepay'));
             $transactionNsu = $resData['transaction_nsu'] ?? $resData['slug'] ?? $resData['invoice_slug'] ?? $slug ?? ('infinitepay_' . time());
             $receiptUrl = $resData['receipt_url'] ?? '';
@@ -436,7 +437,8 @@ class InfinitePayHelper
                 $captureMethod,
                 $transactionNsu,
                 $receiptUrl,
-                'Verificação manual via API InfinitePay'
+                'Verificação manual via API InfinitePay',
+                $amountCents
             );
 
             return [
@@ -459,6 +461,7 @@ class InfinitePayHelper
             }
             $saldoDevedor = $valorLiquido - $totalPago;
             $paidAmountCents = (int)round(max(0, $saldoDevedor) * 100);
+            $amountCents = $paidAmountCents;
             $captureMethod = strtolower((string)($_REQUEST['capture_method'] ?? 'infinitepay'));
             $receiptUrl = (string)($_REQUEST['receipt_url'] ?? '');
 
@@ -469,7 +472,8 @@ class InfinitePayHelper
                 $captureMethod,
                 $reqTxNsu,
                 $receiptUrl,
-                'Retorno via Redirect InfinitePay'
+                'Retorno via Redirect InfinitePay',
+                $amountCents
             );
 
             return [
@@ -492,7 +496,7 @@ class InfinitePayHelper
     /**
      * Processa e registra um pagamento confirmado no banco de dados.
      */
-    public static function processarPagamentoConfirmado($link, int $idFatura, int $paidAmountCents, string $captureMethod, ?string $txid, ?string $receiptUrl = '', string $origem = 'Webhook'): array
+    public static function processarPagamentoConfirmado($link, int $idFatura, int $paidAmountCents, string $captureMethod, ?string $txid, ?string $receiptUrl = '', string $origem = 'Webhook', int $amountCents = 0): array
     {
         $idSafe = mysqli_real_escape_string($link, $idFatura);
         $qFatura = "SELECT * FROM Faturas WHERE id_fatura = '$idSafe' LIMIT 1";
@@ -508,11 +512,26 @@ class InfinitePayHelper
             DBExecute($link, "UPDATE Faturas SET infinitepay_slug = '$txidEsc' WHERE id_fatura = '$idSafe'");
         }
 
-        $valorPagoDecimal = $paidAmountCents > 0 ? ($paidAmountCents / 100.0) : (float)($fatura['valor_total'] ?? 0);
+        // 1. Obtém saldo devedor atual antes de registrar este pagamento
+        $calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
+        $valorLiquido = (float)($calcTotals['valor_liquido'] ?? 0);
+        $rSumBefore = DBExecute($link, "SELECT SUM(valor_pago) AS total_pago FROM Pagamentos WHERE id_fatura = '$idSafe' AND status_pagamento = 'Confirmado'");
+        $totalPagoBefore = ($rSumBefore && $rowSumBefore = mysqli_fetch_assoc($rSumBefore)) ? (float)($rowSumBefore['total_pago'] ?? 0) : 0;
+        $saldoDevedorAtual = max(0, $valorLiquido - $totalPagoBefore);
+
+        // 2. Trata valor líquido vs valor com taxa embutida no cartão pelo comprador (paid_amount > amount)
+        $amountDecimal = $amountCents > 0 ? ($amountCents / 100.0) : ($paidAmountCents > 0 ? ($paidAmountCents / 100.0) : (float)($fatura['valor_total'] ?? 0));
+        $valorCobradoCliente = $paidAmountCents > 0 ? ($paidAmountCents / 100.0) : $amountDecimal;
+
+        // Se amountDecimal for maior que o saldo devedor atual, limita ao saldo devedor para quitar perfeitamente (R$ 0,00)
+        $valorPagoDecimal = ($saldoDevedorAtual > 0 && $amountDecimal > $saldoDevedorAtual) ? $saldoDevedorAtual : $amountDecimal;
+
         $formaPagamentoLabel = (strtolower($captureMethod) === 'pix') ? 'PIX (InfinitePay)' : 'Cartão de Crédito (InfinitePay)';
-        $formaSafe = mysqli_real_escape_string($link, $formaPagamentoLabel);
         
         $obs = "Pagamento via InfinitePay - {$formaPagamentoLabel} ({$origem}).";
+        if ($valorCobradoCliente > ($valorPagoDecimal + 0.001)) {
+            $obs .= " (Valor cobrado do cliente no cartão com taxas: R$ " . number_format($valorCobradoCliente, 2, ',', '.') . ").";
+        }
         if (!empty($receiptUrl)) {
             $obs .= " Comprovante: " . $receiptUrl;
         }
