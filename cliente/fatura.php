@@ -1036,9 +1036,9 @@ if ($id_fatura) {
             type: 'POST',
             data: { action: 'gerar_checkout_infinitepay', id_fatura: idFatura },
             dataType: 'json',
-            success: function(res) {
-                if (res.success && res.url) {
-                    window.location.href = res.url;
+                const checkoutUrl = res.checkout_url || res.url;
+                if (res.success && checkoutUrl) {
+                    window.location.href = checkoutUrl;
                 } else {
                     alert('Erro ao gerar checkout: ' + (res.message || 'Tente novamente.'));
                     $('#infinitePayStepLoading').addClass('hidden');
