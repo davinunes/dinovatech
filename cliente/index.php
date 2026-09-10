@@ -1893,14 +1893,37 @@ $nome_inicial = strtok($nome_cliente, ' ');
                     container.html('<p class="text-center text-gray-400 py-4 text-sm italic">Nenhuma fatura cadastrada.</p>');
                     return;
                 }
-                faturas.slice(0, 5).forEach(f => {
+
+                // Ordenação: 1º Pendentes antes de pagas, 2º Maior valor primeiro, 3º Desempate vencimento
+                const faturasOrdenadas = [...faturas].sort((a, b) => {
+                    const isLiqA = a.status === 'Liquidada' ? 1 : 0;
+                    const isLiqB = b.status === 'Liquidada' ? 1 : 0;
+                    if (isLiqA !== isLiqB) {
+                        return isLiqA - isLiqB;
+                    }
+                    const valA = parseFloat(a.valor_total_fatura || 0);
+                    const valB = parseFloat(b.valor_total_fatura || 0);
+                    if (valB !== valA) {
+                        return valB - valA;
+                    }
+                    return (a.data_vencimento || '').localeCompare(b.data_vencimento || '');
+                });
+
+                const hoje = new Date().toISOString().split('T')[0];
+
+                faturasOrdenadas.slice(0, 5).forEach(f => {
                     const isLiq = f.status === 'Liquidada';
-                    const statusClass = isLiq ? 'status-pago' : 'status-aberto';
-                    const statusLabel = isLiq ? 'Paga' : 'Aberta';
+                    const isAtrasada = !isLiq && f.data_vencimento && f.data_vencimento < hoje;
+                    const statusClass = isLiq ? 'status-pago' : (isAtrasada ? 'status-atrasado' : 'status-aberto');
+                    const statusLabel = isLiq ? 'Paga' : (isAtrasada ? 'Atrasada' : 'Aberta');
+                    const icon = isLiq ? 'check_circle' : (isAtrasada ? 'warning' : 'pending');
+                    const iconColor = isLiq ? 'text-emerald-500' : (isAtrasada ? 'text-red-500' : 'text-amber-500');
+                    const iconBg = isLiq ? 'bg-emerald-50' : (isAtrasada ? 'bg-red-50' : 'bg-amber-50');
+
                     container.append(`
                         <div class="fatura-item">
-                            <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${isLiq ? 'bg-emerald-50' : 'bg-amber-50'}">
-                                <span class="material-icons-round text-lg ${isLiq ? 'text-emerald-500' : 'text-amber-500'}">${isLiq ? 'check_circle' : 'pending'}</span>
+                            <span class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}">
+                                <span class="material-icons-round text-lg ${iconColor}">${icon}</span>
                             </span>
                             <div class="flex-1 min-w-0">
                                 <div class="font-bold text-gray-800 text-sm">${formatCurrency(f.valor_total_fatura)}</div>
