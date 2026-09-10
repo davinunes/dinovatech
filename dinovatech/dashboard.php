@@ -521,7 +521,7 @@ DBClose($linkDB);
                                             <th class="w-28 px-3 py-3 text-left font-semibold">Data / Hora</th>
                                             <th class="w-28 px-3 py-3 text-left font-semibold">Tipo</th>
                                             <th class="px-4 py-3 text-left font-semibold">Título / Descrição</th>
-                                            <th class="w-52 px-3 py-3 text-left font-semibold">Pagador / Detalhes</th>
+                                            <th class="w-60 px-3 py-3 text-left font-semibold">Pagador / Detalhes</th>
                                             <th class="w-32 px-4 py-3 text-right font-semibold">Valor</th>
                                         </tr>
                                     </thead>
@@ -1040,7 +1040,9 @@ DBClose($linkDB);
                     const txId = (detalhes.txId || '').toLowerCase();
                     const doc = (t.numeroDocumento || '').toLowerCase();
                     const endToEndId = (detalhes.endToEndId || '').toLowerCase();
-                    return titulo.includes(filtro) || desc.includes(filtro) || tipo.includes(filtro) || nomePagador.includes(filtro) || txId.includes(filtro) || doc.includes(filtro) || endToEndId.includes(filtro);
+                    const clienteNome = (t.cliente_vinculado && t.cliente_vinculado.nome) ? t.cliente_vinculado.nome.toLowerCase() : '';
+                    const clienteCpf = (t.cliente_vinculado && t.cliente_vinculado.cpf_cnpj) ? t.cliente_vinculado.cpf_cnpj.toLowerCase() : '';
+                    return titulo.includes(filtro) || desc.includes(filtro) || tipo.includes(filtro) || nomePagador.includes(filtro) || txId.includes(filtro) || doc.includes(filtro) || endToEndId.includes(filtro) || clienteNome.includes(filtro) || clienteCpf.includes(filtro);
                 });
 
                 transacoes.forEach(t => {
@@ -1069,6 +1071,81 @@ DBClose($linkDB);
                         const dataFormatada = t.dataTransacao ? formatDate(t.dataTransacao) : (t.dataInclusao ? formatDate(t.dataInclusao.substring(0, 10)) : '-');
                         const horaFormatada = t.dataInclusao && t.dataInclusao.length >= 19 ? t.dataInclusao.substring(11, 19) : '';
                         const detalhes = t.detalhes || {};
+                        const cli = t.cliente_vinculado || null;
+
+                        // Bloco da Coluna Pagador / Detalhes (Desktop)
+                        let pagadorColHtml = '';
+                        if (cli) {
+                            const avatarHtml = cli.foto_url 
+                                ? `<img src="${escapeHtml(cli.foto_url)}" alt="${escapeHtml(cli.nome)}" class="w-8 h-8 rounded-full object-cover border border-orange-300 shadow-sm shrink-0">`
+                                : `<div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 font-bold text-xs flex items-center justify-center border border-orange-200 shadow-sm shrink-0" title="${escapeHtml(cli.nome)}">${escapeHtml((cli.nome || 'C').charAt(0).toUpperCase())}</div>`;
+                            
+                            const nomeDiferente = detalhes.nomePagador && detalhes.nomePagador.toLowerCase().trim() !== cli.nome.toLowerCase().trim();
+
+                            pagadorColHtml = `
+                                <div class="flex items-start gap-2.5">
+                                    <a href="cliente_detalhes.php?id=${encodeURIComponent(cli.id_cliente)}" target="_blank" class="shrink-0 hover:opacity-85 transition transform hover:scale-105 inline-block" title="Abrir perfil de ${escapeHtml(cli.nome)}">
+                                        ${avatarHtml}
+                                    </a>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-1">
+                                            <a href="cliente_detalhes.php?id=${encodeURIComponent(cli.id_cliente)}" target="_blank" class="font-bold text-xs text-gray-900 hover:text-orange-600 transition truncate max-w-[175px] block leading-tight" title="Cliente cadastrado: ${escapeHtml(cli.nome)}">
+                                                ${escapeHtml(cli.nome)}
+                                            </a>
+                                            <span class="material-icons text-[14px] text-emerald-500 shrink-0 select-none" title="Cliente vinculado ao cadastro">verified</span>
+                                        </div>
+                                        ${nomeDiferente ? `<div class="text-[10px] text-gray-400 truncate max-w-[175px] leading-tight mt-0.5" title="Nome no Extrato: ${escapeHtml(detalhes.nomePagador)}"><span class="font-medium">Banco:</span> ${escapeHtml(detalhes.nomePagador)}</div>` : ''}
+                                        <div class="text-[10px] text-gray-500 font-mono leading-tight mt-0.5">${escapeHtml(detalhes.cpfCnpjPagador || cli.cpf_cnpj || '')}</div>
+                                        ${detalhes.txId ? `<div class="text-[10px] text-orange-700 font-mono truncate max-w-[175px] leading-tight mt-0.5" title="${escapeHtml(detalhes.txId)}">txId: ${escapeHtml(detalhes.txId)}</div>` : ''}
+                                        ${detalhes.descricaoPix ? `<div class="text-[10px] text-teal-700 italic truncate max-w-[175px] leading-tight mt-0.5" title="${escapeHtml(detalhes.descricaoPix)}">${escapeHtml(detalhes.descricaoPix)}</div>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            pagadorColHtml = `
+                                <div class="space-y-0.5">
+                                    ${detalhes.nomePagador ? `<div class="font-medium text-gray-800 truncate" title="${escapeHtml(detalhes.nomePagador)}">${escapeHtml(detalhes.nomePagador)}</div>` : '<div class="text-xs text-gray-400 italic">-</div>'}
+                                    ${detalhes.cpfCnpjPagador ? `<div class="text-[10px] text-gray-500 font-mono">${escapeHtml(detalhes.cpfCnpjPagador)}</div>` : ''}
+                                    ${detalhes.txId ? `<div class="text-[10px] text-orange-700 font-mono truncate" title="${escapeHtml(detalhes.txId)}">txId: ${escapeHtml(detalhes.txId)}</div>` : ''}
+                                    ${detalhes.descricaoPix ? `<div class="text-[10px] text-teal-700 italic truncate" title="${escapeHtml(detalhes.descricaoPix)}">${escapeHtml(detalhes.descricaoPix)}</div>` : ''}
+                                </div>
+                            `;
+                        }
+
+                        // Bloco Pagador / Detalhes (Mobile)
+                        let pagadorMobileHtml = '';
+                        if (cli) {
+                            const avatarMobileHtml = cli.foto_url 
+                                ? `<img src="${escapeHtml(cli.foto_url)}" alt="${escapeHtml(cli.nome)}" class="w-7 h-7 rounded-full object-cover border border-orange-300 shadow-sm shrink-0">`
+                                : `<div class="w-7 h-7 rounded-full bg-orange-100 text-orange-700 font-bold text-[11px] flex items-center justify-center border border-orange-200 shadow-sm shrink-0" title="${escapeHtml(cli.nome)}">${escapeHtml((cli.nome || 'C').charAt(0).toUpperCase())}</div>`;
+                            
+                            const nomeDiferente = detalhes.nomePagador && detalhes.nomePagador.toLowerCase().trim() !== cli.nome.toLowerCase().trim();
+
+                            pagadorMobileHtml = `
+                                <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+                                    <a href="cliente_detalhes.php?id=${encodeURIComponent(cli.id_cliente)}" target="_blank" class="shrink-0 hover:opacity-85 transition" title="Ver detalhes do cliente">
+                                        ${avatarMobileHtml}
+                                    </a>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-1">
+                                            <a href="cliente_detalhes.php?id=${encodeURIComponent(cli.id_cliente)}" target="_blank" class="text-xs font-bold text-gray-900 hover:text-orange-600 transition truncate">
+                                                ${escapeHtml(cli.nome)}
+                                            </a>
+                                            <span class="material-icons text-xs text-emerald-500 shrink-0" title="Cliente cadastrado">verified</span>
+                                        </div>
+                                        ${nomeDiferente ? `<p class="text-[10px] text-gray-400 truncate"><span class="font-medium">Banco:</span> ${escapeHtml(detalhes.nomePagador)}</p>` : ''}
+                                        ${(detalhes.cpfCnpjPagador || cli.cpf_cnpj) ? `<p class="text-[10px] text-gray-400 font-mono">${escapeHtml(detalhes.cpfCnpjPagador || cli.cpf_cnpj)}</p>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        } else if (detalhes.nomePagador || detalhes.cpfCnpjPagador) {
+                            pagadorMobileHtml = `
+                                <div class="pt-1.5 border-t border-gray-100">
+                                    ${detalhes.nomePagador ? `<p class="text-xs text-gray-700 font-medium truncate"><span class="text-gray-400 font-normal">Pagador:</span> ${escapeHtml(detalhes.nomePagador)}</p>` : ''}
+                                    ${detalhes.cpfCnpjPagador ? `<p class="text-[10px] text-gray-400 font-mono">${escapeHtml(detalhes.cpfCnpjPagador)}</p>` : ''}
+                                </div>
+                            `;
+                        }
 
                         // 1. Linha da Tabela Desktop
                         tableHtml += `
@@ -1089,10 +1166,7 @@ DBClose($linkDB);
                                     ${t.numeroDocumento ? `<div class="text-[10px] text-gray-400 font-mono truncate">Doc: ${escapeHtml(t.numeroDocumento)}</div>` : ''}
                                 </td>
                                 <td class="px-3 py-3">
-                                    ${detalhes.nomePagador ? `<div class="font-medium text-gray-800 truncate" title="${escapeHtml(detalhes.nomePagador)}">${escapeHtml(detalhes.nomePagador)}</div>` : ''}
-                                    ${detalhes.cpfCnpjPagador ? `<div class="text-[10px] text-gray-500 font-mono">${escapeHtml(detalhes.cpfCnpjPagador)}</div>` : ''}
-                                    ${detalhes.txId ? `<div class="text-[10px] text-orange-700 font-mono truncate" title="${escapeHtml(detalhes.txId)}">txId: ${escapeHtml(detalhes.txId)}</div>` : ''}
-                                    ${detalhes.descricaoPix ? `<div class="text-[10px] text-teal-700 italic truncate" title="${escapeHtml(detalhes.descricaoPix)}">${escapeHtml(detalhes.descricaoPix)}</div>` : ''}
+                                    ${pagadorColHtml}
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <span class="${valorClass} text-sm">${valorSinal}${formatCurrency(valor)}</span>
@@ -1119,7 +1193,6 @@ DBClose($linkDB);
                                     <div class="space-y-0.5 flex-1 min-w-0">
                                         <h5 class="font-bold text-gray-900 text-xs truncate" title="${escapeHtml(t.titulo || 'Transação')}">${escapeHtml(t.titulo || 'Transação')}</h5>
                                         ${t.descricao ? `<p class="text-xs text-gray-600 truncate" title="${escapeHtml(t.descricao)}">${escapeHtml(t.descricao)}</p>` : ''}
-                                        ${detalhes.nomePagador ? `<p class="text-xs text-gray-700 font-medium truncate"><span class="text-gray-400 font-normal">Pagador:</span> ${escapeHtml(detalhes.nomePagador)}</p>` : ''}
                                         ${detalhes.descricaoPix ? `<p class="text-[11px] text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-100 font-medium inline-block truncate max-w-full">Pix: ${escapeHtml(detalhes.descricaoPix)}</p>` : ''}
                                     </div>
                                     <div class="text-right shrink-0">
@@ -1127,6 +1200,8 @@ DBClose($linkDB);
                                         ${t.numeroDocumento ? `<span class="text-[9px] text-gray-400 font-mono block">Doc #${escapeHtml(t.numeroDocumento)}</span>` : ''}
                                     </div>
                                 </div>
+
+                                ${pagadorMobileHtml}
                             </div>
                         `;
                     });

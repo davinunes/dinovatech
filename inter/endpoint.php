@@ -335,6 +335,92 @@ try {
             if (isset($_GET['scrollId'])) $params['scrollId'] = $_GET['scrollId'];
 
             $extrato = consultarExtratoCompleto($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $params);
+
+            // Enriquecer transações com clientes vinculados via CPF/CNPJ
+            if ($link && !empty($extrato)) {
+                $listaTransacoes = [];
+                if (is_object($extrato) && isset($extrato->transacoes) && is_array($extrato->transacoes)) {
+                    $listaTransacoes = &$extrato->transacoes;
+                } elseif (is_array($extrato) && isset($extrato['transacoes']) && is_array($extrato['transacoes'])) {
+                    $listaTransacoes = &$extrato['transacoes'];
+                } elseif (is_array($extrato)) {
+                    $listaTransacoes = &$extrato;
+                }
+
+                $cpfsColetados = [];
+                foreach ($listaTransacoes as $tr) {
+                    $det = is_object($tr) ? ($tr->detalhes ?? null) : ($tr['detalhes'] ?? null);
+                    $cpf = null;
+                    if ($det) {
+                        $cpf = is_object($det) ? ($det->cpfCnpjPagador ?? $det->cpfCnpj ?? null) : ($det['cpfCnpjPagador'] ?? $det['cpfCnpj'] ?? null);
+                    }
+                    if (!$cpf) {
+                        $cpf = is_object($tr) ? ($tr->cpfCnpj ?? null) : ($tr['cpfCnpj'] ?? null);
+                    }
+                    if ($cpf) {
+                        $cpfLimpo = preg_replace('/\D/', '', (string)$cpf);
+                        if (!empty($cpfLimpo)) {
+                            $cpfsColetados[$cpfLimpo] = true;
+                        }
+                    }
+                }
+
+                if (!empty($cpfsColetados)) {
+                    $cpfsEscaped = array_map(function ($c) use ($link) {
+                        return "'" . mysqli_real_escape_string($link, $c) . "'";
+                    }, array_keys($cpfsColetados));
+                    $inSql = implode(',', $cpfsEscaped);
+
+                    $sqlCli = "SELECT id_cliente, nome, cpf_cnpj, foto_url 
+                               FROM Clientes 
+                               WHERE cpf_cnpj IN ($inSql) 
+                                  OR REPLACE(REPLACE(REPLACE(REPLACE(cpf_cnpj, '.', ''), '-', ''), '/', ''), ' ', '') IN ($inSql)";
+                    $resCli = DBExecute($link, $sqlCli);
+                    $mapaClientes = [];
+                    if ($resCli) {
+                        while ($rowCli = mysqli_fetch_assoc($resCli)) {
+                            $cLimpo = preg_replace('/\D/', '', (string)$rowCli['cpf_cnpj']);
+                            if ($cLimpo) {
+                                $mapaClientes[$cLimpo] = [
+                                    'id_cliente' => $rowCli['id_cliente'],
+                                    'nome' => $rowCli['nome'],
+                                    'foto_url' => $rowCli['foto_url'],
+                                    'cpf_cnpj' => $rowCli['cpf_cnpj']
+                                ];
+                            }
+                        }
+                    }
+
+                    if (!empty($mapaClientes)) {
+                        foreach ($listaTransacoes as &$tr) {
+                            $det = is_object($tr) ? ($tr->detalhes ?? null) : ($tr['detalhes'] ?? null);
+                            $cpf = null;
+                            if ($det) {
+                                $cpf = is_object($det) ? ($det->cpfCnpjPagador ?? $det->cpfCnpj ?? null) : ($det['cpfCnpjPagador'] ?? $det['cpfCnpj'] ?? null);
+                            }
+                            if (!$cpf) {
+                                $cpf = is_object($tr) ? ($tr->cpfCnpj ?? null) : ($tr['cpfCnpj'] ?? null);
+                            }
+
+                            $vinculado = null;
+                            if ($cpf) {
+                                $cpfLimpo = preg_replace('/\D/', '', (string)$cpf);
+                                if (isset($mapaClientes[$cpfLimpo])) {
+                                    $vinculado = $mapaClientes[$cpfLimpo];
+                                }
+                            }
+
+                            if (is_object($tr)) {
+                                $tr->cliente_vinculado = $vinculado;
+                            } else {
+                                $tr['cliente_vinculado'] = $vinculado;
+                            }
+                        }
+                        unset($tr);
+                    }
+                }
+            }
+
             echo json_encode(['success' => true, 'data' => $extrato]);
             break;
 
