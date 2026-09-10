@@ -1074,7 +1074,11 @@ if ($id_fatura) {
             data: { action: 'gerar_checkout_infinitepay', id_fatura: idFatura },
             dataType: 'json',
             success: function(res) {
-                console.log('[InfinitePay] Resposta da geração de checkout:', res);
+                console.log('%c[InfinitePay Checkout Resposta]:', 'color: #10b981; font-weight: bold;', res);
+                if (res && res.payload) {
+                    console.log('%c[InfinitePay Payload Enviado (Objeto)]:', 'color: #3b82f6; font-weight: bold;', res.payload);
+                    console.log('%c[InfinitePay Payload JSON Exato]:\n%c' + JSON.stringify(res.payload, null, 2), 'color: #10b981; font-weight: bold;', 'color: #111827; font-family: monospace;');
+                }
                 const checkoutUrl = res.checkout_url || res.url;
                 if (res.success && checkoutUrl) {
                     console.log('[InfinitePay] Redirecionando para:', checkoutUrl);

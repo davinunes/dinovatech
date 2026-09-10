@@ -1365,6 +1365,11 @@ if ($id_fatura) {
             btn.prop('disabled', true).html('<span class="material-icons animate-spin text-base mr-1">sync</span> Gerando Link...');
 
             $.post('app.php', { action: 'gerar_checkout_infinitepay', id_fatura: idFatura }, function(res) {
+                console.log('%c[InfinitePay Checkout Resposta]:', 'color: #10b981; font-weight: bold;', res);
+                if (res && res.payload) {
+                    console.log('%c[InfinitePay Payload Enviado (Objeto)]:', 'color: #3b82f6; font-weight: bold;', res.payload);
+                    console.log('%c[InfinitePay Payload JSON Exato]:\n%c' + JSON.stringify(res.payload, null, 2), 'color: #10b981; font-weight: bold;', 'color: #111827; font-family: monospace;');
+                }
                 btn.prop('disabled', false).html('<span class="material-icons text-base">link</span> Gerar Link de Checkout');
                 if (res.success && res.checkout_url) {
                     const checkoutUrl = res.checkout_url;
@@ -2005,7 +2010,11 @@ if ($id_fatura) {
                     data: { action: 'gerar_checkout_infinitepay', id_fatura: idFatura },
                     dataType: 'json',
                     success: function(res) {
-                        console.log('[InfinitePay Admin] Link de Checkout Gerado:', res);
+                        console.log('%c[InfinitePay Admin Link de Checkout Gerado]:', 'color: #10b981; font-weight: bold;', res);
+                        if (res && res.payload) {
+                            console.log('%c[InfinitePay Admin Payload Enviado (Objeto)]:', 'color: #3b82f6; font-weight: bold;', res.payload);
+                            console.log('%c[InfinitePay Admin Payload JSON Exato]:\n%c' + JSON.stringify(res.payload, null, 2), 'color: #10b981; font-weight: bold;', 'color: #111827; font-family: monospace;');
+                        }
                         $btn.prop('disabled', false).html(originalText);
                         if (res.success && (res.checkout_url || res.url)) {
                             showToast('✅ Link de checkout gerado com sucesso!', 'success');

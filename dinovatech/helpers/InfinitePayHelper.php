@@ -172,7 +172,7 @@ class InfinitePayHelper
 
         // 6. Montagem da Payload completa
         $siteRoot = self::getSiteRootUrl();
-        $orderNsu = "fatura#{$id_fatura}";
+        $orderNsu = "fatura-{$id_fatura}";
         $payload = [
             'handle' => $handle,
             'order_nsu' => $orderNsu,
@@ -305,7 +305,7 @@ class InfinitePayHelper
             return ['success' => false, 'message' => 'Handle do InfinitePay não configurado.'];
         }
 
-        $orderNsu = !empty($fatura['infinitepay_nsu']) ? $fatura['infinitepay_nsu'] : "fatura#{$id_fatura}";
+        $orderNsu = !empty($fatura['infinitepay_nsu']) ? $fatura['infinitepay_nsu'] : "fatura-{$id_fatura}";
         $slug = $fatura['infinitepay_slug'] ?? '';
 
         $payloadCheck = [
@@ -343,11 +343,16 @@ class InfinitePayHelper
 
         $resData = json_decode($response, true);
 
-        // Fallback: Se não encontrou paid com order_nsu "fatura#91", tenta com o ID numérico "91"
+        // Fallback: Se não encontrou paid com order_nsu atual, tenta formatos alternativos ("fatura-84", "fatura#84", "84")
         if (is_array($resData) && empty($resData['paid'])) {
-            $numericNsu = (string)$id_fatura;
-            if ($orderNsu !== $numericNsu) {
-                $payloadCheck2 = ['handle' => $handle, 'order_nsu' => $numericNsu];
+            $altNsus = array_unique([
+                "fatura-{$id_fatura}",
+                "fatura#{$id_fatura}",
+                (string)$id_fatura
+            ]);
+            foreach ($altNsus as $altNsu) {
+                if ($altNsu === $orderNsu) continue;
+                $payloadCheck2 = ['handle' => $handle, 'order_nsu' => $altNsu];
                 $ch2 = curl_init($apiUrl);
                 curl_setopt_array($ch2, [
                     CURLOPT_POST => true,
@@ -362,6 +367,7 @@ class InfinitePayHelper
                 $resData2 = json_decode($response2, true);
                 if (is_array($resData2) && !empty($resData2['paid'])) {
                     $resData = $resData2;
+                    break;
                 }
             }
         }
