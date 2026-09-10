@@ -512,12 +512,12 @@ class InfinitePayHelper
         $formaPagamentoLabel = (strtolower($captureMethod) === 'pix') ? 'PIX (InfinitePay)' : 'Cartão de Crédito (InfinitePay)';
         $formaSafe = mysqli_real_escape_string($link, $formaPagamentoLabel);
         
-        $obs = "Pagamento via InfinitePay ({$origem}).";
+        $obs = "Pagamento via InfinitePay - {$formaPagamentoLabel} ({$origem}).";
         if (!empty($receiptUrl)) {
             $obs .= " Comprovante: " . $receiptUrl;
         }
         $obsSafe = mysqli_real_escape_string($link, $obs);
-        $txidSafe = mysqli_real_escape_string($link, $txid ?? ('infinitepay_' . $idFatura));
+        $txidSafe = mysqli_real_escape_string($link, !empty($txid) ? $txid : ('infinitepay_' . time()));
         $dataHoje = date('Y-m-d H:i:s');
 
         // Verifica duplicidade pelo txid
@@ -527,9 +527,9 @@ class InfinitePayHelper
             return ['success' => true, 'already_processed' => true, 'message' => 'Pagamento já processado anteriormente.'];
         }
 
-        // Insere registro em Pagamentos
-        $qIns = "INSERT INTO Pagamentos (id_fatura, data_pagamento, valor_pago, forma_pagamento, status_pagamento, txid, observacao) 
-                 VALUES ('$idSafe', '$dataHoje', '$valorPagoDecimal', '$formaSafe', 'Confirmado', '$txidSafe', '$obsSafe')";
+        // Insere registro em Pagamentos (colunas válidas da tabela Pagamentos)
+        $qIns = "INSERT INTO Pagamentos (id_fatura, data_pagamento, valor_pago, status_pagamento, txid, observacao) 
+                 VALUES ('$idSafe', '$dataHoje', '$valorPagoDecimal', 'Confirmado', '$txidSafe', '$obsSafe')";
         DBExecute($link, $qIns);
 
         // Atualiza status da Fatura se valor total atingido
