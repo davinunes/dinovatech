@@ -64,6 +64,24 @@ if ($id_fatura) {
         $valorLiquidoFatura = $calcTotals['valor_liquido'];
         $saldo_devedor = $valorLiquidoFatura - $total_pago;
 
+        // Processa confirmação da InfinitePay imediatamente se retornado via redirect_url com saldo devedor > 0
+        if ($saldo_devedor > 0 && (!empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['transaction_id']))) {
+            require_once __DIR__ . '/../dinovatech/helpers/InfinitePayHelper.php';
+            InfinitePayHelper::verificarStatusPagamento($link, $id_fatura);
+            // Recarrega pagamentos atualizados da fatura
+            $query_pag = "SELECT * FROM Pagamentos WHERE id_fatura = '$id_safe' ORDER BY data_pagamento DESC";
+            $res_pag = DBExecute($link, $query_pag);
+            $pagamentos = [];
+            $total_pago = 0;
+            while ($row = mysqli_fetch_assoc($res_pag)) {
+                $pagamentos[] = $row;
+                if ($row['status_pagamento'] == 'Confirmado') {
+                    $total_pago += $row['valor_pago'];
+                }
+            }
+            $saldo_devedor = $valorLiquidoFatura - $total_pago;
+        }
+
         // Fetch Company Config
         $config_emissor = [];
         $query_config = "SELECT * FROM ConfiguracoesEmissor LIMIT 1";
@@ -1108,10 +1126,20 @@ if ($id_fatura) {
             $('#infinitePayStepLoading').removeClass('hidden');
         }
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const postData = {
+            action: 'verificar_pagamento_infinitepay',
+            id_fatura: idFatura,
+            slug: urlParams.get('slug') || '',
+            transaction_nsu: urlParams.get('transaction_nsu') || urlParams.get('transaction_id') || '',
+            capture_method: urlParams.get('capture_method') || '',
+            receipt_url: urlParams.get('receipt_url') || ''
+        };
+
         $.ajax({
             url: '../dinovatech/app.php',
             type: 'POST',
-            data: { action: 'verificar_pagamento_infinitepay', id_fatura: idFatura },
+            data: postData,
             dataType: 'json',
             success: function(res) {
                 console.log('[InfinitePay] Resultado da verificação:', res);

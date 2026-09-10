@@ -43,7 +43,9 @@ class InfinitePayHelper
      */
     public static function getSiteRootUrl(): string
     {
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? 80) == 443 ? 'https' : 'http';
+        $protocol = (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+            || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || ($_SERVER['SERVER_PORT'] ?? 80) == 443 ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
         
         $scriptPath = $_SERVER['SCRIPT_NAME'] ?? '/';
@@ -307,7 +309,18 @@ class InfinitePayHelper
 
         $orderNsu = !empty($fatura['infinitepay_nsu']) ? $fatura['infinitepay_nsu'] : "fatura-{$id_fatura}";
         $slug = !empty($fatura['infinitepay_slug']) ? $fatura['infinitepay_slug'] : (string)($_REQUEST['slug'] ?? '');
-        $reqTxNsu = (string)($_REQUEST['transaction_nsu'] ?? '');
+        $reqTxNsu = (string)($_REQUEST['transaction_nsu'] ?? $_REQUEST['transaction_id'] ?? '');
+
+        // Persiste slug e nsu caso venham na requisição/redirect e ainda não estejam salvos
+        self::ensureFaturasColumns($link);
+        if (!empty($slug) && (empty($fatura['infinitepay_slug']) || $fatura['infinitepay_slug'] !== $slug)) {
+            $slugEsc = mysqli_real_escape_string($link, $slug);
+            DBExecute($link, "UPDATE Faturas SET infinitepay_slug = '$slugEsc' WHERE id_fatura = '$id_safe'");
+        }
+        if (!empty($orderNsu) && (empty($fatura['infinitepay_nsu']) || $fatura['infinitepay_nsu'] !== $orderNsu)) {
+            $nsuEsc = mysqli_real_escape_string($link, $orderNsu);
+            DBExecute($link, "UPDATE Faturas SET infinitepay_nsu = '$nsuEsc' WHERE id_fatura = '$id_safe'");
+        }
 
         $payloadCheck = [
             'handle' => $handle,
@@ -409,6 +422,39 @@ class InfinitePayHelper
                 'paid' => true,
                 'message' => 'Pagamento confirmado e registrado com sucesso!',
                 'data' => $resData,
+                'process_details' => $processRes
+            ];
+        }
+
+        // Fallback secundário: se o redirect trouxe os parâmetros da transação confirmada (slug + transaction_nsu/capture_method)
+        if (!empty($reqTxNsu) && (!empty($_REQUEST['capture_method']) || !empty($_REQUEST['receipt_url']))) {
+            $calcTotals = AppHelper::calculateFaturaTotals($link, $id_fatura);
+            $valorLiquido = (float)($calcTotals['valor_liquido'] ?? 0);
+            $resPag = DBExecute($link, "SELECT SUM(valor_pago) AS total_pago FROM Pagamentos WHERE id_fatura = '$id_safe' AND status_pagamento = 'Confirmado'");
+            $totalPago = 0;
+            if ($resPag && $rowPag = mysqli_fetch_assoc($resPag)) {
+                $totalPago = (float)($rowPag['total_pago'] ?? 0);
+            }
+            $saldoDevedor = $valorLiquido - $totalPago;
+            $paidAmountCents = (int)round(max(0, $saldoDevedor) * 100);
+            $captureMethod = strtolower((string)($_REQUEST['capture_method'] ?? 'infinitepay'));
+            $receiptUrl = (string)($_REQUEST['receipt_url'] ?? '');
+
+            $processRes = self::processarPagamentoConfirmado(
+                $link,
+                (int)$id_fatura,
+                $paidAmountCents,
+                $captureMethod,
+                $reqTxNsu,
+                $receiptUrl,
+                'Retorno via Redirect InfinitePay'
+            );
+
+            return [
+                'success' => true,
+                'paid' => true,
+                'message' => 'Pagamento confirmado e registrado via parâmetros de retorno da InfinitePay!',
+                'data' => $_REQUEST,
                 'process_details' => $processRes
             ];
         }
