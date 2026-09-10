@@ -64,22 +64,18 @@ if ($id_fatura) {
         $valorLiquidoFatura = $calcTotals['valor_liquido'];
         $saldo_devedor = $valorLiquidoFatura - $total_pago;
 
-        // Processa confirmação da InfinitePay imediatamente se retornado via redirect_url com saldo devedor > 0
-        if ($saldo_devedor > 0 && (!empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['transaction_id']))) {
+        // Processa confirmação da InfinitePay se a URL contiver parâmetros do redirect
+        $hasInfinitePayParams = !empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['transaction_id']);
+        if ($hasInfinitePayParams) {
             require_once __DIR__ . '/../dinovatech/helpers/InfinitePayHelper.php';
-            InfinitePayHelper::verificarStatusPagamento($link, $id_fatura);
-            // Recarrega pagamentos atualizados da fatura
-            $query_pag = "SELECT * FROM Pagamentos WHERE id_fatura = '$id_safe' ORDER BY data_pagamento DESC";
-            $res_pag = DBExecute($link, $query_pag);
-            $pagamentos = [];
-            $total_pago = 0;
-            while ($row = mysqli_fetch_assoc($res_pag)) {
-                $pagamentos[] = $row;
-                if ($row['status_pagamento'] == 'Confirmado') {
-                    $total_pago += $row['valor_pago'];
-                }
+            // Só usa os dados do redirect se a fatura ainda tiver saldo devedor (webhook não quitou previamente)
+            if ($saldo_devedor > 0) {
+                InfinitePayHelper::verificarStatusPagamento($link, $id_fatura);
             }
-            $saldo_devedor = $valorLiquidoFatura - $total_pago;
+            // Limpa a URL redirecionando para a fatura limpa (evita travamento do navegador)
+            $cleanUrl = "fatura.php?id=" . urlencode($id_fatura) . (!empty($token) ? "&token=" . urlencode($token) : "");
+            header("Location: {$cleanUrl}");
+            exit();
         }
 
         // Fetch Company Config
@@ -1177,10 +1173,6 @@ if ($id_fatura) {
         if ($isInfinitePayAtivo && $saldo_devedor > 0 && $temCheckoutCadastrado): 
         ?>
             startPollingInfinitePay(<?= $id_fatura ?>);
-        <?php endif; ?>
-
-        <?php if ($saldo_devedor > 0 && (!empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['order_nsu']))): ?>
-            verificarPagamentoInfinitePayCliente(<?= $id_fatura ?>, true);
         <?php endif; ?>
 
         $('#btnPagarPixMobile').click(function(){
