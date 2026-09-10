@@ -14,6 +14,40 @@ class AppHelper
         return $env === 'true' || $env === '1';
     }
 
+    /**
+     * Obtém o IP real do cliente/sonda, considerando instâncias atrás de Reverse Proxies SSL (Caddy, Nginx, Cloudflare).
+     *
+     * @return string IP validado do cliente ou fallback
+     */
+    public static function getClientIP(): string
+    {
+        $headers = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_REAL_IP',        // Caddy / Nginx / Traefik
+            'HTTP_X_FORWARDED_FOR',  // Cabeçalho padrão de proxy
+            'REMOTE_ADDR'            // Fallback para conexão direta
+        ];
+
+        foreach ($headers as $header) {
+            if (!empty($_SERVER[$header])) {
+                $ipList = $_SERVER[$header];
+                
+                // X-Forwarded-For pode conter múltiplos IPs (cliente, proxy1, proxy2)
+                if (strpos($ipList, ',') !== false) {
+                    $ips = explode(',', $ipList);
+                    $ipList = trim($ips[0]);
+                }
+                
+                $ip = trim($ipList);
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
+        }
+
+        return $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+    }
+
     public static function checkRememberLogin()
     {
         if (session_status() === PHP_SESSION_NONE) {

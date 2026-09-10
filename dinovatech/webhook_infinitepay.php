@@ -3,12 +3,14 @@
 
 header('Content-Type: application/json; charset=utf-8');
 
+require_once __DIR__ . '/helpers/AppHelper.php';
+
 $inputRaw = file_get_contents('php://input');
 
-// 1. Log do Webhook para depuração e auditoria
+// 1. Log do Webhook para depuração e auditoria (Captura IP real via Caddy/Proxy)
 $logFile = __DIR__ . '/webhook_infinitepay.log';
 $logDate = date('Y-m-d H:i:s');
-$clientIp = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
+$clientIp = AppHelper::getClientIP();
 file_put_contents($logFile, "[{$logDate}] [IP: {$clientIp}] Webhook recebido:\n" . $inputRaw . "\n\n", FILE_APPEND);
 
 if (empty($inputRaw)) {
