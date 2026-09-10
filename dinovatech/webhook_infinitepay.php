@@ -4,6 +4,13 @@
 header('Content-Type: application/json; charset=utf-8');
 
 $inputRaw = file_get_contents('php://input');
+
+// 1. Log do Webhook para depuração e auditoria
+$logFile = __DIR__ . '/webhook_infinitepay.log';
+$logDate = date('Y-m-d H:i:s');
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? 'desconhecido';
+file_put_contents($logFile, "[{$logDate}] [IP: {$clientIp}] Webhook recebido:\n" . $inputRaw . "\n\n", FILE_APPEND);
+
 if (empty($inputRaw)) {
     http_response_code(400);
     echo json_encode(['error' => 'Payload ausente']);
@@ -29,7 +36,7 @@ if (empty($orderNsu)) {
     exit();
 }
 
-// Extrai id_fatura de order_nsu (ex: "fatura#12" ou "12")
+// Extrai id_fatura de order_nsu (ex: "fatura#84" ou "84")
 $idFatura = null;
 if (preg_match('/fatura#(\d+)/i', $orderNsu, $matches)) {
     $idFatura = (int)$matches[1];
@@ -49,6 +56,7 @@ if (!file_exists($dbPath)) {
     $dbPath = __DIR__ . '/database.php';
 }
 require_once $dbPath;
+require_once __DIR__ . '/helpers/InfinitePayHelper.php';
 
 $link = DBConnect();
 if (!$link) {
@@ -57,60 +65,29 @@ if (!$link) {
     exit();
 }
 
-$idSafe = mysqli_real_escape_string($link, $idFatura);
-$qFatura = "SELECT * FROM Faturas WHERE id_fatura = '$idSafe' LIMIT 1";
-$rFatura = DBExecute($link, $qFatura);
-
-if (!$rFatura || mysqli_num_rows($rFatura) === 0) {
-    DBClose($link);
-    http_response_code(400);
-    echo json_encode(['error' => 'Fatura não encontrada no sistema']);
-    exit();
-}
-
-$fatura = mysqli_fetch_assoc($rFatura);
-$valorPagoDecimal = $paidAmountCents > 0 ? ($paidAmountCents / 100.0) : (float)($fatura['valor_total'] ?? 0);
-
-$txidSafe = mysqli_real_escape_string($link, $transactionNsu ?? '');
-$formaPagamentoLabel = ($captureMethod === 'pix') ? 'PIX (InfinitePay)' : 'Cartão de Crédito (InfinitePay)';
-$formaSafe = mysqli_real_escape_string($link, $formaPagamentoLabel);
-$obs = "Pagamento via InfinitePay. Receipt: " . $receiptUrl;
-$obsSafe = mysqli_real_escape_string($link, $obs);
-$dataHoje = date('Y-m-d H:i:s');
-
-// Verifica se a transação já foi registrada
-$qCheck = "SELECT id_pagamento FROM Pagamentos WHERE id_fatura = '$idSafe' AND txid = '$txidSafe' AND status_pagamento = 'Confirmado' LIMIT 1";
-$rCheck = DBExecute($link, $qCheck);
-
-if ($rCheck && mysqli_num_rows($rCheck) > 0) {
-    DBClose($link);
-    http_response_code(200);
-    echo json_encode(['success' => true, 'message' => 'Pagamento já processado anteriormente.']);
-    exit();
-}
-
-// Insere registro de pagamento confirmado
-$qIns = "INSERT INTO Pagamentos (id_fatura, data_pagamento, valor_pago, forma_pagamento, status_pagamento, txid, observacao) 
-         VALUES ('$idSafe', '$dataHoje', '$valorPagoDecimal', '$formaSafe', 'Confirmado', '$txidSafe', '$obsSafe')";
-DBExecute($link, $qIns);
-
-// Atualiza o status da fatura para 'Pago' se atingir o total líquido
-require_once __DIR__ . '/helpers/AppHelper.php';
-$calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
-$valorLiquido = (float)($calcTotals['valor_liquido'] ?? 0);
-
-$rSum = DBExecute($link, "SELECT SUM(valor_pago) AS total_pago FROM Pagamentos WHERE id_fatura = '$idSafe' AND status_pagamento = 'Confirmado'");
-$totalPago = 0;
-if ($rSum && $rowSum = mysqli_fetch_assoc($rSum)) {
-    $totalPago = (float)($rowSum['total_pago'] ?? 0);
-}
-
-if ($totalPago >= $valorLiquido) {
-    DBExecute($link, "UPDATE Faturas SET status = 'Pago' WHERE id_fatura = '$idSafe'");
-}
+$result = InfinitePayHelper::processarPagamentoConfirmado(
+    $link,
+    $idFatura,
+    $paidAmountCents,
+    $captureMethod,
+    $transactionNsu,
+    $receiptUrl,
+    'Webhook Postback'
+);
 
 DBClose($link);
 
-http_response_code(200);
-echo json_encode(['success' => true, 'message' => 'Notificação de pagamento processada com sucesso']);
+if ($result['success']) {
+    http_response_code(200);
+    echo json_encode([
+        'success' => true,
+        'message' => $result['message'],
+        'already_processed' => $result['already_processed'] ?? false
+    ]);
+} else {
+    http_response_code(400);
+    echo json_encode([
+        'error' => $result['message']
+    ]);
+}
 exit();

@@ -1008,16 +1008,20 @@ if ($id_fatura) {
                     </div>
                 </div>
 
-                <div id="infinitePayStepInitial">
+                <div id="infinitePayStepInitial" class="space-y-2">
                     <button type="button" onclick="gerarCheckoutInfinitePayCliente(<?= $id_fatura ?>)" id="btnGerarInfinitePayCliente"
                         class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md">
                         <span class="material-icons-round">open_in_new</span> Ir para Checkout InfinitePay
+                    </button>
+                    <button type="button" onclick="verificarPagamentoInfinitePayCliente(<?= $id_fatura ?>)"
+                        class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 border border-gray-200">
+                        <span class="material-icons-round text-sm text-emerald-600">sync</span> Já realizei o pagamento (Verificar Status)
                     </button>
                 </div>
 
                 <div id="infinitePayStepLoading" class="hidden text-center py-4">
                     <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent mb-3"></div>
-                    <p class="text-xs font-semibold text-gray-600">Gerando checkout seguro...</p>
+                    <p class="text-xs font-semibold text-gray-600">Consultando status do pagamento...</p>
                 </div>
             </div>
         </div>
@@ -1054,8 +1058,45 @@ if ($id_fatura) {
         });
     }
 
+    function verificarPagamentoInfinitePayCliente(idFatura, silent) {
+        if (!silent) {
+            $('#infinitePayStepInitial').addClass('hidden');
+            $('#infinitePayStepLoading').removeClass('hidden');
+        }
+
+        $.ajax({
+            url: '../dinovatech/app.php',
+            type: 'POST',
+            data: { action: 'verificar_pagamento_infinitepay', id_fatura: idFatura },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success && res.paid) {
+                    alert('🎉 Pagamento confirmado com sucesso!');
+                    window.location.reload();
+                } else {
+                    if (!silent) {
+                        alert(res.message || 'Pagamento ainda não foi identificado.');
+                        $('#infinitePayStepLoading').addClass('hidden');
+                        $('#infinitePayStepInitial').removeClass('hidden');
+                    }
+                }
+            },
+            error: function() {
+                if (!silent) {
+                    alert('Erro de comunicação ao verificar status.');
+                    $('#infinitePayStepLoading').addClass('hidden');
+                    $('#infinitePayStepInitial').removeClass('hidden');
+                }
+            }
+        });
+    }
+
     // Conecta botões duplicados (mobile) aos mesmos handlers do desktop
     $(document).ready(function(){
+        <?php if (!empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['order_nsu'])): ?>
+            verificarPagamentoInfinitePayCliente(<?= $id_fatura ?>, true);
+        <?php endif; ?>
+
         $('#btnPagarPixMobile').click(function(){
             $('#modalPix').removeClass('hidden');
             generatePix();

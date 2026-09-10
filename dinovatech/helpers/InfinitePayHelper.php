@@ -39,9 +39,9 @@ class InfinitePayHelper
     }
 
     /**
-     * Retorna a URL base do sistema para Webhook e Redirecionamento.
+     * Retorna a URL raiz do site (sem subpastas /dinovatech ou /cliente).
      */
-    public static function getBaseUrl(): string
+    public static function getSiteRootUrl(): string
     {
         $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || ($_SERVER['SERVER_PORT'] ?? 80) == 443 ? 'https' : 'http';
         $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
@@ -49,11 +49,28 @@ class InfinitePayHelper
         $scriptPath = $_SERVER['SCRIPT_NAME'] ?? '/';
         $dir = dirname($scriptPath);
         $dir = str_replace('\\', '/', $dir);
+        
+        // Remove sufixos /dinovatech ou /cliente para obter a raiz do site
+        $dir = preg_replace('~/(dinovatech|cliente)$~i', '', $dir);
         if ($dir === '/' || $dir === '.') {
             $dir = '';
         }
 
         return rtrim("{$protocol}://{$host}{$dir}", '/');
+    }
+
+    /**
+     * Garante a existência de colunas no banco de dados para salvar dados do checkout.
+     */
+    public static function ensureFaturasColumns($link): void
+    {
+        if (!$link) return;
+        $res = DBExecute($link, "SHOW COLUMNS FROM Faturas LIKE 'infinitepay_checkout_url'");
+        if (!$res || mysqli_num_rows($res) === 0) {
+            DBExecute($link, "ALTER TABLE Faturas ADD COLUMN infinitepay_checkout_url VARCHAR(500) NULL");
+            DBExecute($link, "ALTER TABLE Faturas ADD COLUMN infinitepay_slug VARCHAR(255) NULL");
+            DBExecute($link, "ALTER TABLE Faturas ADD COLUMN infinitepay_nsu VARCHAR(255) NULL");
+        }
     }
 
     /**
@@ -138,13 +155,11 @@ class InfinitePayHelper
                 }
             }
 
-            // Se o somatório dos itens bate com o total líquido (sem retenção/desconto divergente), usa os itens detalhados
             if ($sumItemsCents === $totalCents && !empty($tempItems)) {
                 $itemsPayload = $tempItems;
             }
         }
 
-        // Se não foi possível usar itens detalhados ou opção inativa, envia item resumido
         if (empty($itemsPayload)) {
             $itemsPayload = [
                 [
@@ -156,19 +171,21 @@ class InfinitePayHelper
         }
 
         // 6. Montagem da Payload completa
-        $baseUrl = self::getBaseUrl();
+        $siteRoot = self::getSiteRootUrl();
+        $orderNsu = "fatura#{$id_fatura}";
         $payload = [
             'handle' => $handle,
-            'order_nsu' => "fatura#{$id_fatura}",
+            'order_nsu' => $orderNsu,
             'items' => $itemsPayload
         ];
 
         if ($usarRedirect) {
-            $payload['redirect_url'] = "{$baseUrl}/fatura_view.php?id={$id_fatura}";
+            $tokenParam = !empty($fatura['token_acesso']) ? "&token=" . urlencode($fatura['token_acesso']) : "";
+            $payload['redirect_url'] = "{$siteRoot}/cliente/fatura.php?id={$id_fatura}{$tokenParam}";
         }
 
         if ($usarWebhook) {
-            $payload['webhook_url'] = "{$baseUrl}/webhook_infinitepay.php";
+            $payload['webhook_url'] = "{$siteRoot}/dinovatech/webhook_infinitepay.php";
         }
 
         if ($enviarCliente && !empty($fatura['nome_cliente'])) {
@@ -227,10 +244,22 @@ class InfinitePayHelper
         $resData = json_decode($response, true);
         if ($httpCode >= 200 && $httpCode < 300 && is_array($resData)) {
             $checkoutUrl = $resData['url'] ?? $resData['checkout_url'] ?? $resData['link'] ?? null;
+            $slug = $resData['invoice_slug'] ?? $resData['slug'] ?? null;
+
             if ($checkoutUrl) {
+                // Guarda os identificadores na tabela Faturas
+                self::ensureFaturasColumns($link);
+                $urlSafe = mysqli_real_escape_string($link, $checkoutUrl);
+                $slugSafe = mysqli_real_escape_string($link, (string)$slug);
+                $nsuSafe = mysqli_real_escape_string($link, $orderNsu);
+
+                DBExecute($link, "UPDATE Faturas SET infinitepay_checkout_url = '$urlSafe', infinitepay_slug = '$slugSafe', infinitepay_nsu = '$nsuSafe' WHERE id_fatura = '$id_safe'");
+
                 return [
                     'success' => true,
                     'checkout_url' => $checkoutUrl,
+                    'order_nsu' => $orderNsu,
+                    'slug' => $slug,
                     'payload' => $payload,
                     'raw_response' => $resData
                 ];
@@ -247,5 +276,156 @@ class InfinitePayHelper
             'message' => $errMsg,
             'raw_response' => $response
         ];
+    }
+
+    /**
+     * Consulta o status do pagamento diretamente na API da InfinitePay (POST /payment_check).
+     */
+    public static function verificarStatusPagamento($link, $id_fatura): array
+    {
+        if (!$link || empty($id_fatura)) {
+            return ['success' => false, 'message' => 'Parâmetros inválidos para verificação.'];
+        }
+
+        $id_safe = mysqli_real_escape_string($link, $id_fatura);
+        $qFatura = "SELECT F.*, C.nome AS nome_cliente FROM Faturas F JOIN Clientes C ON F.id_cliente = C.id_cliente WHERE F.id_fatura = '$id_safe' LIMIT 1";
+        $resFatura = DBExecute($link, $qFatura);
+        if (!$resFatura || mysqli_num_rows($resFatura) === 0) {
+            return ['success' => false, 'message' => 'Fatura não encontrada.'];
+        }
+        $fatura = mysqli_fetch_assoc($resFatura);
+
+        $resConfig = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
+        if (!$resConfig || mysqli_num_rows($resConfig) === 0) {
+            return ['success' => false, 'message' => 'Configurações do emissor não encontradas.'];
+        }
+        $config = mysqli_fetch_assoc($resConfig);
+        $handle = self::cleanHandle($config['infinitepay_handle'] ?? '');
+        if (empty($handle)) {
+            return ['success' => false, 'message' => 'Handle do InfinitePay não configurado.'];
+        }
+
+        $orderNsu = !empty($fatura['infinitepay_nsu']) ? $fatura['infinitepay_nsu'] : "fatura#{$id_fatura}";
+        $slug = $fatura['infinitepay_slug'] ?? '';
+
+        $payloadCheck = [
+            'handle' => $handle,
+            'order_nsu' => $orderNsu
+        ];
+        if (!empty($slug)) {
+            $payloadCheck['slug'] = $slug;
+        }
+
+        $apiUrl = 'https://api.checkout.infinitepay.io/payment_check';
+        $jsonPayload = json_encode($payloadCheck);
+
+        $ch = curl_init($apiUrl);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $jsonPayload,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_SSL_VERIFYPEER => true
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlErr) {
+            return ['success' => false, 'message' => "Erro cURL ao consultar InfinitePay: {$curlErr}"];
+        }
+
+        $resData = json_decode($response, true);
+        if (is_array($resData) && !empty($resData['paid'])) {
+            $paidAmountCents = (int)($resData['paid_amount'] ?? $resData['amount'] ?? 0);
+            $captureMethod = strtolower((string)($resData['capture_method'] ?? 'infinitepay'));
+            $transactionNsu = $resData['transaction_nsu'] ?? $slug ?? ('infinitepay_' . time());
+            $receiptUrl = $resData['receipt_url'] ?? '';
+
+            $processRes = self::processarPagamentoConfirmado(
+                $link,
+                (int)$id_fatura,
+                $paidAmountCents,
+                $captureMethod,
+                $transactionNsu,
+                $receiptUrl,
+                'Verificação manual via API InfinitePay'
+            );
+
+            return [
+                'success' => true,
+                'paid' => true,
+                'message' => 'Pagamento confirmado e registrado com sucesso!',
+                'data' => $resData,
+                'process_details' => $processRes
+            ];
+        }
+
+        return [
+            'success' => true,
+            'paid' => false,
+            'message' => 'Pagamento ainda não foi identificado ou está pendente na InfinitePay.',
+            'data' => $resData
+        ];
+    }
+
+    /**
+     * Processa e registra um pagamento confirmado no banco de dados.
+     */
+    public static function processarPagamentoConfirmado($link, int $idFatura, int $paidAmountCents, string $captureMethod, ?string $txid, ?string $receiptUrl = '', string $origem = 'Webhook'): array
+    {
+        $idSafe = mysqli_real_escape_string($link, $idFatura);
+        $qFatura = "SELECT * FROM Faturas WHERE id_fatura = '$idSafe' LIMIT 1";
+        $rFatura = DBExecute($link, $qFatura);
+        if (!$rFatura || mysqli_num_rows($rFatura) === 0) {
+            return ['success' => false, 'message' => 'Fatura não encontrada.'];
+        }
+        $fatura = mysqli_fetch_assoc($rFatura);
+
+        $valorPagoDecimal = $paidAmountCents > 0 ? ($paidAmountCents / 100.0) : (float)($fatura['valor_total'] ?? 0);
+        $formaPagamentoLabel = (strtolower($captureMethod) === 'pix') ? 'PIX (InfinitePay)' : 'Cartão de Crédito (InfinitePay)';
+        $formaSafe = mysqli_real_escape_string($link, $formaPagamentoLabel);
+        
+        $obs = "Pagamento via InfinitePay ({$origem}).";
+        if (!empty($receiptUrl)) {
+            $obs .= " Comprovante: " . $receiptUrl;
+        }
+        $obsSafe = mysqli_real_escape_string($link, $obs);
+        $txidSafe = mysqli_real_escape_string($link, $txid ?? ('infinitepay_' . $idFatura));
+        $dataHoje = date('Y-m-d H:i:s');
+
+        // Verifica duplicidade pelo txid
+        $qCheck = "SELECT id_pagamento FROM Pagamentos WHERE id_fatura = '$idSafe' AND txid = '$txidSafe' AND status_pagamento = 'Confirmado' LIMIT 1";
+        $rCheck = DBExecute($link, $qCheck);
+        if ($rCheck && mysqli_num_rows($rCheck) > 0) {
+            return ['success' => true, 'already_processed' => true, 'message' => 'Pagamento já processado anteriormente.'];
+        }
+
+        // Insere registro em Pagamentos
+        $qIns = "INSERT INTO Pagamentos (id_fatura, data_pagamento, valor_pago, forma_pagamento, status_pagamento, txid, observacao) 
+                 VALUES ('$idSafe', '$dataHoje', '$valorPagoDecimal', '$formaSafe', 'Confirmado', '$txidSafe', '$obsSafe')";
+        DBExecute($link, $qIns);
+
+        // Atualiza status da Fatura se valor total atingido
+        $calcTotals = AppHelper::calculateFaturaTotals($link, $idFatura);
+        $valorLiquido = (float)($calcTotals['valor_liquido'] ?? 0);
+
+        $rSum = DBExecute($link, "SELECT SUM(valor_pago) AS total_pago FROM Pagamentos WHERE id_fatura = '$idSafe' AND status_pagamento = 'Confirmado'");
+        $totalPago = 0;
+        if ($rSum && $rowSum = mysqli_fetch_assoc($rSum)) {
+            $totalPago = (float)($rowSum['total_pago'] ?? 0);
+        }
+
+        if ($totalPago >= $valorLiquido) {
+            DBExecute($link, "UPDATE Faturas SET status = 'Pago' WHERE id_fatura = '$idSafe'");
+        }
+
+        return ['success' => true, 'already_processed' => false, 'message' => 'Pagamento liquidado com sucesso!'];
     }
 }

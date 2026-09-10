@@ -985,6 +985,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $response = InfinitePayHelper::gerarLinkCheckout($link, $id_fatura);
             break;
 
+        case 'verificar_pagamento_infinitepay':
+            require_once __DIR__ . '/helpers/InfinitePayHelper.php';
+            $id_fatura = $_POST['id_fatura'] ?? $_GET['id_fatura'] ?? null;
+            $response = InfinitePayHelper::verificarStatusPagamento($link, $id_fatura);
+            break;
+
         case 'testar_conexao_inter':
             require_once __DIR__ . '/../inter/config.php';
             require_once __DIR__ . '/../inter/api.php';
