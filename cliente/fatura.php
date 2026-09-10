@@ -1027,11 +1027,44 @@ if ($id_fatura) {
         </div>
 
     <script>
+    let infinitePayPollingInterval = null;
+
     function abrirModalInfinitePayCliente() {
+        console.log('[InfinitePay] Abrindo modal de pagamento...');
         $('#modalInfinitePayCliente').removeClass('hidden');
+        startPollingInfinitePay(<?= $id_fatura ?>);
+    }
+
+    function startPollingInfinitePay(idFatura) {
+        if (infinitePayPollingInterval) clearInterval(infinitePayPollingInterval);
+        
+        console.log('%c[InfinitePay Polling] %cIniciando monitoramento automático a cada 5s para Fatura #' + idFatura, 'color: #10b981; font-weight: bold;', 'color: #374151;');
+
+        infinitePayPollingInterval = setInterval(function () {
+            console.debug('[InfinitePay Polling] Verificando status da fatura #' + idFatura + '...');
+            $.ajax({
+                url: '../dinovatech/app.php',
+                type: 'POST',
+                data: { action: 'verificar_pagamento_infinitepay', id_fatura: idFatura },
+                dataType: 'json',
+                success: function(res) {
+                    console.log('[InfinitePay Polling] Resposta:', res);
+                    if (res.success && res.paid) {
+                        clearInterval(infinitePayPollingInterval);
+                        console.log('%c[InfinitePay Polling] %cPagamento CONFIRMADO!', 'color: #10b981; font-weight: bold; font-size: 14px;', 'color: #047857;');
+                        alert('🎉 Pagamento via InfinitePay confirmado com sucesso!');
+                        window.location.reload();
+                    }
+                },
+                error: function(err) {
+                    console.warn('[InfinitePay Polling] Erro temporário:', err);
+                }
+            });
+        }, 5000);
     }
 
     function gerarCheckoutInfinitePayCliente(idFatura) {
+        console.log('[InfinitePay] Solicitando link de checkout para fatura #', idFatura);
         $('#infinitePayStepInitial').addClass('hidden');
         $('#infinitePayStepLoading').removeClass('hidden');
 
@@ -1041,16 +1074,20 @@ if ($id_fatura) {
             data: { action: 'gerar_checkout_infinitepay', id_fatura: idFatura },
             dataType: 'json',
             success: function(res) {
+                console.log('[InfinitePay] Resposta da geração de checkout:', res);
                 const checkoutUrl = res.checkout_url || res.url;
                 if (res.success && checkoutUrl) {
+                    console.log('[InfinitePay] Redirecionando para:', checkoutUrl);
                     window.location.href = checkoutUrl;
                 } else {
+                    console.error('[InfinitePay] Falha ao gerar checkout:', res);
                     alert('Erro ao gerar checkout: ' + (res.message || 'Tente novamente.'));
                     $('#infinitePayStepLoading').addClass('hidden');
                     $('#infinitePayStepInitial').removeClass('hidden');
                 }
             },
-            error: function() {
+            error: function(err) {
+                console.error('[InfinitePay] Erro cURL/AJAX:', err);
                 alert('Erro de comunicação ao gerar checkout.');
                 $('#infinitePayStepLoading').addClass('hidden');
                 $('#infinitePayStepInitial').removeClass('hidden');
@@ -1059,6 +1096,7 @@ if ($id_fatura) {
     }
 
     function verificarPagamentoInfinitePayCliente(idFatura, silent) {
+        console.log('[InfinitePay] Executando verificação manual de pagamento para fatura #', idFatura);
         if (!silent) {
             $('#infinitePayStepInitial').addClass('hidden');
             $('#infinitePayStepLoading').removeClass('hidden');
@@ -1070,6 +1108,7 @@ if ($id_fatura) {
             data: { action: 'verificar_pagamento_infinitepay', id_fatura: idFatura },
             dataType: 'json',
             success: function(res) {
+                console.log('[InfinitePay] Resultado da verificação:', res);
                 if (res.success && res.paid) {
                     alert('🎉 Pagamento confirmado com sucesso!');
                     window.location.reload();
@@ -1081,7 +1120,8 @@ if ($id_fatura) {
                     }
                 }
             },
-            error: function() {
+            error: function(err) {
+                console.error('[InfinitePay] Erro ao verificar pagamento:', err);
                 if (!silent) {
                     alert('Erro de comunicação ao verificar status.');
                     $('#infinitePayStepLoading').addClass('hidden');
@@ -1091,8 +1131,12 @@ if ($id_fatura) {
         });
     }
 
-    // Conecta botões duplicados (mobile) aos mesmos handlers do desktop
+    // Conecta botões duplicados (mobile) e inicia polling de segurança se InfinitePay ativo
     $(document).ready(function(){
+        <?php if ($isInfinitePayAtivo && $saldo_devedor > 0): ?>
+            startPollingInfinitePay(<?= $id_fatura ?>);
+        <?php endif; ?>
+
         <?php if (!empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['order_nsu'])): ?>
             verificarPagamentoInfinitePayCliente(<?= $id_fatura ?>, true);
         <?php endif; ?>

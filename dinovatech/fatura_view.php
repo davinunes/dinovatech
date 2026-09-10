@@ -676,6 +676,78 @@ if ($id_fatura) {
                                     </div>
                                 </div>
                             </div>
+                            <!-- Card InfinitePay Checkout & Status (Admin) -->
+                            <?php 
+                            $isInfinitePayAtivoAdmin = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1;
+                            $temCheckoutInfinitePay = !empty($fatura['infinitepay_checkout_url']) || !empty($fatura['infinitepay_slug']);
+                            if ($isInfinitePayAtivoAdmin || $temCheckoutInfinitePay): 
+                            ?>
+                            <div class="mt-4 border-t pt-4">
+                                <div class="bg-gradient-to-br from-slate-900 via-emerald-950 to-slate-900 text-white p-4 rounded-xl shadow-md border border-emerald-800/40 mb-3 relative overflow-hidden">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center space-x-2">
+                                            <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg" 
+                                                 alt="InfinitePay" class="h-3.5 invert brightness-200">
+                                            <h3 class="font-bold text-sm text-white">InfinitePay Checkout</h3>
+                                        </div>
+                                        <?php
+                                        $statusInfLabel = 'Não Gerado';
+                                        $badgeInfClass = 'bg-slate-700 text-slate-300';
+                                        if ($fatura['status'] === 'Pago' || $fatura['status'] === 'Liquidada') {
+                                            $statusInfLabel = 'Pago / Liquidado';
+                                            $badgeInfClass = 'bg-emerald-950 text-emerald-300 border border-emerald-700/50';
+                                        } elseif ($temCheckoutInfinitePay) {
+                                            $statusInfLabel = 'Checkout Ativo';
+                                            $badgeInfClass = 'bg-amber-950 text-amber-300 border border-amber-700/50';
+                                        }
+                                        ?>
+                                        <span id="badge_infinitepay_status" class="px-2 py-0.5 rounded-full text-[10px] font-bold <?= $badgeInfClass ?>">
+                                            <?= $statusInfLabel ?>
+                                        </span>
+                                    </div>
+
+                                    <div id="infinitepay_feedback_info" class="text-xs text-slate-300 space-y-1 mb-3">
+                                        <?php if ($temCheckoutInfinitePay): ?>
+                                            <p class="text-[11px] leading-tight font-mono text-emerald-200">
+                                                <strong>ID / Slug:</strong> <?= htmlspecialchars($fatura['infinitepay_slug'] ?? $fatura['infinitepay_nsu'] ?? 'N/A') ?>
+                                            </p>
+                                            <?php if (!empty($fatura['infinitepay_nsu'])): ?>
+                                                <p class="text-[10px] text-slate-400"><strong>NSU:</strong> <?= htmlspecialchars($fatura['infinitepay_nsu']) ?></p>
+                                            <?php endif; ?>
+                                            <?php if (!empty($fatura['infinitepay_checkout_url'])): ?>
+                                                <div class="mt-1 flex items-center gap-1 text-[11px]">
+                                                    <a href="<?= htmlspecialchars($fatura['infinitepay_checkout_url']) ?>" target="_blank" 
+                                                       class="text-emerald-400 hover:underline truncate max-w-[200px]" title="Abrir Link do Checkout">
+                                                        <?= htmlspecialchars($fatura['infinitepay_checkout_url']) ?>
+                                                    </a>
+                                                    <button type="button" onclick="navigator.clipboard.writeText('<?= htmlspecialchars($fatura['infinitepay_checkout_url']) ?>'); showToast('Link copiado!', 'info');"
+                                                            class="text-slate-400 hover:text-white" title="Copiar Link">
+                                                        <span class="material-icons text-xs">content_copy</span>
+                                                    </button>
+                                                </div>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <p class="text-[11px] leading-tight text-slate-300">Nenhum checkout gerado para esta fatura ainda.</p>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div class="space-y-1.5">
+                                        <?php if ($saldo_devedor > 0): ?>
+                                            <button type="button" onclick="verificarStatusInfinitePayAdmin(<?= $id_fatura ?>)" id="btnVerificarInfinitePayAdmin"
+                                                class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
+                                                <span class="material-icons text-sm">sync</span> Verificar Status na InfinitePay
+                                            </button>
+                                        <?php endif; ?>
+
+                                        <?php if (empty($fatura['infinitepay_checkout_url']) && $saldo_devedor > 0): ?>
+                                            <button type="button" onclick="gerarCheckoutInfinitePayAdmin(<?= $id_fatura ?>)" id="btnGerarInfinitePayAdmin"
+                                                class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1 border border-slate-700">
+                                                <span class="material-icons text-xs text-emerald-400">add_link</span> Gerar Link de Checkout
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
                             <?php endif; ?>
 
 
@@ -1872,6 +1944,68 @@ if ($id_fatura) {
                         if (json && json.message) msg = json.message;
                     } catch(e){}
                     showToast(msg, 'error');
+                });
+            };
+
+            window.verificarStatusInfinitePayAdmin = function(idFatura) {
+                const $btn = $('#btnVerificarInfinitePayAdmin');
+                const originalText = $btn.html();
+                $btn.prop('disabled', true).html('<span class="material-icons text-sm animate-spin">sync</span> Verificando...');
+
+                console.log('[InfinitePay Admin] Consultando status da fatura #', idFatura);
+
+                $.ajax({
+                    url: 'app.php',
+                    type: 'POST',
+                    data: { action: 'verificar_pagamento_infinitepay', id_fatura: idFatura },
+                    dataType: 'json',
+                    success: function(res) {
+                        console.log('[InfinitePay Admin] Resposta:', res);
+                        $btn.prop('disabled', false).html(originalText);
+                        if (res.success && res.paid) {
+                            showToast('🎉 Pagamento confirmado e liquidado com sucesso!', 'success');
+                            setTimeout(() => window.location.reload(), 1200);
+                        } else if (res.success && !res.paid) {
+                            showToast('⚠️ Status InfinitePay: Pagamento ainda não foi identificado (Pendente).', 'warning');
+                        } else {
+                            showToast('Erro ao verificar status: ' + (res.message || 'Falha de comunicação.'), 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('[InfinitePay Admin] Erro cURL/AJAX:', xhr);
+                        $btn.prop('disabled', false).html(originalText);
+                        showToast('Erro de comunicação com o servidor.', 'error');
+                    }
+                });
+            };
+
+            window.gerarCheckoutInfinitePayAdmin = function(idFatura) {
+                const $btn = $('#btnGerarInfinitePayAdmin');
+                const originalText = $btn.html();
+                $btn.prop('disabled', true).html('<span class="material-icons text-xs animate-spin">sync</span> Gerando...');
+
+                console.log('[InfinitePay Admin] Gerando link para fatura #', idFatura);
+
+                $.ajax({
+                    url: 'app.php',
+                    type: 'POST',
+                    data: { action: 'gerar_checkout_infinitepay', id_fatura: idFatura },
+                    dataType: 'json',
+                    success: function(res) {
+                        console.log('[InfinitePay Admin] Link de Checkout Gerado:', res);
+                        $btn.prop('disabled', false).html(originalText);
+                        if (res.success && (res.checkout_url || res.url)) {
+                            showToast('✅ Link de checkout gerado com sucesso!', 'success');
+                            setTimeout(() => window.location.reload(), 1200);
+                        } else {
+                            showToast('Erro ao gerar checkout: ' + (res.message || 'Tente novamente.'), 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('[InfinitePay Admin] Erro cURL/AJAX:', xhr);
+                        $btn.prop('disabled', false).html(originalText);
+                        showToast('Erro de comunicação com o servidor.', 'error');
+                    }
                 });
             };
 
