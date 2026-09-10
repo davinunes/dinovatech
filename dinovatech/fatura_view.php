@@ -676,6 +676,8 @@ if ($id_fatura) {
                                     </div>
                                 </div>
                             </div>
+                            <?php endif; ?>
+
                             <!-- Card InfinitePay Checkout & Status (Admin) -->
                             <?php 
                             $isInfinitePayAtivoAdmin = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1;
