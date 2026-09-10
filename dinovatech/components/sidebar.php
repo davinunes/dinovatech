@@ -155,9 +155,10 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 
         <?php
         $isInterActive = AppHelper::isInterApiActive();
+        $isInfiniteActive = AppHelper::isInfinitePayActive();
         $isVetMode = AppHelper::isVetMode();
-        $hasFerramentas = $isInterActive || !$isVetMode;
-        $isFerramentasActive = ($currentPage == 'pix_recorrencias.php' || strpos($_SERVER['PHP_SELF'], '/tools/') !== false);
+        $hasFerramentas = $isInterActive || $isInfiniteActive || !$isVetMode;
+        $isFerramentasActive = ($currentPage == 'pix_recorrencias.php' || $currentPage == 'logs_infinitepay.php' || strpos($_SERVER['PHP_SELF'], '/tools/') !== false);
         ?>
         <?php if ($hasFerramentas): ?>
             <div>
@@ -175,6 +176,13 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                             class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'pix_recorrencias.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
                             <span class="material-icons text-lg mr-3 text-purple-400">bolt</span>
                             <span>Pix Automático</span>
+                        </a>
+                    <?php endif; ?>
+                    <?php if ($isInfiniteActive): ?>
+                        <a href="<?= $basePath ?>logs_infinitepay.php"
+                            class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'logs_infinitepay.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                            <span class="material-icons text-lg mr-3 text-emerald-400">receipt_long</span>
+                            <span>Logs InfinitePay</span>
                         </a>
                     <?php endif; ?>
                     <?php if (!$isVetMode): ?>

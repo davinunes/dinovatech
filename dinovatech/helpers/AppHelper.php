@@ -487,5 +487,35 @@ class AppHelper
         DBClose($link);
         return $active;
     }
+
+    public static function isInfinitePayActive()
+    {
+        $dbPath = dirname(__DIR__) . '/database.php';
+        if (!file_exists($dbPath)) {
+            $dbPath = dirname(__DIR__, 2) . '/database.php';
+        }
+
+        if (file_exists($dbPath)) {
+            require_once $dbPath;
+        }
+
+        $link = DBConnect();
+        if (!$link) {
+            return false;
+        }
+
+        $query = "SELECT infinitepay_ativo, infinitepay_handle FROM ConfiguracoesEmissor LIMIT 1";
+        $res = mysqli_query($link, $query);
+        $active = false;
+        if ($res && $row = mysqli_fetch_assoc($res)) {
+            $isToggleAtivo = isset($row['infinitepay_ativo']) && (int)$row['infinitepay_ativo'] === 1;
+            $hasHandle = !empty(trim($row['infinitepay_handle'] ?? ''));
+            if ($isToggleAtivo && $hasHandle) {
+                $active = true;
+            }
+        }
+        DBClose($link);
+        return $active;
+    }
 }
 
