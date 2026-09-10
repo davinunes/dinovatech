@@ -83,6 +83,19 @@ if (!$idFatura) {
     exit();
 }
 
+// Salva o slug e o nsu recebidos no webhook na fatura
+InfinitePayHelper::ensureFaturasColumns($link);
+$idSafe = mysqli_real_escape_string($link, $idFatura);
+$invoiceSlug = $data['invoice_slug'] ?? $data['slug'] ?? '';
+if (!empty($invoiceSlug)) {
+    $slugEsc = mysqli_real_escape_string($link, $invoiceSlug);
+    DBExecute($link, "UPDATE Faturas SET infinitepay_slug = '$slugEsc' WHERE id_fatura = '$idSafe'");
+}
+if (!empty($orderNsu)) {
+    $nsuEsc = mysqli_real_escape_string($link, $orderNsu);
+    DBExecute($link, "UPDATE Faturas SET infinitepay_nsu = '$nsuEsc' WHERE id_fatura = '$idSafe'");
+}
+
 $result = InfinitePayHelper::processarPagamentoConfirmado(
     $link,
     $idFatura,

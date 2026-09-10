@@ -297,6 +297,28 @@ class InfinitePayHelper
         }
         $fatura = mysqli_fetch_assoc($resFatura);
 
+        // 1. Verifica se a fatura já está quitada/paga no banco local (ex: processada via Webhook ou Redirect prévio)
+        $calcTotals = AppHelper::calculateFaturaTotals($link, $id_fatura);
+        $valorLiquido = (float)($calcTotals['valor_liquido'] ?? 0);
+        $resPag = DBExecute($link, "SELECT SUM(valor_pago) AS total_pago FROM Pagamentos WHERE id_fatura = '$id_safe' AND status_pagamento = 'Confirmado'");
+        $totalPago = 0;
+        if ($resPag && $rowPag = mysqli_fetch_assoc($resPag)) {
+            $totalPago = (float)($rowPag['total_pago'] ?? 0);
+        }
+        $saldoDevedor = $valorLiquido - $totalPago;
+        if ($saldoDevedor <= 0) {
+            return [
+                'success' => true,
+                'paid' => true,
+                'message' => 'Pagamento já confirmado e registrado no sistema!',
+                'data' => [
+                    'paid' => true,
+                    'amount' => (int)round($valorLiquido * 100),
+                    'paid_amount' => (int)round($totalPago * 100)
+                ]
+            ];
+        }
+
         $resConfig = DBExecute($link, "SELECT * FROM ConfiguracoesEmissor LIMIT 1");
         if (!$resConfig || mysqli_num_rows($resConfig) === 0) {
             return ['success' => false, 'message' => 'Configurações do emissor não encontradas.'];

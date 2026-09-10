@@ -1144,8 +1144,10 @@ if ($id_fatura) {
             success: function(res) {
                 console.log('[InfinitePay] Resultado da verificação:', res);
                 if (res.success && res.paid) {
-                    alert('🎉 Pagamento confirmado com sucesso!');
-                    window.location.reload();
+                    if (!silent) {
+                        alert('🎉 Pagamento confirmado com sucesso!');
+                    }
+                    window.location.href = 'fatura.php?id=' + idFatura;
                 } else {
                     if (!silent) {
                         alert(res.message || 'Pagamento ainda não foi identificado.');
@@ -1171,7 +1173,7 @@ if ($id_fatura) {
             startPollingInfinitePay(<?= $id_fatura ?>);
         <?php endif; ?>
 
-        <?php if (!empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['order_nsu'])): ?>
+        <?php if ($saldo_devedor > 0 && (!empty($_GET['slug']) || !empty($_GET['transaction_nsu']) || !empty($_GET['order_nsu']))): ?>
             verificarPagamentoInfinitePayCliente(<?= $id_fatura ?>, true);
         <?php endif; ?>
 
