@@ -1963,27 +1963,41 @@ $nome_inicial = strtok($nome_cliente, ' ');
                 const pagasContainer = $('#listPagas');
                 abertasContainer.empty();
                 pagasContainer.empty();
-                let hasAbertas = false, hasPagas = false;
 
-                faturas.forEach(fatura => {
-                    const isLiquidada = fatura.status === 'Liquidada';
-                    const hoje = new Date().toISOString().split('T')[0];
+                const hoje = new Date().toISOString().split('T')[0];
+
+                // Faturas Abertas: mantém a ordem de vencimento (mais próximas primeiro)
+                const faturasAbertas = faturas.filter(f => f.status !== 'Liquidada');
+
+                // Faturas Pagas (Histórico): ordenadas por mais recentes primeiro
+                const faturasPagas = faturas.filter(f => f.status === 'Liquidada').sort((a, b) => {
+                    const dataA = a.data_pagamento || a.data_vencimento || a.data_emissao || '';
+                    const dataB = b.data_pagamento || b.data_vencimento || b.data_emissao || '';
+                    if (dataA !== dataB) {
+                        return dataB.localeCompare(dataA);
+                    }
+                    return (parseInt(b.id_fatura) || 0) - (parseInt(a.id_fatura) || 0);
+                });
+
+                function buildFaturaRowHtml(fatura, isLiquidada) {
                     const isAtrasada = !isLiquidada && fatura.data_vencimento < hoje;
-
                     const statusLabel = isLiquidada ? 'Paga' : (isAtrasada ? 'Atrasada' : 'Em Aberto');
                     const statusClass = isLiquidada ? 'status-pago' : (isAtrasada ? 'status-atrasado' : 'status-aberto');
                     const icon = isLiquidada ? 'check_circle' : (isAtrasada ? 'warning' : 'pending');
                     const iconColor = isLiquidada ? 'text-emerald-500' : (isAtrasada ? 'text-red-500' : 'text-amber-500');
                     const iconBg  = isLiquidada ? 'bg-emerald-50' : (isAtrasada ? 'bg-red-50' : 'bg-amber-50');
+                    const dataInfo = isLiquidada && fatura.data_pagamento
+                        ? `Pago em: ${formatDate(fatura.data_pagamento)}`
+                        : `Vencimento: ${formatDate(fatura.data_vencimento)}`;
 
-                    const html = `
+                    return `
                         <div class="fatura-item animate-fadeInUp">
                             <div class="w-12 h-12 rounded-2xl ${iconBg} flex items-center justify-center shrink-0">
                                 <span class="material-icons-round text-2xl ${iconColor}">${icon}</span>
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="font-extrabold text-gray-800">${formatCurrency(fatura.valor_total_fatura)}</div>
-                                <div class="text-xs text-gray-400 mt-0.5">Vencimento: ${formatDate(fatura.data_vencimento)}</div>
+                                <div class="text-xs text-gray-400 mt-0.5">${dataInfo}</div>
                                 <div class="text-[10px] text-gray-300 mt-0.5">Fatura #${fatura.id_fatura}</div>
                             </div>
                             <div class="flex flex-col items-end gap-2 shrink-0">
@@ -1995,13 +2009,19 @@ $nome_inicial = strtok($nome_cliente, ' ');
                                 </a>
                             </div>
                         </div>`;
+                }
 
-                    if (isLiquidada) { pagasContainer.append(html); hasPagas = true; }
-                    else { abertasContainer.append(html); hasAbertas = true; }
-                });
+                if (faturasAbertas.length > 0) {
+                    faturasAbertas.forEach(f => abertasContainer.append(buildFaturaRowHtml(f, false)));
+                } else {
+                    abertasContainer.html('<p class="text-center py-10 text-gray-400">Nenhuma fatura em aberto. 🎉</p>');
+                }
 
-                if (!hasAbertas) abertasContainer.html('<p class="text-center py-10 text-gray-400">Nenhuma fatura em aberto. 🎉</p>');
-                if (!hasPagas) pagasContainer.html('<p class="text-center py-10 text-gray-400">Nenhuma fatura paga registrada.</p>');
+                if (faturasPagas.length > 0) {
+                    faturasPagas.forEach(f => pagasContainer.append(buildFaturaRowHtml(f, true)));
+                } else {
+                    pagasContainer.html('<p class="text-center py-10 text-gray-400">Nenhuma fatura paga registrada.</p>');
+                }
             }
 
             // ── Carteira de Vacinas Full ──

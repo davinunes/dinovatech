@@ -2823,7 +2823,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             // 2. Faturas (Estatísticas e Próximo Vencimento)
             $qFaturas = "SELECT F.id_fatura, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status,
-                                COALESCE(SUM(P.valor_pago), 0) AS total_pago_fatura
+                                COALESCE(SUM(P.valor_pago), 0) AS total_pago_fatura,
+                                MAX(P.data_pagamento) AS data_pagamento
                          FROM Faturas F
                          LEFT JOIN Pagamentos P ON F.id_fatura = P.id_fatura AND P.status_pagamento = 'Confirmado'
                          WHERE F.id_cliente = '$id_cliente_safe'
