@@ -105,6 +105,9 @@ if ($id_fatura) {
             }
         }
 
+        $isInfinitePayAtivo = !empty($config_emissor['infinitepay_ativo']) && (int)$config_emissor['infinitepay_ativo'] === 1 && !empty($config_emissor['infinitepay_handle']);
+        $isInterAtivo = AppHelper::isInterApiActive();
+
     } else {
         $error_msg = "Fatura não encontrada ou acesso negado.";
     }
@@ -130,7 +133,7 @@ if ($id_fatura) {
     <meta name="theme-color" content="<?= $is_vet_fatura ? '#065f46' : '#0c4a6e' ?>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Round|Material+Icons+Outlined" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <style>
@@ -411,57 +414,119 @@ if ($id_fatura) {
 
             </div>
 
-            <!-- Desktop Payment Action Bar -->
+            <!-- Desktop Payment Action Bar & Cards -->
             <?php if ($saldo_devedor > 0): ?>
-                <div class="bg-gray-50/80 px-6 sm:px-8 py-5 border-t border-gray-100 hidden md:flex flex-row justify-between items-center no-print">
-                    <div>
-                        <p class="text-gray-500 text-xs flex items-center gap-1.5">
-                            <span class="material-icons-round text-emerald-500 text-sm">lock</span>
-                            Pagamento seguro via Banco Inter
-                        </p>
-                        <?php if ($pixRecorrenciaAtiva && $pixRecorrenciaAtiva['status'] === 'APROVADA'): ?>
-                            <span class="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full mt-1.5">
-                                <span class="material-icons-round text-xs">bolt</span> Débito Automático Pix Ativo
-                            </span>
-                        <?php endif; ?>
-                    </div>
-                    <div class="flex flex-wrap gap-3">
+                <div class="bg-gray-50/80 px-6 sm:px-8 py-6 border-t border-gray-100 no-print">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider flex items-center gap-2">
+                                <span class="material-icons-round text-cyan-600 text-base">payment</span>
+                                Opções de Pagamento Online
+                            </h3>
+                            <p class="text-xs text-gray-500 mt-0.5">Selecione a forma de pagamento de sua preferência</p>
+                        </div>
                         <?php if (($fatura['permitir_pagamento_parcial'] ?? 0) == 1): ?>
                             <button type="button" onclick="$('#modalPagamentoParcial').removeClass('hidden')"
-                                class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold py-2.5 px-5 rounded-xl shadow-sm transition text-sm">
+                                class="bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold py-1.5 px-3 rounded-lg shadow-xs transition text-xs">
                                 Pagar Outro Valor
                             </button>
                         <?php endif; ?>
-                        <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
-                            <button id="btnAtivarPixAutomatico" type="button"
-                                class="bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:opacity-90 text-white font-bold py-2.5 px-5 rounded-xl shadow-md transition flex items-center gap-1.5 text-sm">
-                                <span class="material-icons-round text-base text-yellow-300">bolt</span> Ativar Pix Automático
-                            </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Opção 1: InfinitePay (PIX / Cartão) -->
+                        <?php if ($isInfinitePayAtivo): ?>
+                            <div class="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between hover:border-emerald-300 hover:shadow-md transition">
+                                <div>
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center gap-2">
+                                            <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg" 
+                                                 alt="InfinitePay" class="h-4">
+                                        </div>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            PIX / Cartão
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mb-4 leading-relaxed">
+                                        Pagamento instantâneo via QR Code PIX ou parcelamento em até 12x no Cartão de Crédito.
+                                    </p>
+                                </div>
+                                <button type="button" onclick="abrirModalInfinitePayCliente()"
+                                    class="w-full bg-slate-900 hover:bg-slate-800 active:bg-black text-white font-bold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-sm">
+                                    <span class="material-icons-round text-base text-emerald-400">credit_card</span>
+                                    <span>Pagar com InfinitePay</span>
+                                </button>
+                            </div>
                         <?php endif; ?>
-                        <button id="btnPagarPix"
-                            class="btn-brand font-extrabold py-2.5 px-7 rounded-xl shadow-md flex items-center gap-2 text-sm">
-                            <span class="material-icons-round text-base">qr_code_2</span> Pagar Total
-                        </button>
+
+                        <!-- Opção 2: Banco Inter (Somente PIX) -->
+                        <?php if ($isInterAtivo): ?>
+                            <div class="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col justify-between hover:border-orange-300 hover:shadow-md transition">
+                                <div>
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center gap-2">
+                                            <svg class="h-5 w-auto" viewBox="0 0 120 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect width="32" height="32" rx="8" fill="#F27321"/>
+                                                <path d="M10 9H16V23H10V9Z" fill="white"/>
+                                                <path d="M19 14H24V23H19V14Z" fill="white"/>
+                                                <text x="38" y="22" fill="#1E293B" font-family="sans-serif" font-weight="800" font-size="18" letter-spacing="-0.5">inter</text>
+                                            </svg>
+                                        </div>
+                                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                                            PIX Instantâneo
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mb-4 leading-relaxed">
+                                        Pagamento direto via QR Code ou Chave Copia e Cola Banco Inter.
+                                    </p>
+                                </div>
+                                <div class="space-y-2">
+                                    <button type="button" id="btnPagarPix"
+                                        class="w-full bg-slate-900 hover:bg-slate-800 active:bg-black text-white font-bold py-3 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-sm">
+                                        <span class="material-icons-round text-base text-orange-400">qr_code_2</span>
+                                        <span>Pagar PIX via Banco Inter</span>
+                                    </button>
+                                    <?php if ($tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                                        <button id="btnAtivarPixAutomatico" type="button"
+                                            class="w-full bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:opacity-90 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
+                                            <span class="material-icons-round text-sm text-yellow-300">bolt</span> Ativar Pix Automático
+                                        </button>
+                                    <?php elseif ($pixRecorrenciaAtiva && $pixRecorrenciaAtiva['status'] === 'APROVADA'): ?>
+                                        <div class="text-center py-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-center gap-1">
+                                            <span class="material-icons-round text-xs">bolt</span> Débito Automático Pix Ativo
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
                 <!-- STICKY BOTTOM BAR (Mobile) -->
-                <div id="stickyPayBar" class="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-200 shadow-xl no-print p-3 flex flex-col gap-2" style="padding-bottom: env(safe-area-inset-bottom, 12px);">
+                <div id="stickyPayBar" class="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-200 shadow-xl no-print p-3 flex flex-col gap-2 md:hidden" style="padding-bottom: env(safe-area-inset-bottom, 12px);">
                     <div class="flex justify-between items-center text-sm">
                         <span class="text-gray-500 text-xs font-medium">Saldo a pagar</span>
                         <span class="font-extrabold text-lg text-gray-900">R$ <?= number_format($saldo_devedor, 2, ',', '.') ?></span>
                     </div>
                     <div class="flex gap-2">
-                        <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
-                        <button id="btnAtivarPixAutomaticoMobile" type="button"
-                            class="flex-1 bg-gradient-to-r from-purple-700 to-cyan-600 text-white font-bold py-3 rounded-xl shadow-md text-xs flex items-center justify-center gap-1">
-                            <span class="material-icons-round text-sm text-yellow-300">bolt</span> Pix Automático
-                        </button>
+                        <?php if ($isInfinitePayAtivo): ?>
+                            <button type="button" onclick="abrirModalInfinitePayCliente()"
+                                class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl shadow-md text-xs flex items-center justify-center gap-1.5">
+                                <span class="material-icons-round text-sm text-emerald-400">credit_card</span> InfinitePay
+                            </button>
                         <?php endif; ?>
-                        <button id="btnPagarPixMobile"
-                            class="btn-brand flex-1 font-extrabold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 text-sm">
-                            <span class="material-icons-round text-base">qr_code_2</span> Pagar Agora
-                        </button>
+                        <?php if ($isInterAtivo): ?>
+                            <button id="btnPagarPixMobile" type="button"
+                                class="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-1.5 text-xs">
+                                <span class="material-icons-round text-sm text-orange-400">qr_code_2</span> Inter PIX
+                            </button>
+                        <?php endif; ?>
+                        <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                            <button id="btnAtivarPixAutomaticoMobile" type="button"
+                                class="bg-gradient-to-r from-purple-700 to-cyan-600 text-white font-bold py-3 px-3 rounded-xl shadow-md text-xs flex items-center justify-center gap-1">
+                                <span class="material-icons-round text-sm text-yellow-300">bolt</span>
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endif; ?>
@@ -913,7 +978,81 @@ if ($id_fatura) {
     <?php endif; ?>
     </div>
 
+        <!-- Modal InfinitePay (Cliente) -->
+        <div id="modalInfinitePayCliente" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 hidden p-4 no-print">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative overflow-hidden">
+                <button type="button" onclick="$('#modalInfinitePayCliente').addClass('hidden')"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition p-1 rounded-full hover:bg-gray-100">
+                    <span class="material-icons-round text-xl">close</span>
+                </button>
+
+                <div class="text-center mb-6">
+                    <img src="https://cdn.prod.website-files.com/65c1399ac999a342139b5069/65c1399ac999a342139b5434_logo_brlc_preto.svg" 
+                         alt="InfinitePay" class="h-6 mx-auto mb-3">
+                    <h3 class="text-lg font-bold text-gray-900">Pagamento via InfinitePay</h3>
+                    <p class="text-xs text-gray-500 mt-1">Pague via PIX instantâneo ou Cartão de Crédito</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
+                    <div class="flex justify-between items-center text-xs text-gray-600 mb-2">
+                        <span>Fatura:</span>
+                        <span class="font-bold text-gray-800">#<?= $id_fatura ?></span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-gray-600 mb-2">
+                        <span>Cliente:</span>
+                        <span class="font-bold text-gray-800 truncate max-w-[180px]"><?= htmlspecialchars($fatura['nome_cliente'] ?? '') ?></span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-2 flex justify-between items-center text-sm font-bold text-gray-900">
+                        <span>Valor a Pagar:</span>
+                        <span class="text-emerald-600">R$ <?= number_format($saldo_devedor, 2, ',', '.') ?></span>
+                    </div>
+                </div>
+
+                <div id="infinitePayStepInitial">
+                    <button type="button" onclick="gerarCheckoutInfinitePayCliente(<?= $id_fatura ?>)" id="btnGerarInfinitePayCliente"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-sm transition flex items-center justify-center gap-2 shadow-md">
+                        <span class="material-icons-round">open_in_new</span> Ir para Checkout InfinitePay
+                    </button>
+                </div>
+
+                <div id="infinitePayStepLoading" class="hidden text-center py-4">
+                    <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-emerald-500 border-t-transparent mb-3"></div>
+                    <p class="text-xs font-semibold text-gray-600">Gerando checkout seguro...</p>
+                </div>
+            </div>
+        </div>
+
     <script>
+    function abrirModalInfinitePayCliente() {
+        $('#modalInfinitePayCliente').removeClass('hidden');
+    }
+
+    function gerarCheckoutInfinitePayCliente(idFatura) {
+        $('#infinitePayStepInitial').addClass('hidden');
+        $('#infinitePayStepLoading').removeClass('hidden');
+
+        $.ajax({
+            url: '../dinovatech/app.php',
+            type: 'POST',
+            data: { action: 'gerar_checkout_infinitepay', id_fatura: idFatura },
+            dataType: 'json',
+            success: function(res) {
+                if (res.success && res.url) {
+                    window.location.href = res.url;
+                } else {
+                    alert('Erro ao gerar checkout: ' + (res.message || 'Tente novamente.'));
+                    $('#infinitePayStepLoading').addClass('hidden');
+                    $('#infinitePayStepInitial').removeClass('hidden');
+                }
+            },
+            error: function() {
+                alert('Erro de comunicação ao gerar checkout.');
+                $('#infinitePayStepLoading').addClass('hidden');
+                $('#infinitePayStepInitial').removeClass('hidden');
+            }
+        });
+    }
+
     // Conecta botões duplicados (mobile) aos mesmos handlers do desktop
     $(document).ready(function(){
         $('#btnPagarPixMobile').click(function(){
