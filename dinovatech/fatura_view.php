@@ -710,8 +710,19 @@ if ($id_fatura) {
 
                                     <div id="infinitepay_feedback_info" class="text-xs text-slate-300 space-y-1 mb-3">
                                         <?php if ($temCheckoutInfinitePay): ?>
+                                            <?php
+                                            $displaySlug = !empty($fatura['infinitepay_slug']) ? $fatura['infinitepay_slug'] : null;
+                                            if (!$displaySlug && !empty($fatura['infinitepay_checkout_url'])) {
+                                                if (preg_match('/lenc=([A-Za-z0-9_\-]+)/', $fatura['infinitepay_checkout_url'], $mLenc)) {
+                                                    $displaySlug = 'token:' . substr($mLenc[1], 0, 14) . '...';
+                                                }
+                                            }
+                                            if (!$displaySlug) {
+                                                $displaySlug = $fatura['infinitepay_nsu'] ?? ('fatura#' . $id_fatura);
+                                            }
+                                            ?>
                                             <p class="text-[11px] leading-tight font-mono text-emerald-200">
-                                                <strong>ID / Slug:</strong> <?= htmlspecialchars($fatura['infinitepay_slug'] ?? $fatura['infinitepay_nsu'] ?? 'N/A') ?>
+                                                <strong>ID / Ref:</strong> <?= htmlspecialchars($displaySlug) ?>
                                             </p>
                                             <?php if (!empty($fatura['infinitepay_nsu'])): ?>
                                                 <p class="text-[10px] text-slate-400"><strong>NSU:</strong> <?= htmlspecialchars($fatura['infinitepay_nsu']) ?></p>

@@ -342,11 +342,42 @@ class InfinitePayHelper
         }
 
         $resData = json_decode($response, true);
+
+        // Fallback: Se não encontrou paid com order_nsu "fatura#91", tenta com o ID numérico "91"
+        if (is_array($resData) && empty($resData['paid'])) {
+            $numericNsu = (string)$id_fatura;
+            if ($orderNsu !== $numericNsu) {
+                $payloadCheck2 = ['handle' => $handle, 'order_nsu' => $numericNsu];
+                $ch2 = curl_init($apiUrl);
+                curl_setopt_array($ch2, [
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => json_encode($payloadCheck2),
+                    CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'Accept: application/json'],
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_TIMEOUT => 10,
+                    CURLOPT_SSL_VERIFYPEER => true
+                ]);
+                $response2 = curl_exec($ch2);
+                curl_close($ch2);
+                $resData2 = json_decode($response2, true);
+                if (is_array($resData2) && !empty($resData2['paid'])) {
+                    $resData = $resData2;
+                }
+            }
+        }
+
         if (is_array($resData) && !empty($resData['paid'])) {
             $paidAmountCents = (int)($resData['paid_amount'] ?? $resData['amount'] ?? 0);
             $captureMethod = strtolower((string)($resData['capture_method'] ?? 'infinitepay'));
-            $transactionNsu = $resData['transaction_nsu'] ?? $slug ?? ('infinitepay_' . time());
+            $transactionNsu = $resData['transaction_nsu'] ?? $resData['slug'] ?? $resData['invoice_slug'] ?? $slug ?? ('infinitepay_' . time());
             $receiptUrl = $resData['receipt_url'] ?? '';
+
+            // Atualiza slug se foi devolvido
+            $newSlug = $resData['invoice_slug'] ?? $resData['slug'] ?? $transactionNsu;
+            if (!empty($newSlug) && (empty($fatura['infinitepay_slug']) || $fatura['infinitepay_slug'] === '')) {
+                $slugEsc = mysqli_real_escape_string($link, $newSlug);
+                DBExecute($link, "UPDATE Faturas SET infinitepay_slug = '$slugEsc' WHERE id_fatura = '$id_safe'");
+            }
 
             $processRes = self::processarPagamentoConfirmado(
                 $link,
@@ -387,6 +418,12 @@ class InfinitePayHelper
             return ['success' => false, 'message' => 'Fatura não encontrada.'];
         }
         $fatura = mysqli_fetch_assoc($rFatura);
+
+        // Se slug estiver vazio na fatura e veio no txid/origem, salva
+        if (!empty($txid) && empty($fatura['infinitepay_slug'])) {
+            $txidEsc = mysqli_real_escape_string($link, $txid);
+            DBExecute($link, "UPDATE Faturas SET infinitepay_slug = '$txidEsc' WHERE id_fatura = '$idSafe'");
+        }
 
         $valorPagoDecimal = $paidAmountCents > 0 ? ($paidAmountCents / 100.0) : (float)($fatura['valor_total'] ?? 0);
         $formaPagamentoLabel = (strtolower($captureMethod) === 'pix') ? 'PIX (InfinitePay)' : 'Cartão de Crédito (InfinitePay)';
