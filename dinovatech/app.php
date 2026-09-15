@@ -6955,7 +6955,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $idForn = (int)($_POST['id_fornecedor'] ?? 0);
             $razaoSocial = trim($_POST['razao_social'] ?? '');
             $nomeFantasia = trim($_POST['nome_fantasia'] ?? '');
-            $cpfCnpj = trim($_POST['cpf_cnpj'] ?? '');
+            $cpfCnpjRaw = trim($_POST['cpf_cnpj'] ?? '');
+            $cpfCnpjLimpo = preg_replace('/\D/', '', $cpfCnpjRaw);
             $telefone = trim($_POST['telefone'] ?? '');
             $email = trim($_POST['email'] ?? '');
             $contatoResp = trim($_POST['contato_responsavel'] ?? '');
@@ -6968,7 +6969,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             $razaoSafe = mysqli_real_escape_string($link, $razaoSocial);
             $fantasiaSafe = mysqli_real_escape_string($link, $nomeFantasia);
-            $docSafe = mysqli_real_escape_string($link, $cpfCnpj);
+            $docSafe = mysqli_real_escape_string($link, $cpfCnpjLimpo);
             $telSafe = mysqli_real_escape_string($link, $telefone);
             $emailSafe = mysqli_real_escape_string($link, $email);
             $contatoSafe = mysqli_real_escape_string($link, $contatoResp);

@@ -871,6 +871,35 @@ DBClose($linkDB);
             return str;
         }
 
+        // Formatação de CPF / CNPJ (Exibição formatada)
+        function formatarCpfCnpj(doc) {
+            if (!doc) return '-';
+            const d = String(doc).replace(/\D/g, '');
+            if (d.length === 11) {
+                return d.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+            } else if (d.length === 14) {
+                return d.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+            }
+            return doc;
+        }
+
+        // Máscara dinâmica CPF / CNPJ para o input
+        $(document).on('input', '#fornecedorCpfCnpj', function () {
+            let v = $(this).val().replace(/\D/g, '');
+            if (v.length > 14) v = v.substring(0, 14);
+            if (v.length <= 11) {
+                v = v.replace(/^(\d{3})(\d)/, '$1.$2');
+                v = v.replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+                v = v.replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+            } else {
+                v = v.replace(/^(\d{2})(\d)/, '$1.$2');
+                v = v.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+                v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4');
+                v = v.replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5');
+            }
+            $(this).val(v);
+        });
+
         // =========================================================================
         // CARREGAMENTO DE DESPESAS E CARDS
         // =========================================================================
@@ -1013,7 +1042,7 @@ DBClose($linkDB);
                         <td class="px-4 py-3">
                             <div class="font-bold text-gray-800">${escapeHtml(d.razao_social)}</div>
                             ${d.nome_fantasia ? `<div class="text-xs text-gray-400">${escapeHtml(d.nome_fantasia)}</div>` : ''}
-                            ${d.cpf_cnpj ? `<div class="text-[11px] text-gray-400">${d.cpf_cnpj}</div>` : ''}
+                            ${d.cpf_cnpj ? `<div class="text-[11px] text-gray-400 font-mono">${formatarCpfCnpj(d.cpf_cnpj)}</div>` : ''}
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex items-center flex-wrap gap-1">
@@ -1434,7 +1463,7 @@ DBClose($linkDB);
                                     <div class="font-bold text-gray-800">${escapeHtml(f.razao_social)}</div>
                                     ${f.nome_fantasia ? `<div class="text-gray-400">${escapeHtml(f.nome_fantasia)}</div>` : ''}
                                 </td>
-                                <td class="px-3 py-2 text-gray-600">${f.cpf_cnpj || '-'}</td>
+                                <td class="px-3 py-2 text-gray-600 font-mono">${formatarCpfCnpj(f.cpf_cnpj) || '-'}</td>
                                 <td class="px-3 py-2">
                                     <div>${f.telefone || '-'}</div>
                                     ${f.email ? `<div class="text-[10px] text-gray-400">${escapeHtml(f.email)}</div>` : ''}
@@ -1491,7 +1520,7 @@ DBClose($linkDB);
                     $('#fornecedorId').val(f.id_fornecedor);
                     $('#fornecedorRazao').val(f.razao_social);
                     $('#fornecedorFantasia').val(f.nome_fantasia || '');
-                    $('#fornecedorCpfCnpj').val(f.cpf_cnpj || '');
+                    $('#fornecedorCpfCnpj').val(formatarCpfCnpj(f.cpf_cnpj || ''));
                     $('#fornecedorTelefone').val(f.telefone || '');
                     $('#fornecedorEmail').val(f.email || '');
                     $('#fornecedorContato').val(f.contato_responsavel || '');
