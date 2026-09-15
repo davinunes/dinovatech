@@ -50,50 +50,14 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
     <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         <a href="<?= $basePath ?>dashboard.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'dashboard.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">dashboard</span>
+            <span class="material-icons text-xl mr-3 text-cyan-400">dashboard</span>
             <span class="font-medium">Dashboard</span>
         </a>
 
         <a href="<?= $basePath ?>modules/Agenda/dashboard.php"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= strpos($_SERVER['PHP_SELF'], 'modules/Agenda/') !== false ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">calendar_month</span>
+            <span class="material-icons text-xl mr-3 text-sky-400">calendar_month</span>
             <span class="font-medium">Agenda</span>
-        </a>
-
-        <div class="pt-4 pb-2">
-            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cadastros</p>
-        </div>
-
-        <a href="<?= $basePath ?>clientes.php"
-            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'clientes.php' || $currentPage == 'cliente_form.php' || $currentPage == 'cliente_detalhes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">people</span>
-            <span class="font-medium">Clientes</span>
-        </a>
-
-        <?php if (AppHelper::isVetMode()): ?>
-            <a href="<?= $basePath ?>modules/Vet/pets.php"
-                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'pets.php' || $currentPage == 'pet_form.php' || $currentPage == 'pet_detalhes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                <span class="material-icons text-xl mr-3">pets</span>
-                <span class="font-medium">Pets</span>
-            </a>
-
-            <a href="<?= $basePath ?>modules/Vet/internacoes.php"
-                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'internacoes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                <span class="material-icons text-xl mr-3">local_hospital</span>
-                <span class="font-medium">Internações</span>
-            </a>
-        <?php endif; ?>
-
-        <a href="<?= $basePath ?>servicos.php"
-            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'servicos.php' || $currentPage == 'servico_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">build</span>
-            <span class="font-medium">Serviços</span>
-        </a>
-
-        <a href="<?= $basePath ?>modules/Vet/veterinarios.php"
-            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">badge</span>
-            <span class="font-medium">Colaboradores</span>
         </a>
 
         <?php if (AppHelper::isVetMode()): ?>
@@ -123,34 +87,88 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                 <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Clínico</p>
             </div>
 
+            <a href="<?= $basePath ?>modules/Vet/internacoes.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'internacoes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3 text-rose-400">local_hospital</span>
+                <span class="font-medium">Internações</span>
+            </a>
+
             <a href="<?= $basePath ?>modules/Vet/vacinas.php"
                 class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'vacinas.php' || $currentPage == 'vacina_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                <span class="material-icons text-xl mr-3">vaccines</span>
+                <span class="material-icons text-xl mr-3 text-emerald-400">vaccines</span>
                 <span class="font-medium">Vacinas (Catálogo)</span>
             </a>
 
+            <a href="<?= $basePath ?>modules/Vet/modelos_documentos.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'modelos_documentos.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3 text-blue-400">description</span>
+                <span class="font-medium">Modelos Doc.</span>
+            </a>
         <?php endif; ?>
 
         <div class="pt-4 pb-2">
-            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Gestão</p>
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Financeiro</p>
         </div>
 
-        <a href="<?= $basePath ?>config_fiscal.php" id="menuConfiguracoes"
-            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'config_fiscal.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">settings</span>
-            <span class="font-medium">Configurações</span>
+        <?php
+        $isFinanceiroActive = ($currentPage == 'receitas.php' || $currentPage == 'despesas.php' || $currentPage == 'contratos.php' || $currentPage == 'contrato_form.php');
+        ?>
+        <div>
+            <button type="button" onclick="toggleSubmenuFinanceiro()"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                <div class="flex items-center">
+                    <span class="material-icons text-xl mr-3 text-emerald-400">account_balance_wallet</span>
+                    <span class="font-medium">Financeiro</span>
+                </div>
+                <span id="iconExpandFinanceiro" class="material-icons text-sm transition-transform duration-200 <?= $isFinanceiroActive ? 'rotate-180' : '' ?>">expand_more</span>
+            </button>
+            <div id="submenuFinanceiro" class="<?= $isFinanceiroActive ? '' : 'hidden' ?> pl-4 pr-2 py-1 space-y-1">
+                <a href="<?= $basePath ?>receitas.php"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'receitas.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                    <span class="material-icons text-lg mr-3 text-emerald-400">arrow_circle_up</span>
+                    <span>Receitas</span>
+                </a>
+                <a href="<?= $basePath ?>despesas.php"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'despesas.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                    <span class="material-icons text-lg mr-3 text-rose-400">arrow_circle_down</span>
+                    <span>Despesas</span>
+                </a>
+                <a href="<?= $basePath ?>contratos.php"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'contratos.php' || $currentPage == 'contrato_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                    <span class="material-icons text-lg mr-3 text-cyan-400">repeat</span>
+                    <span>Recorrência</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="pt-4 pb-2">
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cadastros</p>
+        </div>
+
+        <a href="<?= $basePath ?>clientes.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'clientes.php' || $currentPage == 'cliente_form.php' || $currentPage == 'cliente_detalhes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3 text-blue-400">people</span>
+            <span class="font-medium">Clientes</span>
         </a>
 
-        <a href="<?= $basePath ?>modules/Vet/modelos_documentos.php"
-            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'modelos_documentos.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">description</span>
-            <span class="font-medium">Modelos Doc.</span>
+        <?php if (AppHelper::isVetMode()): ?>
+            <a href="<?= $basePath ?>modules/Vet/pets.php"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'pets.php' || $currentPage == 'pet_form.php' || $currentPage == 'pet_detalhes.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3 text-amber-400">pets</span>
+                <span class="font-medium">Pets</span>
+            </a>
+        <?php endif; ?>
+
+        <a href="<?= $basePath ?>servicos.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'servicos.php' || $currentPage == 'servico_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3 text-orange-400">build</span>
+            <span class="font-medium">Serviços</span>
         </a>
 
-        <a href="<?= $basePath ?>contratos.php"
-            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'contratos.php' || $currentPage == 'contrato_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">repeat</span>
-            <span class="font-medium">Recorrência</span>
+        <a href="<?= $basePath ?>modules/Vet/veterinarios.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3 text-violet-400">badge</span>
+            <span class="font-medium">Colaboradores</span>
         </a>
 
         <?php
@@ -161,6 +179,9 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
         $isFerramentasActive = ($currentPage == 'pix_recorrencias.php' || $currentPage == 'logs_infinitepay.php' || strpos($_SERVER['PHP_SELF'], '/tools/') !== false);
         ?>
         <?php if ($hasFerramentas): ?>
+            <div class="pt-4 pb-2">
+                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Ferramentas</p>
+            </div>
             <div>
                 <button type="button" onclick="toggleSubmenuFerramentas()"
                     class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
@@ -196,31 +217,15 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             </div>
         <?php endif; ?>
 
-        <?php
-        $isFinanceiroActive = ($currentPage == 'receitas.php' || $currentPage == 'despesas.php');
-        ?>
-        <div>
-            <button type="button" onclick="toggleSubmenuFinanceiro()"
-                class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
-                <div class="flex items-center">
-                    <span class="material-icons text-xl mr-3 text-emerald-400">account_balance_wallet</span>
-                    <span class="font-medium">Financeiro</span>
-                </div>
-                <span id="iconExpandFinanceiro" class="material-icons text-sm transition-transform duration-200 <?= $isFinanceiroActive ? 'rotate-180' : '' ?>">expand_more</span>
-            </button>
-            <div id="submenuFinanceiro" class="<?= $isFinanceiroActive ? '' : 'hidden' ?> pl-4 pr-2 py-1 space-y-1">
-                <a href="<?= $basePath ?>receitas.php"
-                    class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'receitas.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                    <span class="material-icons text-lg mr-3 text-emerald-400">arrow_circle_up</span>
-                    <span>Receitas</span>
-                </a>
-                <a href="<?= $basePath ?>despesas.php"
-                    class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'despesas.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                    <span class="material-icons text-lg mr-3 text-rose-400">arrow_circle_down</span>
-                    <span>Despesas</span>
-                </a>
-            </div>
+        <div class="pt-4 pb-2">
+            <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistema</p>
         </div>
+
+        <a href="<?= $basePath ?>config_fiscal.php" id="menuConfiguracoes"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'config_fiscal.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3 text-slate-400">settings</span>
+            <span class="font-medium">Configurações</span>
+        </a>
 
         <a href="#" onclick="fazerBackup(event)"
             class="flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group">
