@@ -98,12 +98,6 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                 <span class="material-icons text-xl mr-3 text-emerald-400">vaccines</span>
                 <span class="font-medium">Vacinas (Catálogo)</span>
             </a>
-
-            <a href="<?= $basePath ?>modules/Vet/modelos_documentos.php"
-                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'modelos_documentos.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                <span class="material-icons text-xl mr-3 text-blue-400">description</span>
-                <span class="font-medium">Modelos Doc.</span>
-            </a>
         <?php endif; ?>
 
         <div class="pt-4 pb-2">
@@ -169,6 +163,12 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'veterinarios.php' || $currentPage == 'veterinario_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3 text-violet-400">badge</span>
             <span class="font-medium">Colaboradores</span>
+        </a>
+
+        <a href="<?= $basePath ?>modules/Vet/modelos_documentos.php"
+            class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'modelos_documentos.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+            <span class="material-icons text-xl mr-3 text-blue-400">description</span>
+            <span class="font-medium">Modelos de Documentos</span>
         </a>
 
         <?php
