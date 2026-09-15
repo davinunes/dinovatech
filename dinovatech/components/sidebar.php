@@ -135,8 +135,8 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                 </a>
                 <a href="<?= $basePath ?>contratos.php"
                     class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'contratos.php' || $currentPage == 'contrato_form.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-                    <span class="material-icons text-lg mr-3 text-cyan-400">repeat</span>
-                    <span>Recorrência</span>
+                    <span class="material-icons text-lg mr-3 text-cyan-400">assignment</span>
+                    <span>Contratos</span>
                 </a>
             </div>
         </div>
