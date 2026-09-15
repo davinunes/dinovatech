@@ -7515,6 +7515,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'reverter_liquidacao_despesa':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da despesa inválido.";
+                break;
+            }
+            $qRev = "UPDATE Despesas SET 
+                        status = 'Em Aberto',
+                        data_pagamento = NULL,
+                        valor_pago = 0.00,
+                        forma_pagamento = NULL
+                     WHERE id_despesa = $idDespesa";
+            if (@DBExecute($link, $qRev)) {
+                $response['success'] = true;
+                $response['message'] = "Liquidação revertida com sucesso! A despesa retornou para 'Em Aberto'.";
+            } else {
+                $response['message'] = "Erro ao reverter liquidação: " . mysqli_error($link);
+            }
+            break;
+
         case 'cancelar_despesa':
             $idDespesa = (int)($_POST['id_despesa'] ?? 0);
             if ($idDespesa <= 0) {
@@ -7561,6 +7581,78 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             $response['success'] = true;
             $response['data'] = $regras;
+            break;
+
+        case 'obter_regra_recorrente':
+            $idDespesa = (int)($_POST['id_despesa'] ?? $_GET['id_despesa'] ?? 0);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da regra inválido.";
+                break;
+            }
+            $resR = @DBExecute($link, "SELECT * FROM Despesas WHERE id_despesa = $idDespesa AND tipo = 'recorrente' LIMIT 1");
+            if ($resR && $rowR = mysqli_fetch_assoc($resR)) {
+                $response['success'] = true;
+                $response['data'] = $rowR;
+            } else {
+                $response['message'] = "Regra recorrente não encontrada.";
+            }
+            break;
+
+        case 'salvar_template_recorrencia':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da regra recorrente inválido.";
+                break;
+            }
+            $idFornecedor = (int)($_POST['id_fornecedor'] ?? 0);
+            $idCentroCusto = !empty($_POST['id_centro_custo']) ? (int)$_POST['id_centro_custo'] : null;
+            $descricao = trim($_POST['descricao'] ?? '');
+            $diaVenc = max(1, min(31, (int)($_POST['dia_vencimento'] ?? 10)));
+            $observacoes = trim($_POST['observacoes'] ?? '');
+            $recorrenciaAtiva = isset($_POST['recorrencia_ativa']) ? (int)$_POST['recorrencia_ativa'] : 1;
+
+            $valRaw = $_POST['valor'] ?? '0';
+            $vClean = preg_replace('/[^\d,.]/', '', $valRaw);
+            if (strpos($vClean, ',') !== false && strpos($vClean, '.') !== false) {
+                $vClean = str_replace('.', '', $vClean);
+                $vClean = str_replace(',', '.', $vClean);
+            } elseif (strpos($vClean, ',') !== false) {
+                $vClean = str_replace(',', '.', $vClean);
+            }
+            $valor = (float)$vClean;
+
+            if ($idFornecedor <= 0) {
+                $response['message'] = "Selecione o fornecedor.";
+                break;
+            }
+            if (empty($descricao)) {
+                $response['message'] = "A descrição é obrigatória.";
+                break;
+            }
+            if ($valor <= 0) {
+                $response['message'] = "O valor base deve ser maior que zero.";
+                break;
+            }
+
+            $descSafe = mysqli_real_escape_string($link, $descricao);
+            $obsSafe = mysqli_real_escape_string($link, $observacoes);
+            $idCCVal = $idCentroCusto ? $idCentroCusto : "NULL";
+
+            $qUpdTemplate = "UPDATE Despesas SET 
+                                id_fornecedor = $idFornecedor,
+                                id_centro_custo = $idCCVal,
+                                descricao = '$descSafe',
+                                valor = $valor,
+                                dia_vencimento_recorrencia = $diaVenc,
+                                observacoes = '$obsSafe',
+                                recorrencia_ativa = $recorrenciaAtiva
+                             WHERE id_despesa = $idDespesa AND tipo = 'recorrente'";
+            if (@DBExecute($link, $qUpdTemplate)) {
+                $response['success'] = true;
+                $response['message'] = "Template da recorrência atualizado com sucesso!";
+            } else {
+                $response['message'] = "Erro ao atualizar template: " . mysqli_error($link);
+            }
             break;
 
         case 'alternar_status_recorrencia':

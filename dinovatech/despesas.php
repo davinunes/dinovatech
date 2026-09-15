@@ -760,6 +760,92 @@ DBClose($linkDB);
         </div>
     </div>
 
+    <!-- ========================================================================= -->
+    <!-- MODAL: EDITAR TEMPLATE DE RECORRÊNCIA                                     -->
+    <!-- ========================================================================= -->
+    <div id="modalEditarTemplateRecorrente" class="fixed inset-0 bg-black bg-opacity-50 z-55 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden animate__animated animate__fadeIn">
+            <div class="px-6 py-4 bg-purple-900 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-purple-300">edit_note</span>
+                    <h3 class="text-base font-bold">Editar Template da Recorrência</h3>
+                </div>
+                <button type="button" onclick="fecharModalEditarTemplateRecorrente()" class="text-purple-300 hover:text-white">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+
+            <form id="formEditarTemplateRecorrente" onsubmit="salvarTemplateRecorrente(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editRecId" name="id_despesa" value="">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Descrição da Recorrência *</label>
+                    <input type="text" id="editRecDescricao" name="descricao" required
+                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Fornecedor *</label>
+                        <select id="editRecFornecedor" name="id_fornecedor" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                            <option value="">Selecione...</option>
+                            <?php foreach ($fornecedores as $f): ?>
+                                <option value="<?= $f['id_fornecedor'] ?>"><?= htmlspecialchars($f['razao_social']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Centro de Custo</label>
+                        <select id="editRecCentroCusto" name="id_centro_custo"
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                            <option value="">Nenhum (Geral)</option>
+                            <?php foreach ($centrosCusto as $cc): ?>
+                                <option value="<?= $cc['id_centro_custo'] ?>"><?= htmlspecialchars($cc['nome']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Dia do Vencimento (1 a 31) *</label>
+                        <input type="number" id="editRecDiaVenc" name="dia_vencimento" min="1" max="31" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Valor Base Padrão (R$) *</label>
+                        <input type="text" id="editRecValor" name="valor" required
+                            class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Observações Padrão</label>
+                    <textarea id="editRecObs" name="observacoes" rows="2"
+                        class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center">
+                    <label class="flex items-center text-xs font-bold text-gray-700 cursor-pointer select-none">
+                        <input type="checkbox" id="editRecAtiva" name="recorrencia_ativa" class="rounded text-purple-600 focus:ring-purple-500 mr-2">
+                        <span>Recorrência Ativa (Gerar automaticamente todo mês)</span>
+                    </label>
+                </div>
+
+                <div class="pt-3 border-t border-gray-100 flex items-center justify-end gap-2">
+                    <button type="button" onclick="fecharModalEditarTemplateRecorrente()" 
+                        class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" id="btnSalvarTemplateRec"
+                        class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-bold shadow-md transition flex items-center">
+                        <span class="material-icons text-base mr-1">save</span>
+                        Salvar Template
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts JavaScript do Módulo -->
     <?php include 'components/layout_scripts.php'; ?>
     <script>
@@ -883,10 +969,18 @@ DBClose($linkDB);
 
                 // Tipo icon
                 let tipoIcon = '';
+                let btnEditTemplateRec = '';
                 if (d.tipo === 'parcelada') {
                     tipoIcon = `<span class="inline-flex items-center text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mr-1" title="Parcela ${d.parcela_atual}/${d.total_parcelas}"><span class="material-icons text-[12px] mr-0.5">payments</span>${d.parcela_atual}/${d.total_parcelas}</span>`;
                 } else if (d.tipo === 'recorrente') {
-                    tipoIcon = `<span class="inline-flex items-center text-[10px] font-semibold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 mr-1" title="Despesa Recorrente"><span class="material-icons text-[12px] mr-0.5">event_repeat</span>Recorrente</span>`;
+                    const idMatriz = d.id_despesa_origem || d.id_despesa;
+                    tipoIcon = `<button type="button" onclick="abrirEditarTemplateRecorrente(${idMatriz})" class="inline-flex items-center text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 mr-1 transition cursor-pointer" title="Editar Template da Recorrência (Regra Matriz)"><span class="material-icons text-[12px] mr-0.5">event_repeat</span>Recorrente</button>`;
+                    btnEditTemplateRec = `
+                        <button type="button" onclick="abrirEditarTemplateRecorrente(${idMatriz})" 
+                            class="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Editar Template Matriz da Recorrência">
+                            <span class="material-icons text-base">event_repeat</span>
+                        </button>
+                    `;
                 }
 
                 // Anexos badge/button
@@ -899,13 +993,21 @@ DBClose($linkDB);
                     </button>
                 `;
 
-                // Botão de liquidação
+                // Botão de liquidação e reversão
                 let btnLiquidar = '';
+                let btnReverter = '';
                 if (d.status === 'Em Aberto') {
                     btnLiquidar = `
                         <button type="button" onclick="abrirModalLiquidar(${d.id_despesa})" 
                             class="p-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition" title="Liquidar / Pagar">
                             <span class="material-icons text-base">check_circle</span>
+                        </button>
+                    `;
+                } else if (d.status === 'Liquidada') {
+                    btnReverter = `
+                        <button type="button" onclick="reverterLiquidacao(${d.id_despesa})" 
+                            class="p-1.5 bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white rounded-lg transition" title="Reverter Liquidação (Voltar para Em Aberto)">
+                            <span class="material-icons text-base">undo</span>
                         </button>
                     `;
                 }
@@ -944,6 +1046,8 @@ DBClose($linkDB);
                         <td class="px-4 py-3 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1">
                                 ${btnLiquidar}
+                                ${btnReverter}
+                                ${btnEditTemplateRec}
                                 <button type="button" onclick="editarDespesa(${d.id_despesa})" 
                                     class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition" title="Editar Despesa">
                                     <span class="material-icons text-base">edit</span>
@@ -1088,6 +1192,10 @@ DBClose($linkDB);
             const desp = despesasCache.find(d => d.id_despesa == id);
             if (!desp) return;
 
+            // Reset do estado do botão antes de exibir
+            const btn = $('#btnConfirmarLiquidar');
+            btn.prop('disabled', false).html('<span class="material-icons text-base mr-1">check_circle</span> Confirmar Baixa');
+
             $('#liquidarIdDespesa').val(desp.id_despesa);
             $('#liquidarDescricao').text(desp.descricao);
             $('#liquidarFornecedor').text(desp.razao_social);
@@ -1103,6 +1211,7 @@ DBClose($linkDB);
             $('#liquidarDataPagamento').val(`${year}-${month}-${day}T${hours}:${minutes}`);
 
             $('#liquidarValorPago').val(parseFloat(desp.valor).toFixed(2).replace('.', ','));
+            $('#liquidarFormaPagamento').val('Pix');
             $('#liquidarComprovante').val('');
 
             $('#modalLiquidar').removeClass('hidden');
@@ -1110,6 +1219,9 @@ DBClose($linkDB);
 
         function fecharModalLiquidar() {
             $('#modalLiquidar').addClass('hidden');
+            $('#liquidarComprovante').val('');
+            const btn = $('#btnConfirmarLiquidar');
+            btn.prop('disabled', false).html('<span class="material-icons text-base mr-1">check_circle</span> Confirmar Baixa');
         }
 
         function confirmarLiquidacao(e) {
@@ -1118,10 +1230,10 @@ DBClose($linkDB);
             const dataPag = $('#liquidarDataPagamento').val();
             const valPago = $('#liquidarValorPago').val();
             const formaPag = $('#liquidarFormaPagamento').val();
-            const comprovanteFile = $('#liquidarComprovante')[0].files[0];
+            const comprovanteInput = $('#liquidarComprovante')[0];
+            const comprovanteFile = (comprovanteInput && comprovanteInput.files && comprovanteInput.files.length > 0) ? comprovanteInput.files[0] : null;
 
             const btn = $('#btnConfirmarLiquidar');
-            const originalText = btn.html();
             btn.html('<span class="material-icons text-base animate-spin mr-1">refresh</span> Baixando...').prop('disabled', true);
 
             $.post('app.php', {
@@ -1158,12 +1270,24 @@ DBClose($linkDB);
                     }
                 } else {
                     alert('Erro ao liquidar: ' + res.message);
-                    btn.html(originalText).prop('disabled', false);
+                    btn.prop('disabled', false).html('<span class="material-icons text-base mr-1">check_circle</span> Confirmar Baixa');
                 }
-            }, 'json').fail(function() {
-                alert('Erro de comunicação.');
-                btn.html(originalText).prop('disabled', false);
+            }, 'json').fail(function(xhr) {
+                alert('Erro de comunicação ao liquidar despesa.');
+                btn.prop('disabled', false).html('<span class="material-icons text-base mr-1">check_circle</span> Confirmar Baixa');
             });
+        }
+
+        function reverterLiquidacao(id) {
+            if (!confirm('Deseja realmente reverter a liquidação desta despesa?\n\nO status retornará para "Em Aberto" e os dados de pagamento serão limpos.')) return;
+
+            $.post('app.php', { action: 'reverter_liquidacao_despesa', id_despesa: id }, function(res) {
+                if (res.success) {
+                    carregarDespesas();
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json');
         }
 
         // =========================================================================
@@ -1541,10 +1665,16 @@ DBClose($linkDB);
                                     </span>
                                 </td>
                                 <td class="px-3 py-2 text-center">
-                                    <button type="button" onclick="alternarRecorrencia(${r.id_despesa}, ${isAtiva ? 0 : 1})" 
-                                        class="px-2 py-1 rounded text-xs font-bold transition ${isAtiva ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}">
-                                        ${isAtiva ? 'Pausar' : 'Reativar'}
-                                    </button>
+                                    <div class="flex items-center justify-center gap-1">
+                                        <button type="button" onclick="abrirEditarTemplateRecorrente(${r.id_despesa})" 
+                                            class="p-1.5 rounded-lg text-purple-700 bg-purple-50 hover:bg-purple-100 transition" title="Editar Template da Recorrência">
+                                            <span class="material-icons text-sm">edit</span>
+                                        </button>
+                                        <button type="button" onclick="alternarRecorrencia(${r.id_despesa}, ${isAtiva ? 0 : 1})" 
+                                            class="px-2 py-1 rounded-lg text-xs font-bold transition ${isAtiva ? 'bg-amber-50 text-amber-700 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'}">
+                                            ${isAtiva ? 'Pausar' : 'Reativar'}
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         `;
@@ -1562,6 +1692,59 @@ DBClose($linkDB);
                     alert('Erro: ' + res.message);
                 }
             }, 'json');
+        }
+
+        function abrirEditarTemplateRecorrente(id) {
+            $.post('app.php', { action: 'obter_regra_recorrente', id_despesa: id }, function(res) {
+                if (res.success && res.data) {
+                    const r = res.data;
+                    $('#editRecId').val(r.id_despesa);
+                    $('#editRecDescricao').val(r.descricao);
+                    $('#editRecFornecedor').val(r.id_fornecedor);
+                    $('#editRecCentroCusto').val(r.id_centro_custo || '');
+                    $('#editRecDiaVenc').val(r.dia_vencimento_recorrencia || 10);
+                    $('#editRecValor').val(parseFloat(r.valor).toFixed(2).replace('.', ','));
+                    $('#editRecObs').val(r.observacoes || '');
+                    $('#editRecAtiva').prop('checked', parseInt(r.recorrencia_ativa || 0) === 1);
+
+                    $('#modalEditarTemplateRecorrente').removeClass('hidden');
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json');
+        }
+
+        function fecharModalEditarTemplateRecorrente() {
+            $('#modalEditarTemplateRecorrente').addClass('hidden');
+        }
+
+        function salvarTemplateRecorrente(e) {
+            e.preventDefault();
+            const btn = $('#btnSalvarTemplateRec');
+            const origText = btn.html();
+            btn.html('<span class="material-icons text-sm animate-spin mr-1">refresh</span> Salvando...').prop('disabled', true);
+
+            $.post('app.php', {
+                action: 'salvar_template_recorrencia',
+                id_despesa: $('#editRecId').val(),
+                descricao: $('#editRecDescricao').val(),
+                id_fornecedor: $('#editRecFornecedor').val(),
+                id_centro_custo: $('#editRecCentroCusto').val(),
+                dia_vencimento: $('#editRecDiaVenc').val(),
+                valor: $('#editRecValor').val(),
+                observacoes: $('#editRecObs').val(),
+                recorrencia_ativa: $('#editRecAtiva').is(':checked') ? 1 : 0
+            }, function(res) {
+                if (res.success) {
+                    fecharModalEditarTemplateRecorrente();
+                    carregarTabelaRegrasRecorrentes();
+                    carregarDespesas();
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json').always(function() {
+                btn.html(origText).prop('disabled', false);
+            });
         }
 
         function escapeHtml(text) {
