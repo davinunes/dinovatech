@@ -969,18 +969,10 @@ DBClose($linkDB);
 
                 // Tipo icon
                 let tipoIcon = '';
-                let btnEditTemplateRec = '';
                 if (d.tipo === 'parcelada') {
                     tipoIcon = `<span class="inline-flex items-center text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 mr-1" title="Parcela ${d.parcela_atual}/${d.total_parcelas}"><span class="material-icons text-[12px] mr-0.5">payments</span>${d.parcela_atual}/${d.total_parcelas}</span>`;
                 } else if (d.tipo === 'recorrente') {
-                    const idMatriz = d.id_despesa_origem || d.id_despesa;
-                    tipoIcon = `<button type="button" onclick="abrirEditarTemplateRecorrente(${idMatriz})" class="inline-flex items-center text-[10px] font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 px-1.5 py-0.5 rounded border border-purple-200 mr-1 transition cursor-pointer" title="Editar Template da Recorrência (Regra Matriz)"><span class="material-icons text-[12px] mr-0.5">event_repeat</span>Recorrente</button>`;
-                    btnEditTemplateRec = `
-                        <button type="button" onclick="abrirEditarTemplateRecorrente(${idMatriz})" 
-                            class="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition" title="Editar Template Matriz da Recorrência">
-                            <span class="material-icons text-base">event_repeat</span>
-                        </button>
-                    `;
+                    tipoIcon = `<span class="inline-flex items-center text-[10px] font-semibold text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 mr-1" title="Despesa Recorrente"><span class="material-icons text-[12px] mr-0.5">event_repeat</span>Recorrente</span>`;
                 }
 
                 // Anexos badge/button
@@ -1047,7 +1039,6 @@ DBClose($linkDB);
                             <div class="flex items-center justify-center gap-1">
                                 ${btnLiquidar}
                                 ${btnReverter}
-                                ${btnEditTemplateRec}
                                 <button type="button" onclick="editarDespesa(${d.id_despesa})" 
                                     class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition" title="Editar Despesa">
                                     <span class="material-icons text-base">edit</span>

@@ -420,8 +420,13 @@ DBClose($linkDB);
 
         function formatDate(dateString) {
             if (!dateString) return '-';
-            const [year, month, day] = dateString.split('-');
-            return `${day}/${month}/${year}`;
+            if (dateString.includes('/')) return dateString;
+            const clean = String(dateString).split('T')[0].split(' ')[0];
+            const parts = clean.split('-');
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return dateString;
         }
 
         function escapeHtml(text) {
@@ -444,7 +449,7 @@ DBClose($linkDB);
             $('#modalExtratoInter').addClass('hidden');
         };
 
-        $('#btnExtratoInter').click(function () {
+        $(document).on('click', '#btnExtratoInter', function () {
             abrirExtratoInter();
         });
 
@@ -477,6 +482,7 @@ DBClose($linkDB);
             $('#extratoErro').addClass('hidden');
             $('#extratoTabelaContainer').addClass('hidden');
             $('#extratoListaTransacoes').empty();
+            $('#extratoMobileListaTransacoes').empty();
             $('#filtroTextoExtrato').val('');
 
             $.ajax({
@@ -491,25 +497,35 @@ DBClose($linkDB);
                 },
                 success: function (res) {
                     $('#extratoLoading').addClass('hidden');
-                    if (res.success && res.data) {
+                    if (res && res.success && res.data) {
                         let transacoes = [];
-                        if (Array.isArray(res.data.transacoes)) {
-                            transacoes = res.data.transacoes;
-                        } else if (Array.isArray(res.data)) {
-                            transacoes = res.data;
-                        } else if (typeof res.data === 'string') {
+                        const d = res.data;
+
+                        if (Array.isArray(d.transacoes)) {
+                            transacoes = d.transacoes;
+                        } else if (d.transacoes && typeof d.transacoes === 'object') {
+                            transacoes = Object.values(d.transacoes);
+                        } else if (Array.isArray(d)) {
+                            transacoes = d;
+                        } else if (typeof d === 'object') {
+                            transacoes = Object.values(d);
+                        } else if (typeof d === 'string') {
                             try {
-                                const parsed = JSON.parse(res.data);
-                                transacoes = parsed.transacoes || (Array.isArray(parsed) ? parsed : []);
+                                const parsed = JSON.parse(d);
+                                if (Array.isArray(parsed.transacoes)) transacoes = parsed.transacoes;
+                                else if (parsed.transacoes && typeof parsed.transacoes === 'object') transacoes = Object.values(parsed.transacoes);
+                                else if (Array.isArray(parsed)) transacoes = parsed;
+                                else if (typeof parsed === 'object') transacoes = Object.values(parsed);
                             } catch (e) {
                                 console.error('Erro ao interpretar JSON de transações:', e);
                             }
                         }
-                        extratoTransacoesCache = transacoes;
+
+                        extratoTransacoesCache = Array.isArray(transacoes) ? transacoes : [];
                         renderizarExtratoTransacoes(extratoTransacoesCache);
                         $('#extratoTabelaContainer').removeClass('hidden');
                     } else {
-                        $('#extratoErroMsg').text(res.message || 'Erro ao carregar transações do Inter.');
+                        $('#extratoErroMsg').text((res && res.message) ? res.message : 'Erro ao carregar transações do Inter.');
                         $('#extratoErro').removeClass('hidden');
                     }
                 },
@@ -537,25 +553,31 @@ DBClose($linkDB);
             const filtro = ($('#filtroTextoExtrato').val() || '').toLowerCase().trim();
 
             if (!Array.isArray(transacoes)) {
-                transacoes = [];
+                if (transacoes && typeof transacoes === 'object') {
+                    transacoes = Object.values(transacoes);
+                } else {
+                    transacoes = [];
+                }
             }
 
             const filtradas = transacoes.filter(t => {
+                if (!t) return false;
                 if (!filtro) return true;
                 const detalhes = t.detalhes || {};
-                const titulo = (t.titulo || '').toLowerCase();
-                const desc = (t.descricao || '').toLowerCase();
-                const tipo = (t.tipoTransacao || '').toLowerCase();
-                const nomePagador = (detalhes.nomePagador || '').toLowerCase();
-                const txId = (detalhes.txId || '').toLowerCase();
-                const doc = (t.numeroDocumento || '').toLowerCase();
-                const endToEndId = (detalhes.endToEndId || '').toLowerCase();
-                const clienteNome = (t.cliente_vinculado && t.cliente_vinculado.nome) ? t.cliente_vinculado.nome.toLowerCase() : '';
-                const clienteCpf = (t.cliente_vinculado && t.cliente_vinculado.cpf_cnpj) ? t.cliente_vinculado.cpf_cnpj.toLowerCase() : '';
+                const titulo = String(t.titulo || '').toLowerCase();
+                const desc = String(t.descricao || '').toLowerCase();
+                const tipo = String(t.tipoTransacao || '').toLowerCase();
+                const nomePagador = String(detalhes.nomePagador || '').toLowerCase();
+                const txId = String(detalhes.txId || '').toLowerCase();
+                const doc = String(t.numeroDocumento || '').toLowerCase();
+                const endToEndId = String(detalhes.endToEndId || '').toLowerCase();
+                const clienteNome = (t.cliente_vinculado && t.cliente_vinculado.nome) ? String(t.cliente_vinculado.nome).toLowerCase() : '';
+                const clienteCpf = (t.cliente_vinculado && t.cliente_vinculado.cpf_cnpj) ? String(t.cliente_vinculado.cpf_cnpj).toLowerCase() : '';
                 return titulo.includes(filtro) || desc.includes(filtro) || tipo.includes(filtro) || nomePagador.includes(filtro) || txId.includes(filtro) || doc.includes(filtro) || endToEndId.includes(filtro) || clienteNome.includes(filtro) || clienteCpf.includes(filtro);
             });
 
             transacoes.forEach(t => {
+                if (!t) return;
                 const valor = Math.abs(parseFloat(t.valor) || 0);
                 if (t.tipoOperacao === 'C') {
                     totalEntradas += valor;
@@ -570,6 +592,7 @@ DBClose($linkDB);
 
             if (filtradas.length > 0) {
                 filtradas.forEach(t => {
+                    if (!t) return;
                     const valor = Math.abs(parseFloat(t.valor) || 0);
                     const isCredito = (t.tipoOperacao === 'C');
                     const valorClass = isCredito ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
@@ -578,29 +601,31 @@ DBClose($linkDB);
                         ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-800">Crédito</span>'
                         : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-100 text-rose-800">Débito</span>';
 
-                    const dataFormatada = t.dataTransacao ? formatDate(t.dataTransacao) : (t.dataInclusao ? formatDate(t.dataInclusao.substring(0, 10)) : '-');
-                    const horaFormatada = t.dataInclusao && t.dataInclusao.length >= 19 ? t.dataInclusao.substring(11, 19) : '';
+                    const dataFormatada = t.dataTransacao ? formatDate(t.dataTransacao) : (t.dataInclusao ? formatDate(String(t.dataInclusao).substring(0, 10)) : '-');
+                    const horaFormatada = t.dataInclusao && String(t.dataInclusao).length >= 19 ? String(t.dataInclusao).substring(11, 19) : '';
                     const detalhes = t.detalhes || {};
                     const cli = t.cliente_vinculado || null;
+                    const cliNome = (cli && cli.nome) ? String(cli.nome) : '';
+                    const cliId = (cli && cli.id_cliente) ? cli.id_cliente : '';
 
                     // Bloco da Coluna Pagador / Detalhes (Desktop)
                     let pagadorColHtml = '';
-                    if (cli) {
+                    if (cli && cliNome) {
                         const avatarHtml = cli.foto_url 
-                            ? `<img src="${escapeHtml(cli.foto_url)}" alt="${escapeHtml(cli.nome)}" class="w-8 h-8 rounded-full object-cover border border-orange-300 shadow-sm shrink-0">`
-                            : `<div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 font-bold text-xs flex items-center justify-center border border-orange-200 shadow-sm shrink-0" title="${escapeHtml(cli.nome)}">${escapeHtml((cli.nome || 'C').charAt(0).toUpperCase())}</div>`;
+                            ? `<img src="${escapeHtml(cli.foto_url)}" alt="${escapeHtml(cliNome)}" class="w-8 h-8 rounded-full object-cover border border-orange-300 shadow-sm shrink-0">`
+                            : `<div class="w-8 h-8 rounded-full bg-orange-100 text-orange-700 font-bold text-xs flex items-center justify-center border border-orange-200 shadow-sm shrink-0" title="${escapeHtml(cliNome)}">${escapeHtml(cliNome.charAt(0).toUpperCase())}</div>`;
                         
-                        const nomeDiferente = detalhes.nomePagador && detalhes.nomePagador.toLowerCase().trim() !== cli.nome.toLowerCase().trim();
+                        const nomeDiferente = detalhes.nomePagador && String(detalhes.nomePagador).toLowerCase().trim() !== cliNome.toLowerCase().trim();
 
                         pagadorColHtml = `
                             <div class="flex items-start gap-2.5">
-                                <a href="cliente_detalhes.php?id=${encodeURIComponent(cli.id_cliente)}" target="_blank" class="shrink-0 hover:opacity-85 transition transform hover:scale-105 inline-block" title="Abrir perfil de ${escapeHtml(cli.nome)}">
+                                <a href="cliente_detalhes.php?id=${encodeURIComponent(cliId)}" target="_blank" class="shrink-0 hover:opacity-85 transition transform hover:scale-105 inline-block" title="Abrir perfil de ${escapeHtml(cliNome)}">
                                     ${avatarHtml}
                                 </a>
                                 <div class="min-w-0 flex-1">
                                     <div class="flex items-center gap-1">
-                                        <a href="cliente_detalhes.php?id=${encodeURIComponent(cli.id_cliente)}" target="_blank" class="font-bold text-xs text-gray-900 hover:text-orange-600 transition truncate max-w-[175px] block leading-tight" title="Cliente cadastrado: ${escapeHtml(cli.nome)}">
-                                            ${escapeHtml(cli.nome)}
+                                        <a href="cliente_detalhes.php?id=${encodeURIComponent(cliId)}" target="_blank" class="font-bold text-xs text-gray-900 hover:text-orange-600 transition truncate max-w-[175px] block leading-tight" title="Cliente cadastrado: ${escapeHtml(cliNome)}">
+                                            ${escapeHtml(cliNome)}
                                         </a>
                                         <span class="material-icons text-[14px] text-emerald-500 shrink-0 select-none" title="Cliente vinculado ao cadastro">verified</span>
                                     </div>
@@ -618,6 +643,41 @@ DBClose($linkDB);
                                 ${detalhes.cpfCnpjPagador ? `<div class="text-[10px] text-gray-500 font-mono">${escapeHtml(detalhes.cpfCnpjPagador)}</div>` : ''}
                                 ${detalhes.txId ? `<div class="text-[10px] text-orange-700 font-mono truncate" title="${escapeHtml(detalhes.txId)}">txId: ${escapeHtml(detalhes.txId)}</div>` : ''}
                                 ${detalhes.descricaoPix ? `<div class="text-[10px] text-teal-700 italic truncate" title="${escapeHtml(detalhes.descricaoPix)}">${escapeHtml(detalhes.descricaoPix)}</div>` : ''}
+                            </div>
+                        `;
+                    }
+
+                    // Bloco Pagador / Detalhes (Mobile)
+                    let pagadorMobileHtml = '';
+                    if (cli && cliNome) {
+                        const avatarMobileHtml = cli.foto_url 
+                            ? `<img src="${escapeHtml(cli.foto_url)}" alt="${escapeHtml(cliNome)}" class="w-7 h-7 rounded-full object-cover border border-orange-300 shadow-sm shrink-0">`
+                            : `<div class="w-7 h-7 rounded-full bg-orange-100 text-orange-700 font-bold text-[11px] flex items-center justify-center border border-orange-200 shadow-sm shrink-0" title="${escapeHtml(cliNome)}">${escapeHtml(cliNome.charAt(0).toUpperCase())}</div>`;
+                        
+                        const nomeDiferente = detalhes.nomePagador && String(detalhes.nomePagador).toLowerCase().trim() !== cliNome.toLowerCase().trim();
+
+                        pagadorMobileHtml = `
+                            <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+                                <a href="cliente_detalhes.php?id=${encodeURIComponent(cliId)}" target="_blank" class="shrink-0 hover:opacity-85 transition" title="Ver detalhes do cliente">
+                                    ${avatarMobileHtml}
+                                </a>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-1">
+                                        <a href="cliente_detalhes.php?id=${encodeURIComponent(cliId)}" target="_blank" class="text-xs font-bold text-gray-900 hover:text-orange-600 transition truncate">
+                                            ${escapeHtml(cliNome)}
+                                        </a>
+                                        <span class="material-icons text-xs text-emerald-500 shrink-0" title="Cliente cadastrado">verified</span>
+                                    </div>
+                                    ${nomeDiferente ? `<p class="text-[10px] text-gray-400 truncate"><span class="font-medium">Banco:</span> ${escapeHtml(detalhes.nomePagador)}</p>` : ''}
+                                    ${(detalhes.cpfCnpjPagador || cli.cpf_cnpj) ? `<p class="text-[10px] text-gray-400 font-mono">${escapeHtml(detalhes.cpfCnpjPagador || cli.cpf_cnpj)}</p>` : ''}
+                                </div>
+                            </div>
+                        `;
+                    } else if (detalhes.nomePagador || detalhes.cpfCnpjPagador) {
+                        pagadorMobileHtml = `
+                            <div class="pt-1.5 border-t border-gray-100">
+                                ${detalhes.nomePagador ? `<p class="text-xs text-gray-700 font-medium truncate"><span class="text-gray-400 font-normal">Pagador:</span> ${escapeHtml(detalhes.nomePagador)}</p>` : ''}
+                                ${detalhes.cpfCnpjPagador ? `<p class="text-[10px] text-gray-400 font-mono">${escapeHtml(detalhes.cpfCnpjPagador)}</p>` : ''}
                             </div>
                         `;
                     }
@@ -689,11 +749,11 @@ DBClose($linkDB);
             $('#extratoMobileListaTransacoes').html(mobileHtml);
         }
 
-        $('#filtroTextoExtrato').on('input', function () {
+        $(document).on('input', '#filtroTextoExtrato', function () {
             renderizarExtratoTransacoes(extratoTransacoesCache);
         });
 
-        $('#btnExportarPdfExtrato').click(function () {
+        $(document).on('click', '#btnExportarPdfExtrato', function () {
             if (extratoDatasAtuais.dataInicio && extratoDatasAtuais.dataFim) {
                 window.open(`../inter/endpoint.php?action=exportar_extrato_pdf&dataInicio=${extratoDatasAtuais.dataInicio}&dataFim=${extratoDatasAtuais.dataFim}&download=1`, '_blank');
             }
