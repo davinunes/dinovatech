@@ -2741,11 +2741,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $values[] = (float) $row['total'];
             }
 
+            // Obter totais de despesas do mês para o balanço consolidado
+            $mesDesp = !empty($mes) ? mysqli_real_escape_string($link, $mes) : date('Y-m');
+            $qDespTot = "
+                SELECT 
+                    COALESCE(SUM(CASE WHEN status = 'Liquidada' THEN valor_pago ELSE 0 END), 0) as total_pago,
+                    COALESCE(SUM(CASE WHEN status = 'Em Aberto' THEN valor ELSE 0 END), 0) as total_a_pagar,
+                    COALESCE(SUM(CASE WHEN status != 'Cancelada' THEN valor ELSE 0 END), 0) as total_despesas
+                FROM Despesas
+                WHERE data_competencia = '$mesDesp' AND (recorrencia_ativa = 0 OR data_competencia = '$mesDesp')
+            ";
+            $resDespTot = @DBExecute($link, $qDespTot);
+            $despesasPagas = 0.00;
+            $despesasAPagar = 0.00;
+            $despesasTotal = 0.00;
+            if ($resDespTot && $rDT = mysqli_fetch_assoc($resDespTot)) {
+                $despesasPagas = (float)$rDT['total_pago'];
+                $despesasAPagar = (float)$rDT['total_a_pagar'];
+                $despesasTotal = (float)$rDT['total_despesas'];
+            }
+
+            $saldoRealizado = (float)$total_faturado - $despesasPagas;
+            $saldoPrevisto = ((float)$total_faturado + (float)$total_aberto) - $despesasTotal;
+
             $response['success'] = true;
             $response['data'] = [
                 'total_faturado' => $total_faturado,
                 'total_aberto' => $total_aberto,
                 'total_atrasado' => $total_atrasado,
+                'despesas_pagas' => $despesasPagas,
+                'despesas_a_pagar' => $despesasAPagar,
+                'despesas_total' => $despesasTotal,
+                'saldo_realizado' => $saldoRealizado,
+                'saldo_previsto' => $saldoPrevisto,
                 'faturas_recentes' => $recentes,
                 'grafico' => [
                     'labels' => $labels,
@@ -6877,6 +6905,891 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $response['data'] = $data;
             $response['duracao_estimada'] = $duracao_estimada;
             $response['slots'] = $slots;
+            break;
+
+        // =========================================================================
+        // MÓDULO FINANCEIRO: FORNECEDORES
+        // =========================================================================
+        case 'listar_fornecedores':
+            $termo = trim($_POST['termo'] ?? $_GET['termo'] ?? '');
+            $apenasAtivos = isset($_REQUEST['apenas_ativos']) ? (int)$_REQUEST['apenas_ativos'] : 1;
+
+            $whereForn = [];
+            if ($apenasAtivos) {
+                $whereForn[] = "ativo = 1";
+            }
+            if (!empty($termo)) {
+                $termoSafe = mysqli_real_escape_string($link, $termo);
+                $whereForn[] = "(razao_social LIKE '%$termoSafe%' OR nome_fantasia LIKE '%$termoSafe%' OR cpf_cnpj LIKE '%$termoSafe%')";
+            }
+            $sqlWhereForn = !empty($whereForn) ? "WHERE " . implode(" AND ", $whereForn) : "";
+
+            $queryForn = "SELECT * FROM Fornecedores $sqlWhereForn ORDER BY razao_social ASC";
+            $resForn = @DBExecute($link, $queryForn);
+            $fornecedores = [];
+            if ($resForn) {
+                while ($fRow = mysqli_fetch_assoc($resForn)) {
+                    $fornecedores[] = $fRow;
+                }
+            }
+            $response['success'] = true;
+            $response['data'] = $fornecedores;
+            break;
+
+        case 'obter_fornecedor':
+            $idForn = (int)($_POST['id_fornecedor'] ?? $_GET['id_fornecedor'] ?? 0);
+            if ($idForn <= 0) {
+                $response['message'] = "ID do fornecedor inválido.";
+                break;
+            }
+            $resForn = @DBExecute($link, "SELECT * FROM Fornecedores WHERE id_fornecedor = $idForn LIMIT 1");
+            if ($resForn && $fRow = mysqli_fetch_assoc($resForn)) {
+                $response['success'] = true;
+                $response['data'] = $fRow;
+            } else {
+                $response['message'] = "Fornecedor não encontrado.";
+            }
+            break;
+
+        case 'salvar_fornecedor':
+            $idForn = (int)($_POST['id_fornecedor'] ?? 0);
+            $razaoSocial = trim($_POST['razao_social'] ?? '');
+            $nomeFantasia = trim($_POST['nome_fantasia'] ?? '');
+            $cpfCnpj = trim($_POST['cpf_cnpj'] ?? '');
+            $telefone = trim($_POST['telefone'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $contatoResp = trim($_POST['contato_responsavel'] ?? '');
+            $obs = trim($_POST['observacoes'] ?? '');
+
+            if (empty($razaoSocial)) {
+                $response['message'] = "A Razão Social ou Nome do fornecedor é obrigatório.";
+                break;
+            }
+
+            $razaoSafe = mysqli_real_escape_string($link, $razaoSocial);
+            $fantasiaSafe = mysqli_real_escape_string($link, $nomeFantasia);
+            $docSafe = mysqli_real_escape_string($link, $cpfCnpj);
+            $telSafe = mysqli_real_escape_string($link, $telefone);
+            $emailSafe = mysqli_real_escape_string($link, $email);
+            $contatoSafe = mysqli_real_escape_string($link, $contatoResp);
+            $obsSafe = mysqli_real_escape_string($link, $obs);
+
+            if ($idForn > 0) {
+                $queryUpd = "UPDATE Fornecedores SET 
+                                razao_social = '$razaoSafe',
+                                nome_fantasia = '$fantasiaSafe',
+                                cpf_cnpj = '$docSafe',
+                                telefone = '$telSafe',
+                                email = '$emailSafe',
+                                contato_responsavel = '$contatoSafe',
+                                observacoes = '$obsSafe'
+                             WHERE id_fornecedor = $idForn";
+                if (@DBExecute($link, $queryUpd)) {
+                    $response['success'] = true;
+                    $response['message'] = "Fornecedor atualizado com sucesso!";
+                    $response['id_fornecedor'] = $idForn;
+                } else {
+                    $response['message'] = "Erro ao atualizar fornecedor: " . mysqli_error($link);
+                }
+            } else {
+                $queryIns = "INSERT INTO Fornecedores (razao_social, nome_fantasia, cpf_cnpj, telefone, email, contato_responsavel, observacoes)
+                             VALUES ('$razaoSafe', '$fantasiaSafe', '$docSafe', '$telSafe', '$emailSafe', '$contatoSafe', '$obsSafe')";
+                if (@DBExecute($link, $queryIns)) {
+                    $response['success'] = true;
+                    $response['message'] = "Fornecedor cadastrado com sucesso!";
+                    $response['id_fornecedor'] = mysqli_insert_id($link);
+                } else {
+                    $response['message'] = "Erro ao cadastrar fornecedor: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'excluir_fornecedor':
+            $idForn = (int)($_POST['id_fornecedor'] ?? 0);
+            if ($idForn <= 0) {
+                $response['message'] = "ID do fornecedor inválido.";
+                break;
+            }
+            // Verificar se possui despesas vinculadas
+            $chkDesp = @DBExecute($link, "SELECT COUNT(*) as total FROM Despesas WHERE id_fornecedor = $idForn");
+            $hasDesp = false;
+            if ($chkDesp && $rCD = mysqli_fetch_assoc($chkDesp)) {
+                if ((int)$rCD['total'] > 0) {
+                    $hasDesp = true;
+                }
+            }
+            if ($hasDesp) {
+                // Soft delete (inativação) para preservar integridade
+                @DBExecute($link, "UPDATE Fornecedores SET ativo = 0 WHERE id_fornecedor = $idForn");
+                $response['success'] = true;
+                $response['message'] = "Fornecedor inativado (possui despesas associadas).";
+            } else {
+                if (@DBExecute($link, "DELETE FROM Fornecedores WHERE id_fornecedor = $idForn")) {
+                    $response['success'] = true;
+                    $response['message'] = "Fornecedor excluído com sucesso!";
+                } else {
+                    $response['message'] = "Erro ao excluir fornecedor: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        // =========================================================================
+        // MÓDULO FINANCEIRO: CENTROS DE CUSTO
+        // =========================================================================
+        case 'listar_centros_custo':
+            $resCC = @DBExecute($link, "SELECT * FROM CentrosCusto WHERE ativo = 1 ORDER BY nome ASC");
+            $centros = [];
+            if ($resCC) {
+                while ($ccRow = mysqli_fetch_assoc($resCC)) {
+                    $centros[] = $ccRow;
+                }
+            }
+            $response['success'] = true;
+            $response['data'] = $centros;
+            break;
+
+        case 'salvar_centro_custo':
+            $idCC = (int)($_POST['id_centro_custo'] ?? 0);
+            $nomeCC = trim($_POST['nome'] ?? '');
+            $descCC = trim($_POST['descricao'] ?? '');
+            $corCC = trim($_POST['cor'] ?? '#0284c7');
+
+            if (empty($nomeCC)) {
+                $response['message'] = "O nome do centro de custo é obrigatório.";
+                break;
+            }
+
+            $nomeCCSafe = mysqli_real_escape_string($link, $nomeCC);
+            $descCCSafe = mysqli_real_escape_string($link, $descCC);
+            $corCCSafe = mysqli_real_escape_string($link, $corCC);
+
+            if ($idCC > 0) {
+                $qUpdCC = "UPDATE CentrosCusto SET nome = '$nomeCCSafe', descricao = '$descCCSafe', cor = '$corCCSafe' WHERE id_centro_custo = $idCC";
+                if (@DBExecute($link, $qUpdCC)) {
+                    $response['success'] = true;
+                    $response['message'] = "Centro de custo atualizado!";
+                } else {
+                    $response['message'] = "Erro ao atualizar centro de custo: " . mysqli_error($link);
+                }
+            } else {
+                $qInsCC = "INSERT INTO CentrosCusto (nome, descricao, cor) VALUES ('$nomeCCSafe', '$descCCSafe', '$corCCSafe')";
+                if (@DBExecute($link, $qInsCC)) {
+                    $response['success'] = true;
+                    $response['message'] = "Centro de custo criado!";
+                    $response['id_centro_custo'] = mysqli_insert_id($link);
+                } else {
+                    $response['message'] = "Erro ao criar centro de custo: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'excluir_centro_custo':
+            $idCC = (int)($_POST['id_centro_custo'] ?? 0);
+            if ($idCC <= 0) {
+                $response['message'] = "ID do centro de custo inválido.";
+                break;
+            }
+            @DBExecute($link, "UPDATE CentrosCusto SET ativo = 0 WHERE id_centro_custo = $idCC");
+            $response['success'] = true;
+            $response['message'] = "Centro de custo removido com sucesso!";
+            break;
+
+        // =========================================================================
+        // MÓDULO FINANCEIRO: DESPESAS (CONTAS A PAGAR)
+        // =========================================================================
+        case 'sincronizar_recorrencias_mes':
+            $mesAlvo = trim($_POST['mes'] ?? $_GET['mes'] ?? date('Y-m'));
+            if (!preg_match('/^\d{4}-\d{2}$/', $mesAlvo)) {
+                $mesAlvo = date('Y-m');
+            }
+
+            // Buscar todas as matrizes recorrentes ativas
+            $qRec = "SELECT * FROM Despesas WHERE tipo = 'recorrente' AND recorrencia_ativa = 1";
+            $resRec = @DBExecute($link, $qRec);
+            $geradas = 0;
+
+            if ($resRec) {
+                while ($matriz = mysqli_fetch_assoc($resRec)) {
+                    $idMatriz = (int)$matriz['id_despesa'];
+
+                    // Verificar se já existe despesa gerada para esse mês vinculado a esta matriz
+                    $qCheck = "SELECT id_despesa FROM Despesas 
+                               WHERE (id_despesa_pai = $idMatriz OR id_despesa = $idMatriz) 
+                                 AND data_competencia = '$mesAlvo' 
+                               LIMIT 1";
+                    $resCheck = @DBExecute($link, $qCheck);
+                    if ($resCheck && mysqli_num_rows($resCheck) > 0) {
+                        // Já existe despesa para esta competência
+                        continue;
+                    }
+
+                    // Determinar dia de vencimento
+                    $diaVenc = (int)($matriz['dia_vencimento_recorrencia'] ?? 10);
+                    if ($diaVenc <= 0 || $diaVenc > 31) $diaVenc = 10;
+
+                    // Ajustar último dia do mês alvo se o mês tiver menos dias
+                    $ultimoDiaMes = (int)date('t', strtotime($mesAlvo . '-01'));
+                    $diaFinal = min($diaVenc, $ultimoDiaMes);
+                    $dataVencimentoCalculada = $mesAlvo . '-' . str_pad($diaFinal, 2, '0', STR_PAD_LEFT);
+
+                    $idFornSafe = (int)$matriz['id_fornecedor'];
+                    $idCCSafe = !empty($matriz['id_centro_custo']) ? (int)$matriz['id_centro_custo'] : "NULL";
+                    $descSafe = mysqli_real_escape_string($link, $matriz['descricao']);
+                    $valorSafe = (float)$matriz['valor'];
+                    $numDocSafe = mysqli_real_escape_string($link, $matriz['numero_documento'] ?? '');
+                    $obsSafe = mysqli_real_escape_string($link, $matriz['observacoes'] ?? '');
+
+                    $qInsNova = "INSERT INTO Despesas (
+                                    id_fornecedor, id_centro_custo, descricao, tipo, status, 
+                                    data_competencia, data_vencimento, valor, numero_documento, 
+                                    observacoes, id_despesa_pai, parcela_atual, total_parcelas, recorrencia_ativa
+                                 ) VALUES (
+                                    $idFornSafe, $idCCSafe, '$descSafe', 'recorrente', 'Em Aberto',
+                                    '$mesAlvo', '$dataVencimentoCalculada', $valorSafe, '$numDocSafe',
+                                    '$obsSafe', $idMatriz, 1, 1, 0
+                                 )";
+                    if (@DBExecute($link, $qInsNova)) {
+                        $geradas++;
+                    }
+                }
+            }
+
+            $response['success'] = true;
+            $response['geradas_count'] = $geradas;
+            $response['message'] = $geradas > 0 ? "Foram sincronizadas $geradas despesas recorrentes para o mês $mesAlvo." : "Todas as recorrências deste mês já estavam sincronizadas.";
+            break;
+
+        case 'listar_despesas':
+            $mesFiltro = trim($_POST['mes'] ?? $_GET['mes'] ?? date('Y-m'));
+            if (!preg_match('/^\d{4}-\d{2}$/', $mesFiltro)) {
+                $mesFiltro = date('Y-m');
+            }
+
+            // Regra especial solicitada pelo usuário:
+            // "o botão 'Sincronizar Recorrências' (ou a abertura do mês na tela) gera a despesa do mês automaticamente, 
+            // exceto se o mês for no passado. Meses passados só geram a partir das recorrencias se for clicado o botão."
+            $autoSync = !empty($_REQUEST['auto_sync']);
+            $mesAtual = date('Y-m');
+            if ($autoSync && ($mesFiltro >= $mesAtual)) {
+                // Sincroniza automaticamente recorrências para o mês atual ou futuro se ainda faltar alguma
+                $qRec = "SELECT * FROM Despesas WHERE tipo = 'recorrente' AND recorrencia_ativa = 1";
+                $resRec = @DBExecute($link, $qRec);
+                if ($resRec) {
+                    while ($matriz = mysqli_fetch_assoc($resRec)) {
+                        $idMatriz = (int)$matriz['id_despesa'];
+                        $qCheck = "SELECT id_despesa FROM Despesas WHERE (id_despesa_pai = $idMatriz OR id_despesa = $idMatriz) AND data_competencia = '$mesFiltro' LIMIT 1";
+                        $resCheck = @DBExecute($link, $qCheck);
+                        if (!$resCheck || mysqli_num_rows($resCheck) === 0) {
+                            $diaVenc = (int)($matriz['dia_vencimento_recorrencia'] ?? 10);
+                            if ($diaVenc <= 0 || $diaVenc > 31) $diaVenc = 10;
+                            $ultimoDiaMes = (int)date('t', strtotime($mesFiltro . '-01'));
+                            $diaFinal = min($diaVenc, $ultimoDiaMes);
+                            $dataVencCalculada = $mesFiltro . '-' . str_pad($diaFinal, 2, '0', STR_PAD_LEFT);
+
+                            $idFornSafe = (int)$matriz['id_fornecedor'];
+                            $idCCSafe = !empty($matriz['id_centro_custo']) ? (int)$matriz['id_centro_custo'] : "NULL";
+                            $descSafe = mysqli_real_escape_string($link, $matriz['descricao']);
+                            $valorSafe = (float)$matriz['valor'];
+                            $numDocSafe = mysqli_real_escape_string($link, $matriz['numero_documento'] ?? '');
+                            $obsSafe = mysqli_real_escape_string($link, $matriz['observacoes'] ?? '');
+
+                            @DBExecute($link, "INSERT INTO Despesas (
+                                id_fornecedor, id_centro_custo, descricao, tipo, status, 
+                                data_competencia, data_vencimento, valor, numero_documento, 
+                                observacoes, id_despesa_pai, parcela_atual, total_parcelas, recorrencia_ativa
+                            ) VALUES (
+                                $idFornSafe, $idCCSafe, '$descSafe', 'recorrente', 'Em Aberto',
+                                '$mesFiltro', '$dataVencCalculada', $valorSafe, '$numDocSafe',
+                                '$obsSafe', $idMatriz, 1, 1, 0
+                            )");
+                        }
+                    }
+                }
+            }
+
+            $idCCFiltro = (int)($_REQUEST['id_centro_custo'] ?? 0);
+            $idFornFiltro = (int)($_REQUEST['id_fornecedor'] ?? 0);
+            $statusFiltro = trim($_REQUEST['status'] ?? '');
+            $buscaFiltro = trim($_REQUEST['busca'] ?? '');
+
+            // Não trazer a matriz base pura de recorrência se ela não for uma instância executável
+            // (a matriz base tem recorrencia_ativa = 1 e id_despesa_pai IS NULL, mas se data_competencia for diferente do mês, ignorar)
+            $whereDesp = [
+                "d.data_competencia = '$mesFiltro'",
+                "(d.recorrencia_ativa = 0 OR d.data_competencia = '$mesFiltro')"
+            ];
+
+            if ($idCCFiltro > 0) {
+                $whereDesp[] = "d.id_centro_custo = $idCCFiltro";
+            }
+            if ($idFornFiltro > 0) {
+                $whereDesp[] = "d.id_fornecedor = $idFornFiltro";
+            }
+            if (!empty($statusFiltro) && in_array($statusFiltro, ['Em Aberto', 'Liquidada', 'Cancelada'])) {
+                $whereDesp[] = "d.status = '$statusFiltro'";
+            } elseif ($statusFiltro === 'Atrasada') {
+                $whereDesp[] = "d.status = 'Em Aberto' AND d.data_vencimento < CURDATE()";
+            }
+            if (!empty($buscaFiltro)) {
+                $bSafe = mysqli_real_escape_string($link, $buscaFiltro);
+                $whereDesp[] = "(d.descricao LIKE '%$bSafe%' OR d.numero_documento LIKE '%$bSafe%' OR f.razao_social LIKE '%$bSafe%' OR f.nome_fantasia LIKE '%$bSafe%')";
+            }
+
+            $sqlWhereDesp = "WHERE " . implode(" AND ", $whereDesp);
+
+            $queryList = "
+                SELECT d.*, 
+                       f.razao_social, f.nome_fantasia, f.cpf_cnpj, f.telefone as fornecedor_telefone,
+                       cc.nome as centro_custo_nome, cc.cor as centro_custo_cor,
+                       (SELECT COUNT(*) FROM DespesaArquivos da WHERE da.id_despesa = d.id_despesa) as total_anexos
+                FROM Despesas d
+                JOIN Fornecedores f ON d.id_fornecedor = f.id_fornecedor
+                LEFT JOIN CentrosCusto cc ON d.id_centro_custo = cc.id_centro_custo
+                $sqlWhereDesp
+                ORDER BY d.data_vencimento ASC, d.id_despesa ASC
+            ";
+
+            $resList = @DBExecute($link, $queryList);
+            $despesas = [];
+            if ($resList) {
+                while ($row = mysqli_fetch_assoc($resList)) {
+                    // Determina se está atrasada dinamicamente
+                    $isAtrasada = ($row['status'] === 'Em Aberto' && $row['data_vencimento'] < date('Y-m-d'));
+                    $row['is_atrasada'] = $isAtrasada;
+                    $despesas[] = $row;
+                }
+            }
+
+            $response['success'] = true;
+            $response['mes'] = $mesFiltro;
+            $response['data'] = $despesas;
+            break;
+
+        case 'obter_totais_despesas':
+            $mesTot = trim($_POST['mes'] ?? $_GET['mes'] ?? date('Y-m'));
+            if (!preg_match('/^\d{4}-\d{2}$/', $mesTot)) {
+                $mesTot = date('Y-m');
+            }
+
+            $qTot = "
+                SELECT 
+                    COALESCE(SUM(CASE WHEN status = 'Em Aberto' THEN valor ELSE 0 END), 0) as total_aberto,
+                    COALESCE(SUM(CASE WHEN status = 'Liquidada' THEN valor_pago ELSE 0 END), 0) as total_pago,
+                    COALESCE(SUM(CASE WHEN status = 'Em Aberto' AND data_vencimento < CURDATE() THEN valor ELSE 0 END), 0) as total_atrasado,
+                    COALESCE(SUM(CASE WHEN status != 'Cancelada' THEN valor ELSE 0 END), 0) as total_geral,
+                    COUNT(CASE WHEN status = 'Em Aberto' THEN 1 END) as qtd_aberto,
+                    COUNT(CASE WHEN status = 'Liquidada' THEN 1 END) as qtd_liquidada,
+                    COUNT(CASE WHEN status = 'Em Aberto' AND data_vencimento < CURDATE() THEN 1 END) as qtd_atrasada
+                FROM Despesas
+                WHERE data_competencia = '$mesTot' AND (recorrencia_ativa = 0 OR data_competencia = '$mesTot')
+            ";
+            $resTot = @DBExecute($link, $qTot);
+            $totais = [
+                'total_aberto' => 0.00,
+                'total_pago' => 0.00,
+                'total_atrasado' => 0.00,
+                'total_geral' => 0.00,
+                'qtd_aberto' => 0,
+                'qtd_liquidada' => 0,
+                'qtd_atrasada' => 0
+            ];
+            if ($resTot && $rT = mysqli_fetch_assoc($resTot)) {
+                $totais = [
+                    'total_aberto' => (float)$rT['total_aberto'],
+                    'total_pago' => (float)$rT['total_pago'],
+                    'total_atrasado' => (float)$rT['total_atrasado'],
+                    'total_geral' => (float)$rT['total_geral'],
+                    'qtd_aberto' => (int)$rT['qtd_aberto'],
+                    'qtd_liquidada' => (int)$rT['qtd_liquidada'],
+                    'qtd_atrasada' => (int)$rT['qtd_atrasada']
+                ];
+            }
+            $response['success'] = true;
+            $response['data'] = $totais;
+            break;
+
+        case 'salvar_despesa':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            $tipo = trim($_POST['tipo'] ?? 'avulsa');
+            if (!in_array($tipo, ['avulsa', 'parcelada', 'recorrente'])) {
+                $tipo = 'avulsa';
+            }
+
+            $idFornecedor = (int)($_POST['id_fornecedor'] ?? 0);
+            $idCentroCusto = !empty($_POST['id_centro_custo']) ? (int)$_POST['id_centro_custo'] : null;
+            $descricao = trim($_POST['descricao'] ?? '');
+            $dataVencimento = trim($_POST['data_vencimento'] ?? date('Y-m-d'));
+            $numDoc = trim($_POST['numero_documento'] ?? '');
+            $observacoes = trim($_POST['observacoes'] ?? '');
+
+            // Tratar valor monetário (aceita R$ 1.250,50 ou 1250.50)
+            $valorRaw = $_POST['valor'] ?? '0';
+            if (is_string($valorRaw)) {
+                $valorClean = preg_replace('/[^\d,.]/', '', $valorRaw);
+                if (strpos($valorClean, ',') !== false && strpos($valorClean, '.') !== false) {
+                    $valorClean = str_replace('.', '', $valorClean);
+                    $valorClean = str_replace(',', '.', $valorClean);
+                } elseif (strpos($valorClean, ',') !== false) {
+                    $valorClean = str_replace(',', '.', $valorClean);
+                }
+                $valor = (float)$valorClean;
+            } else {
+                $valor = (float)$valorRaw;
+            }
+
+            if ($idFornecedor <= 0) {
+                $response['message'] = "Por favor, selecione o fornecedor.";
+                break;
+            }
+            if (empty($descricao)) {
+                $response['message'] = "A descrição da despesa é obrigatória.";
+                break;
+            }
+            if ($valor <= 0) {
+                $response['message'] = "O valor da despesa deve ser maior que zero.";
+                break;
+            }
+            if (!strtotime($dataVencimento)) {
+                $response['message'] = "Data de vencimento inválida.";
+                break;
+            }
+
+            $competencia = date('Y-m', strtotime($dataVencimento));
+            $descSafe = mysqli_real_escape_string($link, $descricao);
+            $numDocSafe = mysqli_real_escape_string($link, $numDoc);
+            $obsSafe = mysqli_real_escape_string($link, $observacoes);
+            $idCCVal = $idCentroCusto ? $idCentroCusto : "NULL";
+
+            // Se for EDIÇÃO de despesa existente
+            if ($idDespesa > 0) {
+                $qUpd = "UPDATE Despesas SET 
+                            id_fornecedor = $idFornecedor,
+                            id_centro_custo = $idCCVal,
+                            descricao = '$descSafe',
+                            data_competencia = '$competencia',
+                            data_vencimento = '$dataVencimento',
+                            valor = $valor,
+                            numero_documento = '$numDocSafe',
+                            observacoes = '$obsSafe'
+                         WHERE id_despesa = $idDespesa";
+                if (@DBExecute($link, $qUpd)) {
+                    $response['success'] = true;
+                    $response['message'] = "Despesa atualizada com sucesso!";
+                    $response['id_despesa'] = $idDespesa;
+                } else {
+                    $response['message'] = "Erro ao atualizar despesa: " . mysqli_error($link);
+                }
+                break;
+            }
+
+            // Se for CRIAÇÃO DE NOVA DESPESA
+            if ($tipo === 'parcelada') {
+                $totalParcelas = max(2, min(120, (int)($_POST['total_parcelas'] ?? 2)));
+                $tipoValor = trim($_POST['tipo_valor_parcela'] ?? 'parcela'); // 'total' ou 'parcela'
+
+                $valorPorParcela = ($tipoValor === 'total') ? round($valor / $totalParcelas, 2) : $valor;
+
+                $idPai = null;
+                $criadas = 0;
+
+                // Gerar parcelas
+                for ($p = 1; $p <= $totalParcelas; $p++) {
+                    $vencParcela = date('Y-m-d', strtotime("+" . ($p - 1) . " month", strtotime($dataVencimento)));
+                    $compParcela = date('Y-m', strtotime($vencParcela));
+                    $descParcela = $descSafe . " ($p/$totalParcelas)";
+                    $idPaiVal = $idPai ? $idPai : "NULL";
+
+                    $qInsP = "INSERT INTO Despesas (
+                                id_fornecedor, id_centro_custo, descricao, tipo, status,
+                                data_competencia, data_vencimento, valor, numero_documento,
+                                observacoes, id_despesa_pai, parcela_atual, total_parcelas
+                              ) VALUES (
+                                $idFornecedor, $idCCVal, '$descParcela', 'parcelada', 'Em Aberto',
+                                '$compParcela', '$vencParcela', $valorPorParcela, '$numDocSafe',
+                                '$obsSafe', $idPaiVal, $p, $totalParcelas
+                              )";
+                    if (@DBExecute($link, $qInsP)) {
+                        $novoId = mysqli_insert_id($link);
+                        if ($p === 1) {
+                            $idPai = $novoId;
+                            // Auto-vincular a 1ª parcela a si mesma como pai se desejado
+                            @DBExecute($link, "UPDATE Despesas SET id_despesa_pai = $idPai WHERE id_despesa = $idPai");
+                        }
+                        $criadas++;
+                    }
+                }
+
+                $response['success'] = true;
+                $response['message'] = "Foram geradas $criadas parcelas com sucesso!";
+                $response['id_despesa'] = $idPai;
+
+            } elseif ($tipo === 'recorrente') {
+                $diaVenc = (int)date('d', strtotime($dataVencimento));
+                if ($diaVenc <= 0 || $diaVenc > 31) $diaVenc = 10;
+
+                // 1. Cadastrar a Matriz Recorrente
+                $qInsMatriz = "INSERT INTO Despesas (
+                                id_fornecedor, id_centro_custo, descricao, tipo, status,
+                                data_competencia, data_vencimento, valor, numero_documento,
+                                observacoes, recorrencia_ativa, dia_vencimento_recorrencia,
+                                parcela_atual, total_parcelas
+                               ) VALUES (
+                                $idFornecedor, $idCCVal, '$descSafe', 'recorrente', 'Em Aberto',
+                                '$competencia', '$dataVencimento', $valor, '$numDocSafe',
+                                '$obsSafe', 1, $diaVenc, 1, 1
+                               )";
+                if (@DBExecute($link, $qInsMatriz)) {
+                    $idMatriz = mysqli_insert_id($link);
+                    // A própria matriz representa a primeira competência cadastrada
+                    @DBExecute($link, "UPDATE Despesas SET id_despesa_pai = $idMatriz WHERE id_despesa = $idMatriz");
+                    $response['success'] = true;
+                    $response['message'] = "Despesa recorrente cadastrada e ativada!";
+                    $response['id_despesa'] = $idMatriz;
+                } else {
+                    $response['message'] = "Erro ao cadastrar regra recorrente: " . mysqli_error($link);
+                }
+
+            } else {
+                // Avulsa
+                $qInsAvulsa = "INSERT INTO Despesas (
+                                id_fornecedor, id_centro_custo, descricao, tipo, status,
+                                data_competencia, data_vencimento, valor, numero_documento,
+                                observacoes, parcela_atual, total_parcelas
+                               ) VALUES (
+                                $idFornecedor, $idCCVal, '$descSafe', 'avulsa', 'Em Aberto',
+                                '$competencia', '$dataVencimento', $valor, '$numDocSafe',
+                                '$obsSafe', 1, 1
+                               )";
+                if (@DBExecute($link, $qInsAvulsa)) {
+                    $idNovo = mysqli_insert_id($link);
+                    $response['success'] = true;
+                    $response['message'] = "Despesa cadastrada com sucesso!";
+                    $response['id_despesa'] = $idNovo;
+                } else {
+                    $response['message'] = "Erro ao cadastrar despesa: " . mysqli_error($link);
+                }
+            }
+            break;
+
+        case 'liquidar_despesa':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da despesa inválido.";
+                break;
+            }
+
+            $dtPag = trim($_POST['data_pagamento'] ?? date('Y-m-d H:i:s'));
+            if (strlen($dtPag) === 10) {
+                $dtPag .= ' ' . date('H:i:s');
+            }
+            $formaPag = trim($_POST['forma_pagamento'] ?? 'Pix');
+            $formaPagSafe = mysqli_real_escape_string($link, $formaPag);
+
+            $valPagoRaw = $_POST['valor_pago'] ?? null;
+            if ($valPagoRaw !== null && $valPagoRaw !== '') {
+                $vClean = preg_replace('/[^\d,.]/', '', $valPagoRaw);
+                if (strpos($vClean, ',') !== false && strpos($vClean, '.') !== false) {
+                    $vClean = str_replace('.', '', $vClean);
+                    $vClean = str_replace(',', '.', $vClean);
+                } elseif (strpos($vClean, ',') !== false) {
+                    $vClean = str_replace(',', '.', $vClean);
+                }
+                $valorPago = (float)$vClean;
+            } else {
+                // Puxa o valor da despesa do banco
+                $resV = @DBExecute($link, "SELECT valor FROM Despesas WHERE id_despesa = $idDespesa");
+                $valorPago = ($resV && $rV = mysqli_fetch_assoc($resV)) ? (float)$rV['valor'] : 0.00;
+            }
+
+            $qLiq = "UPDATE Despesas SET 
+                        status = 'Liquidada',
+                        data_pagamento = '$dtPag',
+                        valor_pago = $valorPago,
+                        forma_pagamento = '$formaPagSafe'
+                     WHERE id_despesa = $idDespesa";
+            if (@DBExecute($link, $qLiq)) {
+                $response['success'] = true;
+                $response['message'] = "Despesa liquidada com sucesso!";
+            } else {
+                $response['message'] = "Erro ao liquidar despesa: " . mysqli_error($link);
+            }
+            break;
+
+        case 'cancelar_despesa':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da despesa inválido.";
+                break;
+            }
+            if (@DBExecute($link, "UPDATE Despesas SET status = 'Cancelada' WHERE id_despesa = $idDespesa")) {
+                $response['success'] = true;
+                $response['message'] = "Despesa cancelada.";
+            } else {
+                $response['message'] = "Erro ao cancelar despesa: " . mysqli_error($link);
+            }
+            break;
+
+        case 'excluir_despesa':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da despesa inválido.";
+                break;
+            }
+            if (@DBExecute($link, "DELETE FROM Despesas WHERE id_despesa = $idDespesa")) {
+                $response['success'] = true;
+                $response['message'] = "Despesa excluída com sucesso!";
+            } else {
+                $response['message'] = "Erro ao excluir: " . mysqli_error($link);
+            }
+            break;
+
+        case 'listar_recorrencias_regras':
+            $qRegras = "
+                SELECT d.*, f.razao_social, f.nome_fantasia, cc.nome as centro_custo_nome, cc.cor as centro_custo_cor
+                FROM Despesas d
+                JOIN Fornecedores f ON d.id_fornecedor = f.id_fornecedor
+                LEFT JOIN CentrosCusto cc ON d.id_centro_custo = cc.id_centro_custo
+                WHERE d.tipo = 'recorrente' AND (d.id_despesa_pai = d.id_despesa OR d.id_despesa_pai IS NULL)
+                ORDER BY d.recorrencia_ativa DESC, d.descricao ASC
+            ";
+            $resRegras = @DBExecute($link, $qRegras);
+            $regras = [];
+            if ($resRegras) {
+                while ($rRow = mysqli_fetch_assoc($resRegras)) {
+                    $regras[] = $rRow;
+                }
+            }
+            $response['success'] = true;
+            $response['data'] = $regras;
+            break;
+
+        case 'alternar_status_recorrencia':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            $novoStatus = (int)($_POST['ativo'] ?? 1);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da regra inválido.";
+                break;
+            }
+            if (@DBExecute($link, "UPDATE Despesas SET recorrencia_ativa = $novoStatus WHERE id_despesa = $idDespesa")) {
+                $response['success'] = true;
+                $response['message'] = $novoStatus ? "Recorrência reativada!" : "Recorrência pausada.";
+            } else {
+                $response['message'] = "Erro ao alternar status da recorrência: " . mysqli_error($link);
+            }
+            break;
+
+        // =========================================================================
+        // MÓDULO FINANCEIRO: ANEXOS DE DESPESAS (OCI S3 OU LOCAL)
+        // =========================================================================
+        case 'upload_anexo_despesa':
+            $idDespesa = (int)($_POST['id_despesa'] ?? 0);
+            $tipoDoc = trim($_POST['tipo_documento'] ?? 'Outro');
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da despesa não fornecido.";
+                break;
+            }
+            if (!isset($_FILES['arquivo']) || $_FILES['arquivo']['error'] !== UPLOAD_ERR_OK) {
+                $response['message'] = "Arquivo inválido ou não enviado.";
+                break;
+            }
+
+            if ($_FILES['arquivo']['size'] > 15 * 1024 * 1024) {
+                $response['message'] = "O arquivo excede o limite de 15MB.";
+                break;
+            }
+
+            $nomeOriginal = $_FILES['arquivo']['name'];
+            $extensao = strtolower(pathinfo($nomeOriginal, PATHINFO_EXTENSION));
+            $caminhoTemp = $_FILES['arquivo']['tmp_name'];
+            $tamanhoBytes = $_FILES['arquivo']['size'];
+
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->file($caminhoTemp) ?: 'application/octet-stream';
+
+            // Carregar URL do bucket Oracle
+            $resConf = @DBExecute($link, "SELECT api_oracle_url FROM ConfiguracoesEmissor LIMIT 1");
+            $urlBucketPreauth = '';
+            if ($resConf && $rConf = mysqli_fetch_assoc($resConf)) {
+                $urlBucketPreauth = trim($rConf['api_oracle_url'] ?? '');
+            }
+
+            $urlPublica = '';
+            $uploadSucesso = false;
+
+            if (!empty($urlBucketPreauth)) {
+                if (substr($urlBucketPreauth, -1) !== '/') {
+                    $urlBucketPreauth .= '/';
+                }
+                $nomeBucket = 'despesas/' . time() . '_' . $idDespesa . '_' . substr(md5(uniqid()), 0, 8) . '.' . $extensao;
+                $urlUpload = $urlBucketPreauth . $nomeBucket;
+                $conteudo = file_get_contents($caminhoTemp);
+
+                $ch = curl_init($urlUpload);
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $conteudo);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: ' . $mimeType,
+                    'Content-Length: ' . strlen($conteudo)
+                ]);
+                $resCurl = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($httpCode >= 200 && $httpCode < 300) {
+                    $urlPublica = $urlUpload;
+                    $uploadSucesso = true;
+                }
+            }
+
+            // Fallback para pasta local se OCI não estiver configurado ou falhar
+            if (!$uploadSucesso) {
+                $uploadDir = dirname(__DIR__) . '/media/despesas/';
+                if (!is_dir($uploadDir)) {
+                    @mkdir($uploadDir, 0775, true);
+                }
+                $localFilename = time() . '_' . $idDespesa . '_' . substr(md5(uniqid()), 0, 8) . '.' . $extensao;
+                $destinoLocal = $uploadDir . $localFilename;
+                if (@move_uploaded_file($caminhoTemp, $destinoLocal)) {
+                    $urlPublica = '../media/despesas/' . $localFilename;
+                    $uploadSucesso = true;
+                }
+            }
+
+            if (!$uploadSucesso) {
+                $response['message'] = "Falha ao gravar arquivo de despesa.";
+                break;
+            }
+
+            // Inserir na tabela Arquivos
+            $nomeOrigSafe = mysqli_real_escape_string($link, $nomeOriginal);
+            $urlPubSafe = mysqli_real_escape_string($link, $urlPublica);
+            $mimeSafe = mysqli_real_escape_string($link, $mimeType);
+            $tipoDocSafe = mysqli_real_escape_string($link, $tipoDoc);
+
+            $qInsArq = "INSERT INTO Arquivos (nome_original, url_publica, tamanho_bytes, tipo_mime) 
+                        VALUES ('$nomeOrigSafe', '$urlPubSafe', $tamanhoBytes, '$mimeSafe')";
+            if (@DBExecute($link, $qInsArq)) {
+                $idArquivo = mysqli_insert_id($link);
+                $qVinculo = "INSERT INTO DespesaArquivos (id_despesa, id_arquivo, tipo_documento) 
+                             VALUES ($idDespesa, $idArquivo, '$tipoDocSafe')";
+                if (@DBExecute($link, $qVinculo)) {
+                    $response['success'] = true;
+                    $response['message'] = "Anexo salvo com sucesso!";
+                    $response['id_vinculo'] = mysqli_insert_id($link);
+                    $response['url_publica'] = $urlPublica;
+                    $response['nome_original'] = $nomeOriginal;
+                } else {
+                    $response['message'] = "Erro ao vincular anexo à despesa: " . mysqli_error($link);
+                }
+            } else {
+                $response['message'] = "Erro ao registrar anexo no banco: " . mysqli_error($link);
+            }
+            break;
+
+        case 'listar_anexos_despesa':
+            $idDespesa = (int)($_POST['id_despesa'] ?? $_GET['id_despesa'] ?? 0);
+            if ($idDespesa <= 0) {
+                $response['message'] = "ID da despesa inválido.";
+                break;
+            }
+
+            $qAnx = "
+                SELECT da.id_vinculo, da.tipo_documento, da.created_at,
+                       a.id_arquivo, a.nome_original, a.url_publica, a.tamanho_bytes, a.tipo_mime
+                FROM DespesaArquivos da
+                JOIN Arquivos a ON da.id_arquivo = a.id_arquivo
+                WHERE da.id_despesa = $idDespesa
+                ORDER BY da.created_at DESC
+            ";
+            $resAnx = @DBExecute($link, $qAnx);
+            $anexos = [];
+            if ($resAnx) {
+                while ($aRow = mysqli_fetch_assoc($resAnx)) {
+                    $anexos[] = $aRow;
+                }
+            }
+            $response['success'] = true;
+            $response['data'] = $anexos;
+            break;
+
+        case 'excluir_anexo_despesa':
+            $idVinculo = (int)($_POST['id_vinculo'] ?? 0);
+            if ($idVinculo <= 0) {
+                $response['message'] = "ID do anexo inválido.";
+                break;
+            }
+            // Deleta o vínculo da despesa
+            if (@DBExecute($link, "DELETE FROM DespesaArquivos WHERE id_vinculo = $idVinculo")) {
+                $response['success'] = true;
+                $response['message'] = "Anexo removido da despesa.";
+            } else {
+                $response['message'] = "Erro ao remover anexo: " . mysqli_error($link);
+            }
+            break;
+
+        // =========================================================================
+        // MÓDULO FINANCEIRO: BALANÇO CONSOLIDADO (RECEITAS VS DESPESAS)
+        // =========================================================================
+        case 'obter_balanco_financeiro_mes':
+            $mesBal = trim($_POST['mes'] ?? $_GET['mes'] ?? date('Y-m'));
+            if (!preg_match('/^\d{4}-\d{2}$/', $mesBal)) {
+                $mesBal = date('Y-m');
+            }
+
+            // 1. Receitas (Faturas)
+            $qRec = "
+                SELECT 
+                    COALESCE(SUM(CASE WHEN status = 'Liquidada' THEN valor_total_fatura ELSE 0 END), 0) as total_recebido,
+                    COALESCE(SUM(CASE WHEN status = 'Em Aberto' THEN valor_total_fatura ELSE 0 END), 0) as total_a_receber,
+                    COALESCE(SUM(CASE WHEN status != 'Cancelada' THEN valor_total_fatura ELSE 0 END), 0) as total_faturado
+                FROM Faturas
+                WHERE DATE_FORMAT(data_vencimento, '%Y-%m') = '$mesBal'
+            ";
+            $resRec = @DBExecute($link, $qRec);
+            $totRecebido = 0.00;
+            $totAReceber = 0.00;
+            $totFaturado = 0.00;
+            if ($resRec && $rRec = mysqli_fetch_assoc($resRec)) {
+                $totRecebido = (float)$rRec['total_recebido'];
+                $totAReceber = (float)$rRec['total_a_receber'];
+                $totFaturado = (float)$rRec['total_faturado'];
+            }
+
+            // 2. Despesas (Contas a Pagar)
+            $qDesp = "
+                SELECT 
+                    COALESCE(SUM(CASE WHEN status = 'Liquidada' THEN valor_pago ELSE 0 END), 0) as total_pago,
+                    COALESCE(SUM(CASE WHEN status = 'Em Aberto' THEN valor ELSE 0 END), 0) as total_a_pagar,
+                    COALESCE(SUM(CASE WHEN status != 'Cancelada' THEN valor ELSE 0 END), 0) as total_despesas
+                FROM Despesas
+                WHERE data_competencia = '$mesBal' AND (recorrencia_ativa = 0 OR data_competencia = '$mesBal')
+            ";
+            $resDesp = @DBExecute($link, $qDesp);
+            $totPago = 0.00;
+            $totAPagar = 0.00;
+            $totDespesas = 0.00;
+            if ($resDesp && $rDesp = mysqli_fetch_assoc($resDesp)) {
+                $totPago = (float)$rDesp['total_pago'];
+                $totAPagar = (float)$rDesp['total_a_pagar'];
+                $totDespesas = (float)$rDesp['total_despesas'];
+            }
+
+            $saldoRealizado = $totRecebido - $totPago;
+            $saldoPrevisto = $totFaturado - $totDespesas;
+
+            $response['success'] = true;
+            $response['mes'] = $mesBal;
+            $response['data'] = [
+                'receitas_recebidas' => $totRecebido,
+                'receitas_a_receber' => $totAReceber,
+                'receitas_total' => $totFaturado,
+                'despesas_pagas' => $totPago,
+                'despesas_a_pagar' => $totAPagar,
+                'despesas_total' => $totDespesas,
+                'saldo_realizado' => $saldoRealizado,
+                'saldo_previsto' => $saldoPrevisto
+            ];
             break;
 
     }

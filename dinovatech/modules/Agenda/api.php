@@ -270,6 +270,59 @@ switch ($action) {
             }
         }
 
+        // Eventos de Vencimento de Despesas (Contas a Pagar)
+        $exibirDespesas = isset($_GET['exibir_despesas']) ? (int)$_GET['exibir_despesas'] : 1;
+        if ($exibirDespesas && empty($id_vet) && $tipo_agenda !== 'banho_tosa') {
+            $dataIniDesp = substr($start, 0, 10);
+            $dataFimDesp = substr($end, 0, 10);
+
+            $qDespAgenda = "
+                SELECT d.id_despesa, d.descricao, d.valor, d.status, d.data_vencimento,
+                       f.razao_social, f.nome_fantasia
+                FROM Despesas d
+                JOIN Fornecedores f ON d.id_fornecedor = f.id_fornecedor
+                WHERE d.status != 'Cancelada'
+                  AND d.data_vencimento BETWEEN '$dataIniDesp' AND '$dataFimDesp'
+                  AND (d.recorrencia_ativa = 0 OR d.data_competencia IS NOT NULL)
+                ORDER BY d.data_vencimento ASC
+            ";
+            $resDespAgenda = @DBExecute($link, $qDespAgenda);
+            if ($resDespAgenda) {
+                while ($dRow = mysqli_fetch_assoc($resDespAgenda)) {
+                    $isLiquidada = ($dRow['status'] === 'Liquidada');
+                    $isAtrasada = (!$isLiquidada && $dRow['data_vencimento'] < date('Y-m-d'));
+
+                    $colorDesp = '#e11d48'; // Rose para Em Aberto
+                    if ($isLiquidada) {
+                        $colorDesp = '#059669'; // Verde para Liquidada
+                    } elseif ($isAtrasada) {
+                        $colorDesp = '#be123c'; // Vinho para Atrasada
+                    }
+
+                    $fornNome = !empty($dRow['nome_fantasia']) ? $dRow['nome_fantasia'] : $dRow['razao_social'];
+                    $valorFmt = 'R$ ' . number_format((float)$dRow['valor'], 2, ',', '.');
+                    $prefixStatus = $isLiquidada ? '✅ [Pago] ' : ($isAtrasada ? '⚠️ [Atraso] ' : '💸 [Pagar] ');
+
+                    $events[] = [
+                        'id' => 'despesa_' . $dRow['id_despesa'],
+                        'title' => $prefixStatus . $valorFmt . ' - ' . $fornNome . ' (' . $dRow['descricao'] . ')',
+                        'start' => $dRow['data_vencimento'],
+                        'allDay' => true,
+                        'color' => $colorDesp,
+                        'editable' => false,
+                        'extendedProps' => [
+                            'tipo_evento' => 'despesa',
+                            'id_despesa' => $dRow['id_despesa'],
+                            'descricao' => $dRow['descricao'],
+                            'fornecedor' => $dRow['razao_social'],
+                            'valor' => $dRow['valor'],
+                            'status' => $dRow['status']
+                        ]
+                    ];
+                }
+            }
+        }
+
         echo json_encode($events);
         break;
 

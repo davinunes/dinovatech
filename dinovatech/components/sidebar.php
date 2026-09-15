@@ -196,12 +196,32 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             </div>
         <?php endif; ?>
 
-        <!-- Futuro Financeiro 
-        <a href="financeiro.php" class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'financeiro.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
-            <span class="material-icons text-xl mr-3">attach_money</span>
-            <span class="font-medium">Financeiro</span>
-        </a>
-        -->
+        <?php
+        $isFinanceiroActive = ($currentPage == 'receitas.php' || $currentPage == 'despesas.php');
+        ?>
+        <div>
+            <button type="button" onclick="toggleSubmenuFinanceiro()"
+                class="w-full flex items-center justify-between px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors">
+                <div class="flex items-center">
+                    <span class="material-icons text-xl mr-3 text-emerald-400">account_balance_wallet</span>
+                    <span class="font-medium">Financeiro</span>
+                </div>
+                <span id="iconExpandFinanceiro" class="material-icons text-sm transition-transform duration-200 <?= $isFinanceiroActive ? 'rotate-180' : '' ?>">expand_more</span>
+            </button>
+            <div id="submenuFinanceiro" class="<?= $isFinanceiroActive ? '' : 'hidden' ?> pl-4 pr-2 py-1 space-y-1">
+                <a href="<?= $basePath ?>receitas.php"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'receitas.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                    <span class="material-icons text-lg mr-3 text-emerald-400">arrow_circle_up</span>
+                    <span>Receitas</span>
+                </a>
+                <a href="<?= $basePath ?>despesas.php"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm transition-colors <?= $currentPage == 'despesas.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
+                    <span class="material-icons text-lg mr-3 text-rose-400">arrow_circle_down</span>
+                    <span>Despesas</span>
+                </a>
+            </div>
+        </div>
+
         <a href="#" onclick="fazerBackup(event)"
             class="flex items-center px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors group">
             <span class="material-icons text-xl mr-3 text-slate-400 group-hover:text-white">backup</span>
@@ -231,6 +251,16 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
 </header>
 
 <script>
+    function toggleSubmenuFinanceiro() {
+        const submenu = document.getElementById('submenuFinanceiro');
+        const icon = document.getElementById('iconExpandFinanceiro');
+        if (submenu) {
+            submenu.classList.toggle('hidden');
+            if (icon) {
+                icon.classList.toggle('rotate-180');
+            }
+        }
+    }
     function toggleSubmenuFerramentas() {
         const submenu = document.getElementById('submenuFerramentas');
         const icon = document.getElementById('iconExpandFerramentas');

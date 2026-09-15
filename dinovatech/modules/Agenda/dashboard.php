@@ -85,7 +85,12 @@ DBClose($link);
                     <span class="material-icons text-cyan-600 mr-2">calendar_month</span> Agenda
                 </h2>
 
-                <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <label class="flex items-center text-xs font-semibold text-gray-700 cursor-pointer select-none bg-white px-3 py-2 rounded-lg border border-gray-300 shadow-xs hover:bg-gray-50 transition" title="Exibir vencimentos de contas a pagar no calendário">
+                        <input type="checkbox" id="checkExibirDespesas" checked onchange="calendar.refetchEvents()" class="rounded text-rose-600 focus:ring-rose-500 mr-2">
+                        <span class="material-icons text-sm text-rose-600 mr-1">payments</span>
+                        <span>Vencimento Despesas</span>
+                    </label>
                     <button type="button" onclick="openGoogleDiagModal()" class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition-colors" title="Diagnóstico e Logs da Integração Google">
                         <span class="material-icons text-cyan-600 mr-1.5 text-base">sync_alt</span> Diagnóstico Google
                     </button>
@@ -227,6 +232,7 @@ DBClose($link);
                         return {
                             action: 'get_events',
                             id_vet: $('#filterVet').val(),
+                            exibir_despesas: $('#checkExibirDespesas').is(':checked') ? 1 : 0,
                             _: new Date().getTime() // Cache buster
                         };
                     },
@@ -244,6 +250,17 @@ DBClose($link);
                     });
                 },
                 eventClick: function (info) {
+                    if (info.event.extendedProps && info.event.extendedProps.tipo_evento === 'despesa') {
+                        const val = info.event.extendedProps.valor ? 'R$ ' + parseFloat(info.event.extendedProps.valor).toFixed(2).replace('.', ',') : '';
+                        const forn = info.event.extendedProps.fornecedor || 'Fornecedor';
+                        const desc = info.event.extendedProps.descricao || '';
+                        const st = info.event.extendedProps.status || '';
+                        
+                        if (confirm(`💸 CONTA A PAGAR:\n\nFornecedor: ${forn}\nDescrição: ${desc}\nValor: ${val}\nStatus: ${st}\n\nDeseja abrir o módulo de Despesas para gerenciar este pagamento?`)) {
+                            window.location.href = '../../despesas.php';
+                        }
+                        return;
+                    }
                     openEventModal(info.event);
                 },
                 eventDrop: function (info) {

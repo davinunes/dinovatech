@@ -150,39 +150,68 @@ DBClose($linkDB);
                 </div>
             </div>
 
-            <!-- Cards Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Balanço Financeiro do Mês (Receitas vs Despesas) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
 
-                <!-- Card Total Faturado -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                    <div class="p-3 rounded-full bg-green-100 text-green-600 mr-4">
-                        <span class="material-icons text-3xl">attach_money</span>
+                <!-- Card Total Recebido -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-xl bg-emerald-100 text-emerald-600 mr-3">
+                            <span class="material-icons text-2xl">arrow_circle_up</span>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Receitas (Pagas)</p>
+                            <h3 class="text-xl font-bold text-emerald-600" id="statTotalFaturado">R$ 0,00</h3>
+                            <span class="text-[11px] text-gray-400">A receber: <span id="statSubAReceber" class="font-semibold text-blue-600">R$ 0,00</span></span>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium" id="lblTotalFaturado">Total Recebido (Mês)</p>
-                        <h3 class="text-2xl font-bold text-gray-800" id="statTotalFaturado">R$ 0,00</h3>
+                    <a href="receitas.php" class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Ver Receitas">
+                        <span class="material-icons text-base">chevron_right</span>
+                    </a>
+                </div>
+
+                <!-- Card Total Despesas -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-xl bg-rose-100 text-rose-600 mr-3">
+                            <span class="material-icons text-2xl">arrow_circle_down</span>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Despesas (Pagas)</p>
+                            <h3 class="text-xl font-bold text-rose-600" id="statDespesasPagas">R$ 0,00</h3>
+                            <span class="text-[11px] text-gray-400">A pagar: <span id="statSubAPagar" class="font-semibold text-amber-600">R$ 0,00</span></span>
+                        </div>
+                    </div>
+                    <a href="despesas.php" class="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition" title="Ver Despesas">
+                        <span class="material-icons text-base">chevron_right</span>
+                    </a>
+                </div>
+
+                <!-- Card Saldo Realizado (Caixa) -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-xl bg-slate-100 text-slate-700 mr-3" id="iconSaldoRealizadoContainer">
+                            <span class="material-icons text-2xl" id="iconSaldoRealizado">account_balance_wallet</span>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Saldo Realizado</p>
+                            <h3 class="text-xl font-bold text-gray-900" id="statSaldoRealizado">R$ 0,00</h3>
+                            <span class="text-[11px] text-gray-400" id="lblStatusSaldoRealizado">Recebido - Pago</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Card A Receber -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                    <div class="p-3 rounded-full bg-blue-100 text-blue-600 mr-4">
-                        <span class="material-icons text-3xl">pending_actions</span>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium" id="lblTotalAberto">A Receber (Mês)</p>
-                        <h3 class="text-2xl font-bold text-gray-800" id="statTotalAberto">R$ 0,00</h3>
-                    </div>
-                </div>
-
-                <!-- Card Em Atraso -->
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center">
-                    <div class="p-3 rounded-full bg-red-100 text-red-600 mr-4">
-                        <span class="material-icons text-3xl">warning</span>
-                    </div>
-                    <div>
-                        <p class="text-gray-500 text-sm font-medium">Em Atraso (Geral)</p>
-                        <h3 class="text-2xl font-bold text-red-600" id="statTotalAtrasado">R$ 0,00</h3>
+                <!-- Card Saldo Previsto -->
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-xl bg-blue-50 text-blue-600 mr-3">
+                            <span class="material-icons text-2xl">insights</span>
+                        </div>
+                        <div>
+                            <p class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Saldo Previsto (Mês)</p>
+                            <h3 class="text-xl font-bold text-blue-600" id="statSaldoPrevisto">R$ 0,00</h3>
+                            <span class="text-[11px] text-gray-400">Projeção de fluxo</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -649,12 +678,30 @@ DBClose($linkDB);
                             const data = response.data;
 
                             $('#statTotalFaturado').text(formatCurrency(data.total_faturado));
-                            $('#statTotalAberto').text(formatCurrency(data.total_aberto));
-                            $('#statTotalAtrasado').text(formatCurrency(data.total_atrasado));
+                            $('#statSubAReceber').text(formatCurrency(data.total_aberto));
 
-                            // Update Titles if available
-                            if (data.titulo_faturado) $('#lblTotalFaturado').text(data.titulo_faturado);
-                            if (data.titulo_aberto) $('#lblTotalAberto').text(data.titulo_aberto);
+                            $('#statDespesasPagas').text(formatCurrency(data.despesas_pagas || 0));
+                            $('#statSubAPagar').text(formatCurrency(data.despesas_a_pagar || 0));
+
+                            const saldoReal = parseFloat(data.saldo_realizado || 0);
+                            const statSaldoElem = $('#statSaldoRealizado');
+                            const iconSaldoContainer = $('#iconSaldoRealizadoContainer');
+                            const iconSaldo = $('#iconSaldoRealizado');
+
+                            statSaldoElem.text(formatCurrency(saldoReal));
+                            if (saldoReal >= 0) {
+                                statSaldoElem.removeClass('text-rose-600').addClass('text-emerald-600');
+                                iconSaldoContainer.removeClass('bg-rose-100 text-rose-600').addClass('bg-emerald-100 text-emerald-600');
+                                iconSaldo.text('trending_up');
+                                $('#lblStatusSaldoRealizado').text('Superávit do Caixa');
+                            } else {
+                                statSaldoElem.removeClass('text-emerald-600').addClass('text-rose-600');
+                                iconSaldoContainer.removeClass('bg-emerald-100 text-emerald-600').addClass('bg-rose-100 text-rose-600');
+                                iconSaldo.text('trending_down');
+                                $('#lblStatusSaldoRealizado').text('Déficit no Período');
+                            }
+
+                            $('#statSaldoPrevisto').text(formatCurrency(data.saldo_previsto || 0));
 
                             // Render List & Cards
                             let html = '';
