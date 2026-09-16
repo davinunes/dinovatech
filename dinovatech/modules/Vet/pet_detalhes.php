@@ -52,6 +52,80 @@ if ($link) {
     }
 }
 
+// Fetch lists for Tabs if pet is valid
+$vacinas_list = [];
+$receitas_list = [];
+$docs_list = [];
+$internacoes_list = [];
+$atendimentos_list = [];
+
+if ($pet && $link) {
+    // 1. Vacinas
+    $query_vacinas = "SELECT cv.*, v.nome as nome_vacina, v.recorrencia_dias FROM CarteiraVacinas cv 
+                      JOIN Vacinas v ON cv.id_vacina = v.id_vacina 
+                      WHERE cv.id_pet = '$id_safe' 
+                      ORDER BY cv.data_aplicacao DESC";
+    $res_vacinas = DBExecute($link, $query_vacinas);
+    if ($res_vacinas) {
+        while ($vac = mysqli_fetch_assoc($res_vacinas)) {
+            $vacinas_list[] = $vac;
+        }
+    }
+
+    // 2. Receitas
+    $q_rec = "SELECT r.*, a.data_atendimento, (SELECT COUNT(*) FROM ItensReceita WHERE id_receita = r.id_receita) as qtd_itens 
+              FROM Receitas r
+              JOIN Atendimentos a ON r.id_atendimento = a.id_atendimento
+              WHERE a.id_pet = '$id_safe'
+              ORDER BY r.data_receita DESC";
+    $res_rec = DBExecute($link, $q_rec);
+    if ($res_rec) {
+        while ($rec = mysqli_fetch_assoc($res_rec)) {
+            $receitas_list[] = $rec;
+        }
+    }
+
+    // 3. Documentos
+    $q_docs = "SELECT arq.*, a.data_atendimento 
+               FROM Arquivos arq
+               JOIN AtendimentoArquivos aa ON arq.id_arquivo = aa.id_arquivo
+               JOIN Atendimentos a ON aa.id_atendimento = a.id_atendimento
+               WHERE a.id_pet = '$id_safe'
+               ORDER BY arq.data_upload DESC";
+    $res_docs = DBExecute($link, $q_docs);
+    if ($res_docs) {
+        while ($doc = mysqli_fetch_assoc($res_docs)) {
+            $docs_list[] = $doc;
+        }
+    }
+
+    // 4. Internações
+    $query_int = "SELECT i.*, v.nome as nome_vet, v.crmv as crmv_vet,
+                 (SELECT COUNT(*) FROM InternacaoDias WHERE id_internacao = i.id_internacao) as qtd_dias
+                 FROM Internacoes i 
+                 LEFT JOIN Veterinarios v ON i.id_vet = v.id_vet 
+                 WHERE i.id_pet = '$id_safe' 
+                 ORDER BY i.data_internacao DESC";
+    $res_int = DBExecute($link, $query_int);
+    if ($res_int) {
+        while ($int = mysqli_fetch_assoc($res_int)) {
+            $internacoes_list[] = $int;
+        }
+    }
+
+    // 5. Atendimentos / Histórico Clínico
+    $query_atend = "SELECT a.*, v.nome as nome_vet FROM Atendimentos a 
+                    LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet 
+                    WHERE a.id_pet = '$id_safe' 
+                    ORDER BY a.data_atendimento DESC";
+    $res_atend = DBExecute($link, $query_atend);
+    if ($res_atend) {
+        while ($atend = mysqli_fetch_assoc($res_atend)) {
+            $atendimentos_list[] = $atend;
+        }
+    }
+}
+
 // Age Calculator Helper
 function calcularIdade($data_nasc)
 {
@@ -71,8 +145,6 @@ function calcularIdade($data_nasc)
         return "Menos de 1 mês";
     return implode(' e ', $parts);
 }
-
-// Connection kept open for lists below
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -254,223 +326,295 @@ function calcularIdade($data_nasc)
                     </div>
                 </div>
 
-                <!-- Tabs / Sections - Future Phases -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Navigation Tabs Bar -->
+                <div class="mb-6 border-b border-gray-200 bg-white rounded-xl p-2 shadow-sm">
+                    <nav class="flex space-x-2 overflow-x-auto no-scrollbar scroll-smooth" aria-label="Tabs" id="prontuario-tabs">
+                        <button type="button" data-tab="historico" onclick="switchTab('historico')"
+                            class="tab-btn active inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap bg-cyan-50 text-cyan-700 border border-cyan-200">
+                            <span class="material-icons text-base mr-2">history_edu</span>
+                            Histórico Clínico
+                            <span class="tab-badge ml-2 bg-cyan-100 text-cyan-800 text-xs px-2 py-0.5 rounded-full font-bold">
+                                <?= count($atendimentos_list) ?>
+                            </span>
+                        </button>
 
-                    <!-- Vacinas Column -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-fit">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 flex items-center">
-                                <span class="material-icons text-purple-500 mr-2">vaccines</span> Vacinas
-                            </h3>
-                            <button onclick="openVacinaModal()"
-                                class="text-cyan-600 hover:bg-cyan-50 p-1 rounded transition" title="Registrar Vacina">
-                                <span class="material-icons">add</span>
-                            </button>
-                        </div>
+                        <button type="button" data-tab="receitas" onclick="switchTab('receitas')"
+                            class="tab-btn inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                            <span class="material-icons text-base mr-2 text-indigo-500">receipt</span>
+                            Receitas
+                            <span class="tab-badge ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold">
+                                <?= count($receitas_list) ?>
+                            </span>
+                        </button>
 
-                        <div class="divide-y divide-gray-50">
-                            <?php
-                            // Fetch Vaccines
-                            $query_vacinas = "SELECT cv.*, v.nome as nome_vacina, v.recorrencia_dias FROM CarteiraVacinas cv 
-                                              JOIN Vacinas v ON cv.id_vacina = v.id_vacina 
-                                              WHERE cv.id_pet = '$id_safe' 
-                                              ORDER BY cv.data_aplicacao DESC";
-                            $res_vacinas = DBExecute($link, $query_vacinas);
-                            if ($res_vacinas && mysqli_num_rows($res_vacinas) > 0):
-                                while ($vac = mysqli_fetch_assoc($res_vacinas)):
-                                    $vencida = $vac['data_vencimento'] && $vac['data_vencimento'] < date('Y-m-d');
-                                    ?>
-                                    <div class="p-4 hover:bg-gray-50 transition group relative">
-                                        <div class="flex justify-between items-start pr-16">
-                                            <span
-                                                class="font-bold text-gray-700"><?= htmlspecialchars($vac['nome_vacina']) ?></span>
-                                            <span
-                                                class="text-xs text-gray-400"><?= date('d/m/y', strtotime($vac['data_aplicacao'])) ?></span>
-                                        </div>
-                                        <?php if ($vac['data_vencimento']): ?>
-                                            <div class="mt-1 flex items-center text-xs pr-16">
-                                                <span
-                                                    class="material-icons text-[14px] mr-1 <?= $vencida ? 'text-red-500' : 'text-green-500' ?>">event_repeat</span>
-                                                <span class="<?= $vencida ? 'text-red-600 font-bold' : 'text-green-600' ?>">
-                                                    Reforço: <?= date('d/m/Y', strtotime($vac['data_vencimento'])) ?>
-                                                </span>
+                        <button type="button" data-tab="vacinas" onclick="switchTab('vacinas')"
+                            class="tab-btn inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                            <span class="material-icons text-base mr-2 text-purple-500">vaccines</span>
+                            Vacinas
+                            <span class="tab-badge ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold">
+                                <?= count($vacinas_list) ?>
+                            </span>
+                        </button>
+
+                        <button type="button" data-tab="internacoes" onclick="switchTab('internacoes')"
+                            class="tab-btn inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                            <span class="material-icons text-base mr-2 text-rose-500">local_hospital</span>
+                            Internações
+                            <span class="tab-badge ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold">
+                                <?= count($internacoes_list) ?>
+                            </span>
+                        </button>
+
+                        <button type="button" data-tab="documentos" onclick="switchTab('documentos')"
+                            class="tab-btn inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                            <span class="material-icons text-base mr-2 text-orange-500">folder</span>
+                            Documentos & Exames
+                            <span class="tab-badge ml-2 bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full font-bold">
+                                <?= count($docs_list) ?>
+                            </span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab Content Panels -->
+                <div id="tab-content-container">
+
+                    <!-- TAB 1: HISTÓRICO CLÍNICO -->
+                    <div id="tab-historico" class="tab-pane">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <h3 class="font-bold text-gray-800 flex items-center">
+                                    <span class="material-icons text-blue-500 mr-2">history_edu</span> Consultas & Atendimentos
+                                </h3>
+                                <a href="atendimento_form.php?pet_id=<?= $pet['id_pet'] ?>"
+                                    class="bg-cyan-600 text-white px-3.5 py-2 rounded-lg text-sm font-medium hover:bg-cyan-700 transition shadow-sm flex items-center">
+                                    <span class="material-icons text-sm mr-1">add</span> Novo Atendimento
+                                </a>
+                            </div>
+
+                            <div class="divide-y divide-gray-100">
+                                <?php if (!empty($atendimentos_list)): ?>
+                                    <?php foreach ($atendimentos_list as $atend): ?>
+                                        <div class="p-6 hover:bg-gray-50/80 transition block">
+                                            <div class="flex flex-col sm:flex-row justify-between mb-3 gap-2">
+                                                <div class="flex items-center">
+                                                    <div class="bg-blue-100 text-blue-700 w-10 h-10 rounded-full flex items-center justify-center mr-3 font-bold text-sm shrink-0">
+                                                        <?= date('d', strtotime($atend['data_atendimento'])) ?>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-bold text-gray-800 text-lg">
+                                                            <?= htmlspecialchars($atend['motivo_visita'] ?: 'Consulta de Rotina') ?>
+                                                        </h4>
+                                                        <span class="text-xs text-gray-500">
+                                                            <?= date('d/m/Y H:i', strtotime($atend['data_atendimento'])) ?> • Dr(a). <?= htmlspecialchars($atend['nome_vet'] ?: 'Veterinário não informado') ?>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <a href="atendimento_form.php?id=<?= $atend['id_atendimento'] ?>&pet_id=<?= $pet['id_pet'] ?>"
+                                                        class="inline-flex items-center gap-1 bg-cyan-50 text-cyan-700 hover:bg-cyan-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition border border-cyan-200">
+                                                        <span class="material-icons text-sm">edit_note</span> Editar Consulta
+                                                    </a>
+                                                </div>
                                             </div>
-                                        <?php endif; ?>
-                                        <?php if ($vac['lote']): ?>
-                                            <div class="text-xs text-gray-400 mt-1 pr-16">Lote: <?= htmlspecialchars($vac['lote']) ?></div>
-                                        <?php endif; ?>
-                                        <?php if ($vac['observacao']): ?>
-                                            <div class="text-xs text-gray-500 mt-1 italic pr-16">Obs: <?= htmlspecialchars($vac['observacao']) ?></div>
-                                        <?php endif; ?>
 
-                                        <!-- Actions (Edit/Delete) on hover -->
-                                        <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <?php
-                                            $vac_json = json_encode([
-                                                'id_carteira' => $vac['id_carteira'],
-                                                'id_vacina' => $vac['id_vacina'],
-                                                'data_aplicacao' => $vac['data_aplicacao'],
-                                                'data_vencimento' => $vac['data_vencimento'] ?: '',
-                                                'lote' => $vac['lote'] ?: '',
-                                                'observacao' => $vac['observacao'] ?: ''
-                                            ], JSON_HEX_APOS | JSON_HEX_QUOT);
-                                            ?>
-                                            <button onclick='editVacina(<?= $vac_json ?>)' class="p-1 text-cyan-600 hover:bg-cyan-50 rounded transition" title="Editar">
-                                                <span class="material-icons text-[18px]">edit</span>
-                                            </button>
-                                            <button onclick="deleteVacina(<?= $vac['id_carteira'] ?>)" class="p-1 text-red-600 hover:bg-red-50 rounded transition" title="Excluir">
-                                                <span class="material-icons text-[18px]">delete</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <?php
-                                endwhile;
-                            else:
-                                ?>
-                                <div class="p-8 text-center text-gray-400">
-                                    <span class="material-icons text-4xl mb-2 opacity-30">medical_services</span>
-                                    <p class="text-sm">Nenhuma vacina registrada.</p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                                            <div class="sm:pl-13 text-sm text-gray-600 space-y-2">
+                                                <?php if ($atend['diagnostico']): ?>
+                                                    <div class="bg-red-50 text-red-800 px-3 py-1 inline-block rounded font-medium text-xs mb-1 border border-red-100">
+                                                        Dx: <?= htmlspecialchars($atend['diagnostico']) ?>
+                                                    </div>
+                                                <?php endif; ?>
 
-                    <!-- Receitas Column (New) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-fit mt-6">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 flex items-center">
-                                <span class="material-icons text-indigo-500 mr-2">receipt</span> Receitas
-                            </h3>
-                        </div>
-                        <div class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
-                            <?php
-                            $q_rec = "SELECT r.*, a.data_atendimento, (SELECT COUNT(*) FROM ItensReceita WHERE id_receita = r.id_receita) as qtd_itens 
-                                      FROM Receitas r
-                                      JOIN Atendimentos a ON r.id_atendimento = a.id_atendimento
-                                      WHERE a.id_pet = '$id_safe'
-                                      ORDER BY r.data_receita DESC";
-                            $res_rec = DBExecute($link, $q_rec);
-                            if ($res_rec && mysqli_num_rows($res_rec) > 0):
-                                while ($rec = mysqli_fetch_assoc($res_rec)):
-                                    ?>
-                                    <div class="p-4 hover:bg-gray-50 transition cursor-pointer"
-                                        onclick="window.location.href='atendimento_form.php?id=<?= $rec['id_atendimento'] ?>&pet_id=<?= $id_safe ?>'">
-                                        <div class="flex justify-between items-start">
-                                            <span class="font-bold text-gray-700">Receita #<?= $rec['id_receita'] ?></span>
-                                            <span
-                                                class="text-xs text-gray-400"><?= date('d/m/y', strtotime($rec['data_receita'])) ?></span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-1"><?= $rec['qtd_itens'] ?> medicamento(s)</p>
-                                    </div>
-                                    <?php
-                                endwhile;
-                            else:
-                                ?>
-                                <div class="p-6 text-center text-gray-400">
-                                    <p class="text-sm">Nenhuma receita.</p>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                                                <?php if ($atend['anamnese']): ?>
+                                                    <p><span class="font-semibold text-gray-700">Anamnese:</span>
+                                                        <?= substr(htmlspecialchars($atend['anamnese']), 0, 150) . (strlen($atend['anamnese']) > 150 ? '...' : '') ?></p>
+                                                <?php endif; ?>
 
-                    <!-- Documentos Column (New) -->
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden h-fit mt-6">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 flex items-center">
-                                <span class="material-icons text-orange-500 mr-2">folder</span> Documentos
-                            </h3>
-                        </div>
-                        <div class="divide-y divide-gray-50 max-h-64 overflow-y-auto">
-                            <?php
-                            $q_docs = "SELECT arq.*, a.data_atendimento 
-                                       FROM Arquivos arq
-                                       JOIN AtendimentoArquivos aa ON arq.id_arquivo = aa.id_arquivo
-                                       JOIN Atendimentos a ON aa.id_atendimento = a.id_atendimento
-                                       WHERE a.id_pet = '$id_safe'
-                                       ORDER BY arq.data_upload DESC";
-                            $res_docs = DBExecute($link, $q_docs);
-                            if ($res_docs && mysqli_num_rows($res_docs) > 0):
-                                while ($doc = mysqli_fetch_assoc($res_docs)):
-                                    ?>
-                                    <div class="p-4 hover:bg-gray-50 transition">
-                                        <a href="<?= $doc['url_publica'] ?>" target="_blank"
-                                            class="flex justify-between items-center group">
-                                            <div class="flex items-center overflow-hidden">
-                                                <span
-                                                    class="material-icons text-gray-400 group-hover:text-cyan-600 text-sm mr-2">description</span>
-                                                <span
-                                                    class="text-sm text-gray-700 truncate group-hover:text-cyan-700 font-medium"><?= htmlspecialchars($doc['nome_original']) ?></span>
+                                                <?php if ($atend['prescricao']): ?>
+                                                    <div class="mt-2 p-3 bg-gray-50 rounded-lg text-gray-700 font-mono text-xs border border-gray-200">
+                                                        <span class="font-semibold text-gray-500 block mb-1 font-sans">Prescrição:</span>
+                                                        <?= nl2br(htmlspecialchars($atend['prescricao'])) ?>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
-                                        </a>
-                                        <div class="mt-1 flex justify-between text-xs text-gray-400 ml-6">
-                                            <span><?= date('d/m/y', strtotime($doc['data_upload'])) ?></span>
-                                            <span><?= number_format($doc['tamanho_bytes'] / 1024, 1) ?> KB</span>
                                         </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="p-12 text-center text-gray-400">
+                                        <span class="material-icons text-5xl mb-3 opacity-30">folder_open</span>
+                                        <p class="font-medium">Nenhum atendimento registrado.</p>
+                                        <p class="text-sm mt-2 max-w-xs mx-auto text-gray-400">Clique em "Novo Atendimento" para iniciar um prontuário.</p>
                                     </div>
-                                    <?php
-                                endwhile;
-                            else:
-                                ?>
-                                <div class="p-6 text-center text-gray-400">
-                                    <p class="text-sm">Nenhum documento.</p>
-                                </div>
-                            <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Internações Section -->
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-rose-50/50">
-                            <h3 class="font-bold text-gray-800 flex items-center">
-                                <span class="material-icons text-rose-600 mr-2">local_hospital</span> Internações
-                            </h3>
-                            <button onclick="openInternacaoModal()"
-                                class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-rose-700 transition shadow-sm flex items-center">
-                                <span class="material-icons text-sm mr-1">add</span> Nova Internação
-                            </button>
+                    <!-- TAB 2: RECEITAS -->
+                    <div id="tab-receitas" class="tab-pane hidden">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-indigo-50/40">
+                                <h3 class="font-bold text-gray-800 flex items-center">
+                                    <span class="material-icons text-indigo-500 mr-2">receipt</span> Receitas Prescritas
+                                </h3>
+                            </div>
+
+                            <div class="divide-y divide-gray-100">
+                                <?php if (!empty($receitas_list)): ?>
+                                    <?php foreach ($receitas_list as $rec): ?>
+                                        <div class="p-5 hover:bg-gray-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+                                                    <span class="material-icons text-lg">medication</span>
+                                                </div>
+                                                <div>
+                                                    <div class="flex items-center gap-2">
+                                                        <h4 class="font-bold text-gray-800 text-base">Receita #<?= $rec['id_receita'] ?></h4>
+                                                        <span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded font-medium border border-indigo-100">
+                                                            <?= $rec['qtd_itens'] ?> medicamento(s)
+                                                        </span>
+                                                    </div>
+                                                    <p class="text-xs text-gray-500 mt-1">
+                                                        Emitida em <?= date('d/m/Y', strtotime($rec['data_receita'])) ?>
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-2">
+                                                <a href="receita_print.php?id=<?= $rec['id_receita'] ?>" target="_blank"
+                                                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                                                    <span class="material-icons text-sm">print</span> Ver / Imprimir Receita
+                                                </a>
+                                                <a href="atendimento_form.php?id=<?= $rec['id_atendimento'] ?>&pet_id=<?= $id_safe ?>"
+                                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1 border border-gray-200">
+                                                    <span class="material-icons text-sm">open_in_new</span> Atendimento
+                                                </a>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="p-12 text-center text-gray-400">
+                                        <span class="material-icons text-5xl mb-3 opacity-30">receipt</span>
+                                        <p class="font-medium">Nenhuma receita prescrita para este paciente.</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                         </div>
+                    </div>
 
-                        <div class="divide-y divide-gray-100">
-                            <?php
-                            $query_int = "SELECT i.*, v.nome as nome_vet, v.crmv as crmv_vet,
-                                         (SELECT COUNT(*) FROM InternacaoDias WHERE id_internacao = i.id_internacao) as qtd_dias
-                                         FROM Internacoes i 
-                                         LEFT JOIN Veterinarios v ON i.id_vet = v.id_vet 
-                                         WHERE i.id_pet = '$id_safe' 
-                                         ORDER BY i.data_internacao DESC";
-                            $res_int = DBExecute($link, $query_int);
+                    <!-- TAB 3: VACINAS -->
+                    <div id="tab-vacinas" class="tab-pane hidden">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-purple-50/40">
+                                <h3 class="font-bold text-gray-800 flex items-center">
+                                    <span class="material-icons text-purple-500 mr-2">vaccines</span> Carteira de Vacinação
+                                </h3>
+                                <button onclick="openVacinaModal()"
+                                    class="bg-purple-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold hover:bg-purple-700 transition shadow-sm flex items-center gap-1">
+                                    <span class="material-icons text-sm">add</span> Registrar Vacina
+                                </button>
+                            </div>
 
-                            if ($res_int && mysqli_num_rows($res_int) > 0):
-                                while ($int = mysqli_fetch_assoc($res_int)):
-                                    switch ($int['status']) {
-                                        case 'internado':
-                                            $status_class = 'bg-amber-100 text-amber-800 border-amber-200';
-                                            $status_label = 'Em Internação';
-                                            break;
-                                        case 'alta':
-                                            $status_class = 'bg-green-100 text-green-800 border-green-200';
-                                            $status_label = 'Alta Médica';
-                                            break;
-                                        case 'obito':
-                                            $status_class = 'bg-gray-100 text-gray-800 border-gray-200';
-                                            $status_label = 'Óbito';
-                                            break;
-                                        case 'cancelado':
-                                            $status_class = 'bg-red-100 text-red-800 border-red-200';
-                                            $status_label = 'Cancelado';
-                                            break;
-                                        default:
-                                            $status_class = 'bg-gray-100 text-gray-800';
-                                            $status_label = ucfirst($int['status']);
-                                            break;
-                                    }
-                                    $int_json = json_encode($int, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+                            <div class="divide-y divide-gray-100">
+                                <?php if (!empty($vacinas_list)): ?>
+                                    <?php foreach ($vacinas_list as $vac): 
+                                        $vencida = $vac['data_vencimento'] && $vac['data_vencimento'] < date('Y-m-d');
+                                        $vac_json = json_encode([
+                                            'id_carteira' => $vac['id_carteira'],
+                                            'id_vacina' => $vac['id_vacina'],
+                                            'data_aplicacao' => $vac['data_aplicacao'],
+                                            'data_vencimento' => $vac['data_vencimento'] ?: '',
+                                            'lote' => $vac['lote'] ?: '',
+                                            'observacao' => $vac['observacao'] ?: ''
+                                        ], JSON_HEX_APOS | JSON_HEX_QUOT);
                                     ?>
-                                    <div class="p-5 hover:bg-gray-50/80 transition">
-                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                        <div class="p-5 hover:bg-gray-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4 group">
+                                            <div class="space-y-1">
+                                                <div class="flex items-center gap-2">
+                                                    <h4 class="font-bold text-gray-800 text-base"><?= htmlspecialchars($vac['nome_vacina']) ?></h4>
+                                                    <span class="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                                                        Aplicada em: <?= date('d/m/Y', strtotime($vac['data_aplicacao'])) ?>
+                                                    </span>
+                                                </div>
+                                                <?php if ($vac['data_vencimento']): ?>
+                                                    <div class="flex items-center text-xs">
+                                                        <span class="material-icons text-sm mr-1 <?= $vencida ? 'text-red-500' : 'text-green-500' ?>">event_repeat</span>
+                                                        <span class="<?= $vencida ? 'text-red-600 font-bold' : 'text-green-600 font-medium' ?>">
+                                                            Próximo Reforço: <?= date('d/m/Y', strtotime($vac['data_vencimento'])) ?> <?= $vencida ? '(VENCIDO)' : '' ?>
+                                                        </span>
+                                                    </div>
+                                                <?php endif; ?>
+                                                <?php if ($vac['lote']): ?>
+                                                    <p class="text-xs text-gray-400">Lote: <?= htmlspecialchars($vac['lote']) ?></p>
+                                                <?php endif; ?>
+                                                <?php if ($vac['observacao']): ?>
+                                                    <p class="text-xs text-gray-500 italic">Obs: <?= htmlspecialchars($vac['observacao']) ?></p>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <div class="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                <button onclick='editVacina(<?= $vac_json ?>)' class="px-3 py-1.5 text-cyan-700 bg-cyan-50 hover:bg-cyan-100 rounded-lg text-xs font-semibold transition border border-cyan-200 flex items-center gap-1" title="Editar">
+                                                    <span class="material-icons text-sm">edit</span> Editar
+                                                </button>
+                                                <button onclick="deleteVacina(<?= $vac['id_carteira'] ?>)" class="px-3 py-1.5 text-red-700 bg-red-50 hover:bg-red-100 rounded-lg text-xs font-semibold transition border border-red-200 flex items-center gap-1" title="Excluir">
+                                                    <span class="material-icons text-sm">delete</span> Excluir
+                                                </button>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="p-12 text-center text-gray-400">
+                                        <span class="material-icons text-5xl mb-3 opacity-30">medical_services</span>
+                                        <p class="font-medium">Nenhuma vacina registrada para este pet.</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: INTERNAÇÕES -->
+                    <div id="tab-internacoes" class="tab-pane hidden">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-rose-50/50">
+                                <h3 class="font-bold text-gray-800 flex items-center">
+                                    <span class="material-icons text-rose-600 mr-2">local_hospital</span> Histórico de Internações
+                                </h3>
+                                <button onclick="openInternacaoModal()"
+                                    class="bg-rose-600 text-white px-3.5 py-2 rounded-lg text-xs font-semibold hover:bg-rose-700 transition shadow-sm flex items-center gap-1">
+                                    <span class="material-icons text-sm">add</span> Nova Internação
+                                </button>
+                            </div>
+
+                            <div class="divide-y divide-gray-100">
+                                <?php if (!empty($internacoes_list)): ?>
+                                    <?php foreach ($internacoes_list as $int): 
+                                        switch ($int['status']) {
+                                            case 'internado':
+                                                $status_class = 'bg-amber-100 text-amber-800 border-amber-200';
+                                                $status_label = 'Em Internação';
+                                                break;
+                                            case 'alta':
+                                                $status_class = 'bg-green-100 text-green-800 border-green-200';
+                                                $status_label = 'Alta Médica';
+                                                break;
+                                            case 'obito':
+                                                $status_class = 'bg-gray-100 text-gray-800 border-gray-200';
+                                                $status_label = 'Óbito';
+                                                break;
+                                            case 'cancelado':
+                                                $status_class = 'bg-red-100 text-red-800 border-red-200';
+                                                $status_label = 'Cancelado';
+                                                break;
+                                            default:
+                                                $status_class = 'bg-gray-100 text-gray-800';
+                                                $status_label = ucfirst($int['status']);
+                                                break;
+                                        }
+                                        $int_json = json_encode($int, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+                                    ?>
+                                        <div class="p-5 hover:bg-gray-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                             <div>
-                                                <div class="flex items-center gap-2 mb-1">
+                                                <div class="flex items-center gap-2 mb-1 flex-wrap">
                                                     <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold border <?= $status_class ?>">
                                                         <?= $status_label ?>
                                                     </span>
@@ -492,6 +636,7 @@ function calcularIdade($data_nasc)
                                                     • <?= $int['qtd_dias'] ?> dia(s) registrado(s)
                                                 </p>
                                             </div>
+
                                             <div class="flex items-center gap-2 flex-wrap">
                                                 <button onclick='openFichaDigital(<?= $int['id_internacao'] ?>)' 
                                                     class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 border border-indigo-200 shadow-sm">
@@ -511,99 +656,55 @@ function calcularIdade($data_nasc)
                                                 </button>
                                             </div>
                                         </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="p-12 text-center text-gray-400">
+                                        <span class="material-icons text-5xl mb-3 opacity-30">local_hospital</span>
+                                        <p class="font-medium">Nenhuma internação registrada para este paciente.</p>
                                     </div>
-                                <?php
-                                endwhile;
-                            else:
-                                ?>
-                                <div class="p-8 text-center text-gray-400">
-                                    <span class="material-icons text-4xl mb-2 opacity-30">local_hospital</span>
-                                    <p class="text-sm">Nenhuma internação registrada para este pet.</p>
-                                </div>
-                            <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Clinical History (Full Width on Mobile, 2 cols on Desktop) -->
-                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                        <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="font-bold text-gray-800 flex items-center">
-                                <span class="material-icons text-blue-500 mr-2">history_edu</span> Histórico Clínico
-                            </h3>
-                            <a href="atendimento_form.php?pet_id=<?= $pet['id_pet'] ?>"
-                                class="bg-cyan-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium hover:bg-cyan-700 transition shadow-sm flex items-center">
-                                <span class="material-icons text-sm mr-1">add</span> Novo Atendimento
-                            </a>
-                        </div>
+                    <!-- TAB 5: DOCUMENTOS -->
+                    <div id="tab-documentos" class="tab-pane hidden">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-orange-50/40">
+                                <h3 class="font-bold text-gray-800 flex items-center">
+                                    <span class="material-icons text-orange-500 mr-2">folder</span> Documentos & Exames Anexados
+                                </h3>
+                            </div>
 
-                        <div class="divide-y divide-gray-50">
-                            <?php
-                            // Fetch Consultations
-                            $query_atend = "SELECT a.*, v.nome as nome_vet FROM Atendimentos a 
-                                            LEFT JOIN Veterinarios v ON a.id_vet = v.id_vet 
-                                            WHERE a.id_pet = '$id_safe' 
-                                            ORDER BY a.data_atendimento DESC";
-                            $res_atend = DBExecute($link, $query_atend);
-
-                            if ($res_atend && mysqli_num_rows($res_atend) > 0):
-                                while ($atend = mysqli_fetch_assoc($res_atend)):
-                                    ?>
-                                    <div class="p-6 hover:bg-gray-50 transition block">
-                                        <div class="flex flex-col sm:flex-row justify-between mb-2">
-                                            <div class="flex items-center mb-2 sm:mb-0">
-                                                <div
-                                                    class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center mr-3 font-bold text-sm">
-                                                    <?= date('d', strtotime($atend['data_atendimento'])) ?>
-                                                </div>
-                                                <div>
-                                                    <h4 class="font-bold text-gray-800 text-lg">
-                                                        <?= htmlspecialchars($atend['motivo_visita'] ?: 'Consulta de Rotina') ?>
-                                                    </h4>
-                                                    <span
-                                                        class="text-xs text-gray-500"><?= date('M/Y', strtotime($atend['data_atendimento'])) ?>
-                                                        • Dr(a). <?= htmlspecialchars($atend['nome_vet']) ?></span>
+                            <div class="divide-y divide-gray-100">
+                                <?php if (!empty($docs_list)): ?>
+                                    <?php foreach ($docs_list as $doc): ?>
+                                        <div class="p-4 hover:bg-gray-50 transition flex items-center justify-between">
+                                            <div class="flex items-center overflow-hidden mr-4">
+                                                <span class="material-icons text-orange-500 text-xl mr-3">description</span>
+                                                <div class="truncate">
+                                                    <a href="<?= $doc['url_publica'] ?>" target="_blank"
+                                                        class="text-sm font-semibold text-gray-800 hover:text-cyan-600 truncate block">
+                                                        <?= htmlspecialchars($doc['nome_original']) ?>
+                                                    </a>
+                                                    <span class="text-xs text-gray-400">
+                                                        Upload em <?= date('d/m/Y', strtotime($doc['data_upload'])) ?> • <?= number_format($doc['tamanho_bytes'] / 1024, 1) ?> KB
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div>
-                                                <a href="atendimento_form.php?id=<?= $atend['id_atendimento'] ?>&pet_id=<?= $pet['id_pet'] ?>"
-                                                    class="text-gray-400 hover:text-cyan-600 transition">
-                                                    <span class="material-icons">edit_note</span>
-                                                </a>
-                                            </div>
+                                            <a href="<?= $doc['url_publica'] ?>" target="_blank"
+                                                class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition shrink-0 flex items-center gap-1">
+                                                <span class="material-icons text-sm">open_in_new</span> Abrir Documento
+                                            </a>
                                         </div>
-
-                                        <div class="pl-12 text-sm text-gray-600 space-y-2">
-                                            <?php if ($atend['diagnostico']): ?>
-                                                <div
-                                                    class="bg-red-50 text-red-800 px-3 py-1 inline-block rounded font-medium text-xs mb-1">
-                                                    Dx: <?= htmlspecialchars($atend['diagnostico']) ?>
-                                                </div>
-                                            <?php endif; ?>
-
-                                            <?php if ($atend['anamnese']): ?>
-                                                <p><span class="font-semibold text-gray-700">Anamnese:</span>
-                                                    <?= substr(htmlspecialchars($atend['anamnese']), 0, 100) . '...' ?></p>
-                                            <?php endif; ?>
-
-                                            <?php if ($atend['prescricao']): ?>
-                                                <div
-                                                    class="mt-2 p-3 bg-gray-100 rounded text-gray-700 font-mono text-xs border border-gray-200">
-                                                    <?= nl2br(htmlspecialchars($atend['prescricao'])) ?>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="p-12 text-center text-gray-400">
+                                        <span class="material-icons text-5xl mb-3 opacity-30">folder</span>
+                                        <p class="font-medium">Nenhum documento ou exame anexado a este paciente.</p>
                                     </div>
-                                    <?php
-                                endwhile;
-                            else:
-                                ?>
-                                <div class="p-12 text-center text-gray-400">
-                                    <span class="material-icons text-5xl mb-3 opacity-30">folder_open</span>
-                                    <p class="font-medium">Nenhum atendimento registrado.</p>
-                                    <p class="text-sm mt-2 max-w-xs mx-auto text-gray-400">Clique em "Novo Atendimento" para
-                                        iniciar um prontuário.</p>
-                                </div>
-                            <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 
@@ -976,8 +1077,8 @@ function calcularIdade($data_nasc)
                         </div>
 
                         <!-- Table of Medications -->
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-xs text-left border-collapse" id="fd_table_meds">
+                        <div class="overflow-x-auto rounded-lg border border-gray-100">
+                            <table class="w-full text-xs text-left border-collapse min-w-[650px]" id="fd_table_meds">
                                 <thead>
                                     <tr class="bg-gray-100 text-gray-600 font-bold border-b border-gray-200">
                                         <th class="p-2.5 w-1/3">MEDICAÇÃO</th>
@@ -1520,6 +1621,53 @@ function calcularIdade($data_nasc)
                 },
                 error: function() { alert('Erro ao salvar medicação.'); }
             });
+        });
+
+        // --- Main Tabs Handler ---
+        function switchTab(tabId) {
+            if (!$('#tab-' + tabId).length) return;
+
+            // Hide all tab panes
+            $('.tab-pane').addClass('hidden');
+            // Show target tab pane
+            $('#tab-' + tabId).removeClass('hidden');
+
+            // Reset buttons style
+            $('.tab-btn')
+                .removeClass('active bg-cyan-50 text-cyan-700 border-cyan-200 font-semibold')
+                .addClass('text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium');
+
+            // Reset badges style
+            $('.tab-badge')
+                .removeClass('bg-cyan-100 text-cyan-800')
+                .addClass('bg-gray-100 text-gray-600');
+
+            // Activate active tab button & badge
+            const $activeBtn = $('[data-tab="' + tabId + '"]');
+            $activeBtn
+                .addClass('active bg-cyan-50 text-cyan-700 border-cyan-200 font-semibold')
+                .removeClass('text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium');
+            
+            $activeBtn.find('.tab-badge')
+                .addClass('bg-cyan-100 text-cyan-800')
+                .removeClass('bg-gray-100 text-gray-600');
+
+            // Sync URL hash without scrolling
+            if (history.pushState) {
+                history.pushState(null, null, '#' + tabId);
+            } else {
+                location.hash = '#' + tabId;
+            }
+        }
+
+        // On Load: Check Hash or activate default
+        $(document).ready(function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && $('#tab-' + hash).length) {
+                switchTab(hash);
+            } else {
+                switchTab('historico');
+            }
         });
     </script>
 </body>
