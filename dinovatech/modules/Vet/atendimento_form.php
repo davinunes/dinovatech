@@ -75,6 +75,26 @@ if ($id_atendimento) {
     }
 }
 
+// Age Calculator Helper
+function calcularIdade($data_nasc)
+{
+    if (!$data_nasc)
+        return "Desconhecida";
+    $dob = new DateTime($data_nasc);
+    $now = new DateTime();
+    $diff = $now->diff($dob);
+
+    $parts = [];
+    if ($diff->y > 0)
+        $parts[] = $diff->y . " ano" . ($diff->y > 1 ? 's' : '');
+    if ($diff->m > 0)
+        $parts[] = $diff->m . " mês" . ($diff->m > 1 ? 'es' : '');
+
+    if (empty($parts))
+        return "Menos de 1 mês";
+    return implode(' e ', $parts);
+}
+
 // Fetch Pet Info (for display)
 $pet = null;
 if ($id_pet_pre) {
@@ -326,34 +346,84 @@ DBClose($link);
     <div class="flex-1 flex flex-col lg:ml-64 min-h-screen transition-all duration-300">
         <main class="flex-1 p-6 mt-16 lg:mt-0">
 
-            <!-- Header -->
-            <div class="flex flex-col md:flex-row items-center justify-between mb-6">
-                <div class="flex items-center mb-4 md:mb-0">
-                    <a href="pet_detalhes.php?id=<?= $id_pet_pre ?>" class="mr-4 text-gray-500 hover:text-gray-700">
-                        <span class="material-icons">arrow_back</span>
-                    </a>
-                    <div>
-                        <h2 class="text-3xl font-bold text-gray-800">Atendimento Clínico</h2>
-                        <p class="text-gray-500">Paciente: <b><?= htmlspecialchars($pet['nome']) ?></b>
-                            (<?= htmlspecialchars($pet['especie']) ?>)</p>
+            <!-- Header & Patient Summary Card -->
+            <div class="max-w-5xl mx-auto mb-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 overflow-hidden">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <a href="pet_detalhes.php?id=<?= $id_pet_pre ?>" 
+                            class="p-2 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-lg transition shrink-0" 
+                            title="Voltar ao Prontuário">
+                            <span class="material-icons">arrow_back</span>
+                        </a>
+
+                        <?php
+                        $foto_pet_url = $pet['foto_url'] ?? '';
+                        if (!empty($foto_pet_url) && !preg_match('~^(https?://|/)~i', $foto_pet_url)) {
+                            $foto_pet_url = '../../' . $foto_pet_url;
+                        }
+                        ?>
+                        <?php if (!empty($foto_pet_url)): ?>
+                            <img src="<?= htmlspecialchars($foto_pet_url) ?>" class="w-14 h-14 rounded-full object-cover shadow-sm border-2 border-white shrink-0" alt="Foto">
+                        <?php else: ?>
+                            <div class="w-14 h-14 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center font-bold text-xl shrink-0 shadow-inner">
+                                <span class="material-icons text-3xl">pets</span>
+                            </div>
+                        <?php endif; ?>
+
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h2 class="text-2xl font-bold text-gray-800">
+                                    <?= htmlspecialchars($pet['nome'] ?? 'Paciente') ?>
+                                </h2>
+                                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 uppercase">
+                                    <?= htmlspecialchars($pet['especie'] ?? 'Pet') ?>
+                                </span>
+                                <?php if (!empty($pet['sexo'])): ?>
+                                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold <?= $pet['sexo'] == 'M' ? 'bg-blue-100 text-blue-800' : 'bg-pink-100 text-pink-800' ?>">
+                                        <?= $pet['sexo'] == 'M' ? 'Macho' : 'Fêmea' ?>
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                Tutor: <span class="font-semibold text-gray-700"><?= htmlspecialchars($pet['nome_tutor'] ?? 'N/A') ?></span>
+                                • Raça: <?= htmlspecialchars($pet['raca'] ?: 'SDR') ?>
+                                • Idade: <?= calcularIdade($pet['data_nascimento'] ?? null) ?>
+                                <?= !empty($pet['peso']) ? ' • Peso: ' . number_format($pet['peso'], 2) . ' kg' : '' ?>
+                            </p>
+                        </div>
                     </div>
+
+                    <a href="pet_detalhes.php?id=<?= $id_pet_pre ?>"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 border border-gray-200 shrink-0">
+                        <span class="material-icons text-sm">visibility</span> Ver Ficha Completa
+                    </a>
                 </div>
             </div>
 
-            <!-- Tabs Navigation -->
-            <div class="max-w-5xl mx-auto tabs-nav">
-                <button type="button" class="tab-btn active" onclick="openTab('prontuario')">
-                    <span class="material-icons text-sm align-middle mr-1">assignment</span> Prontuário
-                </button>
-                <button type="button" class="tab-btn" onclick="openTab('receitas')">
-                    <span class="material-icons text-sm align-middle mr-1">receipt</span> Receitas
-                </button>
-                <button type="button" class="tab-btn" onclick="openTab('anexos')">
-                    <span class="material-icons text-sm align-middle mr-1">attach_file</span> Anexos / Docs
-                </button>
-                <button type="button" class="tab-btn" onclick="openTab('documentos')">
-                    <span class="material-icons text-sm align-middle mr-1">description</span> Emitir Documento
-                </button>
+            <!-- Tabs Navigation Bar -->
+            <div class="max-w-5xl mx-auto mb-6 border-b border-gray-200 bg-white rounded-xl p-2 shadow-sm">
+                <nav class="flex space-x-2 overflow-x-auto no-scrollbar scroll-smooth" aria-label="Tabs" id="atendimento-tabs">
+                    <button type="button" data-tab="prontuario" onclick="openTab('prontuario')"
+                        class="tab-btn active inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-semibold transition-all whitespace-nowrap bg-cyan-50 text-cyan-700 border border-cyan-200 shadow-sm">
+                        <span class="material-icons text-base mr-2">assignment</span>
+                        Prontuário
+                    </button>
+                    <button type="button" data-tab="receitas" onclick="openTab('receitas')"
+                        class="tab-btn inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                        <span class="material-icons text-base mr-2 text-indigo-500">receipt</span>
+                        Receitas
+                    </button>
+                    <button type="button" data-tab="anexos" onclick="openTab('anexos')"
+                        class="tab-btn inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                        <span class="material-icons text-base mr-2 text-amber-500">attach_file</span>
+                        Anexos / Docs
+                    </button>
+                    <button type="button" data-tab="documentos" onclick="openTab('documentos')"
+                        class="tab-btn inline-flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+                        <span class="material-icons text-base mr-2 text-emerald-500">description</span>
+                        Emitir Documento
+                    </button>
+                </nav>
             </div>
 
             <!-- TABS CONTENT -->
@@ -756,11 +826,32 @@ DBClose($link);
 
         // --- TABS LOGIC ---
         function openTab(tabName) {
-            $('.tab-content').addClass('hidden');
-            $('#tab-' + tabName).removeClass('hidden');
-            $('.tab-btn').removeClass('active');
-            $('.tab-btn[onclick="openTab(\'' + tabName + '\')"]').addClass('active');
+            if (!$('#tab-' + tabName).length) return;
 
+            // Hide all tab contents
+            $('.tab-content').addClass('hidden');
+            // Show target tab content
+            $('#tab-' + tabName).removeClass('hidden');
+
+            // Reset tab buttons style
+            $('.tab-btn')
+                .removeClass('active bg-cyan-50 text-cyan-700 border-cyan-200 font-semibold shadow-sm')
+                .addClass('text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium');
+
+            // Highlight active tab button
+            const $activeBtn = $('[data-tab="' + tabName + '"]');
+            $activeBtn
+                .addClass('active bg-cyan-50 text-cyan-700 border-cyan-200 font-semibold shadow-sm')
+                .removeClass('text-gray-600 hover:text-gray-900 hover:bg-gray-100 font-medium');
+
+            // Sync Hash in URL
+            if (history.pushState) {
+                history.pushState(null, null, '#' + tabName);
+            } else {
+                location.hash = '#' + tabName;
+            }
+
+            // Lazy Load Tab Data
             if (tabName === 'receitas' && ID_ATENDIMENTO) carregarReceitas();
             if (tabName === 'anexos' && ID_ATENDIMENTO) carregarArquivos();
             if (tabName === 'documentos' && ID_ATENDIMENTO) {
@@ -768,6 +859,16 @@ DBClose($link);
                 carregarHistoricoDocs();
             }
         }
+
+        // On Load: Check Hash or activate default
+        $(document).ready(function() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && $('#tab-' + hash).length) {
+                openTab(hash);
+            } else {
+                openTab('prontuario');
+            }
+        });
 
 
         // Init TinyMCE for custom text
