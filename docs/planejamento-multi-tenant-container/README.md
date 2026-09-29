@@ -1,6 +1,6 @@
 # Arquitetura e Planejamento: SaaS Multi-Tenant por Isolamento de Containers (K3s)
 
-Este documento consolida a estratégia técnica e de negócios para comercialização do **Dinovatech**, preservando a base de código PHP existente e escalando via orquestração de containers.
+Este documento consolida a estratégia técnica, de infraestrutura e de negócios para a comercialização do **Dinovatech**, preservando a base de código PHP existente e escalando via orquestração de containers.
 
 ---
 
@@ -38,7 +38,7 @@ flowchart TD
         MariaDBServer[("MariaDB Centralizado\n(1 Database por Cliente)")]
     end
 
-    subgraph WorkerNodes["Nós de Execução (OCI Free Tier 1GB / VPSs Extras)"]
+    subgraph WorkerNodes["Nós de Execução (OCI Free Tier / VPSs Extras)"]
         K3sAgent1["Worker 1 (OCI x86 1GB)"]
         K3sAgent2["Worker 2 (OCI x86 1GB)"]
     end
@@ -70,54 +70,110 @@ flowchart TD
 
 ---
 
-## 3. Regras de Negócio e Controle de Inadimplência
+## 3. Gestão de Nuvem OCI (Oracle Cloud) & Estratégia de Custos
 
-A gestão de inadimplência opera em 3 camadas de ciclo de vida:
+### 3.1 Limites Always Free e Separação de Cotas
+As cotas da Oracle Cloud são totalmente **independentes por tipo de serviço**:
+
+| Serviço | Cota Gratuita (Always Free) | Impacto no Disco da VM? |
+| :--- | :--- | :--- |
+| **Discos de VM (Block Volume)** | **200 GB no total da conta** | *(É a própria cota de boot/dados)* |
+| **Instâncias Ampere ARM** | **Até 2 OCPUs / 12 GB RAM** (ou 4 OCPUs / 24 GB) | ❌ Não desconta do disco |
+| **Instâncias AMD Micro** | **2 instâncias (1 vCPU / 1 GB RAM cada)** | ❌ Não desconta do disco |
+| **Object Storage (S3)** | **10 GB Standard + 10 GB Archive** | ❌ **Cota 100% isolada** |
+| **Autonomous Database** | **2 instâncias com 20 GB cada (Total 40 GB)** | ❌ **Cota 100% isolada** |
+| **Tráfego de Saída (Egress)** | **10 TB / mês gratuitos** | ❌ Não desconta de nada |
+
+### 3.2 Upgrade para Pay As You Go (PAYG) - Diretrizes e Vantagens
+* **Fatura R$ 0,00 Garantida**: A política oficial da Oracle isenta integralmente os recursos Always Free em contas PAYG enquanto mantidos dentro dos limites.
+* **Principais Vantagens do PAYG**:
+  1. **Prioridade Máxima de Hardware**: Elimina o erro *"Out of host capacity"* na criação de instâncias ARM.
+  2. **Imunidade Total à Política de Ociosidade**: Contas PAYG **nunca** sofrem desligamento automático por baixa utilização de CPU/RAM.
+  3. **Acesso a Outras Regiões e Serviços Avançados**.
+* **Travas de Segurança Obrigatórias no PAYG**:
+  * Manter a soma de todos os discos de boot e volumes anexados **<= 200 GB**.
+  * Criar as instâncias Always Free **apenas na Home Region**.
+  * Configurar um **Budget Alert (Orçamento)** no painel da Oracle com limite de **R$ 2,00** para receber alertas imediatos por e-mail caso haja qualquer cobrança indesejada.
+
+### 3.3 Política de Ociosidade em Contas Free Puras (Script Anti-Idle)
+Em contas gratuitas sem PAYG, instâncias com menos de 20% de CPU/RAM/Rede por 7 dias são pausadas pela Oracle. Para evitar isso enquanto a VM não tiver carga real:
+```bash
+# Executar uma carga leve de 60s a cada 3 horas via cron
+sudo apt-get install stress-ng -y
+# Crontab: 0 */3 * * * stress-ng --cpu 2 --cpu-load 25 --timeout 60s
+```
+
+---
+
+## 4. Trigger de Pagamento, Inadimplência e Ciclo de Vida
+
+A gestão de inadimplência opera de forma automatizada integrando o **Webhook da InfinitePay** com a API do **Kubernetes (K3s)**:
 
 ```mermaid
 stateDiagram-v2
     [*] --> Ativo : Pagamento Confirmado
     Ativo --> Tolerancia : Vencimento sem Pagamento (1 a 30 dias)
-    Tolerancia --> Ativo : Fatura Paga
+    Tolerancia --> Ativo : Fatura Paga (Webhook InfinitePay)
     Tolerancia --> Suspenso : Atraso > 30 dias
     Suspenso --> Ativo : Pix / Cartão Confirmado (Reativação em 5s)
     Suspenso --> [*] : Cancelamento Definitivo (Backup e Purge)
 ```
 
+### 4.1 Fases do Ciclo de Cobrança
+
 1. **Dia 0 a 30 de atraso (Tolerância com Aviso)**:
    * Pod de aplicação continua rodando normalmente.
-   * Sistema valida a licença e exibe banner no topo: *"Sua mensalidade está em aberto. Evite a interrupção dos serviços."*
-   * Nenhuma funcionalidade médica/fiscal é bloqueada.
+   * Sistema valida a licença e exibe banner no topo do painel: *"Sua mensalidade está em aberto. Evite a interrupção dos serviços."*
+   * Nenhuma funcionalidade médica/fiscal é interrompida.
 
 2. **Após 30 dias de atraso (Suspensão de Infraestrutura)**:
-   * O Painel Master executa:
+   * O Painel Master executa via API K8s:
      ```bash
      kubectl scale deployment app -n cliente-x --replicas=0
      ```
    * **Benefícios**:
      * Libera 100% da memória RAM alocada para o PHP do cliente.
-     * Interrompe crons, disparos automáticos e webhooks.
+     * Interrompe crons, disparos automáticos e webhooks do cliente.
      * Os dados no banco de dados e arquivos de upload **permanecem 100% preservados**.
-   * O Ingress redireciona o tráfego para a página global de bloqueio/pagamento com QR Code Pix da InfinitePay.
+   * O Ingress redireciona o tráfego para a página global estática de bloqueio com QR Code Pix dinâmico.
 
-3. **Reativação Instantânea**:
-   * O webhook de pagamento da InfinitePay notifica o Painel Master.
-   * O painel executa `kubectl scale deployment app -n cliente-x --replicas=1`.
-   * O sistema do cliente volta ao ar em menos de 5 segundos.
+3. **Trigger de Pagamento & Reativação Instantânea**:
+   * O cliente realiza o pagamento do Pix na tela de bloqueio.
+   * O webhook da **InfinitePay** envia a confirmação `transaction_paid` para o Painel Master.
+   * O Painel Master atualiza a licença e executa imediatamente:
+     ```bash
+     kubectl scale deployment app -n cliente-x --replicas=1
+     ```
+   * O Pod de aplicação sobe e o sistema do cliente volta ao ar em **menos de 5 segundos**.
 
 ---
 
-## 4. Pipeline de Updates (CI/CD, GitHub Tags e Auto-Update)
+## 5. Domínios Personalizados (Custom Domains)
 
-### 4.1 Fluxo de Entrega Contínua
-1. **Desenvolvimento Local / Servidor Remoto**: Código finalizado e testado.
+Para clientes que desejam utilizar domínio próprio (ex: `sistema.clinicavetdovale.com.br`) em vez do subdomínio padrão (`cliente.app.com.br`):
+
+### 5.1 Caddy com On-Demand TLS (Abordagem Recomendada)
+* O cliente aponta um registro CNAME `sistema.clinica.com.br` -> `app.seudominio.com.br`.
+* Na primeira requisição, o Caddy consulta a API do Painel Master: `GET /api/v1/check-domain?domain=sistema.clinica.com.br`.
+* Se o domínio estiver cadastrado e ativo, o Caddy emite o certificado SSL Let's Encrypt em tempo real e libera o tráfego.
+
+### 5.2 Traefik + Cert-Manager no K3s
+* Ao cadastrar o domínio próprio no painel, o manifesto do `Ingress` é atualizado adicionando o novo host nas regras e na seção `tls.hosts`.
+* O Cert-Manager valida o CNAME e gera o secret TLS automaticamente.
+
+---
+
+## 6. Pipeline de Updates (CI/CD, GitHub Tags e Auto-Update)
+
+### 6.1 Fluxo de Entrega Contínua
+1. **Desenvolvimento Local / Servidor Remoto**: Código testado e validado.
 2. **Criação de Tag**: `git tag v1.3.0 && git push origin v1.3.0`.
-3. **GitHub Actions**:
+3. **GitHub Actions (ou Gitea Actions)**:
    * Compila a imagem Docker multi-arch (`linux/amd64`, `linux/arm64`).
    * Envia para o registry (`ghcr.io/seu-usuario/dinovatech:v1.3.0`).
-   * Dispara webhook para o Painel Master avisando a disponibilidade da nova versão.
+   * Dispara webhook para o Painel Master avisando a nova versão.
 
-### 4.2 Janela de Atualização na Madrugada
+### 6.2 Janela de Atualização na Madrugada
 * O Painel Master gerencia grupos de atualização:
   * **Grupo 1 (Auto-Update Ativo)**: Agendado via cron diário às **03:00 AM**.
   * **Grupo 2 (Manual / Estável)**: Atualizado apenas sob demanda pelo painel.
@@ -125,28 +181,29 @@ stateDiagram-v2
   ```bash
   kubectl set image deployment/app dinovatech=ghcr.io/seu-usuario/dinovatech:v1.3.0 -n cliente-x
   ```
-* **Migração Automática de Banco**: O script de inicialização do container (`entrypoint.sh`) executa as migrações SQL pendentes antes de disponibilizar as requisições HTTP.
+* **Migração Automática de Banco**: O script de inicialização do container (`entrypoint.sh`) executa as migrações SQL pendentes antes de liberar o tráfego HTTP.
 
 ---
 
-## 5. Roteiro de Implementação (Roadmap)
+## 7. Roteiro de Implementação (Roadmap)
 
 ### Fase 1: Dockerização do Dinovatech
-- [ ] Criar `Dockerfile` (PHP 8.2/8.3 + Apache/Nginx + extensões `mysqli`, `soap`, `xml`, `openssl`, `gd`, `zip`).
+- [ ] Criar `Dockerfile` multi-arch (PHP 8.2/8.3 + Apache/Nginx + extensões `mysqli`, `soap`, `xml`, `openssl`, `gd`, `zip`).
 - [ ] Criar `docker-compose.yml` local para testes de subida rápida.
 - [ ] Parametrizar todas as credenciais sensíveis via variáveis de ambiente (`.env`).
 
-### Fase 2: Mecanismo de Licenciamento (Client & Server)
+### Fase 2: Mecanismo de Licenciamento & Triggers
 - [ ] Criar `LicenseHelper.php` dentro do Dinovatech com cache local JWT (tolerância offline de 3 a 7 dias).
-- [ ] Criar API simples no Painel Master para validação de licenças (`/api/v1/license/verify`).
-- [ ] Implementar tela de bloqueio e banner de aviso de fatura em aberto.
+- [ ] Criar API no Painel Master para validação de licenças (`/api/v1/license/verify`).
+- [ ] Integrar webhook da InfinitePay com rotina de desbloqueio automático de Pods.
+- [ ] Implementar banner de aviso (0 a 30 dias) e tela global de bloqueio pós 30 dias.
 
-### Fase 3: Setup do Cluster K3s & Ingress
-- [ ] Instalar K3s no servidor principal (OCI ou VPS econômica como Hetzner).
-- [ ] Configurar Cert-Manager para emissão automática de SSL Let's Encrypt via subdomínios (`*.app.com.br`).
-- [ ] Criar template YAML / Helm Chart base para provisionamento de novos tenants.
+### Fase 3: Setup do Cluster K3s & Nuvem
+- [ ] Provisionar instância ARM na OCI (ou VPS econômica como Hetzner) e realizar upgrade para PAYG.
+- [ ] Instalar K3s e configurar Traefik/Caddy com Cert-Manager para SSL wildcard/on-demand.
+- [ ] Criar templates YAML / Helm base para provisionamento de novos tenants.
 
 ### Fase 4: Automação do Painel Master
 - [ ] Interface para criar novos clientes (geração de DB, namespace K3s e chave de licença em 1 clique).
-- [ ] Integração com webhook InfinitePay para renovação automática e reativação de pods suspensos.
+- [ ] Orquestrador de comandos `kubectl scale` para suspensão e reativação.
 - [ ] Agendador de updates noturnos com monitoramento de status.
