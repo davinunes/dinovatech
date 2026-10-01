@@ -3822,6 +3822,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     'tax_settings' => $calcData['tax_settings'],
                     'total_servicos' => $calcData['total_servicos'],
                     'validation_errors' => $calcData['validation_errors'],
+                    'conformidade_fiscal' => $calcData['conformidade_fiscal'] ?? null,
                     'ambiente' => $calcData['ambiente']
                 ];
             } else {

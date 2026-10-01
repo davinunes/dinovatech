@@ -531,25 +531,31 @@ if ($id_fatura) {
                                 <?php if ($isFiscalAtivo && !$hasAuthorized): ?>
                                     <!-- NFS-e Preview Card -->
                                     <div id="nfsePreviewCard"
-                                        class="hidden bg-blue-50 p-3 rounded-lg border border-blue-100 mb-3">
-                                        <h4
-                                            class="text-[10px] font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center">
-                                            <span class="material-icons text-xs mr-1">info</span> Resumo Fiscal (Prévia)
-                                        </h4>
-                                        <div class="text-[11px] text-blue-900 space-y-1 leading-tight">
-                                            <div class="grid grid-cols-2 gap-1">
+                                        class="hidden bg-gradient-to-br from-blue-50 to-indigo-50/40 p-3.5 rounded-xl border border-blue-200/80 mb-3 shadow-xs">
+                                        <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-blue-100">
+                                            <h4 class="text-[10px] font-bold text-blue-900 uppercase tracking-wider flex items-center">
+                                                <span class="material-icons text-xs mr-1 text-blue-600">receipt_long</span> Resumo Fiscal (Prévia)
+                                            </h4>
+                                            <span id="nfseAmbienteBadge" class="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">Homologação</span>
+                                        </div>
+                                        <div class="text-[11px] text-blue-950 space-y-1.5 leading-tight">
+                                            <div class="grid grid-cols-2 gap-x-2 gap-y-1 bg-white/70 p-2 rounded-lg border border-blue-100/70 font-mono text-[10.5px]">
                                                 <p><strong>CNAE:</strong> <span id="nfseCnae">...</span></p>
-                                                <p><strong>LC116:</strong> <span id="nfseItList">...</span></p>
-                                                <p><strong>NBS:</strong> <span id="nfseNbs">...</span></p>
-                                                <p><strong>Aliq:</strong> <span id="nfseAliq">...</span>%</p>
-                                                <p><strong>Retido:</strong> <span id="nfseRet">...</span></p>
+                                                <p><strong>LC 116:</strong> <span id="nfseItList">...</span></p>
+                                                <p><strong>cTribNac:</strong> <span id="nfseTribNac" class="font-bold text-cyan-800">...</span></p>
+                                                <p><strong>NBS:</strong> <span id="nfseNbs" class="font-bold text-cyan-800">...</span></p>
+                                                <p><strong>Alíquota ISS:</strong> <span id="nfseAliq">...</span>%</p>
+                                                <p><strong>ISS Retido:</strong> <span id="nfseRet">...</span></p>
+                                                <p class="col-span-2 text-[10px] text-gray-600"><strong>IBS/CBS:</strong> CST <span id="nfseCst" class="font-bold">...</span> | Class <span id="nfseClass" class="font-bold">...</span> | IndOp <span id="nfseIndOp" class="font-bold">...</span></p>
                                             </div>
-                                            <p class="truncate" title=""><strong>Desc:</strong> <span id="nfseDesc">...</span>
-                                            </p>
-                                            <p class="truncate"><strong>Tomador:</strong> <span id="nfseTomador">...</span></p>
+                                            <p class="truncate text-gray-700" title=""><strong>Descrição:</strong> <span id="nfseDesc">...</span></p>
+                                            <p class="truncate text-gray-700"><strong>Tomador:</strong> <span id="nfseTomador">...</span></p>
+
+                                            <!-- STATUS DE CONFORMIDADE FISCAL (REFORMA TRIBUTÁRIA / EM062) -->
+                                            <div id="nfseConformidadeBox" class="mt-2 p-2 rounded-lg border text-[10.5px] leading-normal flex items-start gap-1.5 transition"></div>
 
                                             <div id="nfseErrors"
-                                                class="hidden mt-2 p-2 bg-red-100 text-red-700 rounded border border-red-200">
+                                                class="hidden mt-2 p-2 bg-red-100 text-red-700 rounded-lg border border-red-200 text-xs">
                                             </div>
                                         </div>
                                     </div>
@@ -1636,20 +1642,54 @@ if ($id_fatura) {
                 if (res.success) {
                     $('#nfsePreviewCard').removeClass('hidden');
                     $('#nfseDesc').text(res.data.discriminacao).attr('title', res.data.discriminacao);
-                    $('#nfseCnae').text(res.data.tax_settings.codigo_cnae);
-                    $('#nfseItList').text(res.data.tax_settings.item_lista_servico);
-                    $('#nfseNbs').text(res.data.tax_settings.codigo_nbs);
+                    $('#nfseCnae').text(res.data.tax_settings.codigo_cnae || '-');
+                    $('#nfseItList').text(res.data.tax_settings.item_lista_servico || '-');
+                    $('#nfseTribNac').text(res.data.tax_settings.codigo_tributacao_nacional || '-');
+                    $('#nfseNbs').text(res.data.tax_settings.codigo_nbs || '-');
                     $('#nfseAliq').text(res.data.tax_settings.aliquota_iss);
                     $('#nfseRet').text(res.data.tax_settings.iss_retido == '1' ? 'SIM' : 'NÃO');
+                    
+                    $('#nfseCst').text(res.data.tax_settings.cst_ibs_cbs || '000');
+                    $('#nfseClass').text(res.data.tax_settings.classificacao_trib_ibs_cbs || '000001');
+                    $('#nfseIndOp').text(res.data.tax_settings.indicador_operacao || '100301');
+
+                    const isProd = (res.data.ambiente === 'producao');
+                    $('#nfseAmbienteBadge').text(isProd ? 'Produção' : 'Homologação')
+                        .removeClass('bg-blue-100 text-blue-800 bg-emerald-100 text-emerald-800')
+                        .addClass(isProd ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800');
 
                     let tomadorText = res.data.tomador.razao_social;
                     if (res.data.tomador.codigo_municipio) tomadorText += ' (Mun: ' + res.data.tomador.codigo_municipio + ')';
-
                     $('#nfseTomador').text(tomadorText);
 
-                    if (res.data.validation_errors.length > 0) {
-                        $('#nfseErrors').removeClass('hidden').html('<strong>Erros:</strong> ' + res.data.validation_errors.join(', '));
-                        $('#btnGerarNfse').prop('disabled', true).addClass('opacity-50 cursor-not-allowed').attr('title', 'Corrija os erros do cliente antes de gerar.');
+                    // Validação de Conformidade Fiscal (Reforma Tributária IBS/CBS)
+                    const conf = res.data.conformidade_fiscal;
+                    const confBox = $('#nfseConformidadeBox');
+                    let bloqueioFiscal = false;
+
+                    if (conf) {
+                        confBox.removeClass('hidden bg-emerald-50 border-emerald-200 text-emerald-900 bg-amber-50 border-amber-300 text-amber-900');
+                        if (conf.valido) {
+                            confBox.addClass('bg-emerald-50 border-emerald-200 text-emerald-900');
+                            confBox.html('<span class="material-icons text-sm text-emerald-600 mt-0.5">verified</span><div><strong>Conformidade Fiscal OK:</strong> Parâmetros de cTribNac, NBS e IBS/CBS 100% aderentes à matriz nacional.</div>');
+                        } else {
+                            confBox.addClass('bg-amber-50 border-amber-300 text-amber-900');
+                            confBox.html(`<span class="material-icons text-sm text-amber-600 mt-0.5">warning</span><div><strong>Atenção (Erro EM062):</strong> ${conf.mensagem}</div>`);
+                            if (isProd) {
+                                bloqueioFiscal = true;
+                            }
+                        }
+                    } else {
+                        confBox.addClass('hidden');
+                    }
+
+                    if (res.data.validation_errors.length > 0 || bloqueioFiscal) {
+                        let errorMsg = res.data.validation_errors.length > 0 
+                            ? '<strong>Erros Cadastrais:</strong> ' + res.data.validation_errors.join(', ')
+                            : '<strong>Incompatibilidade Fiscal:</strong> Os parâmetros do serviço violam a matriz nacional [EM062]. Ajuste o serviço antes de emitir em produção.';
+                        
+                        $('#nfseErrors').removeClass('hidden').html(errorMsg);
+                        $('#btnGerarNfse').prop('disabled', true).addClass('opacity-50 cursor-not-allowed').attr('title', 'Revise as pendências antes de gerar.');
                     } else {
                         $('#nfseErrors').addClass('hidden');
                         $('#btnGerarNfse').prop('disabled', false).removeClass('opacity-50 cursor-not-allowed');

@@ -312,6 +312,17 @@ class AppHelper
             $validationErrors[] = "Código CNAE - Verifique o Cadastro do Serviço";
         }
 
+        // --- VALIDAÇÃO DE CONFORMIDADE FISCAL (IBS/CBS - REFORMA TRIBUTÁRIA) ---
+        require_once __DIR__ . '/FiscalCatalogHelper.php';
+        $checkFiscal = FiscalCatalogHelper::validarCorrelacao(
+            $taxSettings['codigo_tributacao_nacional'] ?? '',
+            $taxSettings['codigo_nbs'] ?? '',
+            $taxSettings['classificacao_trib_ibs_cbs'] ?? '',
+            $taxSettings['indicador_operacao'] ?? '',
+            $taxSettings['cst_ibs_cbs'] ?? '',
+            $link
+        );
+
         return [
             'success' => true,
             'fatura' => $fatura,
@@ -321,6 +332,7 @@ class AppHelper
             'tax_settings' => $taxSettings,
             'discriminacao' => $discriminacaoFinal,
             'validation_errors' => $validationErrors,
+            'conformidade_fiscal' => $checkFiscal,
             'ambiente' => ($config['ambiente_padrao'] === 'producao') ? 'producao' : 'homologacao'
         ];
     }

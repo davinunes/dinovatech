@@ -491,8 +491,46 @@ if ($id_servico) {
                             </div>
                             <button type="button" id="btnAutoFixCorrelacao" class="hidden px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1">
                                 <span class="material-icons text-sm">auto_fix_high</span>
-                                Aplicar Correlação Oficial
+                                Aplicar Padrão Oficial
                             </button>
+                        </div>
+
+                        <!-- ASSISTENTE INTERATIVO DE OPÇÕES OFICIAIS (SEFAZ / NOTA CONTROL) -->
+                        <div id="assistenteCorrelacaoCard" class="mt-5 pt-4 border-t border-cyan-100 hidden">
+                            <div class="flex items-center justify-between mb-2.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-icons text-cyan-700 text-base">rule</span>
+                                    <h4 class="text-xs font-bold text-gray-800 uppercase tracking-wider">
+                                        Combinações Oficiais Permitidas para este Serviço
+                                    </h4>
+                                </div>
+                                <span id="qtdOpcoesDisponiveis" class="text-[11px] font-bold text-cyan-800 bg-cyan-100/70 px-2.5 py-0.5 rounded-full border border-cyan-200">
+                                    0 opções oficiais
+                                </span>
+                            </div>
+
+                            <p class="text-[11px] text-gray-600 mb-3">
+                                Selecione abaixo a classificação exata para que a SEFAZ autorize a NFS-e sem rejeição <strong class="text-rose-600">[EM062]</strong>:
+                            </p>
+
+                            <!-- Tabela de Opções da Matriz -->
+                            <div class="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-xs max-h-72 overflow-y-auto">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-gray-50 text-gray-700 uppercase text-[10px] sticky top-0 border-b border-gray-200 z-10 shadow-xs">
+                                        <tr>
+                                            <th class="p-2.5 font-bold">Código NBS</th>
+                                            <th class="p-2.5 font-bold">Descrição da Atividade (NBS)</th>
+                                            <th class="p-2.5 font-bold text-center">CST</th>
+                                            <th class="p-2.5 font-bold text-center">Classificação</th>
+                                            <th class="p-2.5 font-bold text-center">Ind. Operação</th>
+                                            <th class="p-2.5 font-bold text-right">Ação</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="corpoTabelaOpcoesNbs" class="divide-y divide-gray-100 text-gray-800">
+                                        <!-- Preenchido dinamicamente via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -660,6 +698,7 @@ if ($id_servico) {
 
             // Sincronização e Validação de Correlação Fiscal Oficial (Reforma Tributária IBS/CBS)
             let sugestaoOficialAtual = null;
+            let opcoesOficiaisAtuais = [];
 
             function checarCorrelacaoFiscal(autoAplicarSeVazio = false) {
                 const cTrib = $('#codigo_tributacao_nacional').val().trim();
@@ -670,10 +709,13 @@ if ($id_servico) {
 
                 if (!cTrib || cTrib.length < 4) {
                     $('#boxStatusCorrelacao').addClass('hidden');
+                    $('#assistenteCorrelacaoCard').addClass('hidden');
                     $('#lista_nbs_dinamico').empty();
                     $('#nbsBadgeStatus').text('');
                     return;
                 }
+
+                $('#lblTribNacAtual').text(cTrib);
 
                 $.post('app.php', { 
                     action: 'get_correlacao_reforma', 
@@ -682,19 +724,23 @@ if ($id_servico) {
                 }, function(res) {
                     if (res.success && res.data) {
                         sugestaoOficialAtual = res.data;
+                        opcoesOficiaisAtuais = res.nbs_disponiveis || [];
 
                         // Popula Datalist de NBS compatíveis
-                        if (res.nbs_disponiveis && res.nbs_disponiveis.length > 0) {
-                            let optionsHtml = '';
-                            res.nbs_disponiveis.forEach(function(item) {
-                                optionsHtml += `<option value="${item.codigo_nbs}">${item.codigo_nbs} - ${item.descricao_nbs || 'Serviço correlacionado'}</option>`;
+                        if (opcoesOficiaisAtuais.length > 0) {
+                            let datalistHtml = '';
+                            opcoesOficiaisAtuais.forEach(function(item) {
+                                datalistHtml += `<option value="${item.codigo_nbs}">${item.codigo_nbs} - ${item.descricao_nbs || 'Serviço correlacionado'}</option>`;
                             });
-                            $('#lista_nbs_dinamico').html(optionsHtml);
-                            $('#nbsBadgeStatus').text(`${res.nbs_disponiveis.length} NBS compatível(is)`).removeClass('text-rose-500').addClass('text-cyan-700');
+                            $('#lista_nbs_dinamico').html(datalistHtml);
+                            $('#nbsBadgeStatus').text(`${opcoesOficiaisAtuais.length} NBS compatível(is)`).removeClass('text-rose-500').addClass('text-cyan-700');
                         } else {
                             $('#lista_nbs_dinamico').empty();
                             $('#nbsBadgeStatus').text('');
                         }
+
+                        // Renderiza Tabela de Opções Oficiais da Matriz
+                        renderizarTabelaOpcoesOficiais(opcoesOficiaisAtuais);
 
                         // Auto-aplicar se campos estiverem com defaults ou vazios
                         if (autoAplicarSeVazio) {
@@ -733,12 +779,97 @@ if ($id_servico) {
                             } else {
                                 box.addClass('bg-amber-50 border-amber-300 text-amber-900');
                                 icon.text('warning').removeClass('text-emerald-600 text-rose-600').addClass('text-amber-600');
-                                text.html(`<strong>Atenção (Erro EM062):</strong> ${valRes.message}`);
+                                text.html(`<strong>Atenção (Incompatibilidade [EM062]):</strong> ${valRes.message}`);
                                 btnFix.removeClass('hidden');
                             }
+
+                            // Atualiza destaque na tabela de opções
+                            destacarOpcaoAtivaNaTabela(curNbs, curClass, curInd, curCst);
                         }, 'json');
                     }
                 }, 'json');
+            }
+
+            function renderizarTabelaOpcoesOficiais(opcoes) {
+                const card = $('#assistenteCorrelacaoCard');
+                const tbody = $('#corpoTabelaOpcoesNbs');
+                const badgeQtd = $('#qtdOpcoesDisponiveis');
+
+                if (!opcoes || opcoes.length === 0) {
+                    card.addClass('hidden');
+                    tbody.empty();
+                    return;
+                }
+
+                badgeQtd.text(`${opcoes.length} opções oficiais`);
+                card.removeClass('hidden');
+
+                let html = '';
+                opcoes.forEach(function(item, idx) {
+                    const descNbs = item.descricao_nbs || 'Atividade geral correlacionada';
+                    html += `
+                        <tr class="hover:bg-cyan-50/50 transition linha-opcao-fiscal cursor-pointer" data-idx="${idx}" data-nbs="${item.codigo_nbs}" data-cst="${item.cst_ibs_cbs}" data-class="${item.classificacao_trib}" data-ind="${item.indicador_operacao}">
+                            <td class="p-2.5 font-mono font-bold text-cyan-950 whitespace-nowrap">
+                                <span class="px-2 py-0.5 bg-gray-100 rounded border border-gray-200">${item.codigo_nbs}</span>
+                            </td>
+                            <td class="p-2.5 text-gray-700 leading-tight">
+                                ${descNbs}
+                            </td>
+                            <td class="p-2.5 text-center font-mono font-bold text-gray-600">
+                                <span class="px-1.5 py-0.5 bg-gray-100 rounded">${item.cst_ibs_cbs}</span>
+                            </td>
+                            <td class="p-2.5 text-center font-mono font-bold text-gray-600">
+                                <span class="px-1.5 py-0.5 bg-gray-100 rounded">${item.classificacao_trib}</span>
+                            </td>
+                            <td class="p-2.5 text-center font-mono font-bold text-gray-600">
+                                <span class="px-1.5 py-0.5 bg-gray-100 rounded">${item.indicador_operacao}</span>
+                            </td>
+                            <td class="p-2.5 text-right whitespace-nowrap">
+                                <button type="button" class="btn-selecionar-opcao px-2.5 py-1 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1 ml-auto">
+                                    <span class="material-icons text-xs">done</span> Usar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.html(html);
+
+                // Vincula evento de clique para aplicar a opção
+                tbody.find('.btn-selecionar-opcao, tr.linha-opcao-fiscal').on('click', function(e) {
+                    const row = $(this).closest('tr');
+                    const nbs = row.data('nbs');
+                    const cst = row.data('cst');
+                    const cls = row.data('class');
+                    const ind = row.data('ind');
+
+                    if (nbs) $('#codigo_nbs').val(nbs);
+                    if (cst) $('#cst_ibs_cbs').val(cst);
+                    if (cls) $('#classificacao_trib_ibs_cbs').val(cls);
+                    if (ind) $('#indicador_operacao').val(ind);
+
+                    checarCorrelacaoFiscal(false);
+                });
+            }
+
+            function destacarOpcaoAtivaNaTabela(curNbs, curClass, curInd, curCst) {
+                $('#corpoTabelaOpcoesNbs tr').each(function() {
+                    const row = $(this);
+                    const rowNbs = String(row.data('nbs')).trim();
+                    const rowClass = String(row.data('class')).trim();
+                    const rowInd = String(row.data('ind')).trim();
+                    const rowCst = String(row.data('cst')).trim();
+
+                    const isMatch = (rowNbs === curNbs && rowClass === curClass && rowInd === curInd);
+
+                    if (isMatch) {
+                        row.addClass('bg-emerald-50 text-emerald-950 font-semibold border-l-4 border-emerald-500').removeClass('hover:bg-cyan-50/50');
+                        row.find('.btn-selecionar-opcao').removeClass('bg-cyan-600 hover:bg-cyan-700').addClass('bg-emerald-600 hover:bg-emerald-700').html('<span class="material-icons text-xs">check_circle</span> Em Uso');
+                    } else {
+                        row.removeClass('bg-emerald-50 text-emerald-950 font-semibold border-l-4 border-emerald-500').addClass('hover:bg-cyan-50/50');
+                        row.find('.btn-selecionar-opcao').removeClass('bg-emerald-600 hover:bg-emerald-700').addClass('bg-cyan-600 hover:bg-cyan-700').html('<span class="material-icons text-xs">done</span> Usar');
+                    }
+                });
             }
 
             // Gatilhos de validação
@@ -750,7 +881,7 @@ if ($id_servico) {
                 checarCorrelacaoFiscal(false);
             });
 
-            // Botão Aplicar Correlação Oficial
+            // Botão Aplicar Padrão Oficial
             $('#btnAutoFixCorrelacao').on('click', function() {
                 if (sugestaoOficialAtual) {
                     if (sugestaoOficialAtual.codigo_nbs) $('#codigo_nbs').val(sugestaoOficialAtual.codigo_nbs);
@@ -761,8 +892,9 @@ if ($id_servico) {
                 }
             });
 
-            // Validação inicial ao carregar a página (se já houver cTribNac preenchido)
-            if ($('#codigo_tributacao_nacional').val().trim().length >= 4) {
+            // Executa imediatamente ao abrir a tela (edição ou cadastro)
+            const cTribInit = $('#codigo_tributacao_nacional').val().trim();
+            if (cTribInit.length >= 4) {
                 checarCorrelacaoFiscal(false);
             }
 
