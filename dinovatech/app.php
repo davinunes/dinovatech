@@ -6,6 +6,7 @@ session_start();
 include "../database.php"; // Seu arquivo com DBConnect, DBExecute, etc.
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers/AppHelper.php';
+require_once __DIR__ . '/helpers/FiscalCatalogHelper.php';
 require_once __DIR__ . '/helpers/EncryptionHelper.php';
 require_once __DIR__ . '/helpers/ContaDevHelper.php';
 

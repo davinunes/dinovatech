@@ -440,7 +440,7 @@ if ($id_servico) {
                             <div>
                                 <label for="codigo_tributacao_nacional" class="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
                                     <span>Cód. Trib. Nacional (cTribNac)</span>
-                                    <span class="text-[10px] text-cyan-700 font-normal">Obrigatório</span>
+                                    <span id="statusLabelTribNac" class="text-[10px] font-bold text-cyan-700">Obrigatório</span>
                                 </label>
                                 <input type="text" id="codigo_tributacao_nacional" name="codigo_tributacao_nacional" maxlength="6"
                                     value="<?= htmlspecialchars($servico['codigo_tributacao_nacional'] ?? '') ?>"
@@ -450,36 +450,39 @@ if ($id_servico) {
                             </div>
 
                             <div>
-                                <label for="indicador_operacao" class="block text-xs font-bold text-gray-800 mb-1">
-                                    Indicador Operação (cIndOp)
+                                <label for="indicador_operacao" class="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                                    <span>Indicador Operação (cIndOp)</span>
+                                    <span id="statusLabelIndOp" class="text-[10px] font-bold"></span>
                                 </label>
                                 <input type="text" id="indicador_operacao" name="indicador_operacao" maxlength="6"
-                                    value="<?= htmlspecialchars($servico['indicador_operacao'] ?? '050101') ?>"
-                                    placeholder="050101"
-                                    class="w-full p-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
-                                <p class="text-[10px] text-gray-500 mt-1">Padrão: <strong>050101</strong> (Serviço regular).</p>
+                                    value="<?= htmlspecialchars($servico['indicador_operacao'] ?? '100301') ?>"
+                                    placeholder="100301"
+                                    class="w-full p-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white transition">
+                                <p class="text-[10px] text-gray-500 mt-1">Ex: <strong>100301</strong> (Operações onerosas).</p>
                             </div>
 
                             <div>
-                                <label for="cst_ibs_cbs" class="block text-xs font-bold text-gray-800 mb-1">
-                                    CST IBS/CBS (3 dígitos)
+                                <label for="cst_ibs_cbs" class="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                                    <span>CST IBS/CBS (3 dígitos)</span>
+                                    <span id="statusLabelCst" class="text-[10px] font-bold"></span>
                                 </label>
                                 <input type="text" id="cst_ibs_cbs" name="cst_ibs_cbs" maxlength="3"
                                     value="<?= htmlspecialchars($servico['cst_ibs_cbs'] ?? '000') ?>"
                                     placeholder="000"
-                                    class="w-full p-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
+                                    class="w-full p-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white transition">
                                 <p class="text-[10px] text-gray-500 mt-1">Padrão: <strong>000</strong> (Tributação Integral).</p>
                             </div>
 
                             <div>
-                                <label for="classificacao_trib_ibs_cbs" class="block text-xs font-bold text-gray-800 mb-1">
-                                    Classificação Trib. (6 dígitos)
+                                <label for="classificacao_trib_ibs_cbs" class="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                                    <span>Classificação Trib. (6 dígitos)</span>
+                                    <span id="statusLabelClass" class="text-[10px] font-bold"></span>
                                 </label>
                                 <input type="text" id="classificacao_trib_ibs_cbs" name="classificacao_trib_ibs_cbs" maxlength="6"
                                     value="<?= htmlspecialchars($servico['classificacao_trib_ibs_cbs'] ?? '000001') ?>"
                                     placeholder="000001"
-                                    class="w-full p-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
-                                <p class="text-[10px] text-gray-500 mt-1">Padrão: <strong>000001</strong> (Geral).</p>
+                                    class="w-full p-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white transition">
+                                <p class="text-[10px] text-gray-500 mt-1">Padrão: <strong>000001</strong> (Integral) ou <strong>200043</strong>.</p>
                             </div>
                         </div>
 
@@ -783,11 +786,95 @@ if ($id_servico) {
                                 btnFix.removeClass('hidden');
                             }
 
-                            // Atualiza destaque na tabela de opções
+                            // Atualiza destaque na tabela de opções e estiliza inputs em acordo/desacordo
                             destacarOpcaoAtivaNaTabela(curNbs, curClass, curInd, curCst);
+                            colorirCamposConformidade(curNbs, curClass, curInd, curCst, opcoesOficiaisAtuais, valRes.success);
                         }, 'json');
                     }
                 }, 'json');
+            }
+
+            function colorirCamposConformidade(curNbs, curClass, curInd, curCst, opcoes, isTudoValido) {
+                const cTrib = $('#codigo_tributacao_nacional').val().trim();
+                
+                function setInputState(sel, labelSel, status, msg) {
+                    const el = $(sel);
+                    const lbl = $(labelSel);
+                    el.removeClass('border-gray-300 border-2 border-cyan-400 border-emerald-500 bg-emerald-50/50 bg-emerald-50 text-emerald-950 focus:ring-emerald-500 border-rose-500 bg-rose-50/60 bg-rose-50 text-rose-950 focus:ring-rose-500 border-amber-400 bg-amber-50/30');
+
+                    if (status === 'ok') {
+                        el.addClass('border-2 border-emerald-500 bg-emerald-50 text-emerald-950 font-semibold focus:ring-2 focus:ring-emerald-500');
+                        if (lbl && lbl.length) {
+                            lbl.html('<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-bold text-[11px] inline-flex items-center gap-1"><span class="material-icons text-[12px]">check_circle</span> Em Acordo</span>');
+                        }
+                    } else if (status === 'error') {
+                        el.addClass('border-2 border-rose-500 bg-rose-50 text-rose-950 font-bold focus:ring-2 focus:ring-rose-500');
+                        if (lbl && lbl.length) {
+                            lbl.html(`<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded-md font-bold text-[11px] inline-flex items-center gap-1" title="${msg}"><span class="material-icons text-[12px]">error</span> ${msg || 'Em Desacordo'}</span>`);
+                        }
+                    } else {
+                        el.addClass('border border-gray-300');
+                        if (lbl && lbl.length) lbl.text('');
+                    }
+                }
+
+                // Validação do cTribNac
+                if (cTrib && cTrib.length === 6) {
+                    setInputState('#codigo_tributacao_nacional', '#statusLabelTribNac', 'ok');
+                } else {
+                    setInputState('#codigo_tributacao_nacional', '#statusLabelTribNac', 'error', 'Informe 6 dígitos');
+                }
+
+                if (isTudoValido) {
+                    setInputState('#codigo_nbs', '#statusLabelNbs', 'ok');
+                    setInputState('#indicador_operacao', '#statusLabelIndOp', 'ok');
+                    setInputState('#cst_ibs_cbs', '#statusLabelCst', 'ok');
+                    setInputState('#classificacao_trib_ibs_cbs', '#statusLabelClass', 'ok');
+                    return;
+                }
+
+                if (!opcoes || opcoes.length === 0) {
+                    setInputState('#codigo_nbs', '#statusLabelNbs', 'error', 'Sem opções p/ cTrib');
+                    setInputState('#indicador_operacao', '#statusLabelIndOp', 'error', 'Verificar');
+                    setInputState('#cst_ibs_cbs', '#statusLabelCst', 'error', 'Verificar');
+                    setInputState('#classificacao_trib_ibs_cbs', '#statusLabelClass', 'error', 'Verificar');
+                    return;
+                }
+
+                // 1. Verifica NBS
+                const nbsExiste = opcoes.some(op => String(op.codigo_nbs).trim() === curNbs);
+                if (!curNbs || !nbsExiste) {
+                    setInputState('#codigo_nbs', '#statusLabelNbs', 'error', 'NBS Fora da Matriz');
+                } else {
+                    setInputState('#codigo_nbs', '#statusLabelNbs', 'ok');
+                }
+
+                // Opções filtradas pelo NBS se existir
+                const opcoesDoNbs = nbsExiste ? opcoes.filter(op => String(op.codigo_nbs).trim() === curNbs) : opcoes;
+
+                // 2. Checa ClassTrib (desacordo com '000000')
+                const classExiste = opcoesDoNbs.some(op => String(op.classificacao_trib).trim() === curClass || String(op.classificacao_trib).replace(/^0+/, '') === curClass.replace(/^0+/, ''));
+                if (!classExiste || curClass === '000000' || !curClass) {
+                    setInputState('#classificacao_trib_ibs_cbs', '#statusLabelClass', 'error', 'ClassTrib Desacordo');
+                } else {
+                    setInputState('#classificacao_trib_ibs_cbs', '#statusLabelClass', 'ok');
+                }
+
+                // 3. Checa IndOp (desacordo com '050101')
+                const indExiste = opcoesDoNbs.some(op => String(op.indicador_operacao).trim() === curInd || String(op.indicador_operacao).replace(/^0+/, '') === curInd.replace(/^0+/, ''));
+                if (!indExiste || curInd === '050101' || !curInd) {
+                    setInputState('#indicador_operacao', '#statusLabelIndOp', 'error', 'IndOp Desacordo');
+                } else {
+                    setInputState('#indicador_operacao', '#statusLabelIndOp', 'ok');
+                }
+
+                // 4. Checa CST
+                const cstExiste = opcoesDoNbs.some(op => String(op.cst_ibs_cbs).trim() === curCst || String(op.cst_ibs_cbs).replace(/^0+/, '') === curCst.replace(/^0+/, ''));
+                if (!cstExiste) {
+                    setInputState('#cst_ibs_cbs', '#statusLabelCst', 'error', 'CST Desacordo');
+                } else {
+                    setInputState('#cst_ibs_cbs', '#statusLabelCst', 'ok');
+                }
             }
 
             function renderizarTabelaOpcoesOficiais(opcoes) {
