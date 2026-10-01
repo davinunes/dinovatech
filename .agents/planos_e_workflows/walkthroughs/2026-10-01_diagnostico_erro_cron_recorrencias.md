@@ -1,23 +1,27 @@
-# Walkthrough: Correção de Captura de Erros e Guia de Diagnóstico do Cron de Recorrências
+# Walkthrough: Solução para Erro de Tamanho da Coluna Tag no Cron de Recorrências
 
 **Data**: 2026-10-01  
-**Módulo**: Faturas / CronRecorrenciasHelper  
+**Módulo**: Faturas / CronRecorrenciasHelper / Banco de Dados  
 
-## Resumo das Modificações
+---
 
-1. **[`dinovatech/helpers/CronRecorrenciasHelper.php`](file:///e:/DEV/dinovatech/dinovatech/helpers/CronRecorrenciasHelper.php)**
-   - Corrigido o fluxo de erro ao inserir item na fatura. O erro retornado pelo MariaDB (`mysqli_error`) agora é salvo em `$dbErr` antes de efetuar a limpeza preventiva `DELETE FROM Faturas WHERE id_fatura = $newFaturaId`.
+## O que é o campo `tag` na tabela `ItensFatura`?
 
-## Guia de Investigação no Banco Remoto
+A coluna `tag` na tabela `ItensFatura` armazena a **descrição do item da fatura**, exibida como o subtítulo explicativo do serviço em `fatura_view.php` (logo abaixo do nome do serviço).
 
-Para descobrir por que a Recorrência ID 6 falhou na inserção do item:
+Na geração automática de faturas recorrentes ([`CronRecorrenciasHelper.php`](file:///e:/DEV/dinovatech/dinovatech/helpers/CronRecorrenciasHelper.php)), o sistema preenche esse campo com a `descricao_personalizada` definida no contrato do cliente.
 
-1. Execute a query para inspecionar os dados da Recorrência ID 6:
-   ```sql
-   SELECT R.*, S.nome_servico, C.nome AS nome_cliente 
-   FROM Recorrencias R
-   LEFT JOIN Servicos S ON R.id_servico = S.id_servico
-   LEFT JOIN Clientes C ON R.id_cliente = C.id_cliente
-   WHERE R.id_recorrencia = 6;
-   ```
-2. Caso a coluna `nome_servico` venha `NULL`, o serviço vinculado a este contrato foi deletado previamente. Ajuste a coluna `id_servico` da Recorrência ID 6 para um serviço válido em `Servicos`.
+---
+
+## Solução Aplicada
+
+1. **Migration SQL Criada**:
+   - Arquivo: [`database/migrations/20261001_0001_alter_itensfatura_tag_to_text.sql`](file:///e:/DEV/dinovatech/database/migrations/20261001_0001_alter_itensfatura_tag_to_text.sql)
+   - Conteúdo:
+     ```sql
+     ALTER TABLE `ItensFatura` MODIFY COLUMN `tag` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+     ```
+
+2. **Ação Requerida no Banco de Dados Remoto**:
+   - Executar a alteração acima no MariaDB para expandir a coluna `tag` de `VARCHAR(255)` para `TEXT`.
+   - Isso permite descrições de contratos com texto longo sem risco de estouro de tamanho.
