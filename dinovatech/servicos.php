@@ -7,6 +7,7 @@ if (!isset($_SESSION['usuario_id'])) {
 include "../database.php";
 require_once __DIR__ . "/config.php";
 require_once __DIR__ . "/helpers/AppHelper.php";
+require_once __DIR__ . "/helpers/FiscalCatalogHelper.php";
 
 $servicos_ativos = [];
 $servicos_desativados = [];
@@ -23,6 +24,15 @@ if ($link) {
     $result = DBExecute($link, $query);
     if ($result) {
         while ($row = mysqli_fetch_assoc($result)) {
+            $row['check_fiscal'] = FiscalCatalogHelper::validarCorrelacao(
+                $row['codigo_tributacao_nacional'] ?? '',
+                $row['codigo_nbs'] ?? '',
+                $row['classificacao_trib_ibs_cbs'] ?? '',
+                $row['indicador_operacao'] ?? '',
+                $row['cst_ibs_cbs'] ?? '',
+                $link
+            );
+
             if ($row['status_ativo'] == 1) {
                 $servicos_ativos[] = $row;
             } else {
@@ -126,14 +136,7 @@ if ($link) {
                             <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
                                 <?php if (!empty($servicos_ativos)): ?>
                                     <?php foreach ($servicos_ativos as $servico): 
-                                        $checkFiscal = FiscalCatalogHelper::validarCorrelacao(
-                                            $servico['codigo_tributacao_nacional'] ?? '',
-                                            $servico['codigo_nbs'] ?? '',
-                                            $servico['classificacao_trib_ibs_cbs'] ?? '',
-                                            $servico['indicador_operacao'] ?? '',
-                                            $servico['cst_ibs_cbs'] ?? '',
-                                            $link
-                                        );
+                                        $checkFiscal = $servico['check_fiscal'] ?? ['valido' => false, 'mensagem' => 'Revisão necessária'];
                                     ?>
                                         <tr class="hover:bg-gray-50/70 transition" id="row-servico-<?= $servico['id_servico'] ?>">
                                             <td class="p-4 font-medium text-gray-900 flex items-center gap-3">
@@ -221,14 +224,7 @@ if ($link) {
                 <div class="md:hidden space-y-4">
                     <?php if (!empty($servicos_ativos)): ?>
                         <?php foreach ($servicos_ativos as $servico): 
-                            $checkFiscal = FiscalCatalogHelper::validarCorrelacao(
-                                $servico['codigo_tributacao_nacional'] ?? '',
-                                $servico['codigo_nbs'] ?? '',
-                                $servico['classificacao_trib_ibs_cbs'] ?? '',
-                                $servico['indicador_operacao'] ?? '',
-                                $servico['cst_ibs_cbs'] ?? '',
-                                $link
-                            );
+                            $checkFiscal = $servico['check_fiscal'] ?? ['valido' => false, 'mensagem' => 'Revisão necessária'];
                         ?>
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100" id="card-servico-<?= $servico['id_servico'] ?>">
                                 <div class="flex items-center gap-3 mb-3">
