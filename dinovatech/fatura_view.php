@@ -1712,28 +1712,46 @@ if ($id_fatura) {
                     // Reload to show new status or attachments
                     setTimeout(() => location.reload(), 2000);
                 } else {
-                    showToast(res.message, 'error');
-                    // Show detailed error in alert for easier debugging
-                    let debugMsg = res.details || res.message || '';
+                    const msgErro = res.message || 'Erro ao gerar NFS-e.';
+                    showToast(msgErro, 'error');
+
+                    console.error("%c[NFSe Emissão Falhou]", "color: #ef4444; font-weight: bold; font-size: 14px;", msgErro);
+                    
+                    if (res.details) {
+                        console.error("%c[NFSe Stack Trace / Detalhes]:\n", "color: #b91c1c; font-family: monospace; font-size: 12px;", res.details);
+                    }
                     if (res.debug_xml) {
-                        console.log("%cDEBUG XML ENVIO (CORPO):\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_xml);
+                        console.log("%c[DEBUG XML ENVIO (CORPO)]:\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_xml);
                     }
                     if (res.debug_cabecalho) {
-                        console.log("%cDEBUG CABECALHO:\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_cabecalho);
+                        console.log("%c[DEBUG CABECALHO]:\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_cabecalho);
                     }
                     if (res.debug_envelope) {
-                        console.log("%cDEBUG ENVELOPE SOAP:\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_envelope);
+                        console.log("%c[DEBUG ENVELOPE SOAP]:\n", "color: #2563eb; font-weight: bold; font-size: 13px;", res.debug_envelope);
                     }
                     if (res.debug_retorno) {
-                        console.log("%cDEBUG RETORNO SOAP:\n", "color: #dc2626; font-weight: bold; font-size: 13px;", res.debug_retorno);
+                        console.log("%c[DEBUG RETORNO SOAP]:\n", "color: #dc2626; font-weight: bold; font-size: 13px;", res.debug_retorno);
                     }
-                    if (debugMsg) alert(debugMsg);
+
+                    // Se houver mensagem detalhada ou rejeição, exibir no container visual da página
+                    if ($('#nfseErrors').length) {
+                        $('#nfseErrors').removeClass('hidden').html(`
+                            <div class="flex items-start gap-2">
+                                <span class="material-icons text-red-500 text-sm mt-0.5">error</span>
+                                <div>
+                                    <p class="font-bold">${msgErro}</p>
+                                    ${res.details ? `<p class="text-[11px] text-gray-600 mt-1 font-mono whitespace-pre-wrap">${res.details.split('\n')[0]}</p>` : ''}
+                                    <p class="text-[10px] text-gray-400 mt-1">Abra o console do desenvolvedor (F12) para ver o XML e a resposta completa da SEFAZ.</p>
+                                </div>
+                            </div>
+                        `);
+                    }
+
                     btn.prop('disabled', false).html(originalText);
                 }
             }, 'json').fail(function (jqXHR, textStatus, errorThrown) {
-                console.error("FALHA AJAX EMISSÃO:", textStatus, errorThrown, jqXHR.responseText);
-                alert("Resposta do servidor:\n\n" + (jqXHR.responseText || ("Status: " + textStatus + " / " + errorThrown)));
-                showToast('Falha na resposta do servidor.', 'error');
+                console.error("%c[FALHA AJAX EMISSÃO NFSE]:", "color: #ef4444; font-weight: bold;", textStatus, errorThrown, jqXHR.responseText);
+                showToast('Falha na resposta do servidor. Verifique o console (F12).', 'error');
                 btn.prop('disabled', false).html(originalText);
             });
         }

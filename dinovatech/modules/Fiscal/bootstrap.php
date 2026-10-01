@@ -17,3 +17,5 @@ spl_autoload_register(function ($class) {
         require_once $file;
     }
 });
+
+require_once dirname(__DIR__) . '/helpers/FiscalCatalogHelper.php';

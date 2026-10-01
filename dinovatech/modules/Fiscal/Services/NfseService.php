@@ -11,7 +11,10 @@ use Dinovatech\Modules\Fiscal\DTOs\CancellationResult;
 use Dinovatech\Modules\Fiscal\DTOs\UrlResult;
 use Dinovatech\Modules\Fiscal\DTOs\CadastroResult;
 use AppHelper;
+use FiscalCatalogHelper;
 use Exception;
+
+require_once __DIR__ . '/../../../helpers/FiscalCatalogHelper.php';
 
 class NfseService
 {
