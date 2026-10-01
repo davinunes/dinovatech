@@ -115,34 +115,193 @@ class FiscalCatalogHelper
         return array_slice($results, 0, $limit);
     }
 
+    private static ?array $correlacaoData = null;
+
+    /**
+     * Carrega os dados indexados da Matriz de Correlação Oficial (IBS/CBS).
+     */
+    public static function getCorrelacoesData(): array
+    {
+        if (self::$correlacaoData !== null) {
+            return self::$correlacaoData;
+        }
+
+        $jsonPath = dirname(__DIR__) . '/data/correlacao_ibscbs.json';
+        if (file_exists($jsonPath)) {
+            $content = file_get_contents($jsonPath);
+            $data = json_decode($content, true);
+            if (is_array($data)) {
+                self::$correlacaoData = $data;
+                return self::$correlacaoData;
+            }
+        }
+
+        self::$correlacaoData = [];
+        return self::$correlacaoData;
+    }
+
+    /**
+     * Retorna a lista de NBS válidos para um determinado Código de Tributação Nacional (cTribNac).
+     */
+    public static function getNbsDisponiveisPorTribNac(string $cTribNac, $link = null): array
+    {
+        $cTribClean = str_pad(preg_replace('/\D/', '', $cTribNac), 6, '0', STR_PAD_LEFT);
+        if (empty($cTribClean) || $cTribClean === '000000') {
+            return [];
+        }
+
+        $lista = [];
+
+        // 1. Tenta buscar no DB
+        if ($link) {
+            $safeTrib = mysqli_real_escape_string($link, $cTribClean);
+            $query = "SELECT c.codigo_nbs, n.descricao as descricao_nbs, c.cst_ibs_cbs, c.classificacao_trib, c.indicador_operacao 
+                      FROM TribRefCorrelacaoIbsCbs c
+                      LEFT JOIN TribRefNbs n ON c.codigo_nbs = n.codigo_nbs
+                      WHERE c.codigo_trib_nac = '{$safeTrib}'
+                      ORDER BY c.codigo_nbs ASC";
+            $res = @DBExecute($link, $query);
+            if ($res && mysqli_num_rows($res) > 0) {
+                while ($row = mysqli_fetch_assoc($res)) {
+                    $lista[] = [
+                        'codigo_nbs' => $row['codigo_nbs'],
+                        'descricao_nbs' => $row['descricao_nbs'] ?: '',
+                        'cst_ibs_cbs' => $row['cst_ibs_cbs'] ?: '000',
+                        'classificacao_trib' => $row['classificacao_trib'] ?: '000001',
+                        'indicador_operacao' => $row['indicador_operacao'] ?: '100301'
+                    ];
+                }
+                return $lista;
+            }
+        }
+
+        // 2. Fallback via JSON indexado
+        $allData = self::getCorrelacoesData();
+        if (isset($allData[$cTribClean]['correlacoes'])) {
+            return $allData[$cTribClean]['correlacoes'];
+        }
+
+        return [];
+    }
+
+    /**
+     * Valida se a combinação (cTribNac, cNbs, cClassTrib, cIndOp, cst) é válida conforme a matriz oficial da Nota Control.
+     */
+    public static function validarCorrelacao(
+        string $cTribNac,
+        ?string $cNbs,
+        ?string $cClassTrib,
+        ?string $cIndOp,
+        ?string $cst = null,
+        $link = null
+    ): array {
+        $cTribClean = str_pad(preg_replace('/\D/', '', $cTribNac), 6, '0', STR_PAD_LEFT);
+        $cNbsClean = !empty($cNbs) ? str_pad(preg_replace('/\D/', '', $cNbs), 9, '0', STR_PAD_LEFT) : '';
+        $cClassClean = !empty($cClassTrib) ? str_pad(preg_replace('/\D/', '', $cClassTrib), 6, '0', STR_PAD_LEFT) : '000001';
+        $cIndOpClean = !empty($cIndOp) ? str_pad(preg_replace('/\D/', '', $cIndOp), 6, '0', STR_PAD_LEFT) : '100301';
+        $cstClean = !empty($cst) ? str_pad(preg_replace('/\D/', '', $cst), 3, '0', STR_PAD_LEFT) : '000';
+
+        if (empty($cTribClean) || $cTribClean === '000000') {
+            return [
+                'valido' => false,
+                'mensagem' => 'Código de Tributação Nacional (cTribNac) é obrigatório e deve ter 6 dígitos.',
+                'sugestao' => null
+            ];
+        }
+
+        // Obtém correlações válidas para esse cTribNac
+        $opcoesValidas = self::getNbsDisponiveisPorTribNac($cTribClean, $link);
+
+        if (empty($opcoesValidas)) {
+            // Não há restrição conhecida ou código genérico
+            return [
+                'valido' => true,
+                'mensagem' => 'Código nacional aceito sem restrição de matriz pré-definida.',
+                'sugestao' => null
+            ];
+        }
+
+        // Procura correspondência exata
+        foreach ($opcoesValidas as $op) {
+            $opNbs = str_pad($op['codigo_nbs'], 9, '0', STR_PAD_LEFT);
+            $opClass = str_pad($op['classificacao_trib'], 6, '0', STR_PAD_LEFT);
+            $opInd = str_pad($op['indicador_operacao'], 6, '0', STR_PAD_LEFT);
+            $opCst = str_pad($op['cst_ibs_cbs'], 3, '0', STR_PAD_LEFT);
+
+            $matchNbs = empty($cNbsClean) || ($opNbs === $cNbsClean);
+            $matchClass = ($opClass === $cClassClean);
+            $matchInd = ($opInd === $cIndOpClean);
+            $matchCst = empty($cstClean) || ($opCst === $cstClean);
+
+            if ($matchNbs && $matchClass && $matchInd && $matchCst) {
+                return [
+                    'valido' => true,
+                    'mensagem' => 'Parâmetros fiscais 100% correlacionados com a matriz oficial.',
+                    'sugestao' => $op
+                ];
+            }
+        }
+
+        // Sugestão padrão (primeira tupla compatível com o NBS ou primeira tupla do cTribNac)
+        $sugestao = $opcoesValidas[0];
+        if (!empty($cNbsClean)) {
+            foreach ($opcoesValidas as $op) {
+                if (str_pad($op['codigo_nbs'], 9, '0', STR_PAD_LEFT) === $cNbsClean) {
+                    $sugestao = $op;
+                    break;
+                }
+            }
+        }
+
+        return [
+            'valido' => false,
+            'mensagem' => "[EM062] Incompatibilidade fiscal: O conjunto cTribNac ({$cTribClean}), NBS ({$cNbsClean}), cClassTrib ({$cClassClean}) e cIndOp ({$cIndOpClean}) não possui correlação na matriz oficial da Reforma Tributária.",
+            'sugestao' => $sugestao,
+            'opcoes_validas' => $opcoesValidas
+        ];
+    }
+
     /**
      * Retorna a sugestão de parâmetros de IBS/CBS para a Reforma Tributária.
      */
     public static function getCorrelacaoReforma(string $cTribNac, ?string $cNbs = null, $link = null): array
     {
-        if ($link) {
-            $safeTrib = mysqli_real_escape_string($link, preg_replace('/\D/', '', $cTribNac));
-            $safeNbs = mysqli_real_escape_string($link, preg_replace('/\D/', '', $cNbs ?: ''));
-            
-            $whereNbs = !empty($safeNbs) ? "AND (codigo_nbs = '{$safeNbs}' OR codigo_nbs IS NULL)" : "";
-            $query = "SELECT cst_ibs_cbs, classificacao_trib, indicador_operacao FROM TribRefCorrelacaoIbsCbs WHERE codigo_trib_nac = '{$safeTrib}' {$whereNbs} ORDER BY id ASC LIMIT 1";
-            $res = @DBExecute($link, $query);
-            
-            if ($res && mysqli_num_rows($res) > 0) {
-                $row = mysqli_fetch_assoc($res);
+        $cTribClean = str_pad(preg_replace('/\D/', '', $cTribNac), 6, '0', STR_PAD_LEFT);
+        $cNbsClean = !empty($cNbs) ? str_pad(preg_replace('/\D/', '', $cNbs), 9, '0', STR_PAD_LEFT) : '';
+
+        if (!empty($cTribClean) && $cTribClean !== '000000') {
+            $opcoes = self::getNbsDisponiveisPorTribNac($cTribClean, $link);
+            if (!empty($opcoes)) {
+                if (!empty($cNbsClean)) {
+                    foreach ($opcoes as $op) {
+                        if (str_pad($op['codigo_nbs'], 9, '0', STR_PAD_LEFT) === $cNbsClean) {
+                            return [
+                                'codigo_nbs' => $op['codigo_nbs'],
+                                'cst_ibs_cbs' => $op['cst_ibs_cbs'] ?: '000',
+                                'classificacao_trib_ibs_cbs' => $op['classificacao_trib'] ?: '000001',
+                                'indicador_operacao' => $op['indicador_operacao'] ?: '100301'
+                            ];
+                        }
+                    }
+                }
+
+                // Retorna a primeira válida como sugestão padrão
+                $primeira = $opcoes[0];
                 return [
-                    'cst_ibs_cbs' => $row['cst_ibs_cbs'] ?: '000',
-                    'classificacao_trib_ibs_cbs' => $row['classificacao_trib'] ?: '000000',
-                    'indicador_operacao' => $row['indicador_operacao'] ?: '050101'
+                    'codigo_nbs' => $primeira['codigo_nbs'],
+                    'cst_ibs_cbs' => $primeira['cst_ibs_cbs'] ?: '000',
+                    'classificacao_trib_ibs_cbs' => $primeira['classificacao_trib'] ?: '000001',
+                    'indicador_operacao' => $primeira['indicador_operacao'] ?: '100301'
                 ];
             }
         }
 
         // Padrão Simples Nacional / Operação Tributável Regular
         return [
+            'codigo_nbs' => $cNbsClean ?: '',
             'cst_ibs_cbs' => '000',
-            'classificacao_trib_ibs_cbs' => '000000',
-            'indicador_operacao' => '050101'
+            'classificacao_trib_ibs_cbs' => '000001',
+            'indicador_operacao' => '100301'
         ];
     }
 }

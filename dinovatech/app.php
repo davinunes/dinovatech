@@ -106,8 +106,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $cTribNac = trim($_POST['codigo_trib_nac'] ?? '');
             $cNbs = trim($_POST['codigo_nbs'] ?? '');
             $correlacao = FiscalCatalogHelper::getCorrelacaoReforma($cTribNac, $cNbs, $link);
+            $nbsDisponiveis = FiscalCatalogHelper::getNbsDisponiveisPorTribNac($cTribNac, $link);
+            $validacao = FiscalCatalogHelper::validarCorrelacao(
+                $cTribNac, 
+                $cNbs ?: ($correlacao['codigo_nbs'] ?? null), 
+                $correlacao['classificacao_trib_ibs_cbs'] ?? null, 
+                $correlacao['indicador_operacao'] ?? null, 
+                $correlacao['cst_ibs_cbs'] ?? null, 
+                $link
+            );
             $response['success'] = true;
             $response['data'] = $correlacao;
+            $response['nbs_disponiveis'] = $nbsDisponiveis;
+            $response['validacao'] = $validacao;
+            break;
+
+        case 'validar_correlacao_fiscal':
+            $cTribNac = trim($_POST['codigo_trib_nac'] ?? '');
+            $cNbs = trim($_POST['codigo_nbs'] ?? '');
+            $cClassTrib = trim($_POST['classificacao_trib_ibs_cbs'] ?? '');
+            $cIndOp = trim($_POST['indicador_operacao'] ?? '');
+            $cst = trim($_POST['cst_ibs_cbs'] ?? '');
+            $validacao = FiscalCatalogHelper::validarCorrelacao($cTribNac, $cNbs, $cClassTrib, $cIndOp, $cst, $link);
+            $response['success'] = $validacao['valido'];
+            $response['message'] = $validacao['mensagem'];
+            $response['data'] = $validacao;
             break;
 
         // ACTIONS: ContaDev Integration
@@ -1639,16 +1662,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 // Novos Campos Fiscais e Módulos
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
-                $codigo_tributacao_nacional = mysqli_real_escape_string($link, $_POST['codigo_tributacao_nacional'] ?? '');
+                $rawTribNac = preg_replace('/\D/', '', $_POST['codigo_tributacao_nacional'] ?? '');
+                $codigo_tributacao_nacional = !empty($rawTribNac) ? str_pad($rawTribNac, 6, '0', STR_PAD_LEFT) : '';
+                
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
-                $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
+                
+                $rawNbs = preg_replace('/\D/', '', $_POST['codigo_nbs'] ?? '');
+                $codigo_nbs = !empty($rawNbs) ? str_pad($rawNbs, 9, '0', STR_PAD_LEFT) : '';
+                
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
                 $tributacao_issqn = (int)($_POST['tributacao_issqn'] ?? 1);
                 $iss_retido = (isset($_POST['iss_retido']) && $_POST['iss_retido'] == '1') ? 1 : 0;
-                $cst_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['cst_ibs_cbs']) ? $_POST['cst_ibs_cbs'] : '000');
-                $classificacao_trib_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['classificacao_trib_ibs_cbs']) ? $_POST['classificacao_trib_ibs_cbs'] : '000000');
-                $indicador_operacao = mysqli_real_escape_string($link, !empty($_POST['indicador_operacao']) ? $_POST['indicador_operacao'] : '050101');
+                
+                $cst_ibs_cbs = trim($_POST['cst_ibs_cbs'] ?? '000');
+                $classificacao_trib_ibs_cbs = trim($_POST['classificacao_trib_ibs_cbs'] ?? '000001');
+                $indicador_operacao = trim($_POST['indicador_operacao'] ?? '100301');
+
+                // Autocorrelação de segurança se os parâmetros forem vazios ou genéricos
+                if (!empty($codigo_tributacao_nacional)) {
+                    $correlacaoSugerida = FiscalCatalogHelper::getCorrelacaoReforma($codigo_tributacao_nacional, $codigo_nbs, $link);
+                    if (empty($codigo_nbs) && !empty($correlacaoSugerida['codigo_nbs'])) {
+                        $codigo_nbs = $correlacaoSugerida['codigo_nbs'];
+                    }
+                    if ($classificacao_trib_ibs_cbs === '000000' || empty($classificacao_trib_ibs_cbs)) {
+                        $classificacao_trib_ibs_cbs = $correlacaoSugerida['classificacao_trib_ibs_cbs'];
+                    }
+                    if ($indicador_operacao === '050101' || empty($indicador_operacao)) {
+                        $indicador_operacao = $correlacaoSugerida['indicador_operacao'];
+                    }
+                }
+
+                $codigo_tributacao_nacional = mysqli_real_escape_string($link, $codigo_tributacao_nacional);
+                $codigo_nbs = mysqli_real_escape_string($link, $codigo_nbs);
+                $cst_ibs_cbs = mysqli_real_escape_string($link, str_pad(preg_replace('/\D/', '', $cst_ibs_cbs), 3, '0', STR_PAD_LEFT));
+                $classificacao_trib_ibs_cbs = mysqli_real_escape_string($link, str_pad(preg_replace('/\D/', '', $classificacao_trib_ibs_cbs), 6, '0', STR_PAD_LEFT));
+                $indicador_operacao = mysqli_real_escape_string($link, str_pad(preg_replace('/\D/', '', $indicador_operacao), 6, '0', STR_PAD_LEFT));
+
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
                 
@@ -1734,16 +1784,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 // Novos Campos Fiscais
                 $item_lista_servico = mysqli_real_escape_string($link, $_POST['item_lista_servico'] ?? $_POST['codigo_servico_lc116'] ?? '');
-                $codigo_tributacao_nacional = mysqli_real_escape_string($link, $_POST['codigo_tributacao_nacional'] ?? '');
+                $rawTribNac = preg_replace('/\D/', '', $_POST['codigo_tributacao_nacional'] ?? '');
+                $codigo_tributacao_nacional = !empty($rawTribNac) ? str_pad($rawTribNac, 6, '0', STR_PAD_LEFT) : '';
+                
                 $codigo_cnae = mysqli_real_escape_string($link, $_POST['codigo_cnae'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
-                $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
+                
+                $rawNbs = preg_replace('/\D/', '', $_POST['codigo_nbs'] ?? '');
+                $codigo_nbs = !empty($rawNbs) ? str_pad($rawNbs, 9, '0', STR_PAD_LEFT) : '';
+                
                 $aliquota_iss = mysqli_real_escape_string($link, $_POST['aliquota_iss'] ?? '0.00');
                 $tributacao_issqn = (int)($_POST['tributacao_issqn'] ?? 1);
                 $iss_retido = (isset($_POST['iss_retido']) && $_POST['iss_retido'] == '1') ? 1 : 0;
-                $cst_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['cst_ibs_cbs']) ? $_POST['cst_ibs_cbs'] : '000');
-                $classificacao_trib_ibs_cbs = mysqli_real_escape_string($link, !empty($_POST['classificacao_trib_ibs_cbs']) ? $_POST['classificacao_trib_ibs_cbs'] : '000000');
-                $indicador_operacao = mysqli_real_escape_string($link, !empty($_POST['indicador_operacao']) ? $_POST['indicador_operacao'] : '050101');
+                
+                $cst_ibs_cbs = trim($_POST['cst_ibs_cbs'] ?? '000');
+                $classificacao_trib_ibs_cbs = trim($_POST['classificacao_trib_ibs_cbs'] ?? '000001');
+                $indicador_operacao = trim($_POST['indicador_operacao'] ?? '100301');
+
+                // Autocorrelação de segurança se os parâmetros forem vazios ou genéricos
+                if (!empty($codigo_tributacao_nacional)) {
+                    $correlacaoSugerida = FiscalCatalogHelper::getCorrelacaoReforma($codigo_tributacao_nacional, $codigo_nbs, $link);
+                    if (empty($codigo_nbs) && !empty($correlacaoSugerida['codigo_nbs'])) {
+                        $codigo_nbs = $correlacaoSugerida['codigo_nbs'];
+                    }
+                    if ($classificacao_trib_ibs_cbs === '000000' || empty($classificacao_trib_ibs_cbs)) {
+                        $classificacao_trib_ibs_cbs = $correlacaoSugerida['classificacao_trib_ibs_cbs'];
+                    }
+                    if ($indicador_operacao === '050101' || empty($indicador_operacao)) {
+                        $indicador_operacao = $correlacaoSugerida['indicador_operacao'];
+                    }
+                }
+
+                $codigo_tributacao_nacional = mysqli_real_escape_string($link, $codigo_tributacao_nacional);
+                $codigo_nbs = mysqli_real_escape_string($link, $codigo_nbs);
+                $cst_ibs_cbs = mysqli_real_escape_string($link, str_pad(preg_replace('/\D/', '', $cst_ibs_cbs), 3, '0', STR_PAD_LEFT));
+                $classificacao_trib_ibs_cbs = mysqli_real_escape_string($link, str_pad(preg_replace('/\D/', '', $classificacao_trib_ibs_cbs), 6, '0', STR_PAD_LEFT));
+                $indicador_operacao = mysqli_real_escape_string($link, str_pad(preg_replace('/\D/', '', $indicador_operacao), 6, '0', STR_PAD_LEFT));
+
                 $descricao_nfse_padrao = mysqli_real_escape_string($link, $_POST['descricao_nfse_padrao'] ?? '');
                 $descricao_fiscal = mysqli_real_escape_string($link, $_POST['descricao_fiscal'] ?? '');
 

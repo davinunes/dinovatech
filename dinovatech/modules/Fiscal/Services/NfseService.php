@@ -131,7 +131,7 @@ class NfseService
 
         // Determina o Código de Tributação Nacional (cTribNac de 6 dígitos)
         if (!empty($taxSettings['codigo_tributacao_nacional'])) {
-            $dto->codigoTributacaoNacional = str_pad(preg_replace('/\D/', '', $taxSettings['codigo_tributacao_nacional']), 6, '0', STR_PAD_RIGHT);
+            $dto->codigoTributacaoNacional = str_pad(preg_replace('/\D/', '', $taxSettings['codigo_tributacao_nacional']), 6, '0', STR_PAD_LEFT);
         } else {
             // Fallback inteligente baseado no Item LC 116 (ex: '01.07' -> '010701')
             $itemDigits = preg_replace('/\D/', '', $taxSettings['item_lista_servico'] ?? '0107');
@@ -144,8 +144,58 @@ class NfseService
         $dto->municipioPrestacaoIbge = '5300108';
         $dto->tributacaoIssqn = (int)($taxSettings['tributacao_issqn'] ?? 1);
         $dto->cstIbsCbs = $taxSettings['cst_ibs_cbs'] ?? '000';
-        $dto->classificacaoTribIbsCbs = $taxSettings['classificacao_trib_ibs_cbs'] ?? '000000';
-        $dto->indicadorOperacao = $taxSettings['indicador_operacao'] ?? '050101';
+        $dto->classificacaoTribIbsCbs = $taxSettings['classificacao_trib_ibs_cbs'] ?? '000001';
+        $dto->indicadorOperacao = $taxSettings['indicador_operacao'] ?? '100301';
+
+        // 3.1. Validação Pré-Emissão (Pre-flight Check) para o Padrão Nacional
+        if ($isNacional && $ambiente === 'producao') {
+            $checkCorrelacao = FiscalCatalogHelper::validarCorrelacao(
+                $dto->codigoTributacaoNacional,
+                $dto->codigoNbs,
+                $dto->classificacaoTribIbsCbs,
+                $dto->indicadorOperacao,
+                $dto->cstIbsCbs,
+                $this->link
+            );
+
+            if (!$checkCorrelacao['valido']) {
+                // Tenta auto-recuperar aplicando a sugestão oficial se disponível
+                if (!empty($checkCorrelacao['sugestao'])) {
+                    $sug = $checkCorrelacao['sugestao'];
+                    if (empty($dto->codigoNbs) && !empty($sug['codigo_nbs'])) {
+                        $dto->codigoNbs = $sug['codigo_nbs'];
+                    }
+                    if ($dto->classificacaoTribIbsCbs === '000000' || $dto->classificacaoTribIbsCbs === '000001') {
+                        $dto->classificacaoTribIbsCbs = $sug['classificacao_trib'];
+                    }
+                    if ($dto->indicadorOperacao === '050101' || $dto->indicadorOperacao === '100301') {
+                        $dto->indicadorOperacao = $sug['indicador_operacao'];
+                    }
+                    if (!empty($sug['cst_ibs_cbs'])) {
+                        $dto->cstIbsCbs = $sug['cst_ibs_cbs'];
+                    }
+
+                    // Revalida após auto-recuperação
+                    $recheck = FiscalCatalogHelper::validarCorrelacao(
+                        $dto->codigoTributacaoNacional,
+                        $dto->codigoNbs,
+                        $dto->classificacaoTribIbsCbs,
+                        $dto->indicadorOperacao,
+                        $dto->cstIbsCbs,
+                        $this->link
+                    );
+                    if (!$recheck['valido']) {
+                        return EmissionResult::failure(
+                            $recheck['mensagem'] . ' Por favor, revise o cadastro do serviço antes de emitir.'
+                        );
+                    }
+                } else {
+                    return EmissionResult::failure(
+                        $checkCorrelacao['mensagem'] . ' Por favor, revise o cadastro do serviço antes de emitir.'
+                    );
+                }
+            }
+        }
 
         // 4. Executa a emissão pelo provedor ativo
         $result = $this->provider->emitir($dto);

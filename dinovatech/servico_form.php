@@ -360,13 +360,15 @@ if ($id_servico) {
                             </div>
 
                             <div>
-                                <label for="codigo_nbs" class="block text-xs font-semibold text-gray-700 mb-1">
-                                    Código NBS v2.0 (9 dígitos)
+                                <label for="codigo_nbs" class="block text-xs font-semibold text-gray-700 mb-1 flex items-center justify-between">
+                                    <span>Código NBS v2.0 (9 dígitos)</span>
+                                    <span id="nbsBadgeStatus" class="text-[10px] text-gray-400 font-normal"></span>
                                 </label>
-                                <input type="text" id="codigo_nbs" name="codigo_nbs" maxlength="9"
-                                    value="<?= htmlspecialchars($servico['codigo_nbs'] ?? '') ?>" placeholder="Ex: 115080000"
-                                    class="w-full p-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 transition text-sm">
-                                <p class="text-[10px] text-gray-400 mt-1">Nomenclatura Brasileira de Serviços.</p>
+                                <input type="text" id="codigo_nbs" name="codigo_nbs" maxlength="9" list="lista_nbs_dinamico"
+                                    value="<?= htmlspecialchars($servico['codigo_nbs'] ?? '') ?>" placeholder="Ex: 115021000"
+                                    class="w-full p-2.5 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 transition text-sm font-mono">
+                                <datalist id="lista_nbs_dinamico"></datalist>
+                                <p class="text-[10px] text-gray-400 mt-1">Nomenclatura Brasileira de Serviços (sugestões carregadas pelo cTribNac).</p>
                             </div>
 
                             <div>
@@ -474,11 +476,23 @@ if ($id_servico) {
                                     Classificação Trib. (6 dígitos)
                                 </label>
                                 <input type="text" id="classificacao_trib_ibs_cbs" name="classificacao_trib_ibs_cbs" maxlength="6"
-                                    value="<?= htmlspecialchars($servico['classificacao_trib_ibs_cbs'] ?? '000000') ?>"
-                                    placeholder="000000"
+                                    value="<?= htmlspecialchars($servico['classificacao_trib_ibs_cbs'] ?? '000001') ?>"
+                                    placeholder="000001"
                                     class="w-full p-2.5 border border-gray-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-cyan-500 focus:outline-none bg-white">
-                                <p class="text-[10px] text-gray-500 mt-1">Padrão: <strong>000000</strong> (Geral).</p>
+                                <p class="text-[10px] text-gray-500 mt-1">Padrão: <strong>000001</strong> (Geral).</p>
                             </div>
+                        </div>
+
+                        <!-- FEEDBACK EM TEMPO REAL DA CORRELAÇÃO OFICIAL (REFORMA TRIBUTÁRIA) -->
+                        <div id="boxStatusCorrelacao" class="mt-4 p-3.5 rounded-xl border flex items-center justify-between text-xs transition-all duration-200 hidden">
+                            <div class="flex items-center gap-2.5">
+                                <span id="iconStatusCorrelacao" class="material-icons text-base"></span>
+                                <span id="textStatusCorrelacao" class="font-medium"></span>
+                            </div>
+                            <button type="button" id="btnAutoFixCorrelacao" class="hidden px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1">
+                                <span class="material-icons text-sm">auto_fix_high</span>
+                                Aplicar Correlação Oficial
+                            </button>
                         </div>
                     </div>
 
@@ -644,20 +658,113 @@ if ($id_servico) {
                 }
             });
 
-            // Sincronização ao alterar cTribNac (busca automática dos parâmetros de IBS/CBS)
-            $('#codigo_tributacao_nacional, #codigo_nbs').on('change blur', function() {
+            // Sincronização e Validação de Correlação Fiscal Oficial (Reforma Tributária IBS/CBS)
+            let sugestaoOficialAtual = null;
+
+            function checarCorrelacaoFiscal(autoAplicarSeVazio = false) {
                 const cTrib = $('#codigo_tributacao_nacional').val().trim();
                 const cNbs = $('#codigo_nbs').val().trim();
-                if (cTrib.length >= 6) {
-                    $.post('app.php', { action: 'get_correlacao_reforma', codigo_trib_nac: cTrib, codigo_nbs: cNbs }, function(res) {
-                        if (res.success && res.data) {
+                const cClass = $('#classificacao_trib_ibs_cbs').val().trim();
+                const cInd = $('#indicador_operacao').val().trim();
+                const cst = $('#cst_ibs_cbs').val().trim();
+
+                if (!cTrib || cTrib.length < 4) {
+                    $('#boxStatusCorrelacao').addClass('hidden');
+                    $('#lista_nbs_dinamico').empty();
+                    $('#nbsBadgeStatus').text('');
+                    return;
+                }
+
+                $.post('app.php', { 
+                    action: 'get_correlacao_reforma', 
+                    codigo_trib_nac: cTrib, 
+                    codigo_nbs: cNbs 
+                }, function(res) {
+                    if (res.success && res.data) {
+                        sugestaoOficialAtual = res.data;
+
+                        // Popula Datalist de NBS compatíveis
+                        if (res.nbs_disponiveis && res.nbs_disponiveis.length > 0) {
+                            let optionsHtml = '';
+                            res.nbs_disponiveis.forEach(function(item) {
+                                optionsHtml += `<option value="${item.codigo_nbs}">${item.codigo_nbs} - ${item.descricao_nbs || 'Serviço correlacionado'}</option>`;
+                            });
+                            $('#lista_nbs_dinamico').html(optionsHtml);
+                            $('#nbsBadgeStatus').text(`${res.nbs_disponiveis.length} NBS compatível(is)`).removeClass('text-rose-500').addClass('text-cyan-700');
+                        } else {
+                            $('#lista_nbs_dinamico').empty();
+                            $('#nbsBadgeStatus').text('');
+                        }
+
+                        // Auto-aplicar se campos estiverem com defaults ou vazios
+                        if (autoAplicarSeVazio) {
+                            if (!cNbs && res.data.codigo_nbs) $('#codigo_nbs').val(res.data.codigo_nbs);
                             if (res.data.cst_ibs_cbs) $('#cst_ibs_cbs').val(res.data.cst_ibs_cbs);
                             if (res.data.classificacao_trib_ibs_cbs) $('#classificacao_trib_ibs_cbs').val(res.data.classificacao_trib_ibs_cbs);
                             if (res.data.indicador_operacao) $('#indicador_operacao').val(res.data.indicador_operacao);
                         }
-                    }, 'json');
+
+                        // Valida a combinação atual em tempo real
+                        const curNbs = $('#codigo_nbs').val().trim();
+                        const curClass = $('#classificacao_trib_ibs_cbs').val().trim();
+                        const curInd = $('#indicador_operacao').val().trim();
+                        const curCst = $('#cst_ibs_cbs').val().trim();
+
+                        $.post('app.php', {
+                            action: 'validar_correlacao_fiscal',
+                            codigo_trib_nac: cTrib,
+                            codigo_nbs: curNbs,
+                            classificacao_trib_ibs_cbs: curClass,
+                            indicador_operacao: curInd,
+                            cst_ibs_cbs: curCst
+                        }, function(valRes) {
+                            const box = $('#boxStatusCorrelacao');
+                            const icon = $('#iconStatusCorrelacao');
+                            const text = $('#textStatusCorrelacao');
+                            const btnFix = $('#btnAutoFixCorrelacao');
+
+                            box.removeClass('hidden bg-emerald-50 border-emerald-300 text-emerald-900 bg-amber-50 border-amber-300 text-amber-900 bg-rose-50 border-rose-300 text-rose-900');
+
+                            if (valRes.success) {
+                                box.addClass('bg-emerald-50 border-emerald-300 text-emerald-900');
+                                icon.text('check_circle').removeClass('text-amber-600 text-rose-600').addClass('text-emerald-600');
+                                text.html('<strong>Correlação Oficial Aprovada:</strong> Combinação de cTribNac, NBS, cClassTrib e cIndOp 100% aderente ao Padrão Nacional.');
+                                btnFix.addClass('hidden');
+                            } else {
+                                box.addClass('bg-amber-50 border-amber-300 text-amber-900');
+                                icon.text('warning').removeClass('text-emerald-600 text-rose-600').addClass('text-amber-600');
+                                text.html(`<strong>Atenção (Erro EM062):</strong> ${valRes.message}`);
+                                btnFix.removeClass('hidden');
+                            }
+                        }, 'json');
+                    }
+                }, 'json');
+            }
+
+            // Gatilhos de validação
+            $('#codigo_tributacao_nacional').on('change blur', function() {
+                checarCorrelacaoFiscal(true);
+            });
+
+            $('#codigo_nbs, #classificacao_trib_ibs_cbs, #indicador_operacao, #cst_ibs_cbs').on('change blur', function() {
+                checarCorrelacaoFiscal(false);
+            });
+
+            // Botão Aplicar Correlação Oficial
+            $('#btnAutoFixCorrelacao').on('click', function() {
+                if (sugestaoOficialAtual) {
+                    if (sugestaoOficialAtual.codigo_nbs) $('#codigo_nbs').val(sugestaoOficialAtual.codigo_nbs);
+                    if (sugestaoOficialAtual.cst_ibs_cbs) $('#cst_ibs_cbs').val(sugestaoOficialAtual.cst_ibs_cbs);
+                    if (sugestaoOficialAtual.classificacao_trib_ibs_cbs) $('#classificacao_trib_ibs_cbs').val(sugestaoOficialAtual.classificacao_trib_ibs_cbs);
+                    if (sugestaoOficialAtual.indicador_operacao) $('#indicador_operacao').val(sugestaoOficialAtual.indicador_operacao);
+                    checarCorrelacaoFiscal(false);
                 }
             });
+
+            // Validação inicial ao carregar a página (se já houver cTribNac preenchido)
+            if ($('#codigo_tributacao_nacional').val().trim().length >= 4) {
+                checarCorrelacaoFiscal(false);
+            }
 
             // Sincronização ao selecionar CNAE
             $('#select_cnae_fiscal').on('change', function() {

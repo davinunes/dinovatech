@@ -109,9 +109,15 @@ class DpsXmlBuilder
 
         $ibsCbsXml = '';
         if ($usarIbsCbs) {
-            $cIndOp    = (!empty($data->indicadorOperacao) && $data->indicadorOperacao !== '050101') ? $data->indicadorOperacao : '100301';
-            $cstIbsCbs = $data->cstIbsCbs ?: '000';
-            $classTrib = (!empty($data->classificacaoTribIbsCbs) && $data->classificacaoTribIbsCbs !== '000000') ? $data->classificacaoTribIbsCbs : '000001';
+            $cIndOpRaw = preg_replace('/\D/', '', $data->indicadorOperacao ?: '');
+            $cIndOp    = (!empty($cIndOpRaw) && $cIndOpRaw !== '50101' && $cIndOpRaw !== '050101') ? str_pad($cIndOpRaw, 6, '0', STR_PAD_LEFT) : '100301';
+            
+            $cstRaw    = preg_replace('/\D/', '', $data->cstIbsCbs ?: '');
+            $cstIbsCbs = !empty($cstRaw) ? str_pad($cstRaw, 3, '0', STR_PAD_LEFT) : '000';
+            
+            $classRaw  = preg_replace('/\D/', '', $data->classificacaoTribIbsCbs ?: '');
+            $classTrib = (!empty($classRaw) && $classRaw !== '0' && $classRaw !== '000000') ? str_pad($classRaw, 6, '0', STR_PAD_LEFT) : '000001';
+            
             $ibsCbsXml = "<IBSCBS>
                 <finNFSe>0</finNFSe>
                 <indFinal>0</indFinal>

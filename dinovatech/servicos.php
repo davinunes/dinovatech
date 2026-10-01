@@ -114,6 +114,7 @@ if ($link) {
                             <thead>
                                 <tr class="bg-gray-50 text-gray-600 text-sm uppercase tracking-wider">
                                     <th class="p-4 font-medium">Serviço</th>
+                                    <th class="p-4 font-medium">Status Fiscal (IBS/CBS)</th>
                                     <?php if (AppHelper::isVetMode()): ?>
                                         <th class="p-4 font-medium">Módulos</th>
                                     <?php endif; ?>
@@ -124,7 +125,16 @@ if ($link) {
                             </thead>
                             <tbody class="text-gray-700 text-sm divide-y divide-gray-50">
                                 <?php if (!empty($servicos_ativos)): ?>
-                                    <?php foreach ($servicos_ativos as $servico): ?>
+                                    <?php foreach ($servicos_ativos as $servico): 
+                                        $checkFiscal = FiscalCatalogHelper::validarCorrelacao(
+                                            $servico['codigo_tributacao_nacional'] ?? '',
+                                            $servico['codigo_nbs'] ?? '',
+                                            $servico['classificacao_trib_ibs_cbs'] ?? '',
+                                            $servico['indicador_operacao'] ?? '',
+                                            $servico['cst_ibs_cbs'] ?? '',
+                                            $link
+                                        );
+                                    ?>
                                         <tr class="hover:bg-gray-50/70 transition" id="row-servico-<?= $servico['id_servico'] ?>">
                                             <td class="p-4 font-medium text-gray-900 flex items-center gap-3">
                                                 <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center flex-shrink-0 shadow-sm border border-cyan-100">
@@ -134,13 +144,24 @@ if ($link) {
                                                     <div class="font-semibold text-gray-900 flex items-center gap-2">
                                                         <?= htmlspecialchars($servico['nome_servico']) ?>
                                                         <?php if (!empty($servico['codigo_tributacao_nacional'])): ?>
-                                                            <span class="text-[10px] bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded border border-cyan-200 font-mono font-semibold" title="Código de Tributação Nacional">cTribNac: <?= htmlspecialchars($servico['codigo_tributacao_nacional']) ?></span>
+                                                            <span class="text-[10px] bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded border border-cyan-200 font-mono font-semibold" title="Código de Tributação Nacional">cTrib: <?= htmlspecialchars($servico['codigo_tributacao_nacional']) ?></span>
                                                         <?php endif; ?>
                                                     </div>
                                                     <?php if (!empty($servico['descricao_fiscal'])): ?>
                                                         <div class="text-xs text-gray-400">NFS-e: <?= htmlspecialchars($servico['descricao_fiscal']) ?></div>
                                                     <?php endif; ?>
                                                 </div>
+                                            </td>
+                                            <td class="p-4">
+                                                <?php if ($checkFiscal['valido']): ?>
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" title="Parâmetros fiscais 100% aderentes à matriz nacional">
+                                                        <span class="material-icons text-[14px]">check_circle</span> Fiscal OK
+                                                    </span>
+                                                <?php else: ?>
+                                                    <a href="servico_form.php?id=<?= $servico['id_servico'] ?>" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 hover:bg-amber-100 transition" title="<?= htmlspecialchars($checkFiscal['mensagem']) ?>">
+                                                        <span class="material-icons text-[14px] text-amber-600">warning</span> Revisar Fiscal
+                                                    </a>
+                                                <?php endif; ?>
                                             </td>
                                             <?php if (AppHelper::isVetMode()): ?>
                                                 <td class="p-4">
@@ -186,7 +207,7 @@ if ($link) {
                                     <?php endforeach; ?>
                                 <?php else: ?>
                                     <tr>
-                                        <td colspan="<?= AppHelper::isVetMode() ? '5' : '4' ?>" class="p-8 text-center text-gray-500">
+                                        <td colspan="<?= AppHelper::isVetMode() ? '6' : '5' ?>" class="p-8 text-center text-gray-500">
                                             Nenhum serviço ativo encontrado.
                                         </td>
                                     </tr>
@@ -199,7 +220,16 @@ if ($link) {
                 <!-- Mobile Cards Ativos -->
                 <div class="md:hidden space-y-4">
                     <?php if (!empty($servicos_ativos)): ?>
-                        <?php foreach ($servicos_ativos as $servico): ?>
+                        <?php foreach ($servicos_ativos as $servico): 
+                            $checkFiscal = FiscalCatalogHelper::validarCorrelacao(
+                                $servico['codigo_tributacao_nacional'] ?? '',
+                                $servico['codigo_nbs'] ?? '',
+                                $servico['classificacao_trib_ibs_cbs'] ?? '',
+                                $servico['indicador_operacao'] ?? '',
+                                $servico['cst_ibs_cbs'] ?? '',
+                                $link
+                            );
+                        ?>
                             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100" id="card-servico-<?= $servico['id_servico'] ?>">
                                 <div class="flex items-center gap-3 mb-3">
                                     <div class="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center flex-shrink-0 border border-cyan-100">
@@ -212,9 +242,16 @@ if ($link) {
                                                 <span class="text-[9px] bg-cyan-50 text-cyan-700 px-1 py-0.5 rounded border border-cyan-200 font-mono font-semibold">cTrib: <?= htmlspecialchars($servico['codigo_tributacao_nacional']) ?></span>
                                             <?php endif; ?>
                                         </div>
-                                        <span class="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                                            <span class="material-icons text-[13px]">schedule</span> <?= (int)($servico['duracao_minutos'] ?? 30) ?> min
-                                        </span>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-xs text-gray-500 flex items-center gap-1">
+                                                <span class="material-icons text-[13px]">schedule</span> <?= (int)($servico['duracao_minutos'] ?? 30) ?> min
+                                            </span>
+                                            <?php if ($checkFiscal['valido']): ?>
+                                                <span class="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded font-bold border border-emerald-200">Fiscal OK</span>
+                                            <?php else: ?>
+                                                <span class="text-[10px] bg-amber-50 text-amber-800 px-1.5 py-0.5 rounded font-bold border border-amber-300">Revisar Fiscal</span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                                 
