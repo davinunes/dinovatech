@@ -255,25 +255,55 @@ try {
 
             $txid_safe = mysqli_real_escape_string($link, $txid);
 
-            // Detecta se é CobV (Jornada 4 / Pix Automático) verificando se existe PixRecorrencias com esse txid_inicial
+            // Detecta o tipo de cobrança Pix (CobR Recorrente, CobV Adesão ou Cob Imediato)
             $qTipoCob = "SELECT P.id_pix_recorrencia FROM PixRecorrencias P WHERE P.txid_inicial = '$txid_safe' LIMIT 1";
             $resTipoCob = DBExecute($link, $qTipoCob);
             $isCobV = ($resTipoCob && mysqli_num_rows($resTipoCob) > 0);
 
+            // Verifica se está registrado em Pagamentos como Débito Automático Pix Agendado (CobR)
+            $qPagRec = "SELECT id_pagamento, observacao FROM Pagamentos WHERE txid = '$txid_safe' LIMIT 1";
+            $resPagRec = DBExecute($link, $qPagRec);
+            $rowPagRec = $resPagRec ? mysqli_fetch_assoc($resPagRec) : null;
+            $isCobR = ($rowPagRec && (
+                stripos($rowPagRec['observacao'] ?? '', 'Débito Automático') !== false ||
+                stripos($rowPagRec['observacao'] ?? '', 'Recorrência RR') !== false ||
+                stripos($rowPagRec['observacao'] ?? '', 'Recorrência') !== false
+            ));
+
             if ($isCobV) {
-                // Jornada 4: consulta via GET /cobv/{txid}
+                // Jornada 4 (Adesão CobV): consulta via GET /cobv/{txid}
                 $pixStatus = consultarCobv($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
                 $statusPix = $pixStatus->status ?? 'ATIVA';
                 $pixArr = $pixStatus->pix ?? null;
-                // CobV retorna pix como objeto único, não array
+                if ($pixArr && !is_array($pixArr)) {
+                    $pixArr = [$pixArr];
+                }
+            } elseif ($isCobR) {
+                // Cobrança Recorrente Subsequente (Débito Automático): consulta via GET /cobr/{txid}
+                $pixStatus = consultarCobrancaIndividual($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
+                $statusPix = $pixStatus->status ?? 'ATIVA';
+                $pixArr = $pixStatus->pix ?? null;
                 if ($pixArr && !is_array($pixArr)) {
                     $pixArr = [$pixArr];
                 }
             } else {
-                // Pix imediato: consulta via GET /cob/{txid}
-                $pixStatus = consultarPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
-                $statusPix = $pixStatus->status ?? 'ATIVA';
-                $pixArr = !empty($pixStatus->pix) ? (array) $pixStatus->pix : null;
+                // Tenta Pix imediato (GET /cob/{txid}) com fallback para /cobr/{txid} caso seja uma cobrança recorrente avulsa
+                try {
+                    $pixStatus = consultarPix($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
+                    $statusPix = $pixStatus->status ?? 'ATIVA';
+                    $pixArr = !empty($pixStatus->pix) ? (array) $pixStatus->pix : null;
+                } catch (Exception $eCob) {
+                    try {
+                        $pixStatus = consultarCobrancaIndividual($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid);
+                        $statusPix = $pixStatus->status ?? 'ATIVA';
+                        $pixArr = $pixStatus->pix ?? null;
+                        if ($pixArr && !is_array($pixArr)) {
+                            $pixArr = [$pixArr];
+                        }
+                    } catch (Exception $eCobrFallback) {
+                        throw $eCob;
+                    }
+                }
             }
 
             if ($statusPix === 'CONCLUIDA' && !empty($pixArr)) {

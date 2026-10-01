@@ -703,6 +703,49 @@ function criarCobrancaRecorrenteSubsequente($config, $sslCert, $sslKey, $caInfo,
 }
 
 /**
+ * Consulta uma cobrança recorrente individual subsequente (GET /cobr/{txid}) - Débito Automático Pix.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $txid Identificador da cobrança recorrente
+ * @return object Dados da cobrança recorrente
+ */
+function consultarCobrancaIndividual($config, $sslCert, $sslKey, $caInfo, $bearerToken, $txid)
+{
+    $url = $config['url_pix_base'] . '/cobr/' . rawurlencode($txid);
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_HTTPGET, true);
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on GET /cobr/{$txid}: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on GET /cobr/{$txid}: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
  * Cancela uma recorrência ativa (Contrato de Pix Automático) no Banco Inter.
  * 
  * @param array $config Configurações do ambiente
