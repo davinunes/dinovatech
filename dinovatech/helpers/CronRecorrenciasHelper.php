@@ -116,10 +116,8 @@ class CronRecorrenciasHelper
                 if ($resFatura) {
                     $newFaturaId = mysqli_insert_id($link);
 
-                    // 4. Monta a tag/descrição do item
-                    $tag = !empty($rec['descricao_personalizada'])
-                        ? $rec['descricao_personalizada']
-                        : "Mensalidade - " . $rec['nome_servico'] . " (" . $mesAnoSafe . ")";
+                    // 4. Monta a tag/descrição do item padrão da mensalidade
+                    $tag = "Mensalidade - " . $rec['nome_servico'] . " (" . $mesAnoSafe . ")";
                     $tagSafe = mysqli_real_escape_string($link, $tag);
 
                     // 5. Insere o item na tabela ItensFatura

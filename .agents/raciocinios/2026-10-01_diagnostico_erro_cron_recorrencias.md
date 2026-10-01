@@ -6,30 +6,29 @@
 
 ---
 
-## 1. O que é a coluna `tag` em `ItensFatura`?
+## 1. Origem do Problema
 
-Ao mapear a utilização do campo no sistema:
-- A coluna `tag` na tabela `ItensFatura` armazena a **descrição estendida ou detalhamento do item da fatura** (subtítulo que é exibido logo abaixo do nome do serviço na visualização da fatura `fatura_view.php`).
-- Ao gerar faturas recorrentes em `CronRecorrenciasHelper.php`, o sistema preenche a `$tag` com o conteúdo de `$rec['descricao_personalizada']` (a descrição personalizada cadastrada no contrato).
-
----
-
-## 2. Causa Raiz do Erro
-
-- Na tabela `Recorrencias`, a coluna `descricao_personalizada` é do tipo `TEXT` (capacidade ilimitada para descrições longas de contrato).
-- Na tabela `ItensFatura`, a coluna `tag` foi originalmente criada como `VARCHAR(255)`.
-- A **Recorrência ID 6** possui uma `descricao_personalizada` cadastrada com mais de 255 caracteres.
-- Ao tentar gravar o item da Fatura ID 104, o MariaDB/MySQL rejeitou o `INSERT` por estouro do limite da coluna: `Data too long for column 'tag' at row 1`.
+- O campo `descricao_personalizada` na tabela `Recorrencias` (editado via TinyMCE com HTML de anotações internas do contrato) estava sendo usado em `CronRecorrenciasHelper.php` como *override* da `$tag` do item da fatura.
+- Como o campo do contrato continha código HTML longo (anotações genéricas do contrato), o texto excedia 255 caracteres e gerava estouro na coluna `tag` da tabela `ItensFatura`.
 
 ---
 
-## 3. Solução Adotada
+## 2. Ajuste Efetuado no Backend PHP
 
-1. **Migration de Banco de Dados**:
-   - Criada a migration [`database/migrations/20261001_0001_alter_itensfatura_tag_to_text.sql`](file:///e:/DEV/dinovatech/database/migrations/20261001_0001_alter_itensfatura_tag_to_text.sql) para alterar o tipo da coluna `tag` na tabela `ItensFatura` de `VARCHAR(255)` para `TEXT`.
-2. **Execução no Servidor Remoto**:
-   - O comando SQL a seguir deve ser executado no banco de dados de produção:
-     ```sql
-     ALTER TABLE `ItensFatura` MODIFY COLUMN `tag` TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL;
-     ```
-   - Após executar a alteração no banco, a Recorrência ID 6 (e qualquer outra com descrição longa) será processada com sucesso no próximo ciclo do cron ou execução manual.
+- Em [`dinovatech/helpers/CronRecorrenciasHelper.php`](file:///e:/DEV/dinovatech/dinovatech/helpers/CronRecorrenciasHelper.php), removeu-se o uso do campo `descricao_personalizada` para a `$tag` da fatura.
+- Agora, a `$tag` do item é sempre padronizada no formato:
+  `"Mensalidade - " . $rec['nome_servico'] . " (" . $mesAnoSafe . ")"` (idêntico ao comportamento já adotado em `app.php`).
+
+---
+
+## 3. Query SQL para Limpeza de Itens Afetados no Banco Remoto
+
+Para corrigir itens que porventura ficaram salvos com o HTML gigante no banco de dados:
+
+```sql
+UPDATE ItensFatura I
+JOIN Servicos S ON I.id_servico = S.id_servico
+JOIN Faturas F ON I.id_fatura = F.id_fatura
+SET I.tag = CONCAT('Mensalidade - ', S.nome_servico, ' (', DATE_FORMAT(F.data_vencimento, '%m/%Y'), ')')
+WHERE I.tag LIKE '%<%' OR CHAR_LENGTH(I.tag) > 255;
+```
