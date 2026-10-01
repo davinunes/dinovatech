@@ -18,4 +18,4 @@ spl_autoload_register(function ($class) {
     }
 });
 
-require_once dirname(__DIR__) . '/helpers/FiscalCatalogHelper.php';
+require_once dirname(__DIR__, 2) . '/helpers/FiscalCatalogHelper.php';
