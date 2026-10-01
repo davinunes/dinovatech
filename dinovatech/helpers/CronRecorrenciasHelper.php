@@ -179,9 +179,10 @@ class CronRecorrenciasHelper
                             'pix_automatico' => $pixAutomaticoInfo
                         ];
                     } else {
+                        $dbErr = mysqli_error($link);
                         // Se falhou ao inserir o item, remove a fatura criada para não deixar fatura vazia
                         DBExecute($link, "DELETE FROM Faturas WHERE id_fatura = $newFaturaId");
-                        $err = "Erro ao inserir item para Fatura ID $newFaturaId (Recorrência ID $idRec): " . mysqli_error($link);
+                        $err = "Erro ao inserir item para Fatura ID $newFaturaId (Recorrência ID $idRec): " . $dbErr;
                         error_log($err);
                         $erros[] = $err;
                     }
