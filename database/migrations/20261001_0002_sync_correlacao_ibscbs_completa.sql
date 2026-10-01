@@ -1,7 +1,4 @@
-﻿-- Migration: 20261001_0002_sync_correlacao_ibscbs_completa.sql
--- Descricao: Carga completa da matriz oficial de correlacao da Reforma Tributaria (IBS/CBS)
 TRUNCATE TABLE TribRefCorrelacaoIbsCbs;
-
 INSERT IGNORE INTO TribRefCorrelacaoIbsCbs (codigo_trib_nac, codigo_nbs, cst_ibs_cbs, classificacao_trib, indicador_operacao) VALUES 
 ('010101', '115021000', '000', '000001', '100301'),
 ('010101', '115022000', '000', '000001', '100301'),
