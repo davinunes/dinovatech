@@ -454,10 +454,18 @@ DBClose($link);
                                 <input type="hidden" name="id_agendamento" value="<?= $id_ag_active ?>">
                             <?php endif; ?>
                         </div>
-                        <button type="submit"
-                            class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center transition transform hover:scale-105">
-                            <span class="material-icons mr-2">save</span> Salvar Prontuário
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <?php if ($is_edit): ?>
+                                <button type="button" onclick="iniciarExclusaoProntuario()"
+                                    class="bg-white hover:bg-red-50 text-red-600 border border-red-200 hover:border-red-300 font-bold py-3 px-5 rounded-lg shadow-sm flex items-center transition cursor-pointer">
+                                    <span class="material-icons mr-1.5 text-red-500">delete_outline</span> Excluir Prontuário
+                                </button>
+                            <?php endif; ?>
+                            <button type="submit"
+                                class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg flex items-center transition transform hover:scale-105">
+                                <span class="material-icons mr-2">save</span> Salvar Prontuário
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Info Basics -->
@@ -813,6 +821,104 @@ DBClose($link);
                     <button type="button" onclick="toggleModalReceita(false)"
                         class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                         Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 1: EXCLUIR PRONTUÁRIO (CONFIRMAÇÃO INICIAL) -->
+    <div id="modal-excluir-prontuario-step1" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-60 transition-opacity" onclick="fecharModalExclusaoStep1()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-100">
+                <div class="bg-white p-6 sm:p-7">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center shrink-0">
+                            <span class="material-icons text-2xl">delete_forever</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Excluir Prontuário</h3>
+                            <p class="text-sm text-gray-600 leading-relaxed">
+                                Tem certeza de que deseja excluir este prontuário (Atendimento #<span class="font-semibold text-gray-800"><?= $id_atendimento ?></span>)?
+                            </p>
+                            <p class="text-xs text-gray-500 mt-2">
+                                Esta operação removerá este atendimento do histórico clínico do paciente.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100">
+                    <button type="button" onclick="fecharModalExclusaoStep1()"
+                        class="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button type="button" id="btn-confirmar-step1" onclick="processarExclusaoStep1()"
+                        class="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+                        <span class="material-icons text-sm">arrow_forward</span> Continuar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EXCLUIR PRONTUÁRIO (SEGUNDA CONFIRMAÇÃO COM AVISO DE VÍNCULOS) -->
+    <div id="modal-excluir-prontuario-step2" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-70 transition-opacity" onclick="fecharModalExclusaoStep2()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-amber-200">
+                <div class="bg-amber-500 h-2 w-full"></div>
+                <div class="bg-white p-6 sm:p-7">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200">
+                            <span class="material-icons text-2xl">warning_amber</span>
+                        </div>
+                        <div class="flex-1">
+                            <div class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-100 text-amber-800 mb-1">
+                                Segunda Confirmação Necessária
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Atenção: Vínculos Encontrados!</h3>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-3">
+                                Este prontuário possui os seguintes registros associados que <strong>também serão permanentemente apagados</strong>:
+                            </p>
+                            
+                            <div class="bg-amber-50 rounded-xl p-3 border border-amber-200 space-y-2 mb-3">
+                                <div id="alerta-vinculo-receitas" class="flex items-center justify-between text-sm text-amber-900">
+                                    <span class="flex items-center gap-2">
+                                        <span class="material-icons text-base text-indigo-600">receipt</span> Receitas médicas:
+                                    </span>
+                                    <span class="font-bold bg-white px-2 py-0.5 rounded border border-amber-200" id="cnt-receitas">0</span>
+                                </div>
+                                <div id="alerta-vinculo-anexos" class="flex items-center justify-between text-sm text-amber-900">
+                                    <span class="flex items-center gap-2">
+                                        <span class="material-icons text-base text-amber-600">attach_file</span> Arquivos / Anexos:
+                                    </span>
+                                    <span class="font-bold bg-white px-2 py-0.5 rounded border border-amber-200" id="cnt-anexos">0</span>
+                                </div>
+                                <div id="alerta-vinculo-documentos" class="flex items-center justify-between text-sm text-amber-900">
+                                    <span class="flex items-center gap-2">
+                                        <span class="material-icons text-base text-emerald-600">description</span> Documentos emitidos:
+                                    </span>
+                                    <span class="font-bold bg-white px-2 py-0.5 rounded border border-amber-200" id="cnt-documentos">0</span>
+                                </div>
+                            </div>
+
+                            <p class="text-xs text-red-600 font-semibold flex items-center gap-1">
+                                <span class="material-icons text-sm">error_outline</span> Essa ação é definitiva e todos os itens acima vinculados serão excluídos.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-6 py-4 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100">
+                    <button type="button" onclick="fecharModalExclusaoStep2()"
+                        class="w-full sm:w-auto px-5 py-2.5 rounded-lg border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">
+                        Desistir / Voltar
+                    </button>
+                    <button type="button" id="btn-confirmar-exclusao-final" onclick="executarExclusaoProntuarioFinal()"
+                        class="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer">
+                        <span class="material-icons text-sm">delete_forever</span> Sim, Excluir Tudo
                     </button>
                 </div>
             </div>
@@ -1394,6 +1500,95 @@ DBClose($link);
                 res = typeof res === 'string' ? JSON.parse(res) : res;
                 if (res.success) carregarReceitas();
                 else alert('Erro: ' + res.message);
+            });
+        }
+
+        // --- EXCLUSÃO DE PRONTUÁRIO COM VALIDAÇÃO DE VÍNCULOS E MODAIS ---
+        let vinculosProntuarioCache = null;
+
+        function iniciarExclusaoProntuario() {
+            if (!ID_ATENDIMENTO) return;
+            $('#modal-excluir-prontuario-step1').removeClass('hidden');
+        }
+
+        function fecharModalExclusaoStep1() {
+            $('#modal-excluir-prontuario-step1').addClass('hidden');
+        }
+
+        function fecharModalExclusaoStep2() {
+            $('#modal-excluir-prontuario-step2').addClass('hidden');
+        }
+
+        function processarExclusaoStep1() {
+            if (!ID_ATENDIMENTO) return;
+            const $btn = $('#btn-confirmar-step1');
+            const originalHtml = $btn.html();
+            $btn.prop('disabled', true).html('<span class="material-icons text-sm animate-spin">refresh</span> Verificando...');
+
+            $.post(BASE_URL, { action: 'verificar_vinculos_prontuario', id_atendimento: ID_ATENDIMENTO }, function (res) {
+                $btn.prop('disabled', false).html(originalHtml);
+                try {
+                    if (typeof res === 'string') res = JSON.parse(res);
+                } catch (e) {}
+
+                if (!res.success) {
+                    alert('Erro ao verificar dados do prontuário: ' + (res.message || 'Desconhecido'));
+                    return;
+                }
+
+                vinculosProntuarioCache = res.data;
+                fecharModalExclusaoStep1();
+
+                // Se houver receitas, anexos ou documentos vinculados, emite a segunda confirmação com aviso detalhado
+                if (vinculosProntuarioCache.total_vinculos > 0) {
+                    $('#cnt-receitas').text(vinculosProntuarioCache.receitas);
+                    $('#cnt-anexos').text(vinculosProntuarioCache.anexos);
+                    $('#cnt-documentos').text(vinculosProntuarioCache.documentos);
+
+                    // Destacar ou esmaecer linhas que não tenham registros
+                    $('#alerta-vinculo-receitas').toggleClass('opacity-40', vinculosProntuarioCache.receitas === 0);
+                    $('#alerta-vinculo-anexos').toggleClass('opacity-40', vinculosProntuarioCache.anexos === 0);
+                    $('#alerta-vinculo-documentos').toggleClass('opacity-40', vinculosProntuarioCache.documentos === 0);
+
+                    $('#modal-excluir-prontuario-step2').removeClass('hidden');
+                } else {
+                    // Sem vínculos: executa diretamente a exclusão
+                    executarExclusaoProntuarioFinal();
+                }
+            }).fail(function () {
+                $btn.prop('disabled', false).html(originalHtml);
+                alert('Erro de conexão ao verificar prontuário.');
+            });
+        }
+
+        function executarExclusaoProntuarioFinal() {
+            if (!ID_ATENDIMENTO) return;
+            const $btnStep1 = $('#btn-confirmar-step1');
+            const $btnStep2 = $('#btn-confirmar-exclusao-final');
+            const origStep2Html = $btnStep2.html();
+
+            $btnStep1.prop('disabled', true);
+            $btnStep2.prop('disabled', true).html('<span class="material-icons text-sm animate-spin">refresh</span> Excluindo...');
+
+            $.post(BASE_URL, { action: 'excluir_prontuario', id_atendimento: ID_ATENDIMENTO }, function (res) {
+                try {
+                    if (typeof res === 'string') res = JSON.parse(res);
+                } catch (e) {}
+
+                if (res.success) {
+                    fecharModalExclusaoStep1();
+                    fecharModalExclusaoStep2();
+                    const destUrl = res.redirect_url || ('pet_detalhes.php?id=' + '<?= $id_pet_pre ?>' + '#historico');
+                    window.location.href = destUrl;
+                } else {
+                    $btnStep1.prop('disabled', false);
+                    $btnStep2.prop('disabled', false).html(origStep2Html);
+                    alert('Erro ao excluir: ' + (res.message || 'Desconhecido'));
+                }
+            }).fail(function () {
+                $btnStep1.prop('disabled', false);
+                $btnStep2.prop('disabled', false).html(origStep2Html);
+                alert('Falha na comunicação com o servidor ao excluir prontuário.');
             });
         }
 

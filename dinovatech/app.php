@@ -5763,6 +5763,116 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'verificar_vinculos_prontuario':
+            $id_atendimento = $_POST['id_atendimento'] ?? 0;
+            if (!$id_atendimento) {
+                $response['message'] = "ID do atendimento é obrigatório.";
+                break;
+            }
+            $id_atendimento = (int)$id_atendimento;
+
+            // Verificar se o atendimento existe
+            $qAtend = "SELECT id_atendimento, id_pet, data_atendimento, queixa_principal FROM Atendimentos WHERE id_atendimento = $id_atendimento";
+            $resAtend = DBExecute($link, $qAtend);
+            if (!$resAtend || mysqli_num_rows($resAtend) === 0) {
+                $response['message'] = "Atendimento não encontrado.";
+                break;
+            }
+            $atendRow = mysqli_fetch_assoc($resAtend);
+
+            // Contar receitas
+            $qRec = "SELECT COUNT(*) as total FROM Receitas WHERE id_atendimento = $id_atendimento";
+            $rRec = DBExecute($link, $qRec);
+            $totalReceitas = ($rRec && $row = mysqli_fetch_assoc($rRec)) ? (int)$row['total'] : 0;
+
+            // Contar anexos
+            $qAnx = "SELECT COUNT(*) as total FROM AtendimentoArquivos WHERE id_atendimento = $id_atendimento";
+            $rAnx = DBExecute($link, $qAnx);
+            $totalAnexos = ($rAnx && $row = mysqli_fetch_assoc($rAnx)) ? (int)$row['total'] : 0;
+
+            // Contar documentos emitidos
+            $qDoc = "SELECT COUNT(*) as total FROM DocumentosEmitidos WHERE id_atendimento = $id_atendimento";
+            $rDoc = DBExecute($link, $qDoc);
+            $totalDocumentos = ($rDoc && $row = mysqli_fetch_assoc($rDoc)) ? (int)$row['total'] : 0;
+
+            $totalVinculos = $totalReceitas + $totalAnexos + $totalDocumentos;
+
+            $response['success'] = true;
+            $response['data'] = [
+                'id_atendimento' => $id_atendimento,
+                'id_pet' => (int)$atendRow['id_pet'],
+                'data_atendimento' => $atendRow['data_atendimento'],
+                'queixa_principal' => $atendRow['queixa_principal'],
+                'receitas' => $totalReceitas,
+                'anexos' => $totalAnexos,
+                'documentos' => $totalDocumentos,
+                'total_vinculos' => $totalVinculos
+            ];
+            break;
+
+        case 'excluir_prontuario':
+            $id_atendimento = $_POST['id_atendimento'] ?? 0;
+            if (!$id_atendimento) {
+                $response['message'] = "ID do atendimento é obrigatório.";
+                break;
+            }
+            $id_atendimento = (int)$id_atendimento;
+
+            // Verificar se o atendimento existe
+            $qAtend = "SELECT id_atendimento, id_pet FROM Atendimentos WHERE id_atendimento = $id_atendimento";
+            $resAtend = DBExecute($link, $qAtend);
+            if (!$resAtend || mysqli_num_rows($resAtend) === 0) {
+                $response['message'] = "Prontuário/Atendimento não encontrado.";
+                break;
+            }
+            $atendRow = mysqli_fetch_assoc($resAtend);
+            $id_pet = (int)$atendRow['id_pet'];
+
+            // 1. Excluir documentos emitidos vinculados
+            DBExecute($link, "DELETE FROM DocumentosEmitidos WHERE id_atendimento = $id_atendimento");
+
+            // 2. Excluir arquivos anexados e seus registros em Arquivos
+            $qArquivos = "SELECT id_arquivo FROM AtendimentoArquivos WHERE id_atendimento = $id_atendimento";
+            $rArquivos = DBExecute($link, $qArquivos);
+            $idsArquivos = [];
+            if ($rArquivos) {
+                while ($arq = mysqli_fetch_assoc($rArquivos)) {
+                    $idsArquivos[] = (int)$arq['id_arquivo'];
+                }
+            }
+            DBExecute($link, "DELETE FROM AtendimentoArquivos WHERE id_atendimento = $id_atendimento");
+            if (!empty($idsArquivos)) {
+                $idsArquivosList = implode(',', $idsArquivos);
+                DBExecute($link, "DELETE FROM Arquivos WHERE id_arquivo IN ($idsArquivosList)");
+            }
+
+            // 3. Excluir receitas e itens de receita
+            $qReceitas = "SELECT id_receita FROM Receitas WHERE id_atendimento = $id_atendimento";
+            $rReceitas = DBExecute($link, $qReceitas);
+            $idsReceitas = [];
+            if ($rReceitas) {
+                while ($rec = mysqli_fetch_assoc($rReceitas)) {
+                    $idsReceitas[] = (int)$rec['id_receita'];
+                }
+            }
+            if (!empty($idsReceitas)) {
+                $idsReceitasList = implode(',', $idsReceitas);
+                DBExecute($link, "DELETE FROM ItensReceita WHERE id_receita IN ($idsReceitasList)");
+            }
+            DBExecute($link, "DELETE FROM Receitas WHERE id_atendimento = $id_atendimento");
+
+            // 4. Excluir o próprio atendimento
+            $qDeleteAtend = "DELETE FROM Atendimentos WHERE id_atendimento = $id_atendimento";
+            if (DBExecute($link, $qDeleteAtend)) {
+                $response['success'] = true;
+                $response['message'] = "Prontuário excluído com sucesso!";
+                $response['redirect_url'] = "pet_detalhes.php?id=" . $id_pet . "#historico";
+            } else {
+                $response['message'] = "Erro ao excluir prontuário: " . mysqli_error($link);
+            }
+            break;
+
+
         // --- GESTÃO DE USUÁRIOS ---
         case 'get_usuarios':
             $query = "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios ORDER BY nome ASC";
