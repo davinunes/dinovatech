@@ -15,12 +15,21 @@ $search = "";
 
 if ($link) {
     $search = isset($_GET['search']) ? mysqli_real_escape_string($link, $_GET['search']) : '';
-    $where_clause = "";
-    if ($search) {
-        $where_clause = "WHERE nome LIKE '%$search%' OR crmv LIKE '%$search%'";
+    
+    $checkCol = DBExecute($link, "SHOW COLUMNS FROM Usuarios LIKE 'id_colaborador'");
+    $hasColabCol = ($checkCol && mysqli_num_rows($checkCol) > 0);
+
+    if ($hasColabCol) {
+        $whereSql = $search ? "WHERE v.nome LIKE '%$search%' OR v.crmv LIKE '%$search%'" : "";
+        $query = "SELECT v.*, u.id_usuario, u.nome AS usuario_nome, u.email AS usuario_email 
+                  FROM Veterinarios v 
+                  LEFT JOIN Usuarios u ON u.id_colaborador = v.id_vet
+                  $whereSql ORDER BY v.nome ASC";
+    } else {
+        $where_clause = $search ? "WHERE nome LIKE '%$search%' OR crmv LIKE '%$search%'" : "";
+        $query = "SELECT * FROM Veterinarios $where_clause ORDER BY nome ASC";
     }
 
-    $query = "SELECT * FROM Veterinarios $where_clause ORDER BY nome ASC";
     $result = DBExecute($link, $query);
     if ($result) {
         while ($row = mysqli_fetch_assoc($result)) {
@@ -157,6 +166,15 @@ if ($link) {
                                         </div>
                                     <?php endif; ?>
                                 </div>
+
+                                <?php if (!empty($vet['usuario_nome'])): ?>
+                                    <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px]">
+                                        <span class="inline-flex items-center gap-1 text-slate-700 font-medium truncate" title="<?= htmlspecialchars($vet['usuario_email']) ?>">
+                                            <span class="material-icons text-xs text-cyan-600">manage_accounts</span> <?= htmlspecialchars($vet['usuario_nome']) ?>
+                                        </span>
+                                        <span class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded text-[10px] font-semibold">Conta Vinculada</span>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                             <div class="bg-gray-50 px-6 py-2.5 border-t border-gray-100 flex justify-end">
                                 <a href="veterinario_form.php?id=<?= $vet['id_vet'] ?>"

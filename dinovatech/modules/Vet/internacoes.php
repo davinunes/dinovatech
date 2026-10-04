@@ -599,7 +599,8 @@ function calcularIdadeCard($data_nasc) {
         // --- Nova Internação Modal ---
         function openNovaInternacaoModal() {
             $('#ni_id_pet').val('');
-            $('#ni_id_vet').val('');
+            const defaultLoggedColabId = '<?= AppHelper::getLoggedColaboradorId() ?? "" ?>';
+            $('#ni_id_vet').val(defaultLoggedColabId || '');
             const now = new Date();
             const nowISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0,16);
             $('#ni_data_internacao').val(nowISO);

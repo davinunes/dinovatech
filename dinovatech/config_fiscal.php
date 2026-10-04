@@ -1166,6 +1166,9 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Nível</th>
                                         <th
+                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Colaborador Vinculado</th>
+                                        <th
                                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Ações</th>
                                     </tr>
@@ -1173,7 +1176,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                 <tbody class="bg-white divide-y divide-gray-200" id="lista-usuarios">
                                     <!-- Populated by JS -->
                                     <tr>
-                                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">Carregando...</td>
+                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">Carregando...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1229,6 +1232,15 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                 <option value="admin">Administrador</option>
                                 <option value="padrao">Padrão</option>
                             </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2">Colaborador Vinculado</label>
+                            <select name="id_colaborador" id="form_id_colaborador"
+                                class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                                <option value="">(Nenhum - Sem vínculo operacional)</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Ao vincular, este colaborador virá selecionado por padrão na agenda e nos prontuários.</p>
                         </div>
 
                         <div class="flex items-center justify-end mt-4">
@@ -1773,6 +1785,35 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
             // --- USER MANAGEMENT JS ---
 
+            let listaColaboradoresCache = null;
+
+            function carregarColaboradoresParaSelect(selectedId = '') {
+                const select = $('#form_id_colaborador');
+                select.find('option:not(:first)').remove();
+
+                const popular = (colabs) => {
+                    colabs.forEach(c => {
+                        const extra = c.crmv ? ` (${c.crmv})` : (c.funcao ? ` - ${c.funcao}` : '');
+                        const isSel = (String(c.id_vet) === String(selectedId)) ? 'selected' : '';
+                        select.append(`<option value="${c.id_vet}" ${isSel}>${c.nome}${extra}</option>`);
+                    });
+                    if (selectedId) {
+                        select.val(selectedId);
+                    }
+                };
+
+                if (listaColaboradoresCache !== null) {
+                    popular(listaColaboradoresCache);
+                } else {
+                    $.post('app.php', { action: 'get_colaboradores_simples' }, function (res) {
+                        if (res.success && res.data) {
+                            listaColaboradoresCache = res.data;
+                            popular(listaColaboradoresCache);
+                        }
+                    }, 'json');
+                }
+            }
+
             window.loadUsuarios = function () {
                 $.post('app.php', { action: 'get_usuarios' }, function (res) {
                     const tbody = $('#lista-usuarios');
@@ -1780,11 +1821,22 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 
                     if (res.success && res.data.length > 0) {
                         res.data.forEach(u => {
+                            let colabBadge = '<span class="text-xs text-gray-400 italic">Nenhum</span>';
+                            if (u.nome_colaborador) {
+                                const crmvTxt = u.crmv ? ` (${u.crmv})` : '';
+                                colabBadge = `
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span class="material-icons text-xs">badge</span> ${u.nome_colaborador}${crmvTxt}
+                                    </span>
+                                `;
+                            }
+
                             tbody.append(`
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${u.nome}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${u.email}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">${u.nivel_acesso}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${colabBadge}</td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <button type="button" onclick='editUsuario(${JSON.stringify(u)})' class="text-cyan-600 hover:text-cyan-900 mr-3">Editar</button>
                                         <button type="button" onclick="deleteUsuario('${u.id_usuario}')" class="text-red-600 hover:text-red-900">Excluir</button>
@@ -1793,7 +1845,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                             `);
                         });
                     } else {
-                        tbody.append('<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Nenhum usuário encontrado.</td></tr>');
+                        tbody.append('<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">Nenhum usuário encontrado.</td></tr>');
                     }
                 }, 'json');
             };
@@ -1817,6 +1869,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                 $('#modalUsuarioTitle').text('Novo Usuário');
                 $('#senha_hint').text('Senha é obrigatória para novos usuários.');
                 $('#form_senha_usuario').attr('placeholder', 'Digite a senha');
+                carregarColaboradoresParaSelect('');
                 $('#modalUsuario').removeClass('hidden');
             };
 
@@ -1833,6 +1886,8 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                 $('#modalUsuarioTitle').text('Editar Usuário');
                 $('#senha_hint').text('Deixe em branco para manter a atual.');
                 $('#form_senha_usuario').attr('placeholder', '(Não alterada)');
+
+                carregarColaboradoresParaSelect(user.id_colaborador || '');
 
                 $('#modalUsuario').removeClass('hidden');
             };

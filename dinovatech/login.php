@@ -12,7 +12,7 @@ if (!isset($_SESSION['usuario_id']) && !empty($_COOKIE['dinovatech_remember'])) 
         $link = DBConnect();
         if ($link) {
             $userIdSafe = mysqli_real_escape_string($link, $userId);
-            $res = DBExecute($link, "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios WHERE id_usuario = '$userIdSafe' LIMIT 1");
+            $res = DBExecute($link, "SELECT * FROM Usuarios WHERE id_usuario = '$userIdSafe' LIMIT 1");
             if ($res && mysqli_num_rows($res) === 1) {
                 $user = mysqli_fetch_assoc($res);
                 $masterKey = defined('APP_MASTER_KEY') && !empty(APP_MASTER_KEY) ? APP_MASTER_KEY : 'dinovatech_secret_key';
@@ -22,6 +22,7 @@ if (!isset($_SESSION['usuario_id']) && !empty($_COOKIE['dinovatech_remember'])) 
                     $_SESSION['usuario_nome'] = $user['nome'];
                     $_SESSION['usuario_email'] = $user['email'];
                     $_SESSION['nivel_acesso'] = $user['nivel_acesso'];
+                    $_SESSION['id_colaborador'] = !empty($user['id_colaborador']) ? (int) $user['id_colaborador'] : null;
                 }
             }
             DBClose($link);

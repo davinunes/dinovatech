@@ -802,6 +802,10 @@ DBClose($link);
 
         function openCheckinModal() {
             $('#formCheckin')[0].reset();
+            const defaultLoggedColabId = '<?= AppHelper::getLoggedColaboradorId() ?? "" ?>';
+            if (defaultLoggedColabId) {
+                $('#checkin_id_colaborador').val(defaultLoggedColabId);
+            }
             $('#checkinMessage, #checkinPreferenciasAlert').addClass('hidden');
             $('#modalCheckin').removeClass('hidden');
             $('.select2-checkin').select2({

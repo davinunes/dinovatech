@@ -260,10 +260,13 @@ DBClose($link);
             $('#eventStart').val(formatDateLocal(start));
             $('#eventEnd').val(formatDateLocal(end));
 
-            // Default Vet to filter
+            // Default Vet to filter or logged-in collaborator
             const filterVet = $('#filterVet').val();
+            const defaultLoggedColabId = '<?= AppHelper::getLoggedColaboradorId() ?? "" ?>';
             if (filterVet) {
                 $('#eventVet').val(filterVet).trigger('change');
+            } else if (defaultLoggedColabId) {
+                $('#eventVet').val(defaultLoggedColabId).trigger('change');
             }
         }
 

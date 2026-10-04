@@ -23,7 +23,7 @@ if (!$link) {
 
 // Busca o usuário pelo email
 $email_safe = mysqli_real_escape_string($link, $email);
-$query = "SELECT id_usuario, nome, email, senha, nivel_acesso FROM Usuarios WHERE email = '{$email_safe}' LIMIT 1";
+$query = "SELECT * FROM Usuarios WHERE email = '{$email_safe}' LIMIT 1";
 $result = DBExecute($link, $query);
 
 if ($result && mysqli_num_rows($result) === 1) {
@@ -36,6 +36,7 @@ if ($result && mysqli_num_rows($result) === 1) {
         $_SESSION['usuario_nome'] = $usuario['nome'];
         $_SESSION['usuario_email'] = $usuario['email'];
         $_SESSION['nivel_acesso'] = $usuario['nivel_acesso'];
+        $_SESSION['id_colaborador'] = !empty($usuario['id_colaborador']) ? (int) $usuario['id_colaborador'] : null;
 
         // Se o usuário selecionou permanecer logado
         if (!empty($_POST['permanecer_logado'])) {

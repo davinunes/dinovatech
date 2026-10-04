@@ -76,7 +76,7 @@ class AppHelper
                 $link = DBConnect();
                 if ($link) {
                     $userIdSafe = mysqli_real_escape_string($link, $userId);
-                    $res = DBExecute($link, "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios WHERE id_usuario = '$userIdSafe' LIMIT 1");
+                    $res = DBExecute($link, "SELECT * FROM Usuarios WHERE id_usuario = '$userIdSafe' LIMIT 1");
                     if ($res && mysqli_num_rows($res) === 1) {
                         $user = mysqli_fetch_assoc($res);
                         $masterKey = defined('APP_MASTER_KEY') && !empty(APP_MASTER_KEY) ? APP_MASTER_KEY : 'dinovatech_secret_key';
@@ -86,6 +86,7 @@ class AppHelper
                             $_SESSION['usuario_nome'] = $user['nome'];
                             $_SESSION['usuario_email'] = $user['email'];
                             $_SESSION['nivel_acesso'] = $user['nivel_acesso'];
+                            $_SESSION['id_colaborador'] = !empty($user['id_colaborador']) ? (int) $user['id_colaborador'] : null;
                             DBClose($link);
                             return true;
                         }
@@ -528,6 +529,66 @@ class AppHelper
         }
         DBClose($link);
         return $active;
+    }
+
+    public static function getLoggedColaboradorId()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['id_colaborador']) && !empty($_SESSION['usuario_id'])) {
+            $dbPath = dirname(__DIR__) . '/database.php';
+            if (!file_exists($dbPath)) {
+                $dbPath = dirname(__DIR__, 2) . '/database.php';
+            }
+            if (file_exists($dbPath)) {
+                require_once $dbPath;
+            }
+
+            $link = DBConnect();
+            if ($link) {
+                $uid = (int) $_SESSION['usuario_id'];
+                $checkCol = DBExecute($link, "SHOW COLUMNS FROM Usuarios LIKE 'id_colaborador'");
+                if ($checkCol && mysqli_num_rows($checkCol) > 0) {
+                    $res = DBExecute($link, "SELECT id_colaborador FROM Usuarios WHERE id_usuario = $uid LIMIT 1");
+                    if ($res && $row = mysqli_fetch_assoc($res)) {
+                        $_SESSION['id_colaborador'] = !empty($row['id_colaborador']) ? (int) $row['id_colaborador'] : null;
+                    }
+                } else {
+                    $_SESSION['id_colaborador'] = null;
+                }
+                DBClose($link);
+            }
+        }
+
+        return !empty($_SESSION['id_colaborador']) ? (int) $_SESSION['id_colaborador'] : null;
+    }
+
+    public static function getLoggedColaborador()
+    {
+        $idColab = self::getLoggedColaboradorId();
+        if (!$idColab) {
+            return null;
+        }
+
+        $dbPath = dirname(__DIR__) . '/database.php';
+        if (!file_exists($dbPath)) {
+            $dbPath = dirname(__DIR__, 2) . '/database.php';
+        }
+        if (file_exists($dbPath)) {
+            require_once $dbPath;
+        }
+
+        $link = DBConnect();
+        if (!$link) {
+            return null;
+        }
+
+        $res = DBExecute($link, "SELECT * FROM Veterinarios WHERE id_vet = $idColab LIMIT 1");
+        $colab = ($res && mysqli_num_rows($res) > 0) ? mysqli_fetch_assoc($res) : null;
+        DBClose($link);
+        return $colab;
     }
 }
 

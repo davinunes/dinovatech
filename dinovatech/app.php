@@ -5874,8 +5874,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
 
         // --- GESTÃO DE USUÁRIOS ---
+        case 'get_colaboradores_simples':
+            $res = DBExecute($link, "SELECT id_vet, nome, funcao, crmv FROM Veterinarios ORDER BY nome ASC");
+            $colabs = [];
+            if ($res) {
+                while ($c = mysqli_fetch_assoc($res)) {
+                    $colabs[] = $c;
+                }
+            }
+            $response['success'] = true;
+            $response['data'] = $colabs;
+            break;
+
         case 'get_usuarios':
-            $query = "SELECT id_usuario, nome, email, nivel_acesso FROM Usuarios ORDER BY nome ASC";
+            $checkCol = DBExecute($link, "SHOW COLUMNS FROM Usuarios LIKE 'id_colaborador'");
+            $hasColabCol = ($checkCol && mysqli_num_rows($checkCol) > 0);
+
+            if ($hasColabCol) {
+                $query = "SELECT u.id_usuario, u.nome, u.email, u.nivel_acesso, u.id_colaborador, 
+                                 v.nome AS nome_colaborador, v.crmv, v.funcao AS funcao_colaborador
+                          FROM Usuarios u
+                          LEFT JOIN Veterinarios v ON u.id_colaborador = v.id_vet
+                          ORDER BY u.nome ASC";
+            } else {
+                $query = "SELECT id_usuario, nome, email, nivel_acesso, NULL AS id_colaborador, NULL AS nome_colaborador FROM Usuarios ORDER BY nome ASC";
+            }
             $result = DBExecute($link, $query);
             $usuarios = [];
             if ($result) {
@@ -5895,16 +5918,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $email = mysqli_real_escape_string($link, $_POST['email'] ?? '');
             $senha = $_POST['senha'] ?? '';
             $nivel_acesso = mysqli_real_escape_string($link, $_POST['nivel_acesso'] ?? 'admin');
+            $id_colaborador = !empty($_POST['id_colaborador']) ? (int) $_POST['id_colaborador'] : null;
+            $id_colaborador_sql = $id_colaborador ? $id_colaborador : "NULL";
 
             if (empty($nome) || empty($email)) {
                 $response['message'] = "Nome e Email são obrigatórios.";
                 break;
             }
 
+            // Checa suporte à coluna id_colaborador
+            $checkCol = DBExecute($link, "SHOW COLUMNS FROM Usuarios LIKE 'id_colaborador'");
+            $hasColabCol = ($checkCol && mysqli_num_rows($checkCol) > 0);
+
             if (!empty($id_usuario)) {
                 // Update
                 $id_usuario = mysqli_real_escape_string($link, $id_usuario);
                 $query = "UPDATE Usuarios SET nome='$nome', email='$email', nivel_acesso='$nivel_acesso'";
+                if ($hasColabCol) {
+                    $query .= ", id_colaborador=$id_colaborador_sql";
+                }
 
                 if (!empty($senha)) {
                     $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
@@ -5919,12 +5951,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     break;
                 }
                 $senhaHash = password_hash($senha, PASSWORD_DEFAULT);
-                $query = "INSERT INTO Usuarios (nome, email, senha, nivel_acesso) VALUES ('$nome', '$email', '$senhaHash', '$nivel_acesso')";
+                if ($hasColabCol) {
+                    $query = "INSERT INTO Usuarios (nome, email, senha, nivel_acesso, id_colaborador) VALUES ('$nome', '$email', '$senhaHash', '$nivel_acesso', $id_colaborador_sql)";
+                } else {
+                    $query = "INSERT INTO Usuarios (nome, email, senha, nivel_acesso) VALUES ('$nome', '$email', '$senhaHash', '$nivel_acesso')";
+                }
             }
 
             if (DBExecute($link, $query)) {
                 $response['success'] = true;
                 $response['message'] = "Usuário salvo com sucesso!";
+
+                // Atualiza sessão caso o usuário alterado seja o usuário atual
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                if (!empty($_SESSION['usuario_id']) && (int) $_SESSION['usuario_id'] === (int) $id_usuario) {
+                    $_SESSION['usuario_nome'] = $_POST['nome'] ?? $_SESSION['usuario_nome'];
+                    $_SESSION['usuario_email'] = $_POST['email'] ?? $_SESSION['usuario_email'];
+                    $_SESSION['nivel_acesso'] = $nivel_acesso;
+                    $_SESSION['id_colaborador'] = $id_colaborador;
+                }
             } else {
                 // Check for duplicate email error
                 if (mysqli_errno($link) == 1062) {

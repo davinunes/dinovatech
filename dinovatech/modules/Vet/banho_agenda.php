@@ -496,8 +496,15 @@ DBClose($link);
             $('#formBanhoAgendamento')[0].reset();
             $('#agendamento_id').val('');
             $('#modalTitle').text('Agendar Banho / Tosa');
-            $('#btnExcluirAgendamento').addClass('hidden');
             $('#boxPreferenciasPet, #boxSaldoPacote, #boxStatusEsteira, #modalMessage').addClass('hidden');
+
+            const defaultLoggedColabId = '<?= AppHelper::getLoggedColaboradorId() ?? "" ?>';
+            const filterColab = $('#filterColaborador').val();
+            if (filterColab) {
+                $('#modal_id_vet').val(filterColab);
+            } else if (defaultLoggedColabId) {
+                $('#modal_id_vet').val(defaultLoggedColabId);
+            }
 
             if (dateStr) {
                 let startStr = dateStr;

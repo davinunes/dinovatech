@@ -30,6 +30,22 @@ if ($id_vet) {
     }
 }
 
+// Carregar Usuários do Sistema para vínculo
+$usuarios = [];
+$id_usuario_vinculado = null;
+$checkCol = DBExecute($link, "SHOW COLUMNS FROM Usuarios LIKE 'id_colaborador'");
+if ($checkCol && mysqli_num_rows($checkCol) > 0) {
+    $resUsers = DBExecute($link, "SELECT id_usuario, nome, email, id_colaborador FROM Usuarios ORDER BY nome ASC");
+    if ($resUsers) {
+        while ($u = mysqli_fetch_assoc($resUsers)) {
+            $usuarios[] = $u;
+            if ($id_vet && (int) $u['id_colaborador'] === (int) $id_vet) {
+                $id_usuario_vinculado = (int) $u['id_usuario'];
+            }
+        }
+    }
+}
+
 // Fetch Google Service Account Email for Hint
 $googleEmailHint = '';
 require_once __DIR__ . '/../../helpers/EncryptionHelper.php';
@@ -62,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $google_calendar_id = $_POST['google_calendar_id'] ?? '';
     $data_nascimento = $_POST['data_nascimento'] ?? '';
+    $id_usuario_vinculado_post = !empty($_POST['id_usuario_vinculado']) ? (int) $_POST['id_usuario_vinculado'] : null;
 
     // Se for função veterinário no modo vet, CRMV é obrigatório
     if ($funcao === 'veterinario' && $isVetMode && empty($crmv)) {
@@ -171,6 +188,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (DBExecute($link, $query)) {
+                $saved_id_vet = $is_edit ? (int) $id_vet : mysqli_insert_id($link);
+
+                // Sincroniza vínculo com conta de usuário
+                $checkCol = DBExecute($link, "SHOW COLUMNS FROM Usuarios LIKE 'id_colaborador'");
+                if ($checkCol && mysqli_num_rows($checkCol) > 0 && $saved_id_vet > 0) {
+                    DBExecute($link, "UPDATE Usuarios SET id_colaborador = NULL WHERE id_colaborador = $saved_id_vet");
+                    if ($id_usuario_vinculado_post) {
+                        DBExecute($link, "UPDATE Usuarios SET id_colaborador = $saved_id_vet WHERE id_usuario = $id_usuario_vinculado_post");
+                    }
+                }
+
                 header("Location: veterinarios.php");
                 exit();
             } else {
@@ -266,6 +294,32 @@ DBClose($link);
                                 </div>
                             </div>
                             <?php endif; ?>
+                        </div>
+
+                        <!-- Vínculo com Usuário do Sistema -->
+                        <div class="border mt-4 mb-4 p-5 rounded-xl bg-slate-50/80 shadow-xs border-slate-200">
+                            <h3 class="text-base font-semibold text-gray-800 flex items-center gap-2 mb-1">
+                                <span class="material-icons text-cyan-600 text-lg">manage_accounts</span>
+                                Usuário de Login Vinculado
+                            </h3>
+                            <p class="text-xs text-gray-500 mb-3">
+                                Vincule este colaborador à conta de usuário que ele utiliza para acessar o sistema. Quando ele estiver logado, este colaborador já virá selecionado por padrão na agenda e nos prontuários.
+                            </p>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Conta de Usuário</label>
+                                <select name="id_usuario_vinculado" class="w-full border-gray-300 rounded-lg p-2.5 border text-sm bg-white">
+                                    <option value="">(Nenhum - Sem conta vinculada)</option>
+                                    <?php foreach ($usuarios as $u): ?>
+                                        <?php
+                                            $isLinkedOther = (!empty($u['id_colaborador']) && (int)$u['id_colaborador'] !== (int)$id_vet);
+                                            $isSelected = ($id_usuario_vinculado && (int)$u['id_usuario'] === (int)$id_usuario_vinculado);
+                                        ?>
+                                        <option value="<?= $u['id_usuario'] ?>" <?= $isSelected ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['email']) ?>) <?= $isLinkedOther ? '• [Vinculado a outro colaborador]' : '' ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                         </div>
 
                         <div class="border mt-4 mb-4 p-5 rounded-xl bg-white shadow-sm border-gray-100">

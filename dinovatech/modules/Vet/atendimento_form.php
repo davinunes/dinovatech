@@ -29,7 +29,7 @@ if ($id_agendamento_pre && !$id_pet_pre) {
     $r_ag = DBExecute($link, $q_ag);
     if ($row_ag = mysqli_fetch_assoc($r_ag)) {
         $id_pet_pre = $row_ag['id_pet'];
-        // $id_vet_pre = $row_ag['id_vet']; // Can be used to set default vet
+        $id_vet_pre = !empty($row_ag['id_vet']) ? $row_ag['id_vet'] : null;
     }
 }
 
@@ -72,6 +72,13 @@ if ($id_atendimento) {
         $tratamento = $atendimento['conduta_tratamento'];
         $obs_internas = ""; // Column missing in DB
         $peso = "";         // Column missing in DB
+    }
+} else {
+    // Para novo atendimento, se veio com vet pré-definido pelo agendamento ou se usuário logado é colaborador
+    if (!empty($id_vet_pre)) {
+        $id_veterinario = $id_vet_pre;
+    } else {
+        $id_veterinario = AppHelper::getLoggedColaboradorId() ?? '';
     }
 }
 

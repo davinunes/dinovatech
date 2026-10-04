@@ -1178,7 +1178,8 @@ function calcularIdade($data_nasc)
             $('#modalInternacaoTitle').text('Nova Internação');
             $('#formInternacao input[name="action"]').val('save_internacao');
             $('#int_id_internacao').val('');
-            $('#int_id_vet').val('');
+            const defaultLoggedColabId = '<?= AppHelper::getLoggedColaboradorId() ?? "" ?>';
+            $('#int_id_vet').val(defaultLoggedColabId || '');
             const now = new Date();
             const nowISO = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0,16);
             $('#int_data_internacao').val(nowISO);
