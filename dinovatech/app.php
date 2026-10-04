@@ -32,21 +32,32 @@ if ((isset($_GET['action']) && $_GET['action'] === 'download_backup') || (isset(
     $filename = null;
     $contentType = 'application/octet-stream';
 
+    // Recupera o Nome Fantasia da empresa para compor o nome do arquivo
+    $empresaNome = AppHelper::getCompanyName();
+    if (function_exists('iconv')) {
+        $empresaNomeClean = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $empresaNome) ?: $empresaNome;
+    } else {
+        $empresaNomeClean = $empresaNome;
+    }
+    $slugEmpresa = preg_replace('/[^a-zA-Z0-9_\-]+/', '_', trim($empresaNomeClean));
+    $slugEmpresa = trim($slugEmpresa, '_');
+    $sufixoEmpresa = !empty($slugEmpresa) ? '_' . $slugEmpresa : '';
+
     if (file_exists('../backup_bd.zip')) {
         $file = '../backup_bd.zip';
-        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.zip';
+        $filename = 'backup_bd' . $sufixoEmpresa . '_' . date('Y-m-d_H-i-s') . '.zip';
         $contentType = 'application/zip';
     } elseif (file_exists('../backup_bd.sql.gz')) {
         $file = '../backup_bd.sql.gz';
-        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.sql.gz';
+        $filename = 'backup_bd' . $sufixoEmpresa . '_' . date('Y-m-d_H-i-s') . '.sql.gz';
         $contentType = 'application/x-gzip';
     } elseif (file_exists('../backup_bd.sql')) {
         $file = '../backup_bd.sql';
-        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.sql';
+        $filename = 'backup_bd' . $sufixoEmpresa . '_' . date('Y-m-d_H-i-s') . '.sql';
         $contentType = 'application/sql';
     } elseif (file_exists('../estrutura.sql') && file_exists('../dados.sql')) {
         $file = '../estrutura.sql';
-        $filename = 'backup_bd_' . date('Y-m-d_H-i-s') . '.sql';
+        $filename = 'backup_bd' . $sufixoEmpresa . '_' . date('Y-m-d_H-i-s') . '.sql';
         $contentType = 'application/sql';
     }
 
@@ -1469,7 +1480,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
 
             // 4. Salva os arquivos no servidor
-            $headerTime = "-- Backup do Banco de Dados - Gerado em " . date('Y-m-d H:i:s') . "\n";
+            $empresaHeader = AppHelper::getCompanyName();
+            $headerTime = "-- Backup do Banco de Dados [$empresaHeader] - Gerado em " . date('Y-m-d H:i:s') . "\n";
             $resEstrutura = file_put_contents($pathEstrutura, $headerTime . $estruturaContent);
             $resDados = file_put_contents($pathDados, $headerTime . $dadosContent);
 
