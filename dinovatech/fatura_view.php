@@ -694,6 +694,10 @@ if ($id_fatura) {
 
                                     <div class="space-y-1.5">
                                         <?php if ($pagamentoDebitoAgendado): ?>
+                                            <button type="button" onclick="solicitarRetentativaDebitoAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>)"
+                                                class="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1 shadow">
+                                                <span class="material-icons text-xs">replay</span> Solicitar Retentativa de Débito
+                                            </button>
                                             <button type="button" onclick="cancelarCobrancaIndividualAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>)"
                                                 class="w-full bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700/50 py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1">
                                                 <span class="material-icons text-xs">cancel</span> Cancelar Débito Desta Fatura
@@ -2086,6 +2090,34 @@ if ($id_fatura) {
                     }
                 }, 'json').fail(function(xhr) {
                     let msg = 'Erro ao cancelar débito no Banco Inter.';
+                    try {
+                        const json = JSON.parse(xhr.responseText);
+                        if (json && json.message) msg = json.message;
+                    } catch(e){}
+                    showToast(msg, 'error');
+                });
+            };
+
+            window.solicitarRetentativaDebitoAdmin = function(txid, idFatura) {
+                const hoje = new Date().toISOString().split('T')[0];
+                const dataEscolhida = prompt('Informe a data prevista para a nova tentativa de débito (formato AAAA-MM-DD):', hoje);
+                if (!dataEscolhida) return;
+
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEscolhida)) {
+                    alert('Data inválida. Utilize o formato AAAA-MM-DD (Exemplo: ' + hoje + ')');
+                    return;
+                }
+
+                showToast('Solicitando retentativa de débito no Banco Inter...', 'info');
+                $.post('../inter/endpoint.php?action=solicitar_retentativa_pix_cobranca', { txid: txid, id_fatura: idFatura, data: dataEscolhida }, function(res) {
+                    if (res.success) {
+                        showToast('Retentativa de débito solicitada com sucesso para ' + dataEscolhida + '!', 'success');
+                        setTimeout(() => window.location.reload(), 1500);
+                    } else {
+                        showToast(res.message || 'Erro ao solicitar retentativa no Banco Inter.', 'error');
+                    }
+                }, 'json').fail(function(xhr) {
+                    let msg = 'Erro ao solicitar retentativa no Banco Inter.';
                     try {
                         const json = JSON.parse(xhr.responseText);
                         if (json && json.message) msg = json.message;

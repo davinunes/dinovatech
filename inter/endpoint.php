@@ -603,6 +603,19 @@ try {
             echo json_encode($resCancelCob);
             break;
 
+        case 'solicitar_retentativa_pix_cobranca':
+            $txid = $_POST['txid'] ?? $requestBody['txid'] ?? $_GET['txid'] ?? null;
+            $dataPrevia = $_POST['data'] ?? $requestBody['data'] ?? $_GET['data'] ?? null;
+            $idFatura = (int)($_POST['id_fatura'] ?? $requestBody['id_fatura'] ?? $_GET['id_fatura'] ?? 0);
+
+            if (empty($txid)) {
+                throw new Exception("TXID da cobrança é obrigatório para solicitar retentativa.");
+            }
+
+            $resRet = PixAutomaticoService::solicitarRetentativaCobrancaService($txid, $dataPrevia, $idFatura, $link);
+            echo json_encode($resRet);
+            break;
+
         case 'obter_status_pix_recorrencia_fatura':
             $idFatura = (int)($_GET['id_fatura'] ?? $requestBody['id_fatura'] ?? 0);
             if ($idFatura <= 0) {

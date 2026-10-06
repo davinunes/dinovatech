@@ -841,6 +841,53 @@ function cancelarCobrancaIndividual($config, $sslCert, $sslKey, $caInfo, $bearer
 }
 
 /**
+ * Solicita a retentativa de uma cobrança recorrente no Banco Inter (POST /cobr/{txid}/retentativa/{data}).
+ * Utilizado quando a cobrança não foi liquidada na data esperada (ex: falta de saldo) e a Política
+ * de retentativas permite uma nova tentativa.
+ * 
+ * @param array $config Configurações do ambiente
+ * @param string $sslCert Caminho do certificado (.crt)
+ * @param string $sslKey Caminho da chave privada (.key)
+ * @param string $caInfo Caminho da cadeia CA (.crt)
+ * @param string $bearerToken Token OAuth2
+ * @param string $txid Identificador da transação
+ * @param string $dataPrevia Data prevista para liquidação (YYYY-MM-DD)
+ * @return object Resposta do Banco Inter
+ */
+function solicitarRetentativaCobranca($config, $sslCert, $sslKey, $caInfo, $bearerToken, $txid, $dataPrevia)
+{
+    $url = $config['url_pix_base'] . '/cobr/' . rawurlencode($txid) . '/retentativa/' . rawurlencode($dataPrevia);
+    $headers = [
+        'Authorization: Bearer ' . $bearerToken,
+        'Content-Type: application/json'
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, '{}');
+    curl_setopt($ch, CURLOPT_SSLCERT, $sslCert);
+    curl_setopt($ch, CURLOPT_SSLKEY, $sslKey);
+    curl_setopt($ch, CURLOPT_CAINFO, $caInfo);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $response = curl_exec($ch);
+    $error = curl_error($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($error) {
+        throw new Exception("cURL Error on POST /cobr/{$txid}/retentativa/{$dataPrevia}: " . $error . " | HTTP Code: " . $httpCode);
+    }
+    if ($httpCode >= 400) {
+        throw new Exception("API Error on POST /cobr/{$txid}/retentativa/{$dataPrevia}: " . $response . " | HTTP Code: " . $httpCode);
+    }
+
+    return json_decode($response);
+}
+
+/**
  * Configura / Atualiza a URL do Webhook de Recorrência no Banco Inter (PUT /webhookrec).
  * 
  * @param array $config Configurações do ambiente

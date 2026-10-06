@@ -493,6 +493,60 @@ class PixAutomaticoService
     }
 
     /**
+     * Solicita retentativa de débito de uma cobrança recorrente no Banco Inter (POST /cobr/{txid}/retentativa/{data}).
+     * 
+     * @param string $txid TXID da cobrança
+     * @param string|null $dataPrevia Data prevista para nova liquidação (YYYY-MM-DD)
+     * @param int|null $idFatura ID da fatura vinculada
+     * @param mysqli|null $link Conexão ativa com o banco
+     * @return array Resposta da operação
+     */
+    public static function solicitarRetentativaCobrancaService($txid, $dataPrevia = null, $idFatura = null, $link = null)
+    {
+        global $ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile;
+
+        $txid = trim((string)$txid);
+        if (empty($txid)) {
+            throw new Exception("TXID da cobrança é obrigatório para solicitar retentativa.");
+        }
+
+        if (empty($dataPrevia)) {
+            $dataPrevia = date('Y-m-d');
+        } else {
+            // Garante formato YYYY-MM-DD
+            $time = strtotime($dataPrevia);
+            if (!$time) {
+                throw new Exception("Data prevista para retentativa inválida: " . $dataPrevia);
+            }
+            $dataPrevia = date('Y-m-d', $time);
+        }
+
+        $token = getInterAccessToken($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile);
+        $responseInter = solicitarRetentativaCobranca($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid, $dataPrevia);
+
+        if ($link) {
+            $txidSafe = mysqli_real_escape_string($link, $txid);
+            $dataPreviaSafe = mysqli_real_escape_string($link, $dataPrevia);
+            $dtAgora = date('d/m/Y H:i');
+
+            $qUpdatePag = "UPDATE Pagamentos 
+                           SET data_pagamento = '$dataPreviaSafe',
+                               status_pagamento = 'Pendente',
+                               observacao = CONCAT(COALESCE(observacao,''), ' [Retentativa de débito solicitada para $dataPreviaSafe em $dtAgora]')
+                           WHERE txid = '$txidSafe'";
+            DBExecute($link, $qUpdatePag);
+        }
+
+        return [
+            'success' => true,
+            'txid' => $txid,
+            'idFatura' => $idFatura,
+            'dataPrevia' => $dataPrevia,
+            'data' => $responseInter
+        ];
+    }
+
+    /**
      * Processa notificações passivas recebidas do Banco Inter via Webhook.
      * Payload esperado: {"recs": [ {"idRec": "...", "status": "APROVADA", ...} ]}
      * 
