@@ -5353,8 +5353,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $ra = DBExecute($link, $qa);
                 $dados = mysqli_fetch_assoc($ra);
             } elseif ($id_recorrencia) {
-                $q = "SELECT r.*, 
-                        c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
+                $q = "SELECT r.*, r.id_cliente as rec_id_cliente,
+                        c.*, c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
                         s.nome_servico
                         FROM Recorrencias r
                         LEFT JOIN Clientes c ON r.id_cliente = c.id_cliente
@@ -5413,16 +5413,73 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
             }
 
+            // Endereço Completo do Cliente
+            $enderecoCompleto = trim($dados['endereco_tutor'] ?? $dados['endereco'] ?? '');
+            if (!empty($dados['numero'])) {
+                $enderecoCompleto .= ', ' . $dados['numero'];
+            }
+            if (!empty($dados['complemento'])) {
+                $enderecoCompleto .= ' - ' . $dados['complemento'];
+            }
+            if (!empty($dados['bairro'])) {
+                $enderecoCompleto .= ', Bairro ' . $dados['bairro'];
+            }
+            if (!empty($dados['uf'])) {
+                $enderecoCompleto .= ' - ' . $dados['uf'];
+            }
+            if (!empty($dados['cep'])) {
+                $enderecoCompleto .= ', CEP: ' . $dados['cep'];
+            }
+
+            // Dia do Vencimento
+            $diaVencimento = '';
+            if (!empty($dados['dia_vencimento'])) {
+                $diaVencimento = str_pad($dados['dia_vencimento'], 2, '0', STR_PAD_LEFT);
+            } elseif (!empty($dados['data_inicio_cobranca'])) {
+                $diaVencimento = date('d', strtotime($dados['data_inicio_cobranca']));
+            }
+
+            // Vigência em Meses
+            $mesesVigencia = '12';
+            if (!empty($dados['data_inicio_cobranca']) && !empty($dados['data_fim_cobranca'])) {
+                try {
+                    $d1 = new DateTime($dados['data_inicio_cobranca']);
+                    $d2 = new DateTime($dados['data_fim_cobranca']);
+                    $diffVig = $d1->diff($d2);
+                    $totM = ($diffVig->y * 12) + $diffVig->m;
+                    if ($totM > 0) $mesesVigencia = (string)$totM;
+                } catch (Exception $eVig) {}
+            }
+
+            $nomeCliente = $dados['nome_tutor'] ?? $dados['nome'] ?? '';
+            $cpfCnpjCliente = formatCpfCnpj_Preview($dados['cpf_tutor'] ?? $dados['cpf_cnpj'] ?? '');
+            $ieCliente = $dados['inscricao_estadual'] ?? '';
+            $imCliente = $dados['inscricao_municipal'] ?? '';
+            $valorContratoFmt = isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '';
+
             // Map ALL available variables
             $vars = [
-                '{{NOME_TUTOR}}' => $dados['nome_tutor'],
-                '{{NOME_CLIENTE}}' => $dados['nome_tutor'],
-                '{{CPF_TUTOR}}' => formatCpfCnpj_Preview($dados['cpf_tutor'] ?? ''),
-                '{{CPF_CNPJ_CLIENTE}}' => formatCpfCnpj_Preview($dados['cpf_tutor'] ?? ''),
-                '{{ENDERECO_TUTOR}}' => $dados['endereco_tutor'] ?? '',
-                '{{ENDERECO_CLIENTE}}' => $dados['endereco_tutor'] ?? '',
-                '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? '',
-                '{{TELEFONE_CLIENTE}}' => $dados['telefone_tutor'] ?? '',
+                '{{NOME_TUTOR}}' => $nomeCliente,
+                '{{NOME_CLIENTE}}' => $nomeCliente,
+                '{{RAZAO_SOCIAL_CLIENTE}}' => $nomeCliente,
+                '{{CPF_TUTOR}}' => $cpfCnpjCliente,
+                '{{CPF_CNPJ_CLIENTE}}' => $cpfCnpjCliente,
+                '{{CPF_CLIENTE}}' => $cpfCnpjCliente,
+                '{{CNPJ_CLIENTE}}' => $cpfCnpjCliente,
+                '{{IE_CLIENTE}}' => $ieCliente,
+                '{{INSCRICAO_ESTADUAL_CLIENTE}}' => $ieCliente,
+                '{{IM_CLIENTE}}' => $imCliente,
+                '{{INSCRICAO_MUNICIPAL_CLIENTE}}' => $imCliente,
+                '{{ENDERECO_TUTOR}}' => $enderecoCompleto,
+                '{{ENDERECO_CLIENTE}}' => $enderecoCompleto,
+                '{{LOGRADOURO_CLIENTE}}' => $dados['endereco_tutor'] ?? $dados['endereco'] ?? '',
+                '{{NUMERO_CLIENTE}}' => $dados['numero'] ?? '',
+                '{{BAIRRO_CLIENTE}}' => $dados['bairro'] ?? '',
+                '{{COMPLEMENTO_CLIENTE}}' => $dados['complemento'] ?? '',
+                '{{CEP_CLIENTE}}' => $dados['cep'] ?? '',
+                '{{UF_CLIENTE}}' => $dados['uf'] ?? '',
+                '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? $dados['email'] ?? '',
+                '{{TELEFONE_CLIENTE}}' => $dados['telefone_tutor'] ?? $dados['telefone'] ?? '',
                 '{{NOME_PET}}' => $dados['nome_pet'],
                 '{{ESPECIE_PET}}' => $dados['especie'],
                 '{{RACA_PET}}' => $dados['raca'],
@@ -5433,9 +5490,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 '{{NOME_VET}}' => $dados['nome_vet'],
                 '{{CRMV_VET}}' => $dados['crmv_vet'],
                 '{{SERVICO_NOME}}' => $dados['nome_servico'] ?? '',
-                '{{VALOR_CONTRATO}}' => isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '',
-                '{{DATA_INICIO}}' => isset($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
-                '{{DIA_VENCIMENTO}}' => isset($dados['data_inicio_cobranca']) ? date('d', strtotime($dados['data_inicio_cobranca'])) : '',
+                '{{VALOR_CONTRATO}}' => $valorContratoFmt,
+                '{{VALOR_RECORRENTE}}' => $valorContratoFmt,
+                '{{DATA_INICIO}}' => !empty($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
+                '{{DATA_FIM}}' => !empty($dados['data_fim_cobranca']) ? date('d/m/Y', strtotime($dados['data_fim_cobranca'])) : '',
+                '{{DIA_VENCIMENTO}}' => $diaVencimento,
+                '{{MESES_VIGENCIA}}' => $mesesVigencia,
                 '{{DESCRICAO_FISCAL}}' => $dados['descricao_fiscal'] ?? $dados['descricao_personalizada'] ?? '',
                 '{{ISS_RETIDO}}' => (isset($dados['iss_retido']) && $dados['iss_retido'] == '1') ? 'Sim' : 'Não',
                 '{{DATA_ATUAL}}' => date('d/m/Y'),
@@ -5584,7 +5644,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $dados['id_cliente'] = $dados['pet_id_cliente'] ?? $dados['client_id_final'];
             } elseif ($id_recorrencia) {
                 $q = "SELECT r.*, r.id_cliente as rec_id_cliente,
-                        c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
+                        c.*, c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
                         s.nome_servico
                         FROM Recorrencias r
                         LEFT JOIN Clientes c ON r.id_cliente = c.id_cliente
@@ -5610,11 +5670,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $modelo = mysqli_fetch_assoc($r_mod);
 
             // 3. Variables
-            // We need to construct $vars array.
-            // Simplified version or full? Full version logic from documento_print.php is best but lengthy.
-            // Since this is for SAVING the content, we must render it fully.
-
-            // Helper for Date/Age
             $idade = 'N/I';
             $data_nascimento = '';
             if (!empty($dados['nascimento'])) {
@@ -5628,14 +5683,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
 
             // Helper for CPF
-            function formatCpfCnpj_App($pCpfCnpj)
-            {
-                $cnpj_cpf = preg_replace("/\D/", '', $pCpfCnpj);
-                if (strlen($cnpj_cpf) === 11)
-                    return preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cnpj_cpf);
-                if (strlen($cnpj_cpf) === 14)
-                    return preg_replace("/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/", "\$1.\$2.\$3/\$4-\$5", $cnpj_cpf);
-                return $pCpfCnpj;
+            if (!function_exists('formatCpfCnpj_App')) {
+                function formatCpfCnpj_App($pCpfCnpj)
+                {
+                    $cnpj_cpf = preg_replace("/\D/", '', $pCpfCnpj);
+                    if (strlen($cnpj_cpf) === 11)
+                        return preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cnpj_cpf);
+                    if (strlen($cnpj_cpf) === 14)
+                        return preg_replace("/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/", "\$1.\$2.\$3/\$4-\$5", $cnpj_cpf);
+                    return $pCpfCnpj;
+                }
             }
 
             // Config for Logo/City
@@ -5650,28 +5707,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     $nomeCidade = $ibgeCidade;
             }
 
-            // Logo URL logic (simplified for saving, usually consistent)
-            $basePath = '../../'; // Relative to modules/Vet/
-            // Actually, here we are in app.php (root). We don't need relative path magic as much, but stored content might expect it if used in print.
-            // documento_print uses relative path because it's in modules/Vet/.
-            // The stored content is HTML. `documento_print.php` renders it.
-            // If we store with `../../`, it works if printed from `modules/Vet/`.
-            // But if printed from elsewhere, it breaks.
-            // Best to store absolute path or relate to root?
-            // `documento_print.php` sets `{{LOGO_URL}}` dynamically.
-            // Wait! `documento_print.php` REPLACES variables at runtime (render time).
-            // DOES IT?
-            // `documento_print.php` lines 195-202: It replaces keys in `$modelo['conteudo']` with values.
-            // AND THEN SAVES THE RESULT ($conteudo_final) to database!
-            // So yes, we ARE saving the RENDERED content (snapshot).
-            // So we MUST replace variables here too.
-
             $logo_url = '';
             if (!empty($empresa['logo_url'])) {
-                $logo_url = '../../' . $empresa['logo_url']; // Keep relative to modules/Vet/ for compatibility with print view if it shares base
+                $logo_url = '../../' . $empresa['logo_url'];
             } else {
                 $logo_url = '../../assets/img/logo_dino.png';
             }
+
+            // Endereço Completo do Cliente
+            $enderecoCompleto = trim($dados['endereco_tutor'] ?? $dados['endereco'] ?? '');
+            if (!empty($dados['numero'])) {
+                $enderecoCompleto .= ', ' . $dados['numero'];
+            }
+            if (!empty($dados['complemento'])) {
+                $enderecoCompleto .= ' - ' . $dados['complemento'];
+            }
+            if (!empty($dados['bairro'])) {
+                $enderecoCompleto .= ', Bairro ' . $dados['bairro'];
+            }
+            if (!empty($dados['uf'])) {
+                $enderecoCompleto .= ' - ' . $dados['uf'];
+            }
+            if (!empty($dados['cep'])) {
+                $enderecoCompleto .= ', CEP: ' . $dados['cep'];
+            }
+
+            // Dia do Vencimento
+            $diaVencimento = '';
+            if (!empty($dados['dia_vencimento'])) {
+                $diaVencimento = str_pad($dados['dia_vencimento'], 2, '0', STR_PAD_LEFT);
+            } elseif (!empty($dados['data_inicio_cobranca'])) {
+                $diaVencimento = date('d', strtotime($dados['data_inicio_cobranca']));
+            }
+
+            // Vigência em Meses
+            $mesesVigencia = '12';
+            if (!empty($dados['data_inicio_cobranca']) && !empty($dados['data_fim_cobranca'])) {
+                try {
+                    $d1 = new DateTime($dados['data_inicio_cobranca']);
+                    $d2 = new DateTime($dados['data_fim_cobranca']);
+                    $diffVig = $d1->diff($d2);
+                    $totM = ($diffVig->y * 12) + $diffVig->m;
+                    if ($totM > 0) $mesesVigencia = (string)$totM;
+                } catch (Exception $eVig) {}
+            }
+
+            $nomeCliente = $dados['nome_tutor'] ?? $dados['nome'] ?? '';
+            $cpfCnpjCliente = formatCpfCnpj_App($dados['cpf_tutor'] ?? $dados['cpf_cnpj'] ?? '');
+            $ieCliente = $dados['inscricao_estadual'] ?? '';
+            $imCliente = $dados['inscricao_municipal'] ?? '';
+            $valorContratoFmt = isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '';
 
             $vars = [
                 '{{DATA_ATUAL}}' => date('d/m/Y'),
@@ -5681,10 +5766,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 // Company / Emissor
                 '{{EMPRESA_NOME}}' => $empresa['razao_social'] ?? '',
-                '{{RAZAO_SOCIAL}}' => $empresa['razao_social'] ?? '', // Alias
+                '{{RAZAO_SOCIAL}}' => $empresa['razao_social'] ?? '',
                 '{{NOME_FANTASIA}}' => $empresa['nome_fantasia'] ?? '',
                 '{{EMPRESA_CNPJ}}' => formatCpfCnpj_App($empresa['cnpj'] ?? ''),
-                '{{CNPJ_EMISSOR}}' => formatCpfCnpj_App($empresa['cnpj'] ?? ''), // Alias
+                '{{CNPJ_EMISSOR}}' => formatCpfCnpj_App($empresa['cnpj'] ?? ''),
                 '{{EMPRESA_ENDERECO}}' => ($empresa['endereco'] ?? '') . ', ' . ($empresa['numero'] ?? '') . ' - ' . ($empresa['bairro'] ?? ''),
                 '{{EMPRESA_CIDADE}}' => $nomeCidade,
                 '{{EMPRESA_UF}}' => $empresa['uf'] ?? '',
@@ -5693,14 +5778,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 '{{EMPRESA_IE}}' => $empresa['inscricao_estadual'] ?? '',
                 '{{EMPRESA_IM}}' => $empresa['inscricao_municipal'] ?? '',
 
-                '{{NOME_TUTOR}}' => $dados['nome_tutor'],
-                '{{NOME_CLIENTE}}' => $dados['nome_tutor'],
-                '{{CPF_TUTOR}}' => formatCpfCnpj_App($dados['cpf_tutor'] ?? ''),
-                '{{CPF_CNPJ_CLIENTE}}' => formatCpfCnpj_App($dados['cpf_tutor'] ?? ''),
-                '{{ENDERECO_TUTOR}}' => $dados['endereco_tutor'] ?? '',
-                '{{ENDERECO_CLIENTE}}' => $dados['endereco_tutor'] ?? '',
-                '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? '',
-                '{{TELEFONE_CLIENTE}}' => $dados['telefone_tutor'] ?? '',
+                '{{NOME_TUTOR}}' => $nomeCliente,
+                '{{NOME_CLIENTE}}' => $nomeCliente,
+                '{{RAZAO_SOCIAL_CLIENTE}}' => $nomeCliente,
+                '{{CPF_TUTOR}}' => $cpfCnpjCliente,
+                '{{CPF_CNPJ_CLIENTE}}' => $cpfCnpjCliente,
+                '{{CPF_CLIENTE}}' => $cpfCnpjCliente,
+                '{{CNPJ_CLIENTE}}' => $cpfCnpjCliente,
+                '{{IE_CLIENTE}}' => $ieCliente,
+                '{{INSCRICAO_ESTADUAL_CLIENTE}}' => $ieCliente,
+                '{{IM_CLIENTE}}' => $imCliente,
+                '{{INSCRICAO_MUNICIPAL_CLIENTE}}' => $imCliente,
+                '{{ENDERECO_TUTOR}}' => $enderecoCompleto,
+                '{{ENDERECO_CLIENTE}}' => $enderecoCompleto,
+                '{{LOGRADOURO_CLIENTE}}' => $dados['endereco_tutor'] ?? $dados['endereco'] ?? '',
+                '{{NUMERO_CLIENTE}}' => $dados['numero'] ?? '',
+                '{{BAIRRO_CLIENTE}}' => $dados['bairro'] ?? '',
+                '{{COMPLEMENTO_CLIENTE}}' => $dados['complemento'] ?? '',
+                '{{CEP_CLIENTE}}' => $dados['cep'] ?? '',
+                '{{UF_CLIENTE}}' => $dados['uf'] ?? '',
+                '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? $dados['email'] ?? '',
+                '{{TELEFONE_CLIENTE}}' => $dados['telefone_tutor'] ?? $dados['telefone'] ?? '',
                 '{{NOME_PET}}' => $dados['nome_pet'],
                 '{{ESPECIE_PET}}' => $dados['especie'],
                 '{{RACA_PET}}' => $dados['raca'],
@@ -5711,9 +5809,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 '{{NOME_VET}}' => $dados['nome_vet'],
                 '{{CRMV_VET}}' => $dados['crmv_vet'],
                 '{{SERVICO_NOME}}' => $dados['nome_servico'] ?? '',
-                '{{VALOR_CONTRATO}}' => isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '',
-                '{{DATA_INICIO}}' => isset($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
-                '{{DIA_VENCIMENTO}}' => isset($dados['data_inicio_cobranca']) ? date('d', strtotime($dados['data_inicio_cobranca'])) : '',
+                '{{VALOR_CONTRATO}}' => $valorContratoFmt,
+                '{{VALOR_RECORRENTE}}' => $valorContratoFmt,
+                '{{DATA_INICIO}}' => !empty($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
+                '{{DATA_FIM}}' => !empty($dados['data_fim_cobranca']) ? date('d/m/Y', strtotime($dados['data_fim_cobranca'])) : '',
+                '{{DIA_VENCIMENTO}}' => $diaVencimento,
+                '{{MESES_VIGENCIA}}' => $mesesVigencia,
                 '{{DESCRICAO_FISCAL}}' => $dados['descricao_fiscal'] ?? $dados['descricao_personalizada'] ?? '',
                 '{{ISS_RETIDO}}' => (isset($dados['iss_retido']) && $dados['iss_retido'] == '1') ? 'Sim' : 'Não',
                 '{{TEXTO_PERSONALIZADO}}' => '',

@@ -198,32 +198,26 @@ DBClose($link);
 
                                 <span class="var-group-title">Cliente / Tutor</span>
                                 <div class="flex flex-wrap gap-1">
-                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome
-                                        Cliente</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{RAZAO_SOCIAL_CLIENTE}}')">Razão Social</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{NOME_CLIENTE}}')">Nome Cliente</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{CNPJ_CLIENTE}}')">CNPJ Cliente</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{CPF_CNPJ_CLIENTE}}')">CPF/CNPJ</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{IE_CLIENTE}}')">Insc. Estadual</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{ENDERECO_CLIENTE}}')">Endereço</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{EMAIL_CLIENTE}}')">Email</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{TELEFONE_CLIENTE}}')">Telefone</span>
                                 </div>
 
                                 <span class="var-group-title">Contrato / Recorrência</span>
                                 <div class="flex flex-wrap gap-1">
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{SERVICO_NOME}}')">Serviço</span>
-                                    <span class="variable-tag"
-                                        onclick="inserirVariavel('{{VALOR_CONTRATO}}')">Valor</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{DATA_INICIO}}')">Data
-                                        Início</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia
-                                        Venc.</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{DESCRICAO_FISCAL}}')">Desc.
-                                        Fiscal</span>
-                                    <span class="variable-tag" onclick="inserirVariavel('{{ISS_RETIDO}}')">ISS
-                                        Retido?</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{SERVICO_NOME}}')">Serviço</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{VALOR_CONTRATO}}')">Valor</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DATA_INICIO}}')">Data Início</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DATA_FIM}}')">Data Fim</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{MESES_VIGENCIA}}')">Vigência (Meses)</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DIA_VENCIMENTO}}')">Dia Venc.</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{DESCRICAO_FISCAL}}')">Desc. Fiscal</span>
+                                    <span class="variable-tag" onclick="inserirVariavel('{{ISS_RETIDO}}')">ISS Retido?</span>
                                 </div>
 
                                 <?php if (AppHelper::isVetMode()): ?>

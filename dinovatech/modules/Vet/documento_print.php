@@ -70,7 +70,7 @@ if ($id_atendimento) {
 } elseif ($id_recorrencia) {
     // 1. Fetch Recurrence + Client + Service
     $q = "SELECT r.*, r.id_cliente as rec_id_cliente,
-            c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
+            c.*, c.id_cliente as client_id_final, c.nome as nome_tutor, c.cpf_cnpj as cpf_tutor, c.endereco as endereco_tutor, c.email as email_tutor, c.telefone as telefone_tutor,
             s.nome_servico
             FROM Recorrencias r
             LEFT JOIN Clientes c ON r.id_cliente = c.id_cliente
@@ -141,17 +141,63 @@ if (!empty($empresa['codigo_municipio'])) {
 }
 
 // Helper to format CPF/CNPJ
-function formatCpfCnpj($pCpfCnpj)
-{
-    $cnpj_cpf = preg_replace("/\D/", '', $pCpfCnpj);
-    if (strlen($cnpj_cpf) === 11) {
-        return preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cnpj_cpf);
+if (!function_exists('formatCpfCnpj')) {
+    function formatCpfCnpj($pCpfCnpj)
+    {
+        $cnpj_cpf = preg_replace("/\D/", '', $pCpfCnpj);
+        if (strlen($cnpj_cpf) === 11) {
+            return preg_replace("/(\d{3})(\d{3})(\d{3})(\d{2})/", "\$1.\$2.\$3-\$4", $cnpj_cpf);
+        }
+        if (strlen($cnpj_cpf) === 14) {
+            return preg_replace("/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/", "\$1.\$2.\$3/\$4-\$5", $cnpj_cpf);
+        }
+        return $pCpfCnpj;
     }
-    if (strlen($cnpj_cpf) === 14) {
-        return preg_replace("/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/", "\$1.\$2.\$3/\$4-\$5", $cnpj_cpf);
-    }
-    return $pCpfCnpj;
 }
+
+// Endereço Completo do Cliente
+$enderecoCompleto = trim($dados['endereco_tutor'] ?? $dados['endereco'] ?? '');
+if (!empty($dados['numero'])) {
+    $enderecoCompleto .= ', ' . $dados['numero'];
+}
+if (!empty($dados['complemento'])) {
+    $enderecoCompleto .= ' - ' . $dados['complemento'];
+}
+if (!empty($dados['bairro'])) {
+    $enderecoCompleto .= ', Bairro ' . $dados['bairro'];
+}
+if (!empty($dados['uf'])) {
+    $enderecoCompleto .= ' - ' . $dados['uf'];
+}
+if (!empty($dados['cep'])) {
+    $enderecoCompleto .= ', CEP: ' . $dados['cep'];
+}
+
+// Dia do Vencimento
+$diaVencimento = '';
+if (!empty($dados['dia_vencimento'])) {
+    $diaVencimento = str_pad($dados['dia_vencimento'], 2, '0', STR_PAD_LEFT);
+} elseif (!empty($dados['data_inicio_cobranca'])) {
+    $diaVencimento = date('d', strtotime($dados['data_inicio_cobranca']));
+}
+
+// Vigência em Meses
+$mesesVigencia = '12';
+if (!empty($dados['data_inicio_cobranca']) && !empty($dados['data_fim_cobranca'])) {
+    try {
+        $d1 = new DateTime($dados['data_inicio_cobranca']);
+        $d2 = new DateTime($dados['data_fim_cobranca']);
+        $diffVig = $d1->diff($d2);
+        $totM = ($diffVig->y * 12) + $diffVig->m;
+        if ($totM > 0) $mesesVigencia = (string)$totM;
+    } catch (Exception $eVig) {}
+}
+
+$nomeCliente = $dados['nome_tutor'] ?? $dados['nome'] ?? '';
+$cpfCnpjCliente = formatCpfCnpj($dados['cpf_tutor'] ?? $dados['cpf_cnpj'] ?? '');
+$ieCliente = $dados['inscricao_estadual'] ?? '';
+$imCliente = $dados['inscricao_municipal'] ?? '';
+$valorContratoFmt = isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '';
 
 // Map variables
 $vars = [
@@ -176,15 +222,28 @@ $vars = [
     '{{EMPRESA_IM}}' => $empresa['inscricao_municipal'] ?? '',
 
     // Client / Tutor
-    '{{NOME_TUTOR}}' => $dados['nome_tutor'],
-    '{{NOME_CLIENTE}}' => $dados['nome_tutor'], // Alias
-    '{{CLIENTE_NOME_FANTASIA}}' => '', // Field not in DB yet
-    '{{CPF_TUTOR}}' => formatCpfCnpj($dados['cpf_tutor'] ?? ''),
-    '{{CPF_CNPJ_CLIENTE}}' => formatCpfCnpj($dados['cpf_tutor'] ?? ''), // Alias
-    '{{ENDERECO_TUTOR}}' => $dados['endereco_tutor'] ?? '',
-    '{{ENDERECO_CLIENTE}}' => $dados['endereco_tutor'] ?? '', // Alias
-    '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? '',
-    '{{TELEFONE_CLIENTE}}' => $dados['telefone_tutor'] ?? '',
+    '{{NOME_TUTOR}}' => $nomeCliente,
+    '{{NOME_CLIENTE}}' => $nomeCliente,
+    '{{RAZAO_SOCIAL_CLIENTE}}' => $nomeCliente,
+    '{{CLIENTE_NOME_FANTASIA}}' => '',
+    '{{CPF_TUTOR}}' => $cpfCnpjCliente,
+    '{{CPF_CNPJ_CLIENTE}}' => $cpfCnpjCliente,
+    '{{CPF_CLIENTE}}' => $cpfCnpjCliente,
+    '{{CNPJ_CLIENTE}}' => $cpfCnpjCliente,
+    '{{IE_CLIENTE}}' => $ieCliente,
+    '{{INSCRICAO_ESTADUAL_CLIENTE}}' => $ieCliente,
+    '{{IM_CLIENTE}}' => $imCliente,
+    '{{INSCRICAO_MUNICIPAL_CLIENTE}}' => $imCliente,
+    '{{ENDERECO_TUTOR}}' => $enderecoCompleto,
+    '{{ENDERECO_CLIENTE}}' => $enderecoCompleto,
+    '{{LOGRADOURO_CLIENTE}}' => $dados['endereco_tutor'] ?? $dados['endereco'] ?? '',
+    '{{NUMERO_CLIENTE}}' => $dados['numero'] ?? '',
+    '{{BAIRRO_CLIENTE}}' => $dados['bairro'] ?? '',
+    '{{COMPLEMENTO_CLIENTE}}' => $dados['complemento'] ?? '',
+    '{{CEP_CLIENTE}}' => $dados['cep'] ?? '',
+    '{{UF_CLIENTE}}' => $dados['uf'] ?? '',
+    '{{EMAIL_CLIENTE}}' => $dados['email_tutor'] ?? $dados['email'] ?? '',
+    '{{TELEFONE_CLIENTE}}' => $dados['telefone_tutor'] ?? $dados['telefone'] ?? '',
 
     // Pet / Vet (Only relevant if Atendimento)
     '{{NOME_PET}}' => $dados['nome_pet'],
@@ -204,9 +263,12 @@ $vars = [
 
     // Contract / Recurrence (Only relevant if Contrato)
     '{{SERVICO_NOME}}' => $dados['nome_servico'] ?? '',
-    '{{VALOR_CONTRATO}}' => isset($dados['valor_sugerido_recorrencia']) ? 'R$ ' . number_format($dados['valor_sugerido_recorrencia'], 2, ',', '.') : '',
-    '{{DATA_INICIO}}' => isset($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
-    '{{DIA_VENCIMENTO}}' => isset($dados['data_inicio_cobranca']) ? date('d', strtotime($dados['data_inicio_cobranca'])) : '',
+    '{{VALOR_CONTRATO}}' => $valorContratoFmt,
+    '{{VALOR_RECORRENTE}}' => $valorContratoFmt,
+    '{{DATA_INICIO}}' => !empty($dados['data_inicio_cobranca']) ? date('d/m/Y', strtotime($dados['data_inicio_cobranca'])) : '',
+    '{{DATA_FIM}}' => !empty($dados['data_fim_cobranca']) ? date('d/m/Y', strtotime($dados['data_fim_cobranca'])) : '',
+    '{{DIA_VENCIMENTO}}' => $diaVencimento,
+    '{{MESES_VIGENCIA}}' => $mesesVigencia,
 
     // Fiscal / Service Details
     '{{DESCRICAO_FISCAL}}' => $dados['descricao_fiscal'] ?? $dados['descricao_personalizada'] ?? '',
