@@ -101,10 +101,48 @@ if ($id_fatura) {
                         FROM PixRecorrencias P
                         LEFT JOIN Recorrencias R ON P.id_recorrencia = R.id_recorrencia
                         WHERE (P.id_recorrencia = $id_recorrencia_fatura OR P.id_fatura_inicial = $id_safe)
-                        ORDER BY FIELD(P.status, 'APROVADA', 'PENDENTE', 'CRIADA', 'REJEITADA', 'CANCELADA'), P.id_pix_recorrencia DESC LIMIT 1";
+                        ORDER BY CASE P.status WHEN 'APROVADA' THEN 1 WHEN 'PENDENTE' THEN 2 WHEN 'CRIADA' THEN 3 WHEN 'REJEITADA' THEN 4 WHEN 'CANCELADA' THEN 5 ELSE 6 END, P.id_pix_recorrencia DESC LIMIT 1";
             $rPixRec = DBExecute($link, $qPixRec);
             if ($rPixRec && mysqli_num_rows($rPixRec) > 0) {
                 $pix_recorrencia = mysqli_fetch_assoc($rPixRec);
+            }
+        }
+
+        // Verifica se há débito automático agendado para esta fatura em Pagamentos
+        $pagamentoDebitoAgendado = null;
+        foreach ($pagamentos as $pagItem) {
+            if ($pagItem['status_pagamento'] === 'Pendente' && !empty($pagItem['txid']) && strpos($pagItem['observacao'] ?? '', 'Débito Automático') !== false) {
+                $pagamentoDebitoAgendado = $pagItem;
+                break;
+            }
+        }
+
+        // Se ainda não localizou a PixRecorrencias mas a fatura possui débito agendado com id_rec na observação
+        if (!$pix_recorrencia && $pagamentoDebitoAgendado) {
+            if (preg_match('/Recorrência\s+([A-Za-z0-9_-]+)/i', $pagamentoDebitoAgendado['observacao'] ?? '', $mRec)) {
+                $idRecFound = mysqli_real_escape_string($link, trim($mRec[1]));
+                $qPixFromPag = "SELECT P.*, R.nome_servico, R.valor_sugerido_recorrencia 
+                                FROM PixRecorrencias P
+                                LEFT JOIN Recorrencias R ON P.id_recorrencia = R.id_recorrencia
+                                WHERE P.id_rec = '$idRecFound' LIMIT 1";
+                $rPixFromPag = DBExecute($link, $qPixFromPag);
+                if ($rPixFromPag && mysqli_num_rows($rPixFromPag) > 0) {
+                    $pix_recorrencia = mysqli_fetch_assoc($rPixFromPag);
+                }
+            }
+        }
+
+        // Fallback: busca recorrência ativa aprovada vinculada a este cliente
+        if (!$pix_recorrencia && !empty($fatura['id_cliente'])) {
+            $idClienteSafe = (int)$fatura['id_cliente'];
+            $qPixCli = "SELECT P.*, R.nome_servico, R.valor_sugerido_recorrencia 
+                        FROM PixRecorrencias P
+                        LEFT JOIN Recorrencias R ON P.id_recorrencia = R.id_recorrencia
+                        WHERE P.id_cliente = $idClienteSafe AND P.status = 'APROVADA'
+                        ORDER BY P.id_pix_recorrencia DESC LIMIT 1";
+            $rPixCli = DBExecute($link, $qPixCli);
+            if ($rPixCli && mysqli_num_rows($rPixCli) > 0) {
+                $pix_recorrencia = mysqli_fetch_assoc($rPixCli);
             }
         }
     } else {
@@ -609,7 +647,10 @@ if ($id_fatura) {
                                         <?php
                                         $statusRecLabel = 'Não Cadastrado';
                                         $badgeRecClass = 'bg-slate-700 text-slate-300';
-                                        if ($pix_recorrencia) {
+                                        if ($pagamentoDebitoAgendado) {
+                                            $statusRecLabel = 'Débito Agendado';
+                                            $badgeRecClass = 'bg-emerald-950 text-emerald-300 border border-emerald-700/50';
+                                        } elseif ($pix_recorrencia) {
                                             $st = strtoupper($pix_recorrencia['status']);
                                             if ($st === 'APROVADA') {
                                                 $statusRecLabel = 'Ativo / Aprovado';
@@ -632,7 +673,15 @@ if ($id_fatura) {
                                     </div>
 
                                     <div id="pix_recorrencia_feedback" class="text-xs text-slate-300 space-y-1 mb-3">
-                                        <?php if ($pix_recorrencia): ?>
+                                        <?php if ($pagamentoDebitoAgendado): ?>
+                                            <p class="text-[11px] leading-tight font-semibold text-emerald-300">
+                                                <span class="material-icons text-xs align-middle">schedule</span> Débito agendado para <?= date('d/m/Y', strtotime($pagamentoDebitoAgendado['data_pagamento'])) ?>
+                                            </p>
+                                            <p class="text-[10px] text-slate-400 font-mono">TXID: <?= htmlspecialchars($pagamentoDebitoAgendado['txid']) ?></p>
+                                            <?php if ($pix_recorrencia && !empty($pix_recorrencia['id_rec'])): ?>
+                                                <p class="text-[10px] text-purple-200 font-mono">ID Rec: <?= htmlspecialchars($pix_recorrencia['id_rec']) ?></p>
+                                            <?php endif; ?>
+                                        <?php elseif ($pix_recorrencia): ?>
                                             <p class="text-[11px] leading-tight font-mono text-purple-200">ID Rec: <?= htmlspecialchars($pix_recorrencia['id_rec']) ?></p>
                                             <p class="text-[10px] text-slate-400">Valor Mensal: R$ <?= number_format($pix_recorrencia['valor_recorrente'], 2, ',', '.') ?></p>
                                             <?php if (!empty($pix_recorrencia['data_aceite'])): ?>
@@ -644,6 +693,13 @@ if ($id_fatura) {
                                     </div>
 
                                     <div class="space-y-1.5">
+                                        <?php if ($pagamentoDebitoAgendado): ?>
+                                            <button type="button" onclick="cancelarCobrancaIndividualAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>)"
+                                                class="w-full bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700/50 py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1">
+                                                <span class="material-icons text-xs">cancel</span> Cancelar Débito Desta Fatura
+                                            </button>
+                                        <?php endif; ?>
+
                                         <?php if ($pix_recorrencia && !empty($pix_recorrencia['id_rec'])): ?>
                                             <button type="button" onclick="verificarPixRecorrencia('<?= $pix_recorrencia['id_rec'] ?>')"
                                                 class="w-full bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white py-2 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
@@ -656,27 +712,10 @@ if ($id_fatura) {
                                                     <span class="material-icons text-xs">block</span> Cancelar Pix Automático do Contrato
                                                 </button>
                                             <?php endif; ?>
-                                        <?php elseif ($contrato_elegivel_pix && $saldo_devedor > 0): ?>
+                                        <?php elseif ($contrato_elegivel_pix && $saldo_devedor > 0 && !$pagamentoDebitoAgendado): ?>
                                             <button type="button" onclick="gerarJornada4Admin(<?= $id_fatura ?>)"
                                                 class="w-full bg-gradient-to-r from-purple-600 to-cyan-600 hover:opacity-95 text-white py-2.5 px-3 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 shadow">
                                                 <span class="material-icons text-sm text-yellow-300">bolt</span> Gerar Proposta Pix Automático
-                                            </button>
-                                        <?php endif; ?>
-
-                                        <?php
-                                        // Verifica se há débito agendado para esta fatura em Pagamentos
-                                        $pagamentoDebitoAgendado = null;
-                                        foreach ($pagamentos as $pagItem) {
-                                            if ($pagItem['status_pagamento'] === 'Pendente' && !empty($pagItem['txid']) && strpos($pagItem['observacao'] ?? '', 'Débito Automático') !== false) {
-                                                $pagamentoDebitoAgendado = $pagItem;
-                                                break;
-                                            }
-                                        }
-                                        if ($pagamentoDebitoAgendado):
-                                        ?>
-                                            <button type="button" onclick="cancelarCobrancaIndividualAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>)"
-                                                class="w-full bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700/50 py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1 mt-1">
-                                                <span class="material-icons text-xs">cancel</span> Cancelar Débito Desta Fatura
                                             </button>
                                         <?php endif; ?>
                                     </div>

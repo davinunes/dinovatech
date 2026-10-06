@@ -112,10 +112,41 @@ if ($id_fatura) {
                 }
             }
 
-            $qPixRec = "SELECT * FROM PixRecorrencias WHERE (id_recorrencia = $id_recorrencia_fatura OR id_fatura_inicial = $id_safe) ORDER BY FIELD(status, 'APROVADA', 'PENDENTE', 'CRIADA', 'REJEITADA', 'CANCELADA'), id_pix_recorrencia DESC LIMIT 1";
+            $qPixRec = "SELECT * FROM PixRecorrencias WHERE (id_recorrencia = $id_recorrencia_fatura OR id_fatura_inicial = $id_safe) ORDER BY CASE status WHEN 'APROVADA' THEN 1 WHEN 'PENDENTE' THEN 2 WHEN 'CRIADA' THEN 3 WHEN 'REJEITADA' THEN 4 WHEN 'CANCELADA' THEN 5 ELSE 6 END, id_pix_recorrencia DESC LIMIT 1";
             $rPixRec = DBExecute($link, $qPixRec);
             if ($rPixRec && mysqli_num_rows($rPixRec) > 0) {
                 $pixRecorrenciaAtiva = mysqli_fetch_assoc($rPixRec);
+            }
+        }
+
+        // Verifica se há débito automático agendado para esta fatura em Pagamentos
+        $pagamentoDebitoAgendado = null;
+        foreach ($pagamentos as $pagItem) {
+            if ($pagItem['status_pagamento'] === 'Pendente' && !empty($pagItem['txid']) && strpos($pagItem['observacao'] ?? '', 'Débito Automático') !== false) {
+                $pagamentoDebitoAgendado = $pagItem;
+                break;
+            }
+        }
+
+        // Se ainda não localizou mas a fatura possui débito agendado com id_rec na observação
+        if (!$pixRecorrenciaAtiva && $pagamentoDebitoAgendado) {
+            if (preg_match('/Recorrência\s+([A-Za-z0-9_-]+)/i', $pagamentoDebitoAgendado['observacao'] ?? '', $mRec)) {
+                $idRecFound = mysqli_real_escape_string($link, trim($mRec[1]));
+                $qPixFromPag = "SELECT * FROM PixRecorrencias WHERE id_rec = '$idRecFound' LIMIT 1";
+                $rPixFromPag = DBExecute($link, $qPixFromPag);
+                if ($rPixFromPag && mysqli_num_rows($rPixFromPag) > 0) {
+                    $pixRecorrenciaAtiva = mysqli_fetch_assoc($rPixFromPag);
+                }
+            }
+        }
+
+        // Fallback por cliente
+        if (!$pixRecorrenciaAtiva && !empty($fatura['id_cliente'])) {
+            $idClienteSafe = (int)$fatura['id_cliente'];
+            $qPixCli = "SELECT * FROM PixRecorrencias WHERE id_cliente = $idClienteSafe AND status = 'APROVADA' ORDER BY id_pix_recorrencia DESC LIMIT 1";
+            $rPixCli = DBExecute($link, $qPixCli);
+            if ($rPixCli && mysqli_num_rows($rPixCli) > 0) {
+                $pixRecorrenciaAtiva = mysqli_fetch_assoc($rPixCli);
             }
         }
 
@@ -500,15 +531,16 @@ if ($id_fatura) {
                                         <span class="material-icons-round text-base text-orange-400">qr_code_2</span>
                                         <span>Pagar PIX via Banco Inter</span>
                                     </button>
-                                    <?php if ($tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                                    <?php if ($pagamentoDebitoAgendado || ($pixRecorrenciaAtiva && $pixRecorrenciaAtiva['status'] === 'APROVADA')): ?>
+                                        <div class="text-center py-2 px-3 text-[11px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center gap-1.5 shadow-xs">
+                                            <span class="material-icons-round text-sm text-emerald-600">schedule</span>
+                                            <span>Débito Automático agendado para <?= date('d/m/Y', strtotime($pagamentoDebitoAgendado['data_pagamento'] ?? $fatura['data_vencimento'])) ?></span>
+                                        </div>
+                                    <?php elseif ($tem_recorrencia_elegivel): ?>
                                         <button id="btnAtivarPixAutomatico" type="button"
                                             class="w-full bg-gradient-to-r from-purple-700 via-indigo-600 to-cyan-600 hover:opacity-90 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center gap-1.5 shadow-xs">
                                             <span class="material-icons-round text-sm text-yellow-300">bolt</span> Ativar Pix Automático
                                         </button>
-                                    <?php elseif ($pixRecorrenciaAtiva && $pixRecorrenciaAtiva['status'] === 'APROVADA'): ?>
-                                        <div class="text-center py-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-center gap-1">
-                                            <span class="material-icons-round text-xs">bolt</span> Débito Automático Pix Ativo
-                                        </div>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -535,7 +567,7 @@ if ($id_fatura) {
                                 <span class="material-icons-round text-sm text-orange-400">qr_code_2</span> Inter PIX
                             </button>
                         <?php endif; ?>
-                        <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
+                        <?php if (AppHelper::isInterApiActive() && $tem_recorrencia_elegivel && !$pagamentoDebitoAgendado && (!$pixRecorrenciaAtiva || $pixRecorrenciaAtiva['status'] !== 'APROVADA')): ?>
                             <button id="btnAtivarPixAutomaticoMobile" type="button"
                                 class="bg-gradient-to-r from-purple-700 to-cyan-600 text-white font-bold py-3 px-3 rounded-xl shadow-md text-xs flex items-center justify-center gap-1">
                                 <span class="material-icons-round text-sm text-yellow-300">bolt</span>
