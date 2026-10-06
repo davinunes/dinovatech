@@ -693,11 +693,16 @@ if ($id_fatura) {
                                     </div>
 
                                     <div class="space-y-1.5">
-                                        <?php if ($pagamentoDebitoAgendado): ?>
-                                            <button type="button" onclick="solicitarRetentativaDebitoAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>)"
+                                        <?php if ($pagamentoDebitoAgendado): 
+                                            $dtVencCobranca = !empty($fatura['data_vencimento']) ? date('Y-m-d', strtotime($fatura['data_vencimento'])) : date('Y-m-d');
+                                            $cobrancaJaVenceu = ($dtVencCobranca <= date('Y-m-d'));
+                                            if ($cobrancaJaVenceu):
+                                        ?>
+                                            <button type="button" onclick="solicitarRetentativaDebitoAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>, '<?= $dtVencCobranca ?>')"
                                                 class="w-full bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1 shadow">
                                                 <span class="material-icons text-xs">replay</span> Solicitar Retentativa de Débito
                                             </button>
+                                        <?php endif; ?>
                                             <button type="button" onclick="cancelarCobrancaIndividualAdmin('<?= $pagamentoDebitoAgendado['txid'] ?>', <?= $id_fatura ?>)"
                                                 class="w-full bg-amber-900/60 hover:bg-amber-800 text-amber-200 border border-amber-700/50 py-1.5 px-3 rounded-lg text-[11px] font-semibold transition flex items-center justify-center gap-1">
                                                 <span class="material-icons text-xs">cancel</span> Cancelar Débito Desta Fatura
@@ -2098,13 +2103,24 @@ if ($id_fatura) {
                 });
             };
 
-            window.solicitarRetentativaDebitoAdmin = function(txid, idFatura) {
+            window.solicitarRetentativaDebitoAdmin = function(txid, idFatura, dataVencimento) {
                 const hoje = new Date().toISOString().split('T')[0];
+                if (dataVencimento && dataVencimento > hoje) {
+                    const dataVencFormatada = dataVencimento.split('-').reverse().join('/');
+                    alert('Esta cobrança ainda não venceu (Vencimento: ' + dataVencFormatada + ').\n\nA primeira tentativa de débito será executada automaticamente pelo banco na data prevista.');
+                    return;
+                }
+
                 const dataEscolhida = prompt('Informe a data prevista para a nova tentativa de débito (formato AAAA-MM-DD):', hoje);
                 if (!dataEscolhida) return;
 
                 if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEscolhida)) {
                     alert('Data inválida. Utilize o formato AAAA-MM-DD (Exemplo: ' + hoje + ')');
+                    return;
+                }
+
+                if (dataEscolhida < hoje) {
+                    alert('A data para retentativa não pode ser uma data passada.');
                     return;
                 }
 

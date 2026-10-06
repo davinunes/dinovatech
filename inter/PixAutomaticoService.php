@@ -521,6 +521,22 @@ class PixAutomaticoService
             $dataPrevia = date('Y-m-d', $time);
         }
 
+        if ($dataPrevia < date('Y-m-d')) {
+            throw new Exception("A data prevista para nova liquidação não pode ser no passado (" . date('d/m/Y', strtotime($dataPrevia)) . ").");
+        }
+
+        // Validação: impede solicitar retentativa se a data de vencimento da fatura ainda for futura
+        if ($link && $idFatura) {
+            $idFaturaSafe = (int)$idFatura;
+            $resFat = DBExecute($link, "SELECT data_vencimento FROM Faturas WHERE id_fatura = $idFaturaSafe LIMIT 1");
+            if ($resFat && $rowFat = mysqli_fetch_assoc($resFat)) {
+                $dtVenc = !empty($rowFat['data_vencimento']) ? date('Y-m-d', strtotime($rowFat['data_vencimento'])) : null;
+                if ($dtVenc && $dtVenc > date('Y-m-d')) {
+                    throw new Exception("Não é possível solicitar retentativa: o débito original ainda não atingiu o vencimento (" . date('d/m/Y', strtotime($dtVenc)) . "). A primeira tentativa de liquidação ocorrerá automaticamente nesta data.");
+                }
+            }
+        }
+
         $token = getInterAccessToken($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile);
         $responseInter = solicitarRetentativaCobranca($ambienteConfig, $sslCertFile, $sslKeyFile, $caInfoFile, $token, $txid, $dataPrevia);
 
