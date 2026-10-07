@@ -1,0 +1,17 @@
+{
+    "permissions": {
+        "allow": [
+            "Get-ChildItem",
+            "Get-ChildItem *",
+            "^git\\s+.*"
+        ],
+        "deny": [
+            ".*commit.*",
+            ".*push.*",
+            ".*merge.*",
+            ".*rebase.*",
+            ".*reset\\s+--hard.*",
+            ".*rm.*"
+        ]
+    }
+}

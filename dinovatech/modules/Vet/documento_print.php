@@ -16,6 +16,21 @@ require_once $pathConfig;
 require_once $pathHelper;
 require_once __DIR__ . '/../../helpers/PdfHelper.php';
 
+if (!function_exists('renderHiddenInputsForPdf')) {
+    function renderHiddenInputsForPdf($data, $prefix = '')
+    {
+        foreach ($data as $key => $value) {
+            if ($key === 'pdf' || $key === 'PHPSESSID') continue;
+            $name = $prefix !== '' ? $prefix . '[' . $key . ']' : $key;
+            if (is_array($value)) {
+                renderHiddenInputsForPdf($value, $name);
+            } else {
+                echo '<input type="hidden" name="' . htmlspecialchars((string)$name, ENT_QUOTES, 'UTF-8') . '" value="' . htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') . '">' . "\n";
+            }
+        }
+    }
+}
+
 if (isset($_REQUEST['pdf']) && $_REQUEST['pdf'] == '1') {
     ob_start();
 }
@@ -458,9 +473,13 @@ if (isset($_REQUEST['ajax']) && $_REQUEST['ajax'] == '1') {
 
 <?php if (!isset($_REQUEST['pdf']) || $_REQUEST['pdf'] != '1'): ?>
     <div class="btn-action-group no-print">
-        <a href="<?= htmlspecialchars($_SERVER['REQUEST_URI'] . (strpos($_SERVER['REQUEST_URI'], '?') !== false ? '&' : '?') . 'pdf=1') ?>" target="_blank" class="btn-pdf">
-            Baixar PDF
-        </a>
+        <form method="POST" action="" target="_blank" style="display: inline;">
+            <input type="hidden" name="pdf" value="1">
+            <?php renderHiddenInputsForPdf(array_merge($_GET, $_POST)); ?>
+            <button type="submit" class="btn-pdf" style="border: none; cursor: pointer;">
+                Baixar PDF
+            </button>
+        </form>
         <button onclick="window.print()" class="btn-print">Imprimir</button>
     </div>
 <?php endif; ?>
