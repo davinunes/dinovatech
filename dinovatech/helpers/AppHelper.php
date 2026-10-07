@@ -668,7 +668,19 @@ class AppHelper
                 : '';
             $lote = trim($row['lote'] ?? '');
 
-            // V4 (pega o registro mais recente)
+            // Mapeamento dinâmico para qualquer vacina (slug do nome da vacina)
+            $slugVacina = trim(preg_replace('/[^a-z0-9]+/', '_', $nomeVacinaLower), '_');
+            if (!empty($slugVacina) && !isset($vacinasMapeadas[$slugVacina])) {
+                $vacinasMapeadas[$slugVacina] = true;
+                $vars["{{vacina_{$slugVacina}_data}}"] = $dataRealizada;
+                $vars["{{vacina_{$slugVacina}_proxima}}"] = $proximaDose;
+                $vars["{{vacina_{$slugVacina}_lote}}"] = $lote;
+                $vars["{{" . strtoupper("vacina_{$slugVacina}_data") . "}}"] = $dataRealizada;
+                $vars["{{" . strtoupper("vacina_{$slugVacina}_proxima") . "}}"] = $proximaDose;
+                $vars["{{" . strtoupper("vacina_{$slugVacina}_lote") . "}}"] = $lote;
+            }
+
+            // Mapeamentos específicos/curtos (pega o registro mais recente)
             if (!isset($vacinasMapeadas['v4']) && (strpos($nomeVacinaLower, 'v4') !== false || strpos($nomeVacinaLower, 'v-4') !== false)) {
                 $vacinasMapeadas['v4'] = true;
                 $vars['{{vacina_v4_data}}'] = $dataRealizada;
