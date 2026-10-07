@@ -590,5 +590,187 @@ class AppHelper
         DBClose($link);
         return $colab;
     }
+
+    /**
+     * Gera variáveis estruturadas de vacinas (V4, FeLV, Antirrábica, Tabela HTML e Parágrafo)
+     * para preenchimento em modelos de documentos WYSIWYG.
+     *
+     * @param mysqli $link Conexão com o banco de dados
+     * @param int|string|null $id_pet ID do Pet
+     * @return array Mapa de variáveis e seus valores substituídos
+     */
+    public static function gerarVariaveisVacinas($link, $id_pet): array
+    {
+        $vars = [
+            '{{tabela_vacinas}}' => '',
+            '{{TABELA_VACINAS}}' => '',
+            '{{paragrafo_vacinas}}' => '',
+            '{{PARAGRAFO_VACINAS}}' => '',
+            '{{vacinas_paragrafo}}' => '',
+            '{{lista_vacinas_paragrafo}}' => '',
+
+            // Variáveis individuais V4
+            '{{vacina_v4_data}}' => '',
+            '{{vacina_v4_proxima}}' => '',
+            '{{vacina_v4_lote}}' => '',
+            '{{VACINA_V4_DATA}}' => '',
+            '{{VACINA_V4_PROXIMA}}' => '',
+            '{{VACINA_V4_LOTE}}' => '',
+
+            // Variáveis individuais FeLV
+            '{{vacina_felv_data}}' => '',
+            '{{vacina_felv_proxima}}' => '',
+            '{{vacina_felv_lote}}' => '',
+            '{{VACINA_FELV_DATA}}' => '',
+            '{{VACINA_FELV_PROXIMA}}' => '',
+            '{{VACINA_FELV_LOTE}}' => '',
+
+            // Variáveis individuais Antirrábica
+            '{{vacina_antirrabica_data}}' => '',
+            '{{vacina_antirrabica_proxima}}' => '',
+            '{{vacina_antirrabica_lote}}' => '',
+            '{{VACINA_ANTIRRABICA_DATA}}' => '',
+            '{{VACINA_ANTIRRABICA_PROXIMA}}' => '',
+            '{{VACINA_ANTIRRABICA_LOTE}}' => '',
+        ];
+
+        if (!$link || !$id_pet) {
+            return $vars;
+        }
+
+        $id_pet_safe = mysqli_real_escape_string($link, (string)$id_pet);
+
+        $query = "SELECT cv.*, v.nome as nome_vacina
+                  FROM CarteiraVacinas cv
+                  JOIN Vacinas v ON cv.id_vacina = v.id_vacina
+                  WHERE cv.id_pet = '$id_pet_safe'
+                  ORDER BY cv.data_aplicacao DESC, cv.id_carteira DESC";
+
+        $result = DBExecute($link, $query);
+
+        if (!$result || mysqli_num_rows($result) === 0) {
+            return $vars;
+        }
+
+        $vacinas = [];
+        $vacinasMapeadas = [];
+
+        while ($row = mysqli_fetch_assoc($result)) {
+            $vacinas[] = $row;
+
+            $nomeVacinaLower = strtolower(trim($row['nome_vacina'] ?? ''));
+
+            $dataRealizada = (!empty($row['data_aplicacao']) && $row['data_aplicacao'] !== '0000-00-00')
+                ? date('d/m/Y', strtotime($row['data_aplicacao']))
+                : '';
+            $proximaDose = (!empty($row['data_vencimento']) && $row['data_vencimento'] !== '0000-00-00')
+                ? date('d/m/Y', strtotime($row['data_vencimento']))
+                : '';
+            $lote = trim($row['lote'] ?? '');
+
+            // V4 (pega o registro mais recente)
+            if (!isset($vacinasMapeadas['v4']) && (strpos($nomeVacinaLower, 'v4') !== false || strpos($nomeVacinaLower, 'v-4') !== false)) {
+                $vacinasMapeadas['v4'] = true;
+                $vars['{{vacina_v4_data}}'] = $dataRealizada;
+                $vars['{{vacina_v4_proxima}}'] = $proximaDose;
+                $vars['{{vacina_v4_lote}}'] = $lote;
+                $vars['{{VACINA_V4_DATA}}'] = $dataRealizada;
+                $vars['{{VACINA_V4_PROXIMA}}'] = $proximaDose;
+                $vars['{{VACINA_V4_LOTE}}'] = $lote;
+            }
+
+            // FeLV
+            if (!isset($vacinasMapeadas['felv']) && strpos($nomeVacinaLower, 'felv') !== false) {
+                $vacinasMapeadas['felv'] = true;
+                $vars['{{vacina_felv_data}}'] = $dataRealizada;
+                $vars['{{vacina_felv_proxima}}'] = $proximaDose;
+                $vars['{{vacina_felv_lote}}'] = $lote;
+                $vars['{{VACINA_FELV_DATA}}'] = $dataRealizada;
+                $vars['{{VACINA_FELV_PROXIMA}}'] = $proximaDose;
+                $vars['{{VACINA_FELV_LOTE}}'] = $lote;
+            }
+
+            // Antirrábica
+            if (!isset($vacinasMapeadas['antirrabica']) && (strpos($nomeVacinaLower, 'antirrab') !== false || strpos($nomeVacinaLower, 'antirráb') !== false || strpos($nomeVacinaLower, 'raiva') !== false)) {
+                $vacinasMapeadas['antirrabica'] = true;
+                $vars['{{vacina_antirrabica_data}}'] = $dataRealizada;
+                $vars['{{vacina_antirrabica_proxima}}'] = $proximaDose;
+                $vars['{{vacina_antirrabica_lote}}'] = $lote;
+                $vars['{{VACINA_ANTIRRABICA_DATA}}'] = $dataRealizada;
+                $vars['{{VACINA_ANTIRRABICA_PROXIMA}}'] = $proximaDose;
+                $vars['{{VACINA_ANTIRRABICA_LOTE}}'] = $lote;
+            }
+        }
+
+        // 1. Bloco de Tabela Dinâmica (HTML)
+        $tableRows = '';
+        foreach ($vacinas as $v) {
+            $nomeVac = htmlspecialchars($v['nome_vacina'] ?? '');
+            $dtApp = (!empty($v['data_aplicacao']) && $v['data_aplicacao'] !== '0000-00-00')
+                ? date('d/m/Y', strtotime($v['data_aplicacao']))
+                : '-';
+            $dtProx = (!empty($v['data_vencimento']) && $v['data_vencimento'] !== '0000-00-00')
+                ? date('d/m/Y', strtotime($v['data_vencimento']))
+                : '-';
+            $loteVac = !empty(trim($v['lote'] ?? '')) ? htmlspecialchars(trim($v['lote'])) : '-';
+
+            $tableRows .= "
+            <tr>
+                <td style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">{$nomeVac}</td>
+                <td style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">{$dtApp}</td>
+                <td style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">{$dtProx}</td>
+                <td style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">{$loteVac}</td>
+            </tr>";
+        }
+
+        $tabelaHtml = "
+        <table style=\"width: 100%; border-collapse: collapse; margin: 10px 0; font-family: inherit; font-size: 14px;\">
+            <thead>
+                <tr style=\"background-color: #f3f4f6; color: #374151; font-weight: bold; text-align: left;\">
+                    <th style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">Vacina</th>
+                    <th style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">Data Realizada</th>
+                    <th style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">Próxima Dose</th>
+                    <th style=\"padding: 8px 12px; border: 1px solid #e5e7eb;\">Lote/Part.</th>
+                </tr>
+            </thead>
+            <tbody>{$tableRows}
+            </tbody>
+        </table>";
+
+        $vars['{{tabela_vacinas}}'] = $tabelaHtml;
+        $vars['{{TABELA_VACINAS}}'] = $tabelaHtml;
+
+        // 2. Formato de Parágrafo (Omitindo linhas de dados não preenchidos)
+        $paragrafosList = [];
+        foreach ($vacinas as $v) {
+            $linhas = [];
+            if (!empty($v['nome_vacina'])) {
+                $linhas[] = "• <strong>Nome da Vacina:</strong> " . htmlspecialchars($v['nome_vacina']);
+            }
+            if (!empty($v['data_aplicacao']) && $v['data_aplicacao'] !== '0000-00-00') {
+                $linhas[] = "• <strong>Data de Realização:</strong> " . date('d/m/Y', strtotime($v['data_aplicacao']));
+            }
+            if (!empty($v['data_vencimento']) && $v['data_vencimento'] !== '0000-00-00') {
+                $linhas[] = "• <strong>Data da Próxima Dose:</strong> " . date('d/m/Y', strtotime($v['data_vencimento']));
+            }
+            if (!empty(trim($v['lote'] ?? ''))) {
+                $linhas[] = "• <strong>Lote/Partícula (Part):</strong> " . htmlspecialchars(trim($v['lote']));
+            }
+
+            if (!empty($linhas)) {
+                $paragrafosList[] = implode("<br>", $linhas);
+            }
+        }
+
+        $paragrafoHtml = implode("<br><br>", $paragrafosList);
+
+        $vars['{{paragrafo_vacinas}}'] = $paragrafoHtml;
+        $vars['{{PARAGRAFO_VACINAS}}'] = $paragrafoHtml;
+        $vars['{{vacinas_paragrafo}}'] = $paragrafoHtml;
+        $vars['{{lista_vacinas_paragrafo}}'] = $paragrafoHtml;
+
+        return $vars;
+    }
 }
+
 

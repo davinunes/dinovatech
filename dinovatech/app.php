@@ -5517,6 +5517,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 '{{EMPRESA_IM}}' => $empresa['inscricao_municipal'] ?? '',
             ];
 
+            $id_pet_actual = $dados['id_pet'] ?? $_POST['id_pet'] ?? null;
+            if (AppHelper::isVetMode() && !empty($id_pet_actual)) {
+                $vars = array_merge($vars, AppHelper::gerarVariaveisVacinas($link, $id_pet_actual));
+            }
+
             // Filter only used vars? Or return all?
             // Let's filter to only show relevant ones, by checking strpos
             $used_vars = [];
@@ -5819,6 +5824,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 '{{ISS_RETIDO}}' => (isset($dados['iss_retido']) && $dados['iss_retido'] == '1') ? 'Sim' : 'Não',
                 '{{TEXTO_PERSONALIZADO}}' => '',
             ];
+
+            $id_pet_actual = $dados['id_pet'] ?? $_POST['id_pet'] ?? null;
+            if (AppHelper::isVetMode() && !empty($id_pet_actual)) {
+                $vars = array_merge($vars, AppHelper::gerarVariaveisVacinas($link, $id_pet_actual));
+            }
 
             // Overrides
             if (is_array($overrides)) {

@@ -276,6 +276,11 @@ $vars = [
     '{{TEXTO_PERSONALIZADO}}' => '', // Default empty, override via REQUEST
 ];
 
+$id_pet_actual = $dados['id_pet'] ?? $_REQUEST['id_pet'] ?? null;
+if (AppHelper::isVetMode() && !empty($id_pet_actual)) {
+    $vars = array_merge($vars, AppHelper::gerarVariaveisVacinas($link, $id_pet_actual));
+}
+
 // 4. Apply Overrides (if any)
 if (isset($_REQUEST['overrides']) && is_array($_REQUEST['overrides'])) {
     foreach ($_REQUEST['overrides'] as $key => $val) {

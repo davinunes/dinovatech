@@ -238,6 +238,21 @@ DBClose($link);
                                         <span class="variable-tag"
                                             onclick="inserirVariavel('{{ASSINATURA_VET}}')">Assinatura (Imagem)</span>
                                     </div>
+
+                                    <span class="var-group-title">Vacinas (Carteira)</span>
+                                    <div class="flex flex-wrap gap-1">
+                                        <span class="variable-tag bg-cyan-100 text-cyan-800 border-cyan-200 hover:bg-cyan-200" onclick="inserirVariavel('{{tabela_vacinas}}')">Tabela de Vacinas</span>
+                                        <span class="variable-tag bg-cyan-100 text-cyan-800 border-cyan-200 hover:bg-cyan-200" onclick="inserirVariavel('{{paragrafo_vacinas}}')">Parágrafo de Vacinas</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_v4_data}}')">V4 Data</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_v4_proxima}}')">V4 Próxima</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_v4_lote}}')">V4 Lote</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_felv_data}}')">FeLV Data</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_felv_proxima}}')">FeLV Próxima</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_felv_lote}}')">FeLV Lote</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_antirrabica_data}}')">Antirrábica Data</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_antirrabica_proxima}}')">Antirrábica Próxima</span>
+                                        <span class="variable-tag" onclick="inserirVariavel('{{vacina_antirrabica_lote}}')">Antirrábica Lote</span>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>
