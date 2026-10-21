@@ -13,6 +13,11 @@ define('DB_CHARSET', getenv('DB_CHARSET') ?: 'UTF8');
 
 function DBConnect()
 { # Abre Conexão com Database
+        // Garante compatibilidade entre PHP 7.4 e PHP 8.x (evita interrupção por mysqli_sql_exception em falhas de query)
+        if (function_exists('mysqli_report')) {
+                @mysqli_report(MYSQLI_REPORT_OFF);
+        }
+
         $link = @mysqli_connect(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, DB_DATABASE);
         if (!$link) {
                 // Em vez de die(), registre o erro e retorne false

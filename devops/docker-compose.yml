@@ -1,0 +1,58 @@
+version: '3.8'
+
+# Docker Compose de Produção / Staging Dinovatech
+# Executa a aplicação PHP 8.2+ junto com o microserviço sidecar WeasyPrint
+
+services:
+  # Container da Aplicação PHP
+  homepage-php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: "8.2"
+    # Alternativamente, aponte para sua imagem do Docker Hub:
+    # image: seurepo/dinovatech:php8.2
+    container_name: homepage-php
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      # Mapeamento do código-fonte (deploy atual via pasta compartilhada no host)
+      - /caminho/na/vps/dinovatech:/var/www/html
+    environment:
+      - TZ=America/Sao_Paulo
+      - APP_MASTER_KEY=${APP_MASTER_KEY}
+      - DB_HOSTNAME=${DB_HOSTNAME}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - WEASYPRINT_URL=http://weasyprint:9080/convert/html
+    networks:
+      - php_dinovatech_financeiro_default
+    depends_on:
+      - weasyprint
+
+  # Sidecar WeasyPrint REST (Geração de PDFs fora do container PHP)
+  weasyprint:
+    image: ghcr.io/schweizerischebundesbahnen/weasyprint-service:latest
+    container_name: weasyprint
+    restart: unless-stopped
+    init: true
+    ports:
+      - "9080:9080"
+    deploy:
+      resources:
+        limits:
+          # Proteção de memória para VPS Free Tier (1GB RAM)
+          memory: 350M
+        reservations:
+          memory: 80M
+    environment:
+      - TZ=America/Sao_Paulo
+    networks:
+      - php_dinovatech_financeiro_default
+
+networks:
+  php_dinovatech_financeiro_default:
+    external: true
