@@ -167,21 +167,6 @@ class SaasProvisionerHelper
         // 1. Cria o Namespace no Kubernetes (se ainda não existir)
         $k3s->createNamespace($namespace);
 
-        // 2. Cria Secret com as variáveis de ambiente do tenant
-        $secretPayload = [
-            'apiVersion' => 'v1',
-            'kind' => 'Secret',
-            'metadata' => [
-                'name' => 'tenant-env',
-                'namespace' => $namespace
-            ],
-            'type' => 'Opaque',
-            'stringData' => [
-                'DB_HOSTNAME' => defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1',
-                'DB_DATABASE' => $t['db_name'],
-                'DB_USERNAME' => $t['db_user'],
-                'DB_PASSWORD' => $t['db_password'],
-                'DB_CHARSET' => 'UTF8',
         // 2. Cria ou atualiza Secret com as variáveis de ambiente do tenant
         $dbHostFinal = !empty($t['db_host']) ? $t['db_host'] : (defined('SAAS_DEFAULT_DB_HOST') ? SAAS_DEFAULT_DB_HOST : (defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1'));
         $dbPortFinal = !empty($t['db_port']) ? (string)$t['db_port'] : '3306';
