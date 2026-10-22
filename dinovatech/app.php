@@ -2355,6 +2355,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 'db_password' => $_POST['saas_db_password'] ?? '',
                                 'db_host' => $_POST['saas_db_host'] ?? '',
                                 'db_port' => !empty($_POST['saas_db_port']) ? (int)$_POST['saas_db_port'] : 3306,
+                                'app_mode_vet' => isset($_POST['saas_app_mode_vet']) ? (int)$_POST['saas_app_mode_vet'] : 1,
+                                'app_master_key' => $_POST['saas_app_master_key'] ?? '',
+                                'custom_envs' => $_POST['saas_custom_envs'] ?? '',
                                 'versao_imagem' => $_POST['saas_versao_imagem'] ?? 'dinovatech:latest',
                                 'limite_memoria' => $_POST['saas_limite_memoria'] ?? '128Mi',
                                 'limite_cpu' => $_POST['saas_limite_cpu'] ?? '250m'
@@ -2484,6 +2487,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 'db_password' => $_POST['saas_db_password'] ?? '',
                                 'db_host' => $_POST['saas_db_host'] ?? '',
                                 'db_port' => !empty($_POST['saas_db_port']) ? (int)$_POST['saas_db_port'] : 3306,
+                                'app_mode_vet' => isset($_POST['saas_app_mode_vet']) ? (int)$_POST['saas_app_mode_vet'] : 1,
+                                'app_master_key' => $_POST['saas_app_master_key'] ?? '',
+                                'custom_envs' => $_POST['saas_custom_envs'] ?? '',
                                 'versao_imagem' => $_POST['saas_versao_imagem'] ?? 'dinovatech:latest',
                                 'limite_memoria' => $_POST['saas_limite_memoria'] ?? '128Mi',
                                 'limite_cpu' => $_POST['saas_limite_cpu'] ?? '250m'

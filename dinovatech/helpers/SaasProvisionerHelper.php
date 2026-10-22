@@ -35,6 +35,7 @@ class SaasProvisionerHelper
         $base = $dominioBase ?: 'dinovatech.com.br';
         $randomPass = bin2hex(random_bytes(8));
         $defaultHost = defined('SAAS_DEFAULT_DB_HOST') ? SAAS_DEFAULT_DB_HOST : (defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1');
+        $randomMasterKey = bin2hex(random_bytes(32));
 
         return [
             'slug_instancia' => $slug,
@@ -46,6 +47,9 @@ class SaasProvisionerHelper
             'db_password' => $randomPass,
             'db_host' => $defaultHost,
             'db_port' => 3306,
+            'app_mode_vet' => 1,
+            'app_master_key' => $randomMasterKey,
+            'custom_envs' => "",
             'versao_imagem' => defined('K3S_DEFAULT_IMAGE') ? K3S_DEFAULT_IMAGE : 'dinovatech:latest',
             'limite_memoria' => '128Mi',
             'limite_cpu' => '250m'
@@ -83,6 +87,14 @@ class SaasProvisionerHelper
         $dbHost = mysqli_real_escape_string($link, trim($data['db_host'] ?? ''));
         $dbPort = (int)($data['db_port'] ?? 3306);
         if ($dbPort <= 0) $dbPort = 3306;
+
+        $appModeVet = isset($data['app_mode_vet']) ? (int)$data['app_mode_vet'] : 1;
+        $appMasterKey = mysqli_real_escape_string($link, trim($data['app_master_key'] ?? ''));
+        if (empty($appMasterKey)) {
+            $appMasterKey = bin2hex(random_bytes(32));
+        }
+        $customEnvs = mysqli_real_escape_string($link, trim($data['custom_envs'] ?? ''));
+
         $imagem = mysqli_real_escape_string($link, trim($data['versao_imagem'] ?? 'dinovatech:latest'));
         $memoria = mysqli_real_escape_string($link, trim($data['limite_memoria'] ?? '128Mi'));
         $cpu = mysqli_real_escape_string($link, trim($data['limite_cpu'] ?? '250m'));
@@ -103,6 +115,9 @@ class SaasProvisionerHelper
                     db_password = '$dbPass',
                     db_host = " . (!empty($dbHost) ? "'$dbHost'" : "NULL") . ",
                     db_port = '$dbPort',
+                    app_mode_vet = '$appModeVet',
+                    app_master_key = '$appMasterKey',
+                    custom_envs = " . (!empty($customEnvs) ? "'$customEnvs'" : "NULL") . ",
                     versao_imagem = '$imagem',
                     limite_memoria = '$memoria',
                     limite_cpu = '$cpu'
@@ -115,9 +130,9 @@ class SaasProvisionerHelper
             ];
         } else {
             $q = "INSERT INTO saas_tenants 
-                  (id_recorrencia, id_cliente, slug_instancia, subdominio, dominio_customizado, namespace_k8s, db_name, db_user, db_password, db_host, db_port, versao_imagem, limite_memoria, limite_cpu, status_pod)
+                  (id_recorrencia, id_cliente, slug_instancia, subdominio, dominio_customizado, namespace_k8s, db_name, db_user, db_password, db_host, db_port, app_mode_vet, app_master_key, custom_envs, versao_imagem, limite_memoria, limite_cpu, status_pod)
                   VALUES 
-                  ('$idRecorrencia', '$idCliente', '$slug', '$subdominio', " . (!empty($dominioCustom) ? "'$dominioCustom'" : "NULL") . ", '$namespace', '$dbName', '$dbUser', '$dbPass', " . (!empty($dbHost) ? "'$dbHost'" : "NULL") . ", '$dbPort', '$imagem', '$memoria', '$cpu', 'PENDING')";
+                  ('$idRecorrencia', '$idCliente', '$slug', '$subdominio', " . (!empty($dominioCustom) ? "'$dominioCustom'" : "NULL") . ", '$namespace', '$dbName', '$dbUser', '$dbPass', " . (!empty($dbHost) ? "'$dbHost'" : "NULL") . ", '$dbPort', '$appModeVet', '$appMasterKey', " . (!empty($customEnvs) ? "'$customEnvs'" : "NULL") . ", '$imagem', '$memoria', '$cpu', 'PENDING')";
             $res = DBExecute($link, $q);
             return [
                 'success' => (bool)$res,
@@ -167,13 +182,41 @@ class SaasProvisionerHelper
                 'DB_USERNAME' => $t['db_user'],
                 'DB_PASSWORD' => $t['db_password'],
                 'DB_CHARSET' => 'UTF8',
-                'TZ' => 'America/Sao_Paulo',
-                'WEASYPRINT_URL' => 'http://weasyprint.shared-services.svc.cluster.local:9080/convert/html',
-                'APP_MODE_VET' => 'true'
-            ]
-        ];
+        // 2. Cria ou atualiza Secret com as variáveis de ambiente do tenant
         $dbHostFinal = !empty($t['db_host']) ? $t['db_host'] : (defined('SAAS_DEFAULT_DB_HOST') ? SAAS_DEFAULT_DB_HOST : (defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1'));
         $dbPortFinal = !empty($t['db_port']) ? (string)$t['db_port'] : '3306';
+        $appModeVet = (!isset($t['app_mode_vet']) || (int)$t['app_mode_vet'] === 1) ? 'true' : 'false';
+        $appMasterKey = !empty($t['app_master_key']) ? $t['app_master_key'] : bin2hex(random_bytes(32));
+
+        $stringData = [
+            'DB_HOSTNAME' => $dbHostFinal,
+            'DB_PORT' => $dbPortFinal,
+            'DB_DATABASE' => $t['db_name'],
+            'DB_USERNAME' => $t['db_user'],
+            'DB_PASSWORD' => $t['db_password'],
+            'DB_CHARSET' => 'UTF8',
+            'APP_MODE_VET' => $appModeVet,
+            'APP_MASTER_KEY' => $appMasterKey,
+            'TZ' => 'America/Sao_Paulo',
+            'WEASYPRINT_URL' => 'http://weasyprint.shared-services.svc.cluster.local:9080/convert/html'
+        ];
+
+        // Parse de variáveis de ambiente customizadas (formato CHAVE=VALOR por linha)
+        if (!empty($t['custom_envs'])) {
+            $lines = explode("\n", str_replace("\r", "", $t['custom_envs']));
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if (empty($line) || strpos($line, '#') === 0) continue;
+                $parts = explode('=', $line, 2);
+                if (count($parts) === 2) {
+                    $k = trim($parts[0]);
+                    $v = trim($parts[1]);
+                    if (!empty($k)) {
+                        $stringData[$k] = $v;
+                    }
+                }
+            }
+        }
 
         $secretPayload = [
             'apiVersion' => 'v1',
@@ -183,17 +226,7 @@ class SaasProvisionerHelper
                 'namespace' => $namespace
             ],
             'type' => 'Opaque',
-            'stringData' => [
-                'DB_HOSTNAME' => $dbHostFinal,
-                'DB_PORT' => $dbPortFinal,
-                'DB_DATABASE' => $t['db_name'],
-                'DB_USERNAME' => $t['db_user'],
-                'DB_PASSWORD' => $t['db_password'],
-                'DB_CHARSET' => 'UTF8',
-                'TZ' => 'America/Sao_Paulo',
-                'WEASYPRINT_URL' => 'http://weasyprint.shared-services.svc.cluster.local:9080/convert/html',
-                'APP_MODE_VET' => 'true'
-            ]
+            'stringData' => $stringData
         ];
         $secRes = $k3s->request('POST', "/api/v1/namespaces/{$namespace}/secrets", $secretPayload);
         if (!$secRes['success'] && ($secRes['http_code'] ?? 0) === 409) {

@@ -458,6 +458,68 @@ DBClose($link);
                                                 </div>
                                             </div>
                                         </div>
+
+                                        <!-- Variáveis de Ambiente & Módulos do Pod (Secret tenant-env) -->
+                                        <div class="pt-4 border-t border-purple-200/60 space-y-3">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="material-icons text-purple-600 text-sm">settings_suggest</span>
+                                                    <span class="text-xs font-bold text-purple-900 uppercase tracking-wider">Variáveis de Ambiente & Módulos do Pod (ENVs)</span>
+                                                </div>
+                                                <span class="text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded font-mono">Secret: tenant-env</span>
+                                            </div>
+
+                                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                                <!-- Modo Veterinário (APP_MODE_VET) -->
+                                                <div class="sm:col-span-5 bg-white p-3 rounded-xl border border-purple-200/80">
+                                                    <label class="block text-xs font-bold text-gray-800 mb-1 flex items-center gap-1">
+                                                        <span class="material-icons text-sm text-purple-600">pets</span> Módulo Veterinário / Pet Shop
+                                                    </label>
+                                                    <p class="text-[11px] text-gray-500 mb-2">Define se este tenant terá fichas de pacientes, internações e banho & tosa.</p>
+                                                    <div class="flex items-center gap-4">
+                                                        <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-gray-800">
+                                                            <input type="radio" name="saas_app_mode_vet" value="1" <?= (!isset($saas_tenant['app_mode_vet']) || (int)$saas_tenant['app_mode_vet'] === 1) ? 'checked' : '' ?> class="text-purple-600 focus:ring-purple-500">
+                                                            <span>Ativado (Vet/Pet)</span>
+                                                        </label>
+                                                        <label class="inline-flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-gray-800">
+                                                            <input type="radio" name="saas_app_mode_vet" value="0" <?= (isset($saas_tenant['app_mode_vet']) && (int)$saas_tenant['app_mode_vet'] === 0) ? 'checked' : '' ?> class="text-purple-600 focus:ring-purple-500">
+                                                            <span>Geral / Padrão</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Chave Mestra (APP_MASTER_KEY) -->
+                                                <div class="sm:col-span-7 bg-white p-3 rounded-xl border border-purple-200/80">
+                                                    <div class="flex items-center justify-between mb-1">
+                                                        <label for="saas_app_master_key" class="block text-xs font-bold text-gray-800 flex items-center gap-1">
+                                                            <span class="material-icons text-sm text-purple-600">vpn_key</span> APP_MASTER_KEY (Criptografia)
+                                                        </label>
+                                                        <button type="button" onclick="gerarNovaMasterKey()" class="text-[10px] font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-2 py-0.5 rounded transition">
+                                                            Gerar Nova Chave
+                                                        </button>
+                                                    </div>
+                                                    <input type="text" id="saas_app_master_key" name="saas_app_master_key"
+                                                        value="<?= htmlspecialchars($saas_tenant['app_master_key'] ?? '') ?>"
+                                                        placeholder="Chave de 32 bytes (64 caracteres hex)"
+                                                        class="w-full p-2 text-[11px] font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                                    <p class="text-[10px] text-gray-500 mt-1">Usada para criptografar tokens e credenciais deste cliente.</p>
+                                                </div>
+                                            </div>
+
+                                            <!-- Variáveis Customizadas (CUSTOM_ENVS) -->
+                                            <div>
+                                                <label for="saas_custom_envs" class="block text-xs font-bold text-gray-800 mb-1 flex items-center justify-between">
+                                                    <span class="flex items-center gap-1">
+                                                        <span class="material-icons text-sm text-purple-600">tune</span> Variáveis de Ambiente Customizadas Extras
+                                                    </span>
+                                                    <span class="text-[10px] text-gray-400 font-mono">CHAVE=VALOR (uma por linha)</span>
+                                                </label>
+                                                <textarea id="saas_custom_envs" name="saas_custom_envs" rows="3"
+                                                    placeholder="MODULO_FISCAL_ATIVO=true&#10;INFINITEPAY_HANDLE=clinicaalfa&#10;SMTP_FROM_NAME=Clinica Alfa"
+                                                    class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white leading-relaxed"><?= htmlspecialchars($saas_tenant['custom_envs'] ?? '') ?></textarea>
+                                                <p class="text-[10px] text-gray-500 mt-0.5">Qualquer chave informada aqui será injetada no container do K3s para customizações avançadas do cliente.</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1269,6 +1331,17 @@ DBClose($link);
                 for (let i = 0; i < 16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
                 $('#saas_db_password').val(pass);
             }
+
+            if (!$('#saas_app_master_key').val()) {
+                gerarNovaMasterKey();
+            }
+        }
+
+        function gerarNovaMasterKey() {
+            const hex = '0123456789abcdef';
+            let key = '';
+            for (let i = 0; i < 64; i++) key += hex.charAt(Math.floor(Math.random() * hex.length));
+            $('#saas_app_master_key').val(key);
         }
 
         function dispararProvisionamentoPod(idTenant) {
