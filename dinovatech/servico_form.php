@@ -135,6 +135,56 @@ if ($id_servico) {
                                 </div>
                             </div>
 
+                            <!-- MODELO OPERACIONAL / TIPO DE SERVIÇO (SaaS K3s) -->
+                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Modelo Operacional do Serviço
+                                </label>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <label class="flex items-center p-3 rounded-xl border border-gray-200 cursor-pointer transition hover:bg-slate-50 <?= ($servico['tipo_servico'] ?? 'PADRAO') === 'PADRAO' ? 'border-cyan-500 bg-cyan-50/40' : '' ?>" id="label_tipo_padrao">
+                                        <input type="radio" name="tipo_servico" value="PADRAO" <?= ($servico['tipo_servico'] ?? 'PADRAO') === 'PADRAO' ? 'checked' : '' ?> onchange="toggleTipoServico(this.value)" class="text-cyan-600 focus:ring-cyan-500 mr-3">
+                                        <div>
+                                            <span class="block text-sm font-bold text-gray-800">Serviço Padrão</span>
+                                            <span class="block text-xs text-gray-500">Atendimento presencial, hora avulsa ou mensalidade comum.</span>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-3 rounded-xl border border-gray-200 cursor-pointer transition hover:bg-slate-50 <?= ($servico['tipo_servico'] ?? '') === 'SAAS_INSTANCE' ? 'border-purple-500 bg-purple-50/40' : '' ?>" id="label_tipo_saas">
+                                        <input type="radio" name="tipo_servico" value="SAAS_INSTANCE" <?= ($servico['tipo_servico'] ?? '') === 'SAAS_INSTANCE' ? 'checked' : '' ?> onchange="toggleTipoServico(this.value)" class="text-purple-600 focus:ring-purple-500 mr-3">
+                                        <div>
+                                            <span class="block text-sm font-bold text-purple-900 flex items-center gap-1">
+                                                <span class="material-icons text-sm text-purple-600">cloud</span> Instância SaaS (Container K3s)
+                                            </span>
+                                            <span class="block text-xs text-gray-500">Gera contrato com Pod isolado, subdomínio e banco de dados.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Configurações Padrão de Container SaaS -->
+                            <div id="bloco_config_saas" class="<?= ($servico['tipo_servico'] ?? '') === 'SAAS_INSTANCE' ? '' : 'hidden' ?> bg-purple-50/70 border border-purple-200 rounded-xl p-4 mt-3 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-icons text-purple-600 text-lg">tune</span>
+                                        <h4 class="text-xs font-bold text-purple-900 uppercase tracking-wider">Template de Pod K3s para Novos Contratos</h4>
+                                    </div>
+                                    <span class="text-[11px] font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded">Multi-Tenant Container</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                                    <div>
+                                        <label for="saas_default_image" class="block text-xs font-semibold text-gray-700 mb-1">Imagem Docker Base</label>
+                                        <input type="text" name="saas_default_image" id="saas_default_image" value="<?= htmlspecialchars($servico['saas_default_image'] ?? 'dinovatech:latest') ?>" class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    </div>
+                                    <div>
+                                        <label for="saas_default_memory" class="block text-xs font-semibold text-gray-700 mb-1">Limite de Memória RAM</label>
+                                        <input type="text" name="saas_default_memory" id="saas_default_memory" value="<?= htmlspecialchars($servico['saas_default_memory'] ?? '128Mi') ?>" class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    </div>
+                                    <div>
+                                        <label for="saas_default_cpu" class="block text-xs font-semibold text-gray-700 mb-1">Limite de CPU</label>
+                                        <input type="text" name="saas_default_cpu" id="saas_default_cpu" value="<?= htmlspecialchars($servico['saas_default_cpu'] ?? '250m') ?>" class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- MÓDULOS DE DISPONIBILIDADE (Apenas Modo Veterinário / Pet Shop) -->
                             <?php if (AppHelper::isVetMode()): ?>
                             <div class="bg-cyan-50/70 border border-cyan-100 rounded-xl p-4">
@@ -666,6 +716,18 @@ if ($id_servico) {
                     alert('Erro de conexão ao enviar imagem.');
                 }
             });
+        }
+
+        function toggleTipoServico(tipo) {
+            if (tipo === 'SAAS_INSTANCE') {
+                $('#bloco_config_saas').removeClass('hidden');
+                $('#label_tipo_saas').addClass('border-purple-500 bg-purple-50/40').removeClass('border-gray-200');
+                $('#label_tipo_padrao').removeClass('border-cyan-500 bg-cyan-50/40').addClass('border-gray-200');
+            } else {
+                $('#bloco_config_saas').addClass('hidden');
+                $('#label_tipo_padrao').addClass('border-cyan-500 bg-cyan-50/40').removeClass('border-gray-200');
+                $('#label_tipo_saas').removeClass('border-purple-500 bg-purple-50/40').addClass('border-gray-200');
+            }
         }
 
         $(document).ready(function () {

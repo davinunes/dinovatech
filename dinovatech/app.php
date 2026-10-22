@@ -1724,10 +1724,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : $defaultIconServ);
                 $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
 
+                // Suporte a SaaS Multi-Tenant K3s
+                $tipo_servico = (isset($_POST['tipo_servico']) && $_POST['tipo_servico'] === 'SAAS_INSTANCE') ? 'SAAS_INSTANCE' : 'PADRAO';
+                $saas_default_image = mysqli_real_escape_string($link, !empty($_POST['saas_default_image']) ? trim($_POST['saas_default_image']) : 'dinovatech:latest');
+                $saas_default_memory = mysqli_real_escape_string($link, !empty($_POST['saas_default_memory']) ? trim($_POST['saas_default_memory']) : '128Mi');
+                $saas_default_cpu = mysqli_real_escape_string($link, !empty($_POST['saas_default_cpu']) ? trim($_POST['saas_default_cpu']) : '250m');
+
                 $query = "INSERT INTO Servicos 
-                          (nome_servico, valor_sugerido, ativo, item_lista_servico, codigo_tributacao_nacional, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, tributacao_issqn, iss_retido, cst_ibs_cbs, classificacao_trib_ibs_cbs, indicador_operacao, descricao_nfse_padrao, descricao_fiscal, disponivel_clinica, disponivel_banho, duracao_minutos, icone_servico, imagem_url) 
+                          (nome_servico, valor_sugerido, ativo, item_lista_servico, codigo_tributacao_nacional, codigo_cnae, codigo_tributacao_municipio, codigo_nbs, aliquota_iss, tributacao_issqn, iss_retido, cst_ibs_cbs, classificacao_trib_ibs_cbs, indicador_operacao, descricao_nfse_padrao, descricao_fiscal, disponivel_clinica, disponivel_banho, duracao_minutos, icone_servico, imagem_url, tipo_servico, saas_default_image, saas_default_memory, saas_default_cpu) 
                           VALUES 
-                          ('$nome_servico', '$valor_sugerido', '$ativo', '$item_lista_servico', '$codigo_tributacao_nacional', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$tributacao_issqn', '$iss_retido', '$cst_ibs_cbs', '$classificacao_trib_ibs_cbs', '$indicador_operacao', '$descricao_nfse_padrao', '$descricao_fiscal', '$disponivel_clinica', '$disponivel_banho', '$duracao_minutos', '$icone_servico', '$imagem_url')";
+                          ('$nome_servico', '$valor_sugerido', '$ativo', '$item_lista_servico', '$codigo_tributacao_nacional', '$codigo_cnae', '$codigo_tributacao_municipio', '$codigo_nbs', '$aliquota_iss', '$tributacao_issqn', '$iss_retido', '$cst_ibs_cbs', '$classificacao_trib_ibs_cbs', '$indicador_operacao', '$descricao_nfse_padrao', '$descricao_fiscal', '$disponivel_clinica', '$disponivel_banho', '$duracao_minutos', '$icone_servico', '$imagem_url', '$tipo_servico', '$saas_default_image', '$saas_default_memory', '$saas_default_cpu')";
 
                 $result = DBExecute($link, $query);
 
@@ -1846,6 +1852,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $icone_servico = mysqli_real_escape_string($link, !empty($_POST['icone_servico']) ? $_POST['icone_servico'] : $defaultIconServ);
                 $imagem_url = mysqli_real_escape_string($link, $_POST['imagem_url'] ?? '');
 
+                // Suporte a SaaS Multi-Tenant K3s
+                $tipo_servico = (isset($_POST['tipo_servico']) && $_POST['tipo_servico'] === 'SAAS_INSTANCE') ? 'SAAS_INSTANCE' : 'PADRAO';
+                $saas_default_image = mysqli_real_escape_string($link, !empty($_POST['saas_default_image']) ? trim($_POST['saas_default_image']) : 'dinovatech:latest');
+                $saas_default_memory = mysqli_real_escape_string($link, !empty($_POST['saas_default_memory']) ? trim($_POST['saas_default_memory']) : '128Mi');
+                $saas_default_cpu = mysqli_real_escape_string($link, !empty($_POST['saas_default_cpu']) ? trim($_POST['saas_default_cpu']) : '250m');
+
                 $query = "UPDATE Servicos SET 
                             nome_servico = '$nome_servico', 
                             valor_sugerido = '$valor_sugerido',
@@ -1867,7 +1879,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                             disponivel_banho = '$disponivel_banho',
                             duracao_minutos = '$duracao_minutos',
                             icone_servico = '$icone_servico',
-                            imagem_url = '$imagem_url'
+                            imagem_url = '$imagem_url',
+                            tipo_servico = '$tipo_servico',
+                            saas_default_image = '$saas_default_image',
+                            saas_default_memory = '$saas_default_memory',
+                            saas_default_cpu = '$saas_default_cpu'
                           WHERE id_servico = '$id_servico'";
                 $result = DBExecute($link, $query);
 
@@ -2319,8 +2335,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $result = DBExecute($link, $query);
 
                 if ($result) {
+                    $new_id_recorrencia = mysqli_insert_id($link);
                     $response['success'] = true;
                     $response['message'] = "Recorrência vinculada com sucesso!";
+
+                    // Salva dados do SaaS se enviados
+                    if (!empty($_POST['saas_slug_instancia'])) {
+                        require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                        SaasProvisionerHelper::saveTenant(
+                            (int)$new_id_recorrencia,
+                            (int)$id_cliente,
+                            [
+                                'slug_instancia' => $_POST['saas_slug_instancia'],
+                                'subdominio' => $_POST['saas_subdominio'] ?? '',
+                                'dominio_customizado' => $_POST['saas_dominio_customizado'] ?? '',
+                                'namespace_k8s' => 'tenant-' . trim($_POST['saas_slug_instancia']),
+                                'db_name' => $_POST['saas_db_name'] ?? '',
+                                'db_user' => $_POST['saas_db_user'] ?? '',
+                                'db_password' => $_POST['saas_db_password'] ?? '',
+                                'versao_imagem' => $_POST['saas_versao_imagem'] ?? 'dinovatech:latest',
+                                'limite_memoria' => $_POST['saas_limite_memoria'] ?? '128Mi',
+                                'limite_cpu' => $_POST['saas_limite_cpu'] ?? '250m'
+                            ],
+                            $link
+                        );
+                    }
                 } else {
                     $mysql_error_code = mysqli_errno($link);
                     if ($mysql_error_code == 1062) { // Duplicate entry for UNIQUE constraint
@@ -2426,9 +2465,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 if ($result) {
                     $response['success'] = true;
                     $response['message'] = "Recorrência atualizada com sucesso!";
+
+                    // Salva/atualiza dados do SaaS se enviados
+                    if (!empty($_POST['saas_slug_instancia'])) {
+                        require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                        SaasProvisionerHelper::saveTenant(
+                            (int)$id_recorrencia,
+                            (int)$id_cliente,
+                            [
+                                'slug_instancia' => $_POST['saas_slug_instancia'],
+                                'subdominio' => $_POST['saas_subdominio'] ?? '',
+                                'dominio_customizado' => $_POST['saas_dominio_customizado'] ?? '',
+                                'namespace_k8s' => 'tenant-' . trim($_POST['saas_slug_instancia']),
+                                'db_name' => $_POST['saas_db_name'] ?? '',
+                                'db_user' => $_POST['saas_db_user'] ?? '',
+                                'db_password' => $_POST['saas_db_password'] ?? '',
+                                'versao_imagem' => $_POST['saas_versao_imagem'] ?? 'dinovatech:latest',
+                                'limite_memoria' => $_POST['saas_limite_memoria'] ?? '128Mi',
+                                'limite_cpu' => $_POST['saas_limite_cpu'] ?? '250m'
+                            ],
+                            $link
+                        );
+                    }
                 } else {
                     $response['message'] = "Erro ao atualizar recorrência: " . mysqli_error($link);
                 }
+            }
+            break;
+
+        case 'saas_provision_pod':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            if ($id_tenant <= 0) {
+                $response['message'] = "ID do tenant inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $provRes = SaasProvisionerHelper::provisionTenant($id_tenant, $link);
+                $response['success'] = $provRes['success'];
+                $response['message'] = $provRes['message'];
+                $response['data'] = $provRes['data'] ?? null;
+            }
+            break;
+
+        case 'saas_scale_pod':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            $replicas = isset($_POST['replicas']) ? (int)$_POST['replicas'] : 1;
+            if ($id_tenant <= 0) {
+                $response['message'] = "ID do tenant inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $scaleRes = SaasProvisionerHelper::scaleTenant($id_tenant, $replicas, $link);
+                $response['success'] = $scaleRes['success'];
+                $response['message'] = $scaleRes['message'];
             }
             break;
 

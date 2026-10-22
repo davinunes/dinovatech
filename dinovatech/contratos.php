@@ -18,17 +18,20 @@ if ($link) {
         $where_clause = "WHERE C.nome LIKE '%$search%' OR S.nome_servico LIKE '%$search%'";
     }
 
-    $query = "SELECT R.*, C.nome AS nome_cliente, S.nome_servico 
+    $hasSaasTable = false;
+    $checkT = DBExecute($link, "SHOW TABLES LIKE 'saas_tenants'");
+    if ($checkT && mysqli_num_rows($checkT) > 0) {
+        $hasSaasTable = true;
+    }
+
+    $saasSelect = $hasSaasTable ? ", T.id_tenant, T.slug_instancia, T.subdominio, T.status_pod" : "";
+    $saasJoin = $hasSaasTable ? "LEFT JOIN saas_tenants T ON T.id_recorrencia = R.id_recorrencia" : "";
+
+    $query = "SELECT R.*, C.nome AS nome_cliente, S.nome_servico, S.tipo_servico $saasSelect
               FROM Recorrencias R 
               JOIN Clientes C ON R.id_cliente = C.id_cliente 
               JOIN Servicos S ON R.id_servico = S.id_servico 
-              $where_clause
-              ORDER BY R.unica_fatura_gerada_mes_ano DESC, C.nome ASC";
-    // Correction: Field name is ultima_fatura_gerada_mes_ano, not unica...
-    $query = "SELECT R.*, C.nome AS nome_cliente, S.nome_servico 
-              FROM Recorrencias R 
-              JOIN Clientes C ON R.id_cliente = C.id_cliente 
-              JOIN Servicos S ON R.id_servico = S.id_servico 
+              $saasJoin
               $where_clause
               ORDER BY C.nome ASC";
 
@@ -143,8 +146,32 @@ foreach ($contratos as $c) {
                                         <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0">
                                             <td class="p-4 font-medium text-gray-900">
                                                 <?= htmlspecialchars($contrato['nome_cliente']) ?>
+                                                                                    <td class="p-4">
+                                                <div class="flex items-center gap-1.5 flex-wrap">
+                                                    <span><?= htmlspecialchars($contrato['nome_servico']) ?></span>
+                                                    <?php if (!empty($contrato['slug_instancia'])): 
+                                                        $statusPod = $contrato['status_pod'] ?? 'PENDING';
+                                                        $badgeColor = ($statusPod === 'RUNNING') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                                                                     (($statusPod === 'SUSPENDED') ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-100 text-gray-700 border-gray-200');
+                                                    ?>
+                                                        <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border <?= $badgeColor ?>" title="Status do Pod K3s">
+                                                            <span class="material-icons text-[11px]"><?= $statusPod === 'RUNNING' ? 'dns' : 'pause_circle' ?></span> <?= $statusPod ?>
+                                                        </span>
+                                                    <?php elseif (($contrato['tipo_servico'] ?? '') === 'SAAS_INSTANCE'): ?>
+                                                        <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200" title="Instância SaaS">
+                                                            <span class="material-icons text-[11px]">cloud</span> SaaS
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                <?php if (!empty($contrato['subdominio'])): ?>
+                                                    <div class="text-[11px] text-gray-400 font-mono flex items-center gap-1 mt-0.5">
+                                                        <span class="material-icons text-[12px] text-gray-400">link</span>
+                                                        <a href="https://<?= htmlspecialchars($contrato['subdominio']) ?>" target="_blank" class="hover:underline text-cyan-600">
+                                                            <?= htmlspecialchars($contrato['subdominio']) ?>
+                                                        </a>
+                                                    </div>
+                                                <?php endif; ?>
                                             </td>
-                                            <td class="p-4"><?= htmlspecialchars($contrato['nome_servico']) ?></td>
                                             <td class="p-4">R$
                                                 <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?>
                                             </td>
@@ -172,6 +199,7 @@ foreach ($contratos as $c) {
                         </table>
                     </div>
                 </div>
+
                 <!-- Mobile List -->
                 <div class="md:hidden space-y-4">
                     <?php if (!empty($ativos)): ?>
@@ -181,7 +209,23 @@ foreach ($contratos as $c) {
                                     <div>
                                         <h3 class="font-bold text-gray-900"><?= htmlspecialchars($contrato['nome_cliente']) ?>
                                         </h3>
-                                        <p class="text-sm text-gray-600"><?= htmlspecialchars($contrato['nome_servico']) ?></p>
+                                        <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+                                            <span class="text-sm text-gray-600"><?= htmlspecialchars($contrato['nome_servico']) ?></span>
+                                            <?php if (!empty($contrato['slug_instancia'])): 
+                                                $statusPod = $contrato['status_pod'] ?? 'PENDING';
+                                                $badgeColor = ($statusPod === 'RUNNING') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                                                             (($statusPod === 'SUSPENDED') ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-gray-100 text-gray-700 border-gray-200');
+                                            ?>
+                                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border <?= $badgeColor ?>">
+                                                    <span class="material-icons text-[11px]"><?= $statusPod === 'RUNNING' ? 'dns' : 'pause_circle' ?></span> <?= $statusPod ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if (!empty($contrato['subdominio'])): ?>
+                                            <div class="text-[11px] text-cyan-600 font-mono mt-0.5">
+                                                <?= htmlspecialchars($contrato['subdominio']) ?>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="text-right">
                                         <span class="block font-bold text-gray-900">R$
@@ -189,7 +233,7 @@ foreach ($contratos as $c) {
                                         <span
                                             class="text-xs text-gray-500 uppercase"><?= htmlspecialchars($contrato['tipo_periodo']) ?></span>
                                     </div>
-                                </div>
+                                </div>     </div>
                                 <div class="text-sm text-gray-600 mb-4 flex justify-between">
                                     <span>Início: <?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></span>
                                 </div>

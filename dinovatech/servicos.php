@@ -146,6 +146,11 @@ if ($link) {
                                                 <div>
                                                     <div class="font-semibold text-gray-900 flex items-center gap-2">
                                                         <?= htmlspecialchars($servico['nome_servico']) ?>
+                                                        <?php if (($servico['tipo_servico'] ?? '') === 'SAAS_INSTANCE'): ?>
+                                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-200" title="Instância SaaS K3s (Multi-Tenant)">
+                                                                <span class="material-icons text-[12px]">cloud</span> SaaS
+                                                            </span>
+                                                        <?php endif; ?>
                                                         <?php if (!empty($servico['codigo_tributacao_nacional'])): ?>
                                                             <span class="text-[10px] bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded border border-cyan-200 font-mono font-semibold" title="Código de Tributação Nacional">cTrib: <?= htmlspecialchars($servico['codigo_tributacao_nacional']) ?></span>
                                                         <?php endif; ?>
@@ -234,6 +239,11 @@ if ($link) {
                                     <div class="flex-1">
                                         <div class="flex items-center gap-1.5 flex-wrap">
                                             <h3 class="font-bold text-gray-900 leading-snug"><?= htmlspecialchars($servico['nome_servico']) ?></h3>
+                                            <?php if (($servico['tipo_servico'] ?? '') === 'SAAS_INSTANCE'): ?>
+                                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                                    <span class="material-icons text-[11px]">cloud</span> SaaS
+                                                </span>
+                                            <?php endif; ?>
                                             <?php if (!empty($servico['codigo_tributacao_nacional'])): ?>
                                                 <span class="text-[9px] bg-cyan-50 text-cyan-700 px-1 py-0.5 rounded border border-cyan-200 font-mono font-semibold">cTrib: <?= htmlspecialchars($servico['codigo_tributacao_nacional']) ?></span>
                                             <?php endif; ?>

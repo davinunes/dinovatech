@@ -37,16 +37,29 @@ data:
         }
     }
 
-    # Health check, ask endpoint e página padrão na porta 80
+    # Health check, ask endpoint e roteamento HTTP
     :80 {
         handle /healthz {
             respond "OK" 200
         }
+
         handle /ask {
             respond 200
         }
+
+        @tenant {
+            header_regexp host Host ^(?P<slug>[a-z0-9-]+)\.dinovatech\.com\.br$
+        }
+        handle @tenant {
+            reverse_proxy app-{re.host.slug}.tenant-{re.host.slug}.svc.cluster.local:80 {
+                header_up Host {http.request.host}
+                header_up X-Real-IP {http.request.header.X-Forwarded-For}
+                header_up X-Forwarded-Proto http
+            }
+        }
+
         handle {
-            respond "Dinovatech SaaS Ingress (Caddy) - Aguardando roteamento de tenant" 200
+            respond "Dinovatech SaaS Ingress (Caddy) - Instância não encontrada" 404
         }
     }
 
@@ -55,11 +68,24 @@ data:
         tls {
             on_demand
         }
+
         handle /healthz {
             respond "OK" 200
         }
+
+        @tenant {
+            header_regexp host Host ^(?P<slug>[a-z0-9-]+)\.dinovatech\.com\.br$
+        }
+        handle @tenant {
+            reverse_proxy app-{re.host.slug}.tenant-{re.host.slug}.svc.cluster.local:80 {
+                header_up Host {http.request.host}
+                header_up X-Real-IP {http.request.header.X-Forwarded-For}
+                header_up X-Forwarded-Proto https
+            }
+        }
+
         handle {
-            respond "Dinovatech SaaS Ingress (Caddy SSL) - Roteador Ativo" 200
+            respond "Dinovatech SaaS Ingress (Caddy SSL) - Instância não encontrada" 404
         }
     }
 ---

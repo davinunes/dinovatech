@@ -8,6 +8,7 @@ include "../database.php";
 require_once __DIR__ . "/config.php";
 require_once __DIR__ . "/helpers/AppHelper.php";
 require_once __DIR__ . "/helpers/FiscalCatalogHelper.php";
+require_once __DIR__ . "/helpers/SaasProvisionerHelper.php";
 
 $id_recorrencia = $_GET['id'] ?? null;
 // Pre-fill client ID if coming from client details
@@ -43,6 +44,9 @@ if ($id_recorrencia) {
         if ($res_pix && mysqli_num_rows($res_pix) > 0) {
             $pix_recorrencia = mysqli_fetch_assoc($res_pix);
         }
+
+        // Buscar dados da Instância SaaS (saas_tenants)
+        $saas_tenant = SaasProvisionerHelper::getTenantByRecorrencia((int)$id_safe, $link);
     }
 }
 
@@ -50,7 +54,7 @@ if ($id_recorrencia) {
 $servicos = [];
 $current_servico_id = $contrato['id_servico'] ?? 0;
 $filtro_servicos = "(ativo = 1 OR ativo IS NULL" . ($current_servico_id ? " OR id_servico = '$current_servico_id'" : "") . ")";
-$query_servicos = "SELECT id_servico, nome_servico, valor_sugerido, COALESCE(ativo, 1) as ativo FROM Servicos WHERE $filtro_servicos ORDER BY nome_servico ASC";
+$query_servicos = "SELECT id_servico, nome_servico, valor_sugerido, COALESCE(ativo, 1) as ativo, COALESCE(tipo_servico, 'PADRAO') as tipo_servico, saas_default_image, saas_default_memory, saas_default_cpu FROM Servicos WHERE $filtro_servicos ORDER BY nome_servico ASC";
 $result_servicos = DBExecute($link, $query_servicos);
 if ($result_servicos) {
     while ($row = mysqli_fetch_assoc($result_servicos))
@@ -192,12 +196,17 @@ DBClose($link);
                                         class="block text-sm font-medium text-gray-700 mb-1">Serviço</label>
                                     <select id="id_servico" name="id_servico" required
                                         class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition bg-white"
-                                        onchange="updateValorSugerido()">
+                                        onchange="updateValorSugerido(); verificarServicoSaas();">
                                         <option value="">Selecione um serviço...</option>
                                         <?php foreach ($servicos as $s): ?>
-                                            <option value="<?= $s['id_servico'] ?>" data-valor="<?= $s['valor_sugerido'] ?>"
+                                            <option value="<?= $s['id_servico'] ?>" 
+                                                data-valor="<?= $s['valor_sugerido'] ?>"
+                                                data-tipo="<?= $s['tipo_servico'] ?? 'PADRAO' ?>"
+                                                data-image="<?= htmlspecialchars($s['saas_default_image'] ?? 'dinovatech:latest') ?>"
+                                                data-memory="<?= htmlspecialchars($s['saas_default_memory'] ?? '128Mi') ?>"
+                                                data-cpu="<?= htmlspecialchars($s['saas_default_cpu'] ?? '250m') ?>"
                                                 <?= ($contrato['id_servico'] ?? '') == $s['id_servico'] ? 'selected' : '' ?>>
-                                                <?= htmlspecialchars($s['nome_servico']) ?>
+                                                <?= htmlspecialchars($s['nome_servico']) ?><?= ($s['tipo_servico'] ?? '') === 'SAAS_INSTANCE' ? ' ☁️ (SaaS K3s)' : '' ?>
                                             </option>
                                         <?php endforeach; ?>
                                     </select>
@@ -268,6 +277,162 @@ DBClose($link);
                                             value="<?= $contrato['dia_vencimento'] ?? '' ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                                             title="Dia do mês em que a fatura vencerá (1 a 31)">
+                                    </div>
+                                </div>
+
+                                <!-- SEÇÃO DE CONFIGURAÇÃO DA INSTÂNCIA SAAS (K3S) -->
+                                <div id="secao_saas_container" class="<?= (!empty($saas_tenant)) ? '' : 'hidden' ?> border-t-2 border-purple-200 pt-6 mt-6">
+                                    <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-2xl p-6 text-white shadow-lg mb-6">
+                                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                            <div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="p-2 bg-white/10 rounded-lg text-purple-200">
+                                                        <span class="material-icons text-xl">cloud_sync</span>
+                                                    </span>
+                                                    <h3 class="text-xl font-bold">Instância SaaS Dedicada (Cluster K3s)</h3>
+                                                </div>
+                                                <p class="text-xs text-purple-200 mt-1">Este serviço provisiona um Pod isolado, subdomínio e banco de dados MariaDB exclusivo para este cliente.</p>
+                                            </div>
+                                            
+                                            <?php if (!empty($saas_tenant)): ?>
+                                                <div class="flex items-center gap-2">
+                                                    <?php
+                                                    $statusPod = $saas_tenant['status_pod'] ?? 'PENDING';
+                                                    $badgeBg = 'bg-amber-500/20 text-amber-300 border-amber-500/30';
+                                                    if ($statusPod === 'RUNNING') $badgeBg = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30';
+                                                    if ($statusPod === 'SUSPENDED') $badgeBg = 'bg-rose-500/20 text-rose-300 border-rose-500/30';
+                                                    ?>
+                                                    <span id="badgePodStatus" class="px-3 py-1.5 rounded-full text-xs font-bold border <?= $badgeBg ?> flex items-center gap-1.5">
+                                                        <span class="w-2 h-2 rounded-full <?= $statusPod === 'RUNNING' ? 'bg-emerald-400 animate-pulse' : ($statusPod === 'SUSPENDED' ? 'bg-rose-400' : 'bg-amber-400') ?>"></span>
+                                                        POD: <?= $statusPod ?>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <?php if (!empty($saas_tenant)): ?>
+                                            <div class="mt-4 pt-4 border-t border-purple-800/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-purple-300">URL de Acesso:</span>
+                                                    <a href="http://<?= htmlspecialchars($saas_tenant['subdominio']) ?>" target="_blank" class="font-mono font-bold text-cyan-300 hover:underline flex items-center gap-1">
+                                                        http://<?= htmlspecialchars($saas_tenant['subdominio']) ?>
+                                                        <span class="material-icons text-xs">open_in_new</span>
+                                                    </a>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <button type="button" id="btnProvisionarPod" onclick="dispararProvisionamentoPod(<?= (int)$saas_tenant['id_tenant'] ?>)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg transition flex items-center gap-1 shadow-sm">
+                                                        <span class="material-icons text-xs">play_arrow</span> Provisionar / Atualizar Pod
+                                                    </button>
+                                                    <?php if (($saas_tenant['status_pod'] ?? '') === 'RUNNING'): ?>
+                                                        <button type="button" id="btnSuspenderPod" onclick="alterarEscalaPod(<?= (int)$saas_tenant['id_tenant'] ?>, 0)" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg transition flex items-center gap-1 shadow-sm">
+                                                            <span class="material-icons text-xs">pause</span> Suspender
+                                                        </button>
+                                                    <?php elseif (($saas_tenant['status_pod'] ?? '') === 'SUSPENDED'): ?>
+                                                        <button type="button" id="btnReativarPod" onclick="alterarEscalaPod(<?= (int)$saas_tenant['id_tenant'] ?>, 1)" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white font-bold rounded-lg transition flex items-center gap-1 shadow-sm">
+                                                            <span class="material-icons text-xs">play_arrow</span> Reativar
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <!-- Campos de Configuração do Tenant -->
+                                    <div class="bg-purple-50/50 border border-purple-200 rounded-2xl p-6 space-y-4">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label for="saas_slug_instancia" class="block text-xs font-bold text-gray-700 mb-1">
+                                                    Slug da Instância (Identificador K3s) <span class="text-rose-500">*</span>
+                                                </label>
+                                                <div class="flex items-center gap-2">
+                                                    <input type="text" id="saas_slug_instancia" name="saas_slug_instancia"
+                                                        value="<?= htmlspecialchars($saas_tenant['slug_instancia'] ?? '') ?>"
+                                                        placeholder="Ex: clinica-alfa"
+                                                        class="w-full p-2.5 text-xs font-mono font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                                        oninput="atualizarSugestoesSaaS(this.value)">
+                                                    <button type="button" onclick="gerarSlugDoCliente()" class="px-3 py-2.5 bg-purple-100 hover:bg-purple-200 text-purple-800 text-xs font-semibold rounded-lg whitespace-nowrap transition">
+                                                        Sugerir
+                                                    </button>
+                                                </div>
+                                                <span class="text-[10px] text-gray-500">Namespace K3s: <code id="preview_ns" class="text-purple-700 font-mono">tenant-<?= htmlspecialchars($saas_tenant['slug_instancia'] ?? 'slug') ?></code></span>
+                                            </div>
+
+                                            <div>
+                                                <label for="saas_subdominio" class="block text-xs font-bold text-gray-700 mb-1">
+                                                    Subdomínio Principal (Caddy Ingress) <span class="text-rose-500">*</span>
+                                                </label>
+                                                <input type="text" id="saas_subdominio" name="saas_subdominio"
+                                                    value="<?= htmlspecialchars($saas_tenant['subdominio'] ?? '') ?>"
+                                                    placeholder="Ex: alfa.dinovatech.com.br"
+                                                    class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                                <span class="text-[10px] text-gray-500">Subdomínio público com SSL Let's Encrypt</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div>
+                                                <label for="saas_dominio_customizado" class="block text-xs font-bold text-gray-700 mb-1">
+                                                    Domínio Próprio (CNAME)
+                                                </label>
+                                                <input type="text" id="saas_dominio_customizado" name="saas_dominio_customizado"
+                                                    value="<?= htmlspecialchars($saas_tenant['dominio_customizado'] ?? '') ?>"
+                                                    placeholder="Ex: sistema.clinicavet.com.br"
+                                                    class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                                <span class="text-[10px] text-gray-500">Opcional. Caddy emitirá On-Demand TLS</span>
+                                            </div>
+
+                                            <div>
+                                                <label for="saas_versao_imagem" class="block text-xs font-bold text-gray-700 mb-1">
+                                                    Imagem Docker
+                                                </label>
+                                                <input type="text" id="saas_versao_imagem" name="saas_versao_imagem"
+                                                    value="<?= htmlspecialchars($saas_tenant['versao_imagem'] ?? 'dinovatech:latest') ?>"
+                                                    class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                            </div>
+
+                                            <div class="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label for="saas_limite_memoria" class="block text-xs font-bold text-gray-700 mb-1">Memória</label>
+                                                    <input type="text" id="saas_limite_memoria" name="saas_limite_memoria"
+                                                        value="<?= htmlspecialchars($saas_tenant['limite_memoria'] ?? '128Mi') ?>"
+                                                        class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="saas_limite_cpu" class="block text-xs font-bold text-gray-700 mb-1">CPU</label>
+                                                    <input type="text" id="saas_limite_cpu" name="saas_limite_cpu"
+                                                        value="<?= htmlspecialchars($saas_tenant['limite_cpu'] ?? '250m') ?>"
+                                                        class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Banco de Dados Isolado -->
+                                        <div class="pt-3 border-t border-purple-200/60">
+                                            <span class="text-xs font-bold text-purple-900 uppercase tracking-wider block mb-2">Banco de Dados Dedicado (MariaDB)</span>
+                                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                                <div>
+                                                    <label for="saas_db_name" class="block text-xs font-semibold text-gray-700 mb-1">Nome do Banco (DB)</label>
+                                                    <input type="text" id="saas_db_name" name="saas_db_name"
+                                                        value="<?= htmlspecialchars($saas_tenant['db_name'] ?? '') ?>"
+                                                        placeholder="Ex: dino_alfa"
+                                                        class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="saas_db_user" class="block text-xs font-semibold text-gray-700 mb-1">Usuário do Banco</label>
+                                                    <input type="text" id="saas_db_user" name="saas_db_user"
+                                                        value="<?= htmlspecialchars($saas_tenant['db_user'] ?? '') ?>"
+                                                        placeholder="Ex: usr_alfa"
+                                                        class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg">
+                                                </div>
+                                                <div>
+                                                    <label for="saas_db_password" class="block text-xs font-semibold text-gray-700 mb-1">Senha do Banco</label>
+                                                    <input type="text" id="saas_db_password" name="saas_db_password"
+                                                        value="<?= htmlspecialchars($saas_tenant['db_password'] ?? '') ?>"
+                                                        placeholder="Senha gerada"
+                                                        class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg">
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1013,21 +1178,97 @@ DBClose($link);
             btn.disabled = true;
             btn.innerHTML = '<span class="material-icons text-sm mr-1.5 animate-spin">hourglass_top</span> Cancelando...';
 
-            $.post('../inter/endpoint.php?action=cancelar_pix_recorrencia_contrato', { idRec: idRec }, function(res) {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
+        function verificarServicoSaas() {
+            const opt = $('#id_servico').find('option:selected');
+            const tipo = opt.data('tipo');
+            if (tipo === 'SAAS_INSTANCE') {
+                $('#secao_saas_container').removeClass('hidden');
+                if (!$('#saas_slug_instancia').val()) {
+                    gerarSlugDoCliente();
+                }
+                if (opt.data('image') && !$('#saas_versao_imagem').val()) $('#saas_versao_imagem').val(opt.data('image'));
+                if (opt.data('memory') && !$('#saas_limite_memoria').val()) $('#saas_limite_memoria').val(opt.data('memory'));
+                if (opt.data('cpu') && !$('#saas_limite_cpu').val()) $('#saas_limite_cpu').val(opt.data('cpu'));
+            } else {
+                if (!$('#saas_slug_instancia').val()) {
+                    $('#secao_saas_container').addClass('hidden');
+                }
+            }
+        }
+
+        function atualizarSugestoesSaaS(slug) {
+            slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+            $('#saas_slug_instancia').val(slug);
+            $('#preview_ns').text('tenant-' + (slug || 'slug'));
+            if (!$('#saas_subdominio').val() || $('#saas_subdominio').val().endsWith('.dinovatech.com.br')) {
+                $('#saas_subdominio').val((slug ? slug : 'cliente') + '.dinovatech.com.br');
+            }
+            if (!$('#saas_db_name').val() || $('#saas_db_name').val().startsWith('dino_')) {
+                $('#saas_db_name').val('dino_' + slug.replace(/-/g, '_'));
+            }
+            if (!$('#saas_db_user').val() || $('#saas_db_user').val().startsWith('usr_')) {
+                $('#saas_db_user').val('usr_' + slug.replace(/-/g, '_'));
+            }
+        }
+
+        function gerarSlugDoCliente() {
+            const nomeCliente = $('#id_cliente').find('option:selected').text().trim();
+            if (!nomeCliente || nomeCliente.includes('Selecione')) {
+                return;
+            }
+            let slug = nomeCliente.normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+                                  .toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                                  .replace(/^-+|-+$/g, '');
+            if (slug.length > 30) slug = slug.substring(0, 30).replace(/-$/, '');
+            atualizarSugestoesSaaS(slug);
+
+            if (!$('#saas_db_password').val()) {
+                const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                let pass = '';
+                for (let i = 0; i < 16; i++) pass += chars.charAt(Math.floor(Math.random() * chars.length));
+                $('#saas_db_password').val(pass);
+            }
+        }
+
+        function dispararProvisionamentoPod(idTenant) {
+            if (!confirm('Deseja provisionar/atualizar o Pod desta instância no Cluster K3s agora?')) return;
+            const btn = $('#btnProvisionarPod');
+            const orig = btn.html();
+            btn.prop('disabled', true).html('<span class="material-icons text-xs animate-spin">sync</span> Provisionando...');
+
+            $.post('app.php', { action: 'saas_provision_pod', id_tenant: idTenant }, function(res) {
+                btn.prop('disabled', false).html(orig);
                 if (res.success) {
-                    alert('Pix Automático do contrato cancelado com sucesso no Banco Inter.');
+                    alert('Sucesso: ' + res.message);
                     window.location.reload();
                 } else {
-                    alert('Erro ao cancelar: ' + (res.message || 'Erro no banco'));
+                    alert('Erro no provisionamento: ' + res.message);
                 }
             }, 'json').fail(function() {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-                alert('Erro de conexão ao cancelar recorrência.');
+                btn.prop('disabled', false).html(orig);
+                alert('Erro de comunicação com o servidor ao provisionar Pod.');
             });
         }
+
+        function alterarEscalaPod(idTenant, replicas) {
+            const acao = (replicas === 0) ? 'suspender' : 'reativar';
+            if (!confirm(`Deseja realmente ${acao} o Pod desta instância no Cluster K3s?`)) return;
+
+            $.post('app.php', { action: 'saas_scale_pod', id_tenant: idTenant, replicas: replicas }, function(res) {
+                if (res.success) {
+                    alert(res.message);
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json').fail(function() {
+                alert('Falha de conexão ao alterar estado do pod.');
+            });
+        }
+
+        $(document).ready(function() {
+            verificarServicoSaas();
+        });
     </script>
 </body>
 
