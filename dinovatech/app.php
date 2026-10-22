@@ -2353,6 +2353,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 'db_name' => $_POST['saas_db_name'] ?? '',
                                 'db_user' => $_POST['saas_db_user'] ?? '',
                                 'db_password' => $_POST['saas_db_password'] ?? '',
+                                'db_host' => $_POST['saas_db_host'] ?? '',
+                                'db_port' => !empty($_POST['saas_db_port']) ? (int)$_POST['saas_db_port'] : 3306,
                                 'versao_imagem' => $_POST['saas_versao_imagem'] ?? 'dinovatech:latest',
                                 'limite_memoria' => $_POST['saas_limite_memoria'] ?? '128Mi',
                                 'limite_cpu' => $_POST['saas_limite_cpu'] ?? '250m'
@@ -2480,6 +2482,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 'db_name' => $_POST['saas_db_name'] ?? '',
                                 'db_user' => $_POST['saas_db_user'] ?? '',
                                 'db_password' => $_POST['saas_db_password'] ?? '',
+                                'db_host' => $_POST['saas_db_host'] ?? '',
+                                'db_port' => !empty($_POST['saas_db_port']) ? (int)$_POST['saas_db_port'] : 3306,
                                 'versao_imagem' => $_POST['saas_versao_imagem'] ?? 'dinovatech:latest',
                                 'limite_memoria' => $_POST['saas_limite_memoria'] ?? '128Mi',
                                 'limite_cpu' => $_POST['saas_limite_cpu'] ?? '250m'

@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS `saas_tenants` (
   `db_name` VARCHAR(64) NOT NULL COMMENT 'Nome do banco de dados isolado',
   `db_user` VARCHAR(64) NOT NULL COMMENT 'Usuário do banco de dados do tenant',
   `db_password` VARCHAR(100) NOT NULL COMMENT 'Senha do banco de dados do tenant',
+  `db_host` VARCHAR(150) NULL DEFAULT NULL COMMENT 'Host ou IP do banco de dados dedicado',
+  `db_port` INT DEFAULT 3306 COMMENT 'Porta do banco de dados dedicado',
   `versao_imagem` VARCHAR(100) NOT NULL DEFAULT 'dinovatech:latest',
   `limite_memoria` VARCHAR(20) NOT NULL DEFAULT '128Mi',
   `limite_cpu` VARCHAR(20) NOT NULL DEFAULT '250m',

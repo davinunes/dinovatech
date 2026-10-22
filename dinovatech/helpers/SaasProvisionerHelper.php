@@ -34,6 +34,7 @@ class SaasProvisionerHelper
         $slug = self::slugify($clienteNome);
         $base = $dominioBase ?: 'dinovatech.com.br';
         $randomPass = bin2hex(random_bytes(8));
+        $defaultHost = defined('SAAS_DEFAULT_DB_HOST') ? SAAS_DEFAULT_DB_HOST : (defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1');
 
         return [
             'slug_instancia' => $slug,
@@ -43,6 +44,8 @@ class SaasProvisionerHelper
             'db_name' => "dino_{$slug}",
             'db_user' => "usr_{$slug}",
             'db_password' => $randomPass,
+            'db_host' => $defaultHost,
+            'db_port' => 3306,
             'versao_imagem' => defined('K3S_DEFAULT_IMAGE') ? K3S_DEFAULT_IMAGE : 'dinovatech:latest',
             'limite_memoria' => '128Mi',
             'limite_cpu' => '250m'
@@ -77,6 +80,9 @@ class SaasProvisionerHelper
         $dbName = mysqli_real_escape_string($link, trim($data['db_name'] ?? ''));
         $dbUser = mysqli_real_escape_string($link, trim($data['db_user'] ?? ''));
         $dbPass = mysqli_real_escape_string($link, trim($data['db_password'] ?? ''));
+        $dbHost = mysqli_real_escape_string($link, trim($data['db_host'] ?? ''));
+        $dbPort = (int)($data['db_port'] ?? 3306);
+        if ($dbPort <= 0) $dbPort = 3306;
         $imagem = mysqli_real_escape_string($link, trim($data['versao_imagem'] ?? 'dinovatech:latest'));
         $memoria = mysqli_real_escape_string($link, trim($data['limite_memoria'] ?? '128Mi'));
         $cpu = mysqli_real_escape_string($link, trim($data['limite_cpu'] ?? '250m'));
@@ -95,6 +101,8 @@ class SaasProvisionerHelper
                     db_name = '$dbName',
                     db_user = '$dbUser',
                     db_password = '$dbPass',
+                    db_host = " . (!empty($dbHost) ? "'$dbHost'" : "NULL") . ",
+                    db_port = '$dbPort',
                     versao_imagem = '$imagem',
                     limite_memoria = '$memoria',
                     limite_cpu = '$cpu'
@@ -107,9 +115,9 @@ class SaasProvisionerHelper
             ];
         } else {
             $q = "INSERT INTO saas_tenants 
-                  (id_recorrencia, id_cliente, slug_instancia, subdominio, dominio_customizado, namespace_k8s, db_name, db_user, db_password, versao_imagem, limite_memoria, limite_cpu, status_pod)
+                  (id_recorrencia, id_cliente, slug_instancia, subdominio, dominio_customizado, namespace_k8s, db_name, db_user, db_password, db_host, db_port, versao_imagem, limite_memoria, limite_cpu, status_pod)
                   VALUES 
-                  ('$idRecorrencia', '$idCliente', '$slug', '$subdominio', " . (!empty($dominioCustom) ? "'$dominioCustom'" : "NULL") . ", '$namespace', '$dbName', '$dbUser', '$dbPass', '$imagem', '$memoria', '$cpu', 'PENDING')";
+                  ('$idRecorrencia', '$idCliente', '$slug', '$subdominio', " . (!empty($dominioCustom) ? "'$dominioCustom'" : "NULL") . ", '$namespace', '$dbName', '$dbUser', '$dbPass', " . (!empty($dbHost) ? "'$dbHost'" : "NULL") . ", '$dbPort', '$imagem', '$memoria', '$cpu', 'PENDING')";
             $res = DBExecute($link, $q);
             return [
                 'success' => (bool)$res,
@@ -164,7 +172,9 @@ class SaasProvisionerHelper
                 'APP_MODE_VET' => 'true'
             ]
         ];
-        // 2. Cria ou atualiza Secret com as variáveis de ambiente do tenant
+        $dbHostFinal = !empty($t['db_host']) ? $t['db_host'] : (defined('SAAS_DEFAULT_DB_HOST') ? SAAS_DEFAULT_DB_HOST : (defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1'));
+        $dbPortFinal = !empty($t['db_port']) ? (string)$t['db_port'] : '3306';
+
         $secretPayload = [
             'apiVersion' => 'v1',
             'kind' => 'Secret',
@@ -174,7 +184,8 @@ class SaasProvisionerHelper
             ],
             'type' => 'Opaque',
             'stringData' => [
-                'DB_HOSTNAME' => defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1',
+                'DB_HOSTNAME' => $dbHostFinal,
+                'DB_PORT' => $dbPortFinal,
                 'DB_DATABASE' => $t['db_name'],
                 'DB_USERNAME' => $t['db_user'],
                 'DB_PASSWORD' => $t['db_password'],

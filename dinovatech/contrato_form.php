@@ -408,7 +408,32 @@ DBClose($link);
 
                                         <!-- Banco de Dados Isolado -->
                                         <div class="pt-3 border-t border-purple-200/60">
-                                            <span class="text-xs font-bold text-purple-900 uppercase tracking-wider block mb-2">Banco de Dados Dedicado (MariaDB)</span>
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="text-xs font-bold text-purple-900 uppercase tracking-wider block">Conexão do Banco de Dados Dedicado (MariaDB / MySQL)</span>
+                                                <span class="text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded font-medium">Isolamento Multi-Tenant</span>
+                                            </div>
+                                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-3">
+                                                <div class="sm:col-span-8">
+                                                    <label for="saas_db_host" class="block text-xs font-semibold text-gray-700 mb-1">
+                                                        Host / IP do Servidor do Banco
+                                                    </label>
+                                                    <input type="text" id="saas_db_host" name="saas_db_host"
+                                                        value="<?= htmlspecialchars($saas_tenant['db_host'] ?? (defined('SAAS_DEFAULT_DB_HOST') ? SAAS_DEFAULT_DB_HOST : (defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1'))) ?>"
+                                                        placeholder="Ex: 137.131.208.19 ou db-remoto.dominio.com"
+                                                        class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                                    <span class="text-[10px] text-gray-500">Permite usar outro host ou VPS sem acoplamento à máquina atual.</span>
+                                                </div>
+                                                <div class="sm:col-span-4">
+                                                    <label for="saas_db_port" class="block text-xs font-semibold text-gray-700 mb-1">
+                                                        Porta
+                                                    </label>
+                                                    <input type="number" id="saas_db_port" name="saas_db_port"
+                                                        value="<?= htmlspecialchars($saas_tenant['db_port'] ?? '3306') ?>"
+                                                        placeholder="3306"
+                                                        class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                                </div>
+                                            </div>
+
                                             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                                 <div>
                                                     <label for="saas_db_name" class="block text-xs font-semibold text-gray-700 mb-1">Nome do Banco (DB)</label>
