@@ -2519,6 +2519,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'saas_update_image':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            $new_image = trim($_POST['new_image'] ?? '');
+            if ($id_tenant <= 0 || empty($new_image)) {
+                $response['message'] = "ID do tenant e nova imagem são obrigatórios.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $upRes = SaasProvisionerHelper::updateTenantImage($id_tenant, $new_image, $link);
+                $response['success'] = $upRes['success'];
+                $response['message'] = $upRes['message'];
+            }
+            break;
+
+        case 'saas_get_pod_logs':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            $lines = isset($_POST['lines']) ? (int)$_POST['lines'] : 80;
+            if ($id_tenant <= 0) {
+                $response['message'] = "ID do tenant inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $logsRes = SaasProvisionerHelper::getTenantLogs($id_tenant, $lines, $link);
+                $response['success'] = $logsRes['success'];
+                $response['message'] = $logsRes['message'] ?? '';
+                $response['data'] = $logsRes;
+            }
+            break;
+
         case 'incorporar_recorrencias_na_fatura': // Incorporar recorrências em uma fatura
             $id_fatura = $_POST['id_fatura'] ?? '';
             $id_cliente = $_POST['id_cliente'] ?? '';

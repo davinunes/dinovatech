@@ -164,9 +164,32 @@ class SaasProvisionerHelper
                 'APP_MODE_VET' => 'true'
             ]
         ];
-        $k3s->request('POST', "/api/v1/namespaces/{$namespace}/secrets", $secretPayload);
+        // 2. Cria ou atualiza Secret com as variáveis de ambiente do tenant
+        $secretPayload = [
+            'apiVersion' => 'v1',
+            'kind' => 'Secret',
+            'metadata' => [
+                'name' => 'tenant-env',
+                'namespace' => $namespace
+            ],
+            'type' => 'Opaque',
+            'stringData' => [
+                'DB_HOSTNAME' => defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1',
+                'DB_DATABASE' => $t['db_name'],
+                'DB_USERNAME' => $t['db_user'],
+                'DB_PASSWORD' => $t['db_password'],
+                'DB_CHARSET' => 'UTF8',
+                'TZ' => 'America/Sao_Paulo',
+                'WEASYPRINT_URL' => 'http://weasyprint.shared-services.svc.cluster.local:9080/convert/html',
+                'APP_MODE_VET' => 'true'
+            ]
+        ];
+        $secRes = $k3s->request('POST', "/api/v1/namespaces/{$namespace}/secrets", $secretPayload);
+        if (!$secRes['success'] && ($secRes['http_code'] ?? 0) === 409) {
+            $k3s->request('PUT', "/api/v1/namespaces/{$namespace}/secrets/tenant-env", $secretPayload);
+        }
 
-        // 3. Cria Deployment do Pod PHP
+        // 3. Cria ou atualiza Deployment com RollingUpdate Zero-Downtime
         $deploymentPayload = [
             'apiVersion' => 'apps/v1',
             'kind' => 'Deployment',
@@ -180,6 +203,13 @@ class SaasProvisionerHelper
             ],
             'spec' => [
                 'replicas' => 1,
+                'strategy' => [
+                    'type' => 'RollingUpdate',
+                    'rollingUpdate' => [
+                        'maxSurge' => 1,
+                        'maxUnavailable' => 0
+                    ]
+                ],
                 'selector' => [
                     'matchLabels' => [
                         'app' => $appName
@@ -213,6 +243,16 @@ class SaasProvisionerHelper
                                         'cpu' => $t['limite_cpu'],
                                         'memory' => $t['limite_memoria']
                                     ]
+                                ],
+                                'readinessProbe' => [
+                                    'httpGet' => [
+                                        'path' => '/login.php',
+                                        'port' => 80
+                                    ],
+                                    'initialDelaySeconds' => 4,
+                                    'periodSeconds' => 5,
+                                    'timeoutSeconds' => 2,
+                                    'failureThreshold' => 3
                                 ]
                             ]
                         ]
@@ -222,7 +262,36 @@ class SaasProvisionerHelper
         ];
         $depRes = $k3s->request('POST', "/apis/apps/v1/namespaces/{$namespace}/deployments", $deploymentPayload);
 
-        // 4. Cria Service ClusterIP
+        // Se o Deployment já existir (409 Conflict), aplica atualização via PATCH (RollingUpdate automático)
+        if (!$depRes['success'] && ($depRes['http_code'] ?? 0) === 409) {
+            $patchPayload = [
+                'spec' => [
+                    'template' => [
+                        'spec' => [
+                            'containers' => [
+                                [
+                                    'name' => 'php-app',
+                                    'image' => $t['versao_imagem'],
+                                    'resources' => [
+                                        'requests' => [
+                                            'cpu' => '50m',
+                                            'memory' => '64Mi'
+                                        ],
+                                        'limits' => [
+                                            'cpu' => $t['limite_cpu'],
+                                            'memory' => $t['limite_memoria']
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+            $depRes = $k3s->request('PATCH', "/apis/apps/v1/namespaces/{$namespace}/deployments/{$appName}", $patchPayload, 'application/strategic-merge-patch+json');
+        }
+
+        // 4. Cria ou atualiza Service ClusterIP
         $svcPayload = [
             'apiVersion' => 'v1',
             'kind' => 'Service',
@@ -244,7 +313,7 @@ class SaasProvisionerHelper
                 ]
             ]
         ];
-        $k3s->request('POST', "/api/v1/namespaces/{$namespace}/services", $svcPayload);
+        $svcRes = $k3s->request('POST', "/api/v1/namespaces/{$namespace}/services", $svcPayload);
 
         // 5. Atualiza o status no banco
         $status = $depRes['success'] ? 'RUNNING' : 'ERROR';
@@ -253,8 +322,95 @@ class SaasProvisionerHelper
 
         return [
             'success' => $depRes['success'],
-            'message' => $depRes['success'] ? 'Instância provisionada com sucesso no K3s!' : 'Falha ao criar Pod: ' . ($depRes['error'] ?? ''),
+            'message' => $depRes['success'] ? 'Instância provisionada/atualizada com sucesso no K3s (RollingUpdate ativo)!' : 'Falha ao criar Pod: ' . ($depRes['error'] ?? ''),
             'data' => $depRes['data'] ?? null
+        ];
+    }
+
+    /**
+     * Atualiza a tag da imagem Docker do tenant disparando RollingUpdate Zero-Downtime
+     */
+    public static function updateTenantImage(int $idTenant, string $newImage, $link): array
+    {
+        $idSafe = (int)$idTenant;
+        $newImageSafe = trim($newImage);
+        if (empty($newImageSafe)) {
+            return ['success' => false, 'message' => 'Nova imagem não informada.'];
+        }
+
+        $q = "SELECT * FROM saas_tenants WHERE id_tenant = '$idSafe' LIMIT 1";
+        $res = DBExecute($link, $q);
+        if (!$res || mysqli_num_rows($res) === 0) {
+            return ['success' => false, 'message' => 'Tenant não encontrado.'];
+        }
+        $t = mysqli_fetch_assoc($res);
+
+        $k3s = new K3sClientHelper();
+        $namespace = $t['namespace_k8s'];
+        $appName = "app-{$t['slug_instancia']}";
+
+        // Envia Strategic Merge Patch para o Kubernetes atualizar a imagem
+        $patchPayload = [
+            'spec' => [
+                'template' => [
+                    'spec' => [
+                        'containers' => [
+                            [
+                                'name' => 'php-app',
+                                'image' => $newImageSafe
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $patchRes = $k3s->request('PATCH', "/apis/apps/v1/namespaces/{$namespace}/deployments/{$appName}", $patchPayload, 'application/strategic-merge-patch+json');
+
+        if ($patchRes['success']) {
+            $imgEsc = mysqli_real_escape_string($link, $newImageSafe);
+            DBExecute($link, "UPDATE saas_tenants SET versao_imagem = '$imgEsc', status_pod = 'RUNNING' WHERE id_tenant = '$idSafe'");
+            return [
+                'success' => true,
+                'message' => "RollingUpdate iniciado com sucesso para a versão {$newImageSafe}! O K3s manterá o pod atual ativo até o novo estar pronto."
+            ];
+        }
+
+        return [
+            'success' => false,
+            'message' => 'Falha ao atualizar imagem no cluster: ' . ($patchRes['error'] ?? '')
+        ];
+    }
+
+    /**
+     * Obtém os últimos logs do Pod do tenant
+     */
+    public static function getTenantLogs(int $idTenant, int $lines, $link): array
+    {
+        $idSafe = (int)$idTenant;
+        $q = "SELECT * FROM saas_tenants WHERE id_tenant = '$idSafe' LIMIT 1";
+        $res = DBExecute($link, $q);
+        if (!$res || mysqli_num_rows($res) === 0) {
+            return ['success' => false, 'message' => 'Tenant não encontrado.', 'logs' => ''];
+        }
+        $t = mysqli_fetch_assoc($res);
+
+        $k3s = new K3sClientHelper();
+        $namespace = $t['namespace_k8s'];
+
+        $podsRes = $k3s->listPods($namespace);
+        if (!$podsRes['success'] || empty($podsRes['pods'])) {
+            return ['success' => false, 'message' => 'Nenhum pod encontrado para este tenant.', 'logs' => ''];
+        }
+
+        $podName = $podsRes['pods'][0]['name'];
+        $logsRes = $k3s->getPodLogs($namespace, $podName, $lines);
+
+        return [
+            'success' => $logsRes['success'],
+            'pod_name' => $podName,
+            'namespace' => $namespace,
+            'logs' => $logsRes['logs'] ?? ($logsRes['error'] ?? 'Sem logs disponíveis.')
         ];
     }
 

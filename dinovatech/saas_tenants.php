@@ -9,6 +9,8 @@ if (!isset($_SESSION['usuario_id'])) {
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/helpers/AppHelper.php';
 require_once __DIR__ . '/helpers/K3sClientHelper.php';
+require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+require_once __DIR__ . '/../database.php';
 
 // Trava de segurança: somente renderiza se a variável de ambiente permitir
 if (!defined('SAAS_MASTER_ENABLED') || !SAAS_MASTER_ENABLED) {
@@ -49,7 +51,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action'])) {
     exit();
 }
 
-// Carregamento inicial de status do cluster
+// 1. Carregamento dos Tenants e Contratos SaaS do banco
+$tenants = [];
+$totalMrr = 0.0;
+$countRunning = 0;
+$countSuspended = 0;
+$countPending = 0;
+
+$link = DBConnect();
+if ($link) {
+    $hasTable = false;
+    $checkT = DBExecute($link, "SHOW TABLES LIKE 'saas_tenants'");
+    if ($checkT && mysqli_num_rows($checkT) > 0) {
+        $hasTable = true;
+    }
+
+    if ($hasTable) {
+        $q = "SELECT T.*, C.nome AS nome_cliente, C.telefone, R.valor_sugerido_recorrencia, R.tipo_periodo, S.nome_servico 
+              FROM saas_tenants T
+              LEFT JOIN Clientes C ON T.id_cliente = C.id_cliente
+              LEFT JOIN Recorrencias R ON T.id_recorrencia = R.id_recorrencia
+              LEFT JOIN Servicos S ON R.id_servico = S.id_servico
+              ORDER BY T.id_tenant DESC";
+        $res = DBExecute($link, $q);
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $tenants[] = $row;
+                $st = $row['status_pod'] ?? 'PENDING';
+                if ($st === 'RUNNING') {
+                    $countRunning++;
+                } elseif ($st === 'SUSPENDED') {
+                    $countSuspended++;
+                } else {
+                    $countPending++;
+                }
+
+                if (!empty($row['valor_sugerido_recorrencia'])) {
+                    $totalMrr += (float)$row['valor_sugerido_recorrencia'];
+                }
+            }
+        }
+    }
+    DBClose($link);
+}
+
+// 2. Carregamento de status do cluster
 $initialHealth = $k3s->checkHealth();
 $initialNodes = $k3s->getNodes();
 ?>
@@ -58,170 +104,496 @@ $initialNodes = $k3s->getNodes();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel SaaS & Orquestração K3s - Dinovatech</title>
+    <title>Gestão de Instâncias SaaS & Cluster K3s - Dinovatech</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
-<body class="bg-slate-100 font-sans antialiased">
+<body class="bg-slate-100 font-sans antialiased text-slate-800">
     <?php include 'components/sidebar.php'; ?>
 
     <div class="lg:pl-64 flex flex-col min-h-screen">
         <!-- Header -->
-        <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <header class="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sticky top-0 z-10 shadow-xs">
             <div>
                 <div class="flex items-center gap-2">
                     <span class="inline-flex items-center justify-center p-2 bg-purple-100 text-purple-700 rounded-lg">
                         <span class="material-icons text-xl">cloud_sync</span>
                     </span>
-                    <h1 class="text-2xl font-bold text-slate-800">Orquestração SaaS & Cluster K3s</h1>
+                    <h1 class="text-2xl font-bold text-slate-800">Central de Instâncias SaaS (K3s)</h1>
                 </div>
-                <p class="text-sm text-slate-500 mt-1">Gerenciamento de pods, isolamento de containers por tenant e monitoramento de infraestrutura.</p>
+                <p class="text-sm text-slate-500 mt-1">Gerenciamento de contratos SaaS, isolamento de pods por cliente e controle de versões.</p>
             </div>
-            <div class="flex items-center gap-3">
-                <button type="button" id="btnTestarK3s" onclick="testarConexaoCluster()" class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition-all text-sm">
+            <div class="flex items-center gap-2.5">
+                <a href="contrato_form.php" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg text-sm transition shadow-sm">
+                    <span class="material-icons text-sm">add</span>
+                    <span>Novo Contrato SaaS</span>
+                </a>
+                <button type="button" id="btnTestarK3s" onclick="testarConexaoCluster()" class="inline-flex items-center gap-2 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition text-sm">
                     <span class="material-icons text-sm" id="iconBtnTest">sync</span>
-                    <span>Testar Conexão K3s</span>
+                    <span>Testar Cluster</span>
                 </button>
             </div>
         </header>
 
         <!-- Main Content -->
         <main class="flex-1 p-6 space-y-6 max-w-7xl mx-auto w-full">
-            <!-- Cards de Diagnóstico do Cluster -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Card 1: Status da API -->
-                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Status da API K3s</span>
-                        <span id="badgeStatus" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold <?= $initialHealth['healthy'] ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' ?>">
-                            <span class="w-2 h-2 rounded-full <?= $initialHealth['healthy'] ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500' ?>"></span>
-                            <span id="badgeStatusText"><?= $initialHealth['healthy'] ? 'ONLINE (Ready)' : 'OFFLINE' ?></span>
+
+            <!-- CARDS DE MÉTRICAS SAAS & NEGÓCIO -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Card 1: Total Tenants -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total de Instâncias</span>
+                        <div class="text-2xl font-black text-slate-800 mt-1"><?= count($tenants) ?></div>
+                        <span class="text-[11px] text-slate-500">Contratos SaaS ativos</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center border border-purple-100">
+                        <span class="material-icons text-2xl">dns</span>
+                    </div>
+                </div>
+
+                <!-- Card 2: Pods Ativos -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pods em Execução</span>
+                        <div class="text-2xl font-black text-emerald-600 mt-1"><?= $countRunning ?></div>
+                        <span class="text-[11px] text-emerald-700 font-medium">Running no K3s</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100">
+                        <span class="material-icons text-2xl">check_circle</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Suspensos / Pendentes -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Suspensos / Pendentes</span>
+                        <div class="text-2xl font-black text-amber-600 mt-1"><?= $countSuspended + $countPending ?></div>
+                        <span class="text-[11px] text-slate-500"><?= $countSuspended ?> suspensos / <?= $countPending ?> pendentes</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-100">
+                        <span class="material-icons text-2xl">pause_circle</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: MRR SaaS -->
+                <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Receita Recorrente (MRR)</span>
+                        <div class="text-2xl font-black text-purple-700 mt-1">R$ <?= number_format($totalMrr, 2, ',', '.') ?></div>
+                        <span class="text-[11px] text-purple-600 font-medium">Faturamento mensal</span>
+                    </div>
+                    <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
+                        <span class="material-icons text-2xl">payments</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABELA CENTRAL DE CLIENTES / INSTÂNCIAS SAAS -->
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50/50">
+                    <div class="flex items-center gap-2">
+                        <span class="material-icons text-purple-600">view_list</span>
+                        <h2 class="text-base font-bold text-slate-800">Instâncias Dedicadas de Clientes</h2>
+                        <span class="text-xs font-semibold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full"><?= count($tenants) ?></span>
+                    </div>
+                    <div class="text-xs text-slate-500 flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Running</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Suspended</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400"></span> Pending</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-xs tracking-wider border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-4 font-semibold">Cliente / Contrato</th>
+                                <th class="py-3 px-4 font-semibold">Subdomínio & Acesso</th>
+                                <th class="py-3 px-4 font-semibold">Recursos Elásticos</th>
+                                <th class="py-3 px-4 font-semibold">Versão Imagem</th>
+                                <th class="py-3 px-4 font-semibold">Banco de Dados</th>
+                                <th class="py-3 px-4 font-semibold">Status Pod</th>
+                                <th class="py-3 px-4 font-semibold text-right">Ações Rápidas</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            <?php if (!empty($tenants)): ?>
+                                <?php foreach ($tenants as $t): 
+                                    $status = $t['status_pod'] ?? 'PENDING';
+                                    $badge = 'bg-slate-100 text-slate-700 border-slate-200';
+                                    $dot = 'bg-slate-400';
+                                    if ($status === 'RUNNING') {
+                                        $badge = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+                                        $dot = 'bg-emerald-500 animate-pulse';
+                                    } elseif ($status === 'SUSPENDED') {
+                                        $badge = 'bg-amber-50 text-amber-800 border-amber-200';
+                                        $dot = 'bg-amber-500';
+                                    } elseif ($status === 'ERROR') {
+                                        $badge = 'bg-rose-50 text-rose-800 border-rose-200';
+                                        $dot = 'bg-rose-500';
+                                    }
+                                ?>
+                                    <tr class="hover:bg-slate-50/70 transition" id="row-tenant-<?= $t['id_tenant'] ?>">
+                                        <!-- Cliente / Contrato -->
+                                        <td class="py-3.5 px-4 font-medium text-slate-900">
+                                            <div class="flex items-center gap-2.5">
+                                                <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-xs border border-purple-100">
+                                                    <?= strtoupper(substr($t['nome_cliente'] ?? 'C', 0, 2)) ?>
+                                                </div>
+                                                <div>
+                                                    <div class="font-bold text-slate-800 leading-tight">
+                                                        <?= htmlspecialchars($t['nome_cliente'] ?? 'Cliente Desconhecido') ?>
+                                                    </div>
+                                                    <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                                        <span><?= htmlspecialchars($t['nome_servico'] ?? 'SaaS') ?></span>
+                                                        <span>•</span>
+                                                        <span class="font-semibold text-purple-700">R$ <?= number_format($t['valor_sugerido_recorrencia'] ?? 0, 2, ',', '.') ?></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Subdomínio & URL -->
+                                        <td class="py-3.5 px-4">
+                                            <div class="flex items-center gap-1 font-mono text-xs">
+                                                <span class="material-icons text-emerald-600 text-[14px]" title="SSL On-Demand Ativo">lock</span>
+                                                <a href="https://<?= htmlspecialchars($t['subdominio']) ?>" target="_blank" class="text-cyan-700 hover:text-cyan-900 font-semibold hover:underline flex items-center gap-0.5">
+                                                    <?= htmlspecialchars($t['subdominio']) ?>
+                                                    <span class="material-icons text-[12px]">open_in_new</span>
+                                                </a>
+                                            </div>
+                                            <div class="text-[11px] text-slate-400 font-mono mt-0.5">
+                                                NS: <?= htmlspecialchars($t['namespace_k8s']) ?>
+                                            </div>
+                                        </td>
+
+                                        <!-- Recursos Elásticos -->
+                                        <td class="py-3.5 px-4">
+                                            <div class="text-xs font-mono space-y-0.5">
+                                                <div>
+                                                    <span class="text-slate-400">RAM:</span> 
+                                                    <span class="text-slate-700 font-semibold">64Mi ~ <?= htmlspecialchars($t['limite_memoria']) ?></span>
+                                                </div>
+                                                <div>
+                                                    <span class="text-slate-400">CPU:</span> 
+                                                    <span class="text-slate-700 font-semibold">50m ~ <?= htmlspecialchars($t['limite_cpu']) ?></span>
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <!-- Versão da Imagem Docker -->
+                                        <td class="py-3.5 px-4">
+                                            <div class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded font-mono text-[11px]" title="<?= htmlspecialchars($t['versao_imagem']) ?>">
+                                                <span class="material-icons text-[11px] text-purple-600">tag</span>
+                                                <span id="img-tag-<?= $t['id_tenant'] ?>"><?= htmlspecialchars($t['versao_imagem']) ?></span>
+                                            </div>
+                                        </td>
+
+                                        <!-- Banco de Dados -->
+                                        <td class="py-3.5 px-4 font-mono text-xs">
+                                            <div class="font-semibold text-slate-800"><?= htmlspecialchars($t['db_name']) ?></div>
+                                            <div class="text-[11px] text-slate-400">usr: <?= htmlspecialchars($t['db_user']) ?></div>
+                                        </td>
+
+                                        <!-- Status Pod -->
+                                        <td class="py-3.5 px-4">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border <?= $badge ?>">
+                                                <span class="w-2 h-2 rounded-full <?= $dot ?>"></span>
+                                                <span><?= htmlspecialchars($status) ?></span>
+                                            </span>
+                                        </td>
+
+                                        <!-- Ações Rápidas -->
+                                        <td class="py-3.5 px-4 text-right">
+                                            <div class="flex items-center justify-end gap-1.5">
+                                                <?php if ($status === 'PENDING' || $status === 'ERROR'): ?>
+                                                    <!-- Botão Deploy / Provisionar -->
+                                                    <button type="button" onclick="provisionarTenant(<?= $t['id_tenant'] ?>)" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-xs transition" title="Provisionar Pod no K3s">
+                                                        <span class="material-icons text-xs">rocket_launch</span> Deploy
+                                                    </button>
+                                                <?php elseif ($status === 'RUNNING'): ?>
+                                                    <!-- Botão Suspender -->
+                                                    <button type="button" onclick="alterarEscala(<?= $t['id_tenant'] ?>, 0)" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Suspender Pod (Escalar para 0)">
+                                                        <span class="material-icons text-base">pause_circle_filled</span>
+                                                    </button>
+                                                <?php elseif ($status === 'SUSPENDED'): ?>
+                                                    <!-- Botão Reativar -->
+                                                    <button type="button" onclick="alterarEscala(<?= $t['id_tenant'] ?>, 1)" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Reativar Pod (Escalar para 1)">
+                                                        <span class="material-icons text-base">play_circle_filled</span>
+                                                    </button>
+                                                <?php endif; ?>
+
+                                                <!-- Atualizar Versão (RollingUpdate) -->
+                                                <button type="button" onclick="abrirModalUpdate(<?= $t['id_tenant'] ?>, '<?= htmlspecialchars(addslashes($t['nome_cliente'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($t['versao_imagem'])) ?>')" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Atualizar Versão (RollingUpdate)">
+                                                    <span class="material-icons text-base">upgrade</span>
+                                                </button>
+
+                                                <!-- Ver Logs -->
+                                                <button type="button" onclick="abrirModalLogs(<?= $t['id_tenant'] ?>, '<?= htmlspecialchars(addslashes($t['nome_cliente'] ?? '')) ?>')" class="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition" title="Ver Logs do Container">
+                                                    <span class="material-icons text-base">terminal</span>
+                                                </button>
+
+                                                <!-- Editar Contrato -->
+                                                <a href="contrato_form.php?id=<?= $t['id_recorrencia'] ?>" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="Editar Contrato">
+                                                    <span class="material-icons text-base">settings</span>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="7" class="py-12 text-center text-slate-400">
+                                        <span class="material-icons text-4xl mb-2 text-slate-300">cloud_off</span>
+                                        <p class="font-medium text-slate-600">Nenhum contrato SaaS cadastrado ainda.</p>
+                                        <p class="text-xs text-slate-400 mt-1">Ao cadastrar um contrato com um serviço do tipo "Instância SaaS", ele aparecerá aqui automaticamente.</p>
+                                        <a href="contrato_form.php" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-semibold mt-4 transition">
+                                            <span class="material-icons text-xs">add</span> Criar Primeiro Contrato SaaS
+                                        </a>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SEÇÃO EXPANSÍVEL: SAÚDE DO CLUSTER K3S & NÓS -->
+            <details class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden group">
+                <summary class="px-6 py-4 border-b border-slate-200 cursor-pointer flex items-center justify-between bg-slate-50/50 hover:bg-slate-100/50 transition">
+                    <div class="flex items-center gap-2">
+                        <span class="material-icons text-slate-600">storage</span>
+                        <h3 class="font-bold text-slate-800">Diagnóstico e Infraestrutura do Cluster K3s</h3>
+                        <span class="text-xs px-2 py-0.5 rounded-full <?= $initialHealth['healthy'] ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800' ?> font-semibold">
+                            <?= $initialHealth['healthy'] ? 'Cluster Online' : 'Cluster Offline' ?>
                         </span>
                     </div>
-                    <div class="mt-4">
-                        <div class="text-xs text-slate-500">Endpoint:</div>
-                        <div class="text-sm font-mono text-slate-700 truncate font-semibold" title="<?= htmlspecialchars(K3S_API_URL) ?>">
-                            <?= htmlspecialchars(K3S_API_URL) ?>
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                        <span>Latência REST:</span>
-                        <span id="labelLatencia" class="font-bold text-slate-700"><?= $initialHealth['latency_ms'] ?> ms</span>
-                    </div>
-                </div>
+                    <span class="material-icons text-slate-400 group-open:rotate-180 transition-transform">expand_more</span>
+                </summary>
 
-                <!-- Card 2: Nó Master -->
-                <?php 
-                $firstNode = $initialNodes['nodes'][0] ?? null;
-                ?>
-                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Nó Master Control-Plane</span>
-                        <span class="material-icons text-purple-500">dns</span>
-                    </div>
-                    <div class="mt-2">
-                        <div class="text-lg font-bold text-slate-800" id="labelNodeName">
-                            <?= htmlspecialchars($firstNode['name'] ?? 'Nenhum nó detectado') ?>
-                        </div>
-                        <div class="text-xs text-slate-500 mt-1" id="labelNodeOs">
-                            <?= htmlspecialchars($firstNode['os'] ?? '') ?> (<?= htmlspecialchars($firstNode['architecture'] ?? '') ?>)
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                        <span>Versão Kubelet:</span>
-                        <span id="labelKubeVersion" class="font-bold text-slate-700"><?= htmlspecialchars($firstNode['kubelet_version'] ?? 'N/A') ?></span>
-                    </div>
-                </div>
-
-                <!-- Card 3: Recursos Alocáveis -->
-                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Capacidade do Nó</span>
-                        <span class="material-icons text-cyan-500">memory</span>
-                    </div>
-                    <div class="mt-2 space-y-2">
-                        <div>
-                            <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
-                                <span>CPUs:</span>
-                                <span id="labelCpuCap" class="font-bold"><?= htmlspecialchars($firstNode['cpu_capacity'] ?? '2') ?> vCPUs</span>
+                <div class="p-6 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Card Status da API -->
+                        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase text-slate-400">API REST do K3s</span>
+                                <span class="text-xs font-bold text-emerald-700"><?= $initialHealth['latency_ms'] ?> ms</span>
                             </div>
-                            <div class="w-full bg-slate-100 rounded-full h-2">
-                                <div class="bg-cyan-500 h-2 rounded-full" style="width: 25%"></div>
+                            <div class="mt-2 text-xs font-mono text-slate-700 truncate" title="<?= htmlspecialchars(K3S_API_URL) ?>">
+                                <?= htmlspecialchars(K3S_API_URL) ?>
                             </div>
                         </div>
-                        <div>
-                            <div class="flex justify-between text-xs font-medium text-slate-600 mb-1">
-                                <span>RAM Alocável:</span>
-                                <span id="labelMemCap" class="font-bold"><?= htmlspecialchars($firstNode['memory_allocatable'] ?? '11 GiB') ?></span>
-                            </div>
-                            <div class="w-full bg-slate-100 rounded-full h-2">
-                                <div class="bg-purple-500 h-2 rounded-full" style="width: 20%"></div>
-                            </div>
+
+                        <!-- Card Nó Master -->
+                        <?php $firstNode = $initialNodes['nodes'][0] ?? null; ?>
+                        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <span class="text-xs font-semibold uppercase text-slate-400">Nó Master Control-Plane</span>
+                            <div class="text-sm font-bold text-slate-800 mt-1"><?= htmlspecialchars($firstNode['name'] ?? 'Nenhum nó') ?></div>
+                            <div class="text-xs text-slate-500 mt-0.5"><?= htmlspecialchars($firstNode['os'] ?? '') ?> (<?= htmlspecialchars($firstNode['architecture'] ?? '') ?>)</div>
+                        </div>
+
+                        <!-- Card Recursos do Nó -->
+                        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                            <span class="text-xs font-semibold uppercase text-slate-400">Capacidade da Máquina</span>
+                            <div class="text-sm font-bold text-slate-800 mt-1"><?= htmlspecialchars($firstNode['cpu_capacity'] ?? '2') ?> vCPUs / <?= htmlspecialchars($firstNode['memory_allocatable'] ?? '11 GiB') ?> RAM</div>
+                            <div class="text-xs text-purple-600 font-semibold mt-0.5">Ingress Caddy + WeasyPrint Compartilhado</div>
                         </div>
                     </div>
-                    <div class="mt-3 pt-2 border-t border-slate-100 text-xs text-slate-400">
-                        Pronto para orquestrar múltiplos containers PHP isolados (~35 MB cada).
-                    </div>
-                </div>
-            </div>
 
-            <!-- Banner Informativo -->
-            <div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-xl p-6 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-                <div class="space-y-1">
-                    <h2 class="text-lg font-bold flex items-center gap-2">
-                        <span class="material-icons text-amber-400">auto_awesome</span>
-                        Playground de Isolamento por Containers (Multi-Tenant SaaS)
-                    </h2>
-                    <p class="text-sm text-purple-200">
-                        O seu sistema principal continua seguro na VPS atual. Este cluster K3s funciona como playground para testes de provisionamento, roteamento de subdomínios via Caddy e sidecar compartilhado WeasyPrint.
-                    </p>
-                </div>
-                <div class="flex-shrink-0">
-                    <span class="px-3 py-1 bg-white/10 text-white rounded-lg text-xs font-mono border border-white/20">
-                        K3s v1.36.5+k3s1
-                    </span>
-                </div>
-            </div>
-
-            <!-- Seção de Ações Rápidas de Diagnóstico -->
-            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                        <span class="material-icons text-slate-500">terminal</span>
-                        Pods Ativos no Cluster K3s
-                    </h3>
-                    <button type="button" onclick="carregarPodsCluster()" class="text-xs text-purple-600 hover:text-purple-800 font-semibold flex items-center gap-1">
-                        <span class="material-icons text-xs">refresh</span> Atualizar Lista
-                    </button>
-                </div>
-                <div class="p-6">
-                    <div id="loadingPods" class="text-center py-8 text-slate-400">
-                        <span class="material-icons text-3xl animate-spin mb-2">autorenew</span>
-                        <p class="text-sm">Consultando pods via API REST do K3s...</p>
-                    </div>
-                    <div id="tabelaPodsWrapper" class="hidden overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
-                                <tr>
-                                    <th class="py-3 px-4">Namespace</th>
-                                    <th class="py-3 px-4">Nome do Pod</th>
-                                    <th class="py-3 px-4">Fase</th>
-                                    <th class="py-3 px-4">IP Interno</th>
-                                    <th class="py-3 px-4">Data de Criação</th>
-                                </tr>
-                            </thead>
-                            <tbody id="listaPodsCorpo" class="divide-y divide-slate-100 text-slate-700">
-                                <!-- Preenchido dinamicamente via JS -->
-                            </tbody>
-                        </table>
+                    <!-- Tabela de Pods Brutos do Cluster -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider">Pods Brutos no Cluster (Todos os Namespaces)</h4>
+                            <button type="button" onclick="carregarPodsCluster()" class="text-xs text-purple-600 hover:text-purple-800 font-semibold flex items-center gap-1">
+                                <span class="material-icons text-xs">refresh</span> Atualizar Pods K3s
+                            </button>
+                        </div>
+                        <div id="loadingPods" class="text-center py-6 text-slate-400">
+                            <span class="material-icons text-2xl animate-spin mb-1">autorenew</span>
+                            <p class="text-xs">Consultando pods via API REST do K3s...</p>
+                        </div>
+                        <div id="tabelaPodsWrapper" class="hidden overflow-x-auto border border-slate-200 rounded-lg">
+                            <table class="w-full text-left text-xs">
+                                <thead class="bg-slate-100 text-slate-500 uppercase">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Namespace</th>
+                                        <th class="py-2.5 px-3">Nome do Pod</th>
+                                        <th class="py-2.5 px-3">Fase</th>
+                                        <th class="py-2.5 px-3">IP Interno</th>
+                                        <th class="py-2.5 px-3">Data Criação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaPodsCorpo" class="divide-y divide-slate-100 font-mono text-slate-700"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </details>
         </main>
     </div>
 
+    <!-- MODAL DE ATUALIZAÇÃO DE IMAGEM (ROLLINGUPDATE ZERO-DOWNTIME) -->
+    <div id="modalUpdate" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            <div class="px-6 py-4 bg-purple-50/70 border-b border-purple-100 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-purple-600">upgrade</span>
+                    <h3 class="font-bold text-purple-900 text-sm">Atualizar Versão da Imagem</h3>
+                </div>
+                <button type="button" onclick="fecharModalUpdate()" class="text-slate-400 hover:text-slate-600">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <form id="formUpdateImage" onsubmit="salvarNovaImagem(event)" class="p-6 space-y-4">
+                <input type="hidden" id="modal_id_tenant" name="id_tenant">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Cliente / Instância</label>
+                    <div id="modal_tenant_cliente" class="text-sm font-bold text-slate-900"></div>
+                </div>
+                <div>
+                    <label for="modal_new_image" class="block text-xs font-semibold text-slate-700 mb-1">Nova Imagem Docker / Tag</label>
+                    <input type="text" id="modal_new_image" name="new_image" required placeholder="ex: dinovatech:v1.2.0" class="w-full p-2.5 text-xs font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:outline-hidden">
+                    <p class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-1">
+                        <span class="material-icons text-xs text-purple-600">info</span>
+                        <span>O K3s subirá o novo pod primeiro. O pod antigo só morrerá quando o novo estiver 100% pronto (Zero-Downtime).</span>
+                    </p>
+                </div>
+                <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                    <button type="button" onclick="fecharModalUpdate()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">Cancelar</button>
+                    <button type="submit" id="btnConfirmarUpdate" class="px-4 py-2 text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white rounded-lg shadow-xs transition flex items-center gap-1">
+                        <span class="material-icons text-xs">rocket</span> Aplicar RollingUpdate
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DE LOGS DO CONTAINER -->
+    <div id="modalLogs" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-950 rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-800 overflow-hidden flex flex-col h-[80vh]">
+            <div class="px-6 py-3.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-slate-300">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-emerald-400 text-sm">terminal</span>
+                    <span class="font-bold text-xs text-white" id="modalLogsTitulo">Logs do Pod</span>
+                    <span class="text-[11px] text-slate-400 font-mono" id="modalLogsSub"></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="recarregarLogsModal()" class="text-xs text-slate-400 hover:text-white flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 transition font-mono">
+                        <span class="material-icons text-xs">refresh</span> Recarregar
+                    </button>
+                    <button type="button" onclick="fecharModalLogs()" class="text-slate-400 hover:text-white">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 p-4 overflow-y-auto font-mono text-xs leading-relaxed text-emerald-400 bg-slate-950 whitespace-pre-wrap select-all" id="modalLogsConteudo">
+                Carregando logs do container...
+            </div>
+        </div>
+    </div>
+
     <script>
+        let currentLogTenantId = null;
+
+        function provisionarTenant(idTenant) {
+            if (!confirm('Deseja iniciar o provisionamento desta instância no Cluster K3s agora?')) return;
+            $.post('app.php', { action: 'saas_provision_pod', id_tenant: idTenant }, function(res) {
+                if (res.success) {
+                    alert('Sucesso: ' + res.message);
+                    window.location.reload();
+                } else {
+                    alert('Erro no provisionamento: ' + res.message);
+                }
+            }, 'json').fail(function() {
+                alert('Erro de comunicação com o servidor.');
+            });
+        }
+
+        function alterarEscala(idTenant, replicas) {
+            const acao = (replicas === 0) ? 'suspender' : 'reativar';
+            if (!confirm(`Deseja realmente ${acao} o Pod desta instância no Cluster K3s?`)) return;
+
+            $.post('app.php', { action: 'saas_scale_pod', id_tenant: idTenant, replicas: replicas }, function(res) {
+                if (res.success) {
+                    alert(res.message);
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json').fail(function() {
+                alert('Falha de conexão ao alterar estado do pod.');
+            });
+        }
+
+        function abrirModalUpdate(idTenant, cliente, imagemAtual) {
+            $('#modal_id_tenant').val(idTenant);
+            $('#modal_tenant_cliente').text(cliente);
+            $('#modal_new_image').val(imagemAtual);
+            $('#modalUpdate').removeClass('hidden');
+        }
+
+        function fecharModalUpdate() {
+            $('#modalUpdate').addClass('hidden');
+        }
+
+        function salvarNovaImagem(e) {
+            e.preventDefault();
+            const idTenant = $('#modal_id_tenant').val();
+            const newImage = $('#modal_new_image').val().trim();
+            const btn = $('#btnConfirmarUpdate');
+            const orig = btn.html();
+
+            btn.prop('disabled', true).html('<span class="material-icons text-xs animate-spin">sync</span> Disparando...');
+
+            $.post('app.php', { action: 'saas_update_image', id_tenant: idTenant, new_image: newImage }, function(res) {
+                btn.prop('disabled', false).html(orig);
+                if (res.success) {
+                    alert(res.message);
+                    fecharModalUpdate();
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json').fail(function() {
+                btn.prop('disabled', false).html(orig);
+                alert('Erro de comunicação ao disparar RollingUpdate.');
+            });
+        }
+
+        function abrirModalLogs(idTenant, cliente) {
+            currentLogTenantId = idTenant;
+            $('#modalLogsTitulo').text('Logs: ' + cliente);
+            $('#modalLogsSub').text('Consultando...');
+            $('#modalLogsConteudo').text('Consultando logs do container no K3s...');
+            $('#modalLogs').removeClass('hidden');
+
+            recarregarLogsModal();
+        }
+
+        function fecharModalLogs() {
+            $('#modalLogs').addClass('hidden');
+            currentLogTenantId = null;
+        }
+
+        function recarregarLogsModal() {
+            if (!currentLogTenantId) return;
+            $('#modalLogsConteudo').html('<span class="text-slate-500">Buscando últimas linhas de log...</span>');
+
+            $.post('app.php', { action: 'saas_get_pod_logs', id_tenant: currentLogTenantId, lines: 100 }, function(res) {
+                if (res.success && res.data) {
+                    $('#modalLogsSub').text(res.data.namespace + ' / ' + res.data.pod_name);
+                    const logs = res.data.logs || 'Nenhum log gerado pelo container até o momento.';
+                    $('#modalLogsConteudo').text(logs);
+                } else {
+                    $('#modalLogsConteudo').html('<span class="text-rose-400">Erro ao obter logs: ' + (res.message || 'Sem resposta') + '</span>');
+                }
+            }, 'json').fail(function() {
+                $('#modalLogsConteudo').html('<span class="text-rose-400">Falha de conexão ao buscar logs.</span>');
+            });
+        }
+
         function testarConexaoCluster() {
             const btn = $('#btnTestarK3s');
             const icon = $('#iconBtnTest');
@@ -231,37 +603,11 @@ $initialNodes = $k3s->getNodes();
             $.post('saas_tenants.php', { ajax_action: 'test_connection' }, function(data) {
                 icon.removeClass('animate-spin');
                 btn.prop('disabled', false);
-
-                if (data.success) {
-                    $('#badgeStatus')
-                        .removeClass('bg-rose-100 text-rose-800')
-                        .addClass('bg-emerald-100 text-emerald-800');
-                    $('#badgeStatus span:first')
-                        .removeClass('bg-rose-500')
-                        .addClass('bg-emerald-500 animate-pulse');
-                    $('#badgeStatusText').text('ONLINE (Ready)');
-                    $('#labelLatencia').text(data.health.latency_ms + ' ms');
-
-                    if (data.nodes && data.nodes.length > 0) {
-                        const n = data.nodes[0];
-                        $('#labelNodeName').text(n.name);
-                        $('#labelNodeOs').text(n.os + ' (' + n.architecture + ')');
-                        $('#labelKubeVersion').text(n.kubelet_version);
-                    }
-                } else {
-                    $('#badgeStatus')
-                        .removeClass('bg-emerald-100 text-emerald-800')
-                        .addClass('bg-rose-100 text-rose-800');
-                    $('#badgeStatus span:first')
-                        .removeClass('bg-emerald-500 animate-pulse')
-                        .addClass('bg-rose-500');
-                    $('#badgeStatusText').text('OFFLINE');
-                    alert('Erro ao conectar na API do K3s: ' + (data.health.error || 'Falha de comunicação.'));
-                }
-            }).fail(function() {
+                alert('Conexão K3s testada! Latência: ' + (data.health.latency_ms || 0) + ' ms');
+            }, 'json').fail(function() {
                 icon.removeClass('animate-spin');
                 btn.prop('disabled', false);
-                alert('Falha na requisição AJAX ao testar K3s.');
+                alert('Falha ao comunicar com o cluster K3s.');
             });
         }
 
@@ -269,39 +615,31 @@ $initialNodes = $k3s->getNodes();
             $('#loadingPods').removeClass('hidden');
             $('#tabelaPodsWrapper').addClass('hidden');
 
-            $.post('saas_tenants.php', { ajax_action: 'list_pods' }, function(res) {
+            $.post('saas_tenants.php', { ajax_action: 'list_pods' }, function(data) {
                 $('#loadingPods').addClass('hidden');
                 $('#tabelaPodsWrapper').removeClass('hidden');
 
                 const tbody = $('#listaPodsCorpo');
                 tbody.empty();
 
-                if (res.success && res.pods && res.pods.length > 0) {
-                    res.pods.forEach(function(pod) {
-                        let statusBadge = '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-100 text-slate-700">' + pod.phase + '</span>';
-                        if (pod.phase === 'Running') {
-                            statusBadge = '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-emerald-100 text-emerald-800">Running</span>';
-                        } else if (pod.phase === 'Pending') {
-                            statusBadge = '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-amber-100 text-amber-800">Pending</span>';
-                        } else if (pod.phase === 'Failed') {
-                            statusBadge = '<span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-800">Failed</span>';
-                        }
-
-                        const tr = $('<tr>')
-                            .append($('<td class="py-3 px-4 font-mono text-xs text-purple-700 font-semibold">').text(pod.namespace))
-                            .append($('<td class="py-3 px-4 font-medium text-slate-800">').text(pod.name))
-                            .append($('<td class="py-3 px-4">').html(statusBadge))
-                            .append($('<td class="py-3 px-4 font-mono text-xs text-slate-500">').text(pod.pod_ip || '-'))
-                            .append($('<td class="py-3 px-4 text-xs text-slate-400">').text(pod.start_time || '-'));
-                        tbody.append(tr);
+                if (data.pods && data.pods.length > 0) {
+                    data.pods.forEach(function(pod) {
+                        const phaseClass = (pod.phase === 'Running') ? 'text-emerald-600 font-bold' : 'text-slate-500';
+                        const row = `
+                            <tr class="hover:bg-slate-50">
+                                <td class="py-2 px-3 font-semibold text-slate-800">${pod.namespace}</td>
+                                <td class="py-2 px-3">${pod.name}</td>
+                                <td class="py-2 px-3 ${phaseClass}">${pod.phase}</td>
+                                <td class="py-2 px-3">${pod.pod_ip || '-'}</td>
+                                <td class="py-2 px-3 text-slate-400">${pod.start_time || '-'}</td>
+                            </tr>
+                        `;
+                        tbody.append(row);
                     });
                 } else {
-                    tbody.append('<tr><td colspan="5" class="py-4 text-center text-slate-400">Nenhum pod encontrado ou erro na listagem.</td></tr>');
+                    tbody.html('<tr><td colspan="5" class="py-4 text-center text-slate-400">Nenhum pod encontrado.</td></tr>');
                 }
-            }).fail(function() {
-                $('#loadingPods').addClass('hidden');
-                alert('Erro ao carregar lista de pods.');
-            });
+            }, 'json');
         }
 
         $(document).ready(function() {
