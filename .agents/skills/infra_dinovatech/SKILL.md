@@ -52,14 +52,26 @@ Este documento registra as especificações da infraestrutura remota do Dinovate
 - **Versão do K3s**: `v1.36.5+k3s1` (com containerd `2.3.4-k3s1.36`).
 - **Configuração K3s (`/etc/rancher/k3s/config.yaml`)**:
   - `write-kubeconfig-mode: "644"`
-  - `disable: [traefik]` (Traefik desativado para uso de Caddy / Ingress customizado).
+  - `disable: [traefik]` (Traefik desativado para uso exclusivo do Caddy Ingress).
   - `kubelet-arg`: Reserva de sistema (`cpu=150m,memory=1000Mi`) e kube (`cpu=100m,memory=500Mi`) para estabilidade.
-  - `tls-san`: `137.131.208.19` (permite gestão remota via `kubectl` externo com SSL válido).
-- **Status de Portas e Conectividade Externa**:
-  - **Porta 22 (SSH)**: Ativa e acessível.
-  - **Portas 80 (HTTP) e 443 (HTTPS)**: Ativas e acessíveis externamente via Internet (ServiceLB / KlipperLB escutando).
-  - **Porta 6443 (Kubernetes API)**: Ativa e alcançável externamente para automações e deploy remotos.
-  - *Ingress atual*: `ingress-nginx` ativo como controlador temporário / em migração para Caddy.
+  - `tls-san`: `137.131.208.19` (permite gestão remota via API REST na porta 6443 sem bloqueios de hostname).
+- **Portas e Conectividade Externa**:
+  - **Porta 22 (SSH)**: Acesso administrativo via chave privada.
+  - **Portas 80 (HTTP) e 443 (HTTPS)**: Roteadas diretamente para o **Caddy Ingress** via Service LoadBalancer (`svclb-caddy-service`).
+  - **Porta 6443 (K3s REST API)**: Acessível para o backend do Dinovatech via Bearer Token (`dinovatech-saas-admin-token`).
+- **Ingress Controller (Caddy com On-Demand TLS)**:
+  - Namespace: `ingress-caddy`.
+  - Manifestos: `devops/k8s/01-caddy-ingress.yaml`.
+  - Certificados SSL emitidos automaticamente na hora (*on_demand*) via Let's Encrypt / ZeroSSL para qualquer subdomínio `*.dinovatech.com.br` ou domínio customizado via CNAME.
+  - Roteamento upstream dinâmico para os pods de clientes: `reverse_proxy app-{re.host.slug}.tenant-{re.host.slug}.svc.cluster.local:80`.
+- **Serviço Centralizado WeasyPrint**:
+  - Namespace: `shared-services`.
+  - Manifestos: `devops/k8s/02-weasyprint-shared.yaml`.
+  - DNS interno do Cluster: `http://weasyprint.shared-services.svc.cluster.local:9080/convert/html`.
+  - Compartilhado entre todas as instâncias SaaS para evitar desperdício de memória RAM.
+- **Topologia de Banco de Dados Multi-Tenant**:
+  - Arquitetura **Database-per-Tenant**: Todos os clientes compartilham o servidor MariaDB (remoto OCI ou dedicado), com 1 banco de dados isolado por cliente (`dino_{slug}`).
+  - Credenciais e host configuráveis por tenant (`saas_tenants.db_host`, `saas_tenants.db_port`).
 
 ## 6. Regras de Desenvolvimento e Compilação
 - Desenvolvemos e alteramos apenas o código localmente.

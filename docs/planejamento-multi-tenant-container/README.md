@@ -1,209 +1,237 @@
-# Arquitetura e Planejamento: SaaS Multi-Tenant por Isolamento de Containers (K3s)
+# Arquitetura e Implementação: SaaS Multi-Tenant por Isolamento de Containers (K3s)
 
-Este documento consolida a estratégia técnica, de infraestrutura e de negócios para a comercialização do **Dinovatech**, preservando a base de código PHP existente e escalando via orquestração de containers.
+Este documento consolida a arquitetura técnica, a infraestrutura implementada e o status da plataforma **Dinovatech SaaS**, preservando a base de código PHP existente e isolando clientes via orquestração de containers dedicados (**Container-per-Tenant**).
 
 ---
 
 ## 1. Decisão Estratégica de Arquitetura
 
-### 1.1 Diagnóstico do Código Atual
+### 1.1 Diagnóstico do Sistema
 * O sistema é estruturado em PHP procedural/estruturado com queries manuais SQL (`DBExecute`, `mysqli_query`).
 * Possui forte acoplamento com recursos sensíveis por cliente:
   * **Módulo Fiscal (NFS-e)**: Certificados A1 (`.pfx`), chaves privadas, senhas e controle sequencial de RPS/Lotes.
   * **Financeiro & Webhooks**: Integrações (InfinitePay, Google Calendar) e crons de recorrência.
-  * **Módulo Veterinário**: Alternância de modo via variáveis de ambiente (`APP_MODE_VET`).
+  * **Módulo Veterinário / Outros Modos**: Alternância de modo via variáveis de ambiente (`APP_MODE_VET`).
+  * **Chaves de Criptografia**: Chave mestra dedicada por cliente (`APP_MASTER_KEY`).
 
 ### 1.2 Comparativo: Container-per-Tenant vs. SaaS Monolítico (Banco Compartilhado)
 
-| Critério | Multi-Tenant por Container (Escolhido) | SaaS Monolítico (Banco Único) |
+| Critério | Multi-Tenant por Container (Implementado) | SaaS Monolítico (Banco Único) |
 | :--- | :--- | :--- |
-| **Time to Market** | **Imediato (1 a 2 semanas)** | **Longo (3 a 6 meses)** |
+| **Time to Market** | **Imediato** | **Longo (3 a 6 meses)** |
 | **Refatoração de SQL** | **Zero** — Código roda como está hoje | **Massiva** — Adicionar `WHERE tenant_id = ?` em centenas de arquivos |
 | **Risco LGPD / Vazamento** | **Nulo** — Bancos e processos 100% isolados | **Alto** — Uma falha de query expõe dados de outro cliente |
 | **Certificados Fiscais A1** | **Seguro e Simples** (armazenado por container) | **Complexo** (múltiplos certificados em concorrência de sessão) |
 | **Controle de Inadimplência**| **Nível de Infraestrutura** (`scale replicas=0`) | **Nível de Código** (middlewares e flags em banco) |
+| **Customização por Cliente** | **Alta** (limites de CPU/RAM, ENVs e flags customizadas) | **Baixa** (todas as contas compartilham o mesmo runtime) |
 
 ---
 
-## 2. Topologia de Infraestrutura (Cluster K3s Multi-Provedor)
+## 2. Topologia de Infraestrutura do Cluster K3s
 
-O cluster conecta servidores heterogêneos usando **K3s** com rede interna segura (WireGuard / Flannel Native):
+O ambiente de execução dos clientes é orquestrado no nó **K3s Master ARM64** hospedado na Oracle Cloud:
 
 ```mermaid
 flowchart TD
-    subgraph MasterNode["Nó Principal / Control-Plane (Hetzner CX22 ou OCI Ampere)"]
-        K3sServer["K3s Control-Plane"]
-        Traefik["Traefik Ingress (Let's Encrypt SSL)"]
-        PainelMaster["Painel Master de Licenciamento & CI/CD"]
-        MariaDBServer[("MariaDB Centralizado\n(1 Database por Cliente)")]
+    Internet([Tráfego Externo - HTTP/3, HTTP/2, HTTPS]) -->|Portas 80 / 443| CaddyIngress
+
+    subgraph ClusterK3s["Cluster K3s ARM64 (137.131.208.19)"]
+        subgraph IngressNS["Namespace: ingress-caddy"]
+            CaddyIngress["Caddy Ingress (On-Demand TLS)\nReverse Proxy Dinâmico Regex"]
+        end
+
+        subgraph SharedNS["Namespace: shared-services"]
+            WeasyPrint["WeasyPrint REST API\n(Porta 9080 ClusterIP)\nCompartilhado para PDFs"]
+        end
+
+        subgraph Tenant1["Namespace: tenant-clinica-alfa"]
+            Pod1["Pod: app-clinica-alfa\n(PHP 8.2 Apache)"]
+            Secret1["Secret: tenant-env\n(DB_*, APP_MODE_VET, etc.)"]
+            Svc1["Service: app-clinica-alfa:80"]
+        end
+
+        subgraph Tenant2["Namespace: tenant-pet-beta"]
+            Pod2["Pod: app-pet-beta\n(PHP 8.2 Apache)"]
+            Secret2["Secret: tenant-env\n(DB_*, APP_MODE_VET, etc.)"]
+            Svc2["Service: app-pet-beta:80"]
+        end
     end
 
-    subgraph WorkerNodes["Nós de Execução (OCI Free Tier / VPSs Extras)"]
-        K3sAgent1["Worker 1 (OCI x86 1GB)"]
-        K3sAgent2["Worker 2 (OCI x86 1GB)"]
+    subgraph DataTier["Camada de Dados & Bancos"]
+        MariaDBServer[("MariaDB Centralizado / Remoto\n- dino_clinica_alfa\n- dino_pet_beta")]
     end
 
-    subgraph ClientInstances["Containers de Aplicação (Pods)"]
-        Pod1["Pod: clinica-alfa (PHP 8.x)"]
-        Pod2["Pod: pet-beta (PHP 8.x)"]
-        Pod3["Pod: vet-gama (PHP 8.x)"]
+    subgraph ERPAdmin["ERP Master Dinovatech (Admin)"]
+        AdminPainel["Central SaaS (saas_tenants.php) &\nContratos / Serviços"]
     end
 
-    Traefik -->|clinica-alfa.app.com.br| Pod1
-    Traefik -->|pet-beta.app.com.br| Pod2
-    Traefik -->|vet-gama.app.com.br| Pod3
+    CaddyIngress -->|clinica-alfa.dinovatech.com.br| Svc1
+    CaddyIngress -->|pet-beta.dinovatech.com.br| Svc2
+    Svc1 --> Pod1
+    Svc2 --> Pod2
 
-    Pod1 -->|db_alfa| MariaDBServer
-    Pod2 -->|db_beta| MariaDBServer
-    Pod3 -->|db_gama| MariaDBServer
+    Pod1 -->|cURL PDF| WeasyPrint
+    Pod2 -->|cURL PDF| WeasyPrint
 
-    PainelMaster -.->|kubectl / API K8s| ClientInstances
+    Pod1 -->|Conexão DB| MariaDBServer
+    Pod2 -->|Conexão DB| MariaDBServer
+
+    AdminPainel -.->|REST API K3s (Porta 6443)| ClusterK3s
 ```
 
-### 2.1 Otimização para VPSs de Baixo Custo (1 vCPU / 1 GB RAM)
-* **O Problema de Memória**: Rodar 1 instância completa de MariaDB por Pod consome ~150 MB a 250 MB de RAM cada, inviabilizando VPSs de 1 GB.
-* **A Solução (Database-per-Tenant)**: 
-  * Roda-se **1 único servidor MariaDB** otimizado.
-  * Cada cliente ganha seu próprio banco e usuário isolados (`db_cliente1`, `db_cliente2`).
-  * Os containers PHP (`dinovatech-app`) consomem apenas **25 MB a 40 MB de RAM** em repouso.
-  * Com isso, mesmo nós pequenos (1 GB de RAM com Swap) suportam múltiplos clientes.
+### 2.1 Especificações do Nó K3s
+- **Instância**: OCI Ampere ARM64 (`k3s-master-arm`).
+- **IP Público**: `137.131.208.19`
+- **Hardware**: 2 OCPUs ARM64 (`Neoverse-N1`), 11 GiB RAM livre, 48 GB NVMe.
+- **SO & Versão**: Ubuntu 26.04 LTS aarch64 | K3s `v1.36.5+k3s1` (containerd 2.3.4).
+- **TLS-SAN**: `137.131.208.19` (comunicação segura com token Bearer na porta 6443).
+
+### 2.2 Roteamento Dinâmico com Caddy Ingress (devops/k8s/01-caddy-ingress.yaml)
+* O Caddy substituiu o Traefik/Ingress-Nginx legado.
+* **On-Demand TLS**: Emissão automática de certificados SSL (Let's Encrypt / ZeroSSL) na primeira requisição HTTP sem necessidade de criar recursos `Certificate` manuais.
+* **Upstream Dinâmico**: O Caddy extrai o `{slug}` do hostname via regex e despacha direto para o Service interno do Kubernetes:
+  ```caddy
+  @tenant {
+      header_regexp host Host ^(?P<slug>[a-z0-9-]+)\.dinovatech\.com\.br$
+  }
+  handle @tenant {
+      reverse_proxy app-{re.host.slug}.tenant-{re.host.slug}.svc.cluster.local:80 {
+          header_up Host {http.request.host}
+          header_up X-Real-IP {http.request.header.X-Forwarded-For}
+          header_up X-Forwarded-Proto {http.request.scheme}
+      }
+  }
+  ```
+
+### 2.3 Microserviço WeasyPrint Centralizado (devops/k8s/02-weasyprint-shared.yaml)
+* Rodando no namespace `shared-services` (porta 9080 ClusterIP).
+* Todos os pods de tenants enviam o HTML via cURL para `http://weasyprint.shared-services.svc.cluster.local:9080/convert/html`.
+* **Economia**: Evita alocar ~250 MB de RAM em cada Pod de cliente apenas para compilar PDFs.
 
 ---
 
-## 3. Gestão de Nuvem OCI (Oracle Cloud) & Estratégia de Custos
+## 3. Modelo Operacional: Database-per-Tenant
 
-### 3.1 Limites Always Free e Separação de Cotas
-As cotas da Oracle Cloud são totalmente **independentes por tipo de serviço**:
-
-| Serviço | Cota Gratuita (Always Free) | Impacto no Disco da VM? |
-| :--- | :--- | :--- |
-| **Discos de VM (Block Volume)** | **200 GB no total da conta** | *(É a própria cota de boot/dados)* |
-| **Instâncias Ampere ARM** | **Até 2 OCPUs / 12 GB RAM** (ou 4 OCPUs / 24 GB) | ❌ Não desconta do disco |
-| **Instâncias AMD Micro** | **2 instâncias (1 vCPU / 1 GB RAM cada)** | ❌ Não desconta do disco |
-| **Object Storage (S3)** | **10 GB Standard + 10 GB Archive** | ❌ **Cota 100% isolada** |
-| **Autonomous Database** | **2 instâncias com 20 GB cada (Total 40 GB)** | ❌ **Cota 100% isolada** |
-| **Tráfego de Saída (Egress)** | **10 TB / mês gratuitos** | ❌ Não desconta de nada |
-
-### 3.2 Upgrade para Pay As You Go (PAYG) - Diretrizes e Vantagens
-* **Fatura R$ 0,00 Garantida**: A política oficial da Oracle isenta integralmente os recursos Always Free em contas PAYG enquanto mantidos dentro dos limites.
-* **Principais Vantagens do PAYG**:
-  1. **Prioridade Máxima de Hardware**: Elimina o erro *"Out of host capacity"* na criação de instâncias ARM.
-  2. **Imunidade Total à Política de Ociosidade**: Contas PAYG **nunca** sofrem desligamento automático por baixa utilização de CPU/RAM.
-  3. **Acesso a Outras Regiões e Serviços Avançados**.
-* **Travas de Segurança Obrigatórias no PAYG**:
-  * Manter a soma de todos os discos de boot e volumes anexados **<= 200 GB**.
-  * Criar as instâncias Always Free **apenas na Home Region**.
-  * Configurar um **Budget Alert (Orçamento)** no painel da Oracle com limite de **R$ 2,00** para receber alertas imediatos por e-mail caso haja qualquer cobrança indesejada.
-
-### 3.3 Política de Ociosidade em Contas Free Puras (Script Anti-Idle)
-Em contas gratuitas sem PAYG, instâncias com menos de 20% de CPU/RAM/Rede por 7 dias são pausadas pela Oracle. Para evitar isso enquanto a VM não tiver carga real:
-```bash
-# Executar uma carga leve de 60s a cada 3 horas via cron
-sudo apt-get install stress-ng -y
-# Crontab: 0 */3 * * * stress-ng --cpu 2 --cpu-load 25 --timeout 60s
-```
+Para maximizar densidade e reduzir custos de memória:
+* **Um servidor MariaDB gerenciado** (OCI ou dedicado).
+* **Bancos de Dados Isolados**: Cada tenant recebe um banco exclusivo (`dino_{slug}`), com credenciais isoladas.
+* **Flexibilidade de Infraestrutura**: O contrato do tenant permite especificar `db_host` e `db_port`, viabilizando bancos remotos externos, instâncias dedicadas para grandes clientes ou o banco central padrão (`SAAS_DEFAULT_DB_HOST`).
+* Os containers PHP consomem apenas ~25 MB a 40 MB de RAM em repouso.
 
 ---
 
-## 4. Trigger de Pagamento, Inadimplência e Ciclo de Vida
+## 4. Orquestração, Elasticidade e Zero-Downtime
 
-A gestão de inadimplência opera de forma automatizada integrando o **Webhook da InfinitePay** com a API do **Kubernetes (K3s)**:
+### 4.1 RollingUpdate com Zero-Downtime
+Implementado na classe `SaasProvisionerHelper`:
+* **Estratégia**:
+  ```yaml
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  ```
+* **Readiness Probe**:
+  * Valida `HTTP GET /login.php:80` com `initialDelaySeconds: 5`, `periodSeconds: 5`, `timeoutSeconds: 3`.
+  * O Kubernetes primeiro inicializa o novo pod da nova versão/imagem.
+  * O tráfego só é chaveado para o novo pod quando o `readinessProbe` responder status HTTP 200.
+  * O pod antigo só é encerrado com `SIGTERM` após a prontidão confirmada da nova réplica.
+
+### 4.2 Elasticidade de Recursos (Requests vs Limits)
+Configurável individualmente por contrato ou herdado do template do Serviço:
+* **Requests (Mínimo Garantido)**:
+  * `cpu: 50m`
+  * `memory: 64Mi`
+* **Limits (Teto Máximo de Burst)**:
+  * `cpu: 250m` (ou configurado no contrato/serviço)
+  * `memory: 128Mi` (ou configurado no contrato/serviço)
+
+### 4.3 Injeção Dinâmica de Configurações (Secret `tenant-env`)
+Cada tenant possui um Secret Kubernetes com:
+* `DB_HOSTNAME`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+* `APP_MODE_VET`: `true` ou `false`
+* `APP_MASTER_KEY`: chave criptográfica mestra
+* `custom_envs`: variáveis adicionais informadas linha a linha no formato `CHAVE=VALOR`
+* `WEASYPRINT_URL`: apontando para o serviço central compartilhado
+
+---
+
+## 5. Ciclo de Vida do Cliente e Inadimplência
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Ativo : Pagamento Confirmado
-    Ativo --> Tolerancia : Vencimento sem Pagamento (1 a 30 dias)
-    Tolerancia --> Ativo : Fatura Paga (Webhook InfinitePay)
-    Tolerancia --> Suspenso : Atraso > 30 dias
-    Suspenso --> Ativo : Pix / Cartão Confirmado (Reativação em 5s)
-    Suspenso --> [*] : Cancelamento Definitivo (Backup e Purge)
+    [*] --> Pending : Contrato Criado no ERP
+    Pending --> Running : Deploy Disparado (SaasProvisionerHelper)
+    Running --> Suspenso : Inadimplência (> 30 dias) ou Ação Manual (replicas=0)
+    Suspenso --> Running : Pagamento Confirmado / Reativação (replicas=1)
+    Running --> Updating : Atualização de Imagem (RollingUpdate Zero-Downtime)
+    Updating --> Running : Pod Novo Pronto (Ready 1/1)
+    Suspenso --> [*] : Cancelamento / Exclusão
 ```
 
-### 4.1 Fases do Ciclo de Cobrança
-
-1. **Dia 0 a 30 de atraso (Tolerância com Aviso)**:
-   * Pod de aplicação continua rodando normalmente.
-   * Sistema valida a licença e exibe banner no topo do painel: *"Sua mensalidade está em aberto. Evite a interrupção dos serviços."*
-   * Nenhuma funcionalidade médica/fiscal é interrompida.
-
-2. **Após 30 dias de atraso (Suspensão de Infraestrutura)**:
-   * O Painel Master executa via API K8s:
-     ```bash
-     kubectl scale deployment app -n cliente-x --replicas=0
-     ```
-   * **Benefícios**:
-     * Libera 100% da memória RAM alocada para o PHP do cliente.
-     * Interrompe crons, disparos automáticos e webhooks do cliente.
-     * Os dados no banco de dados e arquivos de upload **permanecem 100% preservados**.
-   * O Ingress redireciona o tráfego para a página global estática de bloqueio com QR Code Pix dinâmico.
-
-3. **Trigger de Pagamento & Reativação Instantânea**:
-   * O cliente realiza o pagamento do Pix na tela de bloqueio.
-   * O webhook da **InfinitePay** envia a confirmação `transaction_paid` para o Painel Master.
-   * O Painel Master atualiza a licença e executa imediatamente:
-     ```bash
-     kubectl scale deployment app -n cliente-x --replicas=1
-     ```
-   * O Pod de aplicação sobe e o sistema do cliente volta ao ar em **menos de 5 segundos**.
+* **Suspensão (scale=0)**:
+  * Libera 100% da memória e CPU do Pod no cluster.
+  * Mantém banco de dados e arquivos intactos.
+  * Caddy redireciona ou entrega página informativa.
+* **Reativação (scale=1)**:
+  * O container sobe novamente em menos de 5 segundos.
 
 ---
 
-## 5. Domínios Personalizados (Custom Domains)
+## 6. Módulos e Componentes Desenvolvidos no ERP
 
-Para clientes que desejam utilizar domínio próprio (ex: `sistema.clinicavetdovale.com.br`) em vez do subdomínio padrão (`cliente.app.com.br`):
+### 6.1 Backend Core
+* **`dinovatech/config.php` & `.env.example`**:
+  * Flags: `SAAS_MASTER_ENABLED`, `K3S_API_URL`, `K3S_API_TOKEN`, `K3S_INSECURE_SKIP_TLS`, `K3S_DEFAULT_IMAGE`, `SAAS_DEFAULT_DB_HOST`.
+* **`dinovatech/helpers/K3sClientHelper.php`**:
+  * Wrapper cURL nativo em PHP para a API REST do Kubernetes (6443) sem necessidade de binários `kubectl` ou chamadas SSH no host do ERP.
+* **`dinovatech/helpers/SaasProvisionerHelper.php`**:
+  * Métodos: `provisionTenant()`, `scaleTenant()`, `updateTenantImage()`, `getTenantLogs()`, `getTenantStatus()`.
+* **`dinovatech/app.php`**:
+  * Endpoints AJAX: `saas_provision_pod`, `saas_scale_pod`, `saas_update_image`, `saas_get_pod_logs`.
 
-### 5.1 Caddy com On-Demand TLS (Abordagem Recomendada)
-* O cliente aponta um registro CNAME `sistema.clinica.com.br` -> `app.seudominio.com.br`.
-* Na primeira requisição, o Caddy consulta a API do Painel Master: `GET /api/v1/check-domain?domain=sistema.clinica.com.br`.
-* Se o domínio estiver cadastrado e ativo, o Caddy emite o certificado SSL Let's Encrypt em tempo real e libera o tráfego.
+### 6.2 Banco de Dados
+* **`database/migrations/20261022_0001_add_saas_multi_tenant_schema.sql`**: Tabela `saas_tenants` e campos de template em `Servicos`.
+* **`database/migrations/20261022_0002_add_db_host_to_saas_tenants.sql`**: Campos `db_host` e `db_port`.
+* **`database/migrations/20261022_0003_add_env_fields_to_saas_tenants.sql`**: Campos `app_mode_vet`, `app_master_key` e `custom_envs`.
 
-### 5.2 Traefik + Cert-Manager no K3s
-* Ao cadastrar o domínio próprio no painel, o manifesto do `Ingress` é atualizado adicionando o novo host nas regras e na seção `tls.hosts`.
-* O Cert-Manager valida o CNAME e gera o secret TLS automaticamente.
-
----
-
-## 6. Pipeline de Updates (CI/CD, GitHub Tags e Auto-Update)
-
-### 6.1 Fluxo de Entrega Contínua
-1. **Desenvolvimento Local / Servidor Remoto**: Código testado e validado.
-2. **Criação de Tag**: `git tag v1.3.0 && git push origin v1.3.0`.
-3. **GitHub Actions (ou Gitea Actions)**:
-   * Compila a imagem Docker multi-arch (`linux/amd64`, `linux/arm64`).
-   * Envia para o registry (`ghcr.io/seu-usuario/dinovatech:v1.3.0`).
-   * Dispara webhook para o Painel Master avisando a nova versão.
-
-### 6.2 Janela de Atualização na Madrugada
-* O Painel Master gerencia grupos de atualização:
-  * **Grupo 1 (Auto-Update Ativo)**: Agendado via cron diário às **03:00 AM**.
-  * **Grupo 2 (Manual / Estável)**: Atualizado apenas sob demanda pelo painel.
-* **Execução do Rolling Update no K3s**:
-  ```bash
-  kubectl set image deployment/app dinovatech=ghcr.io/seu-usuario/dinovatech:v1.3.0 -n cliente-x
-  ```
-* **Migração Automática de Banco**: O script de inicialização do container (`entrypoint.sh`) executa as migrações SQL pendentes antes de liberar o tráfego HTTP.
+### 6.3 Telas e Interfaces
+* **`dinovatech/servico_form.php` & `dinovatech/servicos.php`**:
+  * Cadastro de serviços SaaS com configuração padrão de imagem Docker, memória e CPU.
+* **`dinovatech/contrato_form.php` & `dinovatech/contratos.php`**:
+  * Geração automática de slug a partir do nome do cliente.
+  * Configuração de subdomínio, banco, host/porta, modo veterinário, chave mestra e variáveis extras.
+  * Painel com status do Pod K3s e botões de ação direta.
+* **`dinovatech/saas_tenants.php` (Central SaaS)**:
+  * Dashboard com KPIs: Total de Instâncias, Pods Running, Instâncias Suspensas e MRR Contratado.
+  * Tabela interativa com filtros e botões de ação:
+    * 🚀 Deploy / Provisionar
+    * ⏸️ Suspender / ▶️ Reativar
+    * 🔄 Atualizar Versão (Modal com input de nova tag e disparo de RollingUpdate)
+    * 📋 Ver Logs (Terminal em modal com saída do pod em tempo real)
+  * Painel retrátil de diagnóstico da saúde do cluster K3s ARM64.
 
 ---
 
-## 7. Roteiro de Implementação (Roadmap)
+## 7. Status do Roadmap de Implementação
 
-### Fase 1: Dockerização do Dinovatech
-- [ ] Criar `Dockerfile` multi-arch (PHP 8.2/8.3 + Apache/Nginx + extensões `mysqli`, `soap`, `xml`, `openssl`, `gd`, `zip`).
-- [ ] Criar `docker-compose.yml` local para testes de subida rápida.
-- [ ] Parametrizar todas as credenciais sensíveis via variáveis de ambiente (`.env`).
+### ✅ Concluído
+- [x] Provisionamento e hardening do nó K3s ARM64 (`137.131.208.19`).
+- [x] Implantação do Caddy Ingress com On-Demand TLS e upstream dinâmico por regex.
+- [x] Implantação do microserviço compartilhado WeasyPrint no namespace `shared-services`.
+- [x] Migrations de banco de dados (`20261022_0001`, `0002`, `0003`).
+- [x] Cliente HTTP REST do K3s (`K3sClientHelper.php`) com suporte a cURL e Strategic Merge Patch.
+- [x] Orquestrador de provisionamento, escala, logs e RollingUpdate zero-downtime (`SaasProvisionerHelper.php`).
+- [x] Painel Central de Gestão SaaS (`dinovatech/saas_tenants.php`) com métricas e diagnóstico do cluster.
+- [x] Formulários de Serviços e Contratos com suporte a templates SaaS, modo veterinário e variáveis de ambiente.
 
-### Fase 2: Mecanismo de Licenciamento & Triggers
-- [ ] Criar `LicenseHelper.php` dentro do Dinovatech com cache local JWT (tolerância offline de 3 a 7 dias).
-- [ ] Criar API no Painel Master para validação de licenças (`/api/v1/license/verify`).
-- [ ] Integrar webhook da InfinitePay com rotina de desbloqueio automático de Pods.
-- [ ] Implementar banner de aviso (0 a 30 dias) e tela global de bloqueio pós 30 dias.
-
-### Fase 3: Setup do Cluster K3s & Nuvem
-- [ ] Provisionar instância ARM na OCI (ou VPS econômica como Hetzner) e realizar upgrade para PAYG.
-- [ ] Instalar K3s e configurar Traefik/Caddy com Cert-Manager para SSL wildcard/on-demand.
-- [ ] Criar templates YAML / Helm base para provisionamento de novos tenants.
-
-### Fase 4: Automação do Painel Master
-- [ ] Interface para criar novos clientes (geração de DB, namespace K3s e chave de licença em 1 clique).
-- [ ] Orquestrador de comandos `kubectl scale` para suspensão e reativação.
-- [ ] Agendador de updates noturnos com monitoramento de status.
+### ⏳ Próximas Etapas
+- [ ] **Build e Publicação da Imagem Base ARM64**:
+  * Compilar `devops/Dockerfile` para arquitetura `linux/arm64` (`dinovatech:latest`) e publicar em registry (Docker Hub ou GitHub Container Registry) ou importar no containerd do nó.
+- [ ] **Runner Automatizado de Banco para Novo Tenant**:
+  * Ao criar o tenant no ERP, executar script que roda `CREATE DATABASE IF NOT EXISTS dino_{slug}` e executa as migrações iniciais para deixar as tabelas prontas.
+- [ ] **Automação de Suspensão por Webhook da InfinitePay**:
+  * Quando a fatura do contrato passar de 30 dias em atraso, chamar `SaasProvisionerHelper::scaleTenant($id, 0)` automaticamente.
+- [ ] **Rotina Centralizada de Backup de Bancos dos Tenants**:
+  * Cron noturno executando mysqldump de todas as bases `dino_*` com envio para o Oracle Object Storage.
