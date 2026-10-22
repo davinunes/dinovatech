@@ -146,7 +146,8 @@ foreach ($contratos as $c) {
                                         <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0">
                                             <td class="p-4 font-medium text-gray-900">
                                                 <?= htmlspecialchars($contrato['nome_cliente']) ?>
-                                                                                    <td class="p-4">
+                                            </td>
+                                            <td class="p-4">
                                                 <div class="flex items-center gap-1.5 flex-wrap">
                                                     <span><?= htmlspecialchars($contrato['nome_servico']) ?></span>
                                                     <?php if (!empty($contrato['slug_instancia'])): 
@@ -233,7 +234,7 @@ foreach ($contratos as $c) {
                                         <span
                                             class="text-xs text-gray-500 uppercase"><?= htmlspecialchars($contrato['tipo_periodo']) ?></span>
                                     </div>
-                                </div>     </div>
+                                </div>
                                 <div class="text-sm text-gray-600 mb-4 flex justify-between">
                                     <span>Início: <?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></span>
                                 </div>
