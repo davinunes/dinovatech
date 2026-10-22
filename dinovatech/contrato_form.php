@@ -1178,6 +1178,22 @@ DBClose($link);
             btn.disabled = true;
             btn.innerHTML = '<span class="material-icons text-sm mr-1.5 animate-spin">hourglass_top</span> Cancelando...';
 
+            $.post('../inter/endpoint.php?action=cancelar_pix_recorrencia_contrato', { idRec: idRec }, function(res) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                if (res.success) {
+                    alert('Pix Automático do contrato cancelado com sucesso no Banco Inter.');
+                    window.location.reload();
+                } else {
+                    alert('Erro ao cancelar: ' + (res.message || 'Erro no banco'));
+                }
+            }, 'json').fail(function() {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                alert('Erro de conexão ao cancelar recorrência.');
+            });
+        }
+
         function verificarServicoSaas() {
             const opt = $('#id_servico').find('option:selected');
             const tipo = opt.data('tipo');
