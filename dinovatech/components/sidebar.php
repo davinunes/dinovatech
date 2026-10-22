@@ -221,6 +221,14 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
             <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Sistema</p>
         </div>
 
+        <?php if (defined('SAAS_MASTER_ENABLED') && SAAS_MASTER_ENABLED): ?>
+            <a href="<?= $basePath ?>saas_tenants.php" id="menuSaasTenants"
+                class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'saas_tenants.php' ? 'bg-purple-600 text-white' : 'text-purple-300 hover:bg-slate-800 hover:text-white' ?>">
+                <span class="material-icons text-xl mr-3 text-purple-400">cloud</span>
+                <span class="font-medium">Gestão SaaS (K3s)</span>
+            </a>
+        <?php endif; ?>
+
         <a href="<?= $basePath ?>config_fiscal.php" id="menuConfiguracoes"
             class="flex items-center px-4 py-3 rounded-lg transition-colors <?= $currentPage == 'config_fiscal.php' ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-800 hover:text-white' ?>">
             <span class="material-icons text-xl mr-3 text-slate-400">settings</span>

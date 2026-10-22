@@ -49,4 +49,10 @@ define('APP_MODE_VET', getenv('APP_MODE_VET') === 'true' || getenv('APP_MODE_VET
 // 3. Timezone Default
 date_default_timezone_set(getenv('TZ') ?: 'America/Sao_Paulo');
 
-// Outras configurações globais podem vir aqui
+// 4. Módulo SaaS Master & Orquestração K3s (Flag de Ativação)
+define('SAAS_MASTER_ENABLED', getenv('SAAS_MASTER_ENABLED') === 'true' || getenv('SAAS_MASTER_ENABLED') === '1');
+define('K3S_API_URL', rtrim(getenv('K3S_API_URL') ?: 'https://137.131.208.19:6443', '/'));
+define('K3S_API_TOKEN', getenv('K3S_API_TOKEN') ?: '');
+define('K3S_INSECURE_SKIP_TLS', getenv('K3S_INSECURE_SKIP_TLS') === 'true' || getenv('K3S_INSECURE_SKIP_TLS') === '1' || getenv('K3S_INSECURE_SKIP_TLS') === null);
+define('K3S_DEFAULT_IMAGE', getenv('K3S_DEFAULT_IMAGE') ?: 'dinovatech:latest');
+

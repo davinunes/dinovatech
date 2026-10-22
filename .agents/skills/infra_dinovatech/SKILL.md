@@ -41,7 +41,28 @@ Este documento registra as especificações da infraestrutura remota do Dinovate
   - `PdfHelper.php` converte automaticamente caminhos locais de imagens para **Data URI Base64** antes do envio ao container, tornando o documento autocontido.
   - Atributos legados de dimensões (`width`/`height` do editor TinyMCE) são normalizados em CSS inline (`!important`) para garantir proporções e fidelidade visual na impressão A4.
 
-## 5. Regras de Desenvolvimento e Compilação
+## 5. Cluster K3s Multi-Tenant (Control-Plane / Master ARM64)
+- **Provedor**: Oracle Cloud Infrastructure (OCI) - Instância Ampere ARM64.
+- **IP Público**: `137.131.208.19` (Hostname: `k3s-master-arm`).
+- **Configuração de Hardware**:
+  - **CPU**: 2 OCPUs / vCPUs ARM64 (`Neoverse-N1`).
+  - **RAM**: 11 GiB de RAM disponível (12 GB provisionados).
+  - **Disco**: 48 GB NVMe/SSD (`/dev/sda1` com apenas ~4.0 GB / 9% em uso).
+- **Sistema Operacional**: Ubuntu 26.04 LTS (Kernel 7.0.0-1009-oracle aarch64).
+- **Versão do K3s**: `v1.36.5+k3s1` (com containerd `2.3.4-k3s1.36`).
+- **Configuração K3s (`/etc/rancher/k3s/config.yaml`)**:
+  - `write-kubeconfig-mode: "644"`
+  - `disable: [traefik]` (Traefik desativado para uso de Caddy / Ingress customizado).
+  - `kubelet-arg`: Reserva de sistema (`cpu=150m,memory=1000Mi`) e kube (`cpu=100m,memory=500Mi`) para estabilidade.
+  - `tls-san`: `137.131.208.19` (permite gestão remota via `kubectl` externo com SSL válido).
+- **Status de Portas e Conectividade Externa**:
+  - **Porta 22 (SSH)**: Ativa e acessível.
+  - **Portas 80 (HTTP) e 443 (HTTPS)**: Ativas e acessíveis externamente via Internet (ServiceLB / KlipperLB escutando).
+  - **Porta 6443 (Kubernetes API)**: Ativa e alcançável externamente para automações e deploy remotos.
+  - *Ingress atual*: `ingress-nginx` ativo como controlador temporário / em migração para Caddy.
+
+## 6. Regras de Desenvolvimento e Compilação
 - Desenvolvemos e alteramos apenas o código localmente.
 - Não executar compiladores pesados ou dependências no host a menos que solicitado.
-- Scripts PHP e SQL devem manter compatibilidade com **PHP 7.4** e **MariaDB 10.x**.
+- Scripts PHP e SQL devem manter compatibilidade com **PHP 7.4/8.2+** e **MariaDB 10.x**.
+
