@@ -50,7 +50,7 @@ class K3sClientHelper
         }
 
         $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTPCODE);
+        $httpCode = (int)curl_getinfo($ch, defined('CURLINFO_HTTP_CODE') ? CURLINFO_HTTP_CODE : 2097170);
         $curlError = curl_error($ch);
         curl_close($ch);
 
