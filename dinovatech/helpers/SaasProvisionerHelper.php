@@ -275,7 +275,7 @@ class SaasProvisionerHelper
                                 ],
                                 'readinessProbe' => [
                                     'httpGet' => [
-                                        'path' => '/login.php',
+                                        'path' => '/dinovatech/login.php',
                                         'port' => 80
                                     ],
                                     'initialDelaySeconds' => 4,
