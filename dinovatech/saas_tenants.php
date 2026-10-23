@@ -125,6 +125,10 @@ $initialNodes = $k3s->getNodes();
                 <p class="text-sm text-slate-500 mt-1">Gerenciamento de contratos SaaS, isolamento de pods por cliente e controle de versões.</p>
             </div>
             <div class="flex items-center gap-2.5">
+                <a href="saas_db_tool.php" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg text-sm transition shadow-sm">
+                    <span class="material-icons text-sm">storage</span>
+                    <span>Bancos SaaS (Tool)</span>
+                </a>
                 <a href="contrato_form.php" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg text-sm transition shadow-sm">
                     <span class="material-icons text-sm">add</span>
                     <span>Novo Contrato SaaS</span>
@@ -303,7 +307,12 @@ $initialNodes = $k3s->getNodes();
 
                                         <!-- Banco de Dados -->
                                         <td class="py-3.5 px-4 font-mono text-xs">
-                                            <div class="font-semibold text-slate-800"><?= htmlspecialchars($t['db_name']) ?></div>
+                                            <div class="flex items-center gap-1.5">
+                                                <span class="font-semibold text-slate-800"><?= htmlspecialchars($t['db_name']) ?></span>
+                                                <a href="saas_db_tool.php?id_tenant=<?= $t['id_tenant'] ?>" class="text-emerald-600 hover:text-emerald-800 transition" title="Provisionar / Inicializar Base deste Tenant">
+                                                    <span class="material-icons text-[14px]">build_circle</span>
+                                                </a>
+                                            </div>
                                             <div class="text-[11px] text-slate-400">usr: <?= htmlspecialchars($t['db_user']) ?></div>
                                         </td>
 
