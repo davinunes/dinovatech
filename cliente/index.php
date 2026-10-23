@@ -1916,24 +1916,19 @@ $nome_inicial = strtok($nome_cliente, ' ');
                     return;
                 }
 
-                // Ordenação: 1º Pendentes antes de pagas, 2º Maior valor primeiro, 3º Desempate vencimento
-                const faturasOrdenadas = [...faturas].sort((a, b) => {
-                    const isLiqA = a.status === 'Liquidada' ? 1 : 0;
-                    const isLiqB = b.status === 'Liquidada' ? 1 : 0;
-                    if (isLiqA !== isLiqB) {
-                        return isLiqA - isLiqB;
+                // Últimas Faturas: ordenadas estritamente da mais recente para a mais antiga (vencimento/emissão/ID decrescente)
+                const faturasMaisRecentes = [...faturas].sort((a, b) => {
+                    const dataA = a.data_vencimento || a.data_emissao || '';
+                    const dataB = b.data_vencimento || b.data_emissao || '';
+                    if (dataB !== dataA) {
+                        return dataB.localeCompare(dataA);
                     }
-                    const valA = parseFloat(a.valor_total_fatura || 0);
-                    const valB = parseFloat(b.valor_total_fatura || 0);
-                    if (valB !== valA) {
-                        return valB - valA;
-                    }
-                    return (a.data_vencimento || '').localeCompare(b.data_vencimento || '');
+                    return (parseInt(b.id_fatura) || 0) - (parseInt(a.id_fatura) || 0);
                 });
 
                 const hoje = new Date().toISOString().split('T')[0];
 
-                faturasOrdenadas.slice(0, 5).forEach(f => {
+                faturasMaisRecentes.slice(0, 5).forEach(f => {
                     const isLiq = f.status === 'Liquidada';
                     const isAtrasada = !isLiq && f.data_vencimento && f.data_vencimento < hoje;
                     const statusClass = isLiq ? 'status-pago' : (isAtrasada ? 'status-atrasado' : 'status-aberto');
@@ -1966,8 +1961,15 @@ $nome_inicial = strtok($nome_cliente, ' ');
 
                 const hoje = new Date().toISOString().split('T')[0];
 
-                // Faturas Abertas: mantém a ordem de vencimento (mais próximas primeiro)
-                const faturasAbertas = faturas.filter(f => f.status !== 'Liquidada');
+                // Faturas Abertas: ordenadas por urgência de vencimento (vencimento mais próximo primeiro)
+                const faturasAbertas = faturas.filter(f => f.status !== 'Liquidada').sort((a, b) => {
+                    const dataA = a.data_vencimento || a.data_emissao || '';
+                    const dataB = b.data_vencimento || b.data_emissao || '';
+                    if (dataA !== dataB) {
+                        return dataA.localeCompare(dataB);
+                    }
+                    return (parseInt(a.id_fatura) || 0) - (parseInt(b.id_fatura) || 0);
+                });
 
                 // Faturas Pagas (Histórico): ordenadas por mais recentes primeiro
                 const faturasPagas = faturas.filter(f => f.status === 'Liquidada').sort((a, b) => {

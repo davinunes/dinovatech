@@ -1475,12 +1475,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 while ($row = mysqli_fetch_row($resultSelect)) {
                     $dadosContent .= "INSERT INTO `$table` VALUES(";
                     for ($j = 0; $j < $numFields; $j++) {
-                        $row[$j] = addslashes($row[$j]);
-                        $row[$j] = str_replace("\n", "\\n", $row[$j]);
-                        if (isset($row[$j])) {
-                            $dadosContent .= '"' . $row[$j] . '"';
+                        if ($row[$j] === null) {
+                            $dadosContent .= 'NULL';
                         } else {
-                            $dadosContent .= '""';
+                            $val = addslashes((string)$row[$j]);
+                            $val = str_replace(["\r\n", "\r", "\n"], ["\\r\\n", "\\r", "\\n"], $val);
+                            $dadosContent .= '"' . $val . '"';
                         }
                         if ($j < ($numFields - 1)) {
                             $dadosContent .= ',';
@@ -3167,6 +3167,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $clienteData = mysqli_fetch_assoc($rCliente);
 
             // 2. Faturas (Estatísticas e Próximo Vencimento)
+            // 2. Faturas (Estatísticas e Próximo Vencimento)
+            // Ordena as faturas das mais recentes para as mais antigas
             $qFaturas = "SELECT F.id_fatura, F.data_emissao, F.data_vencimento, F.valor_total_fatura, F.status,
                                 COALESCE(SUM(P.valor_pago), 0) AS total_pago_fatura,
                                 MAX(P.data_pagamento) AS data_pagamento
@@ -3174,7 +3176,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                          LEFT JOIN Pagamentos P ON F.id_fatura = P.id_fatura AND P.status_pagamento = 'Confirmado'
                          WHERE F.id_cliente = '$id_cliente_safe'
                          GROUP BY F.id_fatura
-                         ORDER BY F.data_vencimento ASC";
+                         ORDER BY F.data_vencimento DESC, F.data_emissao DESC, F.id_fatura DESC";
             $rFaturas = DBExecute($link, $qFaturas);
             $faturasList = [];
             $totalAbertoVal = 0.0;
@@ -3193,7 +3195,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     } else {
                         $totalAbertoVal += (float)$f['valor_total_fatura'];
                         $countAberto++;
-                        if (!$proximaFaturaPendente) {
+                        // A próxima fatura pendente é a que possui o vencimento mais urgente/próximo
+                        if (!$proximaFaturaPendente || $f['data_vencimento'] < $proximaFaturaPendente['data_vencimento']) {
                             $proximaFaturaPendente = $f;
                         }
                     }
