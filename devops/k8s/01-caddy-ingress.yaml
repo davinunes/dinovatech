@@ -48,7 +48,7 @@ data:
         }
 
         @tenant {
-            header_regexp host Host ^(?P<slug>[a-z0-9-]+)\.dinovatech\.com\.br$
+            header_regexp host Host ^(?P<slug>[a-z0-9-]+)\.(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$
         }
         handle @tenant {
             reverse_proxy app-{re.host.slug}.tenant-{re.host.slug}.svc.cluster.local:80 {
@@ -74,7 +74,7 @@ data:
         }
 
         @tenant {
-            header_regexp host Host ^(?P<slug>[a-z0-9-]+)\.dinovatech\.com\.br$
+            header_regexp host Host ^(?P<slug>[a-z0-9-]+)\.(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$
         }
         handle @tenant {
             reverse_proxy app-{re.host.slug}.tenant-{re.host.slug}.svc.cluster.local:80 {
