@@ -204,20 +204,133 @@ class K3sClientHelper
         foreach ($res['data']['items'] ?? [] as $item) {
             $metadata = $item['metadata'] ?? [];
             $status = $item['status'] ?? [];
+            $spec = $item['spec'] ?? [];
+
+            // Extrai dados dos containers
+            $containerStatuses = $status['containerStatuses'] ?? [];
+            $firstContainerStatus = $containerStatuses[0] ?? [];
+            $firstContainerSpec = $spec['containers'][0] ?? [];
+
+            $image = $firstContainerStatus['image'] ?? ($firstContainerSpec['image'] ?? '');
+            $isReady = !empty($firstContainerStatus['ready']);
+            $restartCount = (int)($firstContainerStatus['restartCount'] ?? 0);
+
+            // Calcula idade amigável
+            $startTime = $status['startTime'] ?? ($metadata['creationTimestamp'] ?? '');
+            $ageStr = '';
+            if (!empty($startTime)) {
+                $startTs = strtotime($startTime);
+                if ($startTs) {
+                    $diffSec = time() - $startTs;
+                    if ($diffSec < 60) {
+                        $ageStr = "{$diffSec}s";
+                    } elseif ($diffSec < 3600) {
+                        $ageStr = round($diffSec / 60) . "m";
+                    } elseif ($diffSec < 86400) {
+                        $ageStr = round($diffSec / 3600) . "h";
+                    } else {
+                        $ageStr = round($diffSec / 86400) . "d";
+                    }
+                }
+            }
 
             $pods[] = [
                 'name' => $metadata['name'] ?? '',
                 'namespace' => $metadata['namespace'] ?? '',
                 'phase' => $status['phase'] ?? 'Unknown',
                 'pod_ip' => $status['podIP'] ?? '',
-                'node_name' => $item['spec']['nodeName'] ?? '',
-                'start_time' => $status['startTime'] ?? ''
+                'node_name' => $spec['nodeName'] ?? '',
+                'start_time' => $startTime,
+                'age' => $ageStr,
+                'image' => $image,
+                'ready' => $isReady,
+                'restart_count' => $restartCount
             ];
         }
 
         return [
             'success' => true,
             'pods' => $pods
+        ];
+    }
+
+    /**
+     * Obtém detalhes de um Deployment no Kubernetes
+     */
+    public function getDeployment(string $namespace, string $deploymentName): array
+    {
+        $path = "/apis/apps/v1/namespaces/{$namespace}/deployments/{$deploymentName}";
+        $res = $this->request('GET', $path);
+
+        if (!$res['success']) {
+            return $res;
+        }
+
+        $data = $res['data'] ?? [];
+        $spec = $data['spec'] ?? [];
+        $status = $data['status'] ?? [];
+
+        $containers = $spec['template']['spec']['containers'] ?? [];
+        $currentImage = $containers[0]['image'] ?? '';
+
+        return [
+            'success' => true,
+            'name' => $deploymentName,
+            'namespace' => $namespace,
+            'image' => $currentImage,
+            'replicas' => (int)($status['replicas'] ?? ($spec['replicas'] ?? 0)),
+            'ready_replicas' => (int)($status['readyReplicas'] ?? 0),
+            'updated_replicas' => (int)($status['updatedReplicas'] ?? 0),
+            'available_replicas' => (int)($status['availableReplicas'] ?? 0),
+            'conditions' => $status['conditions'] ?? [],
+            'raw' => $data
+        ];
+    }
+
+    /**
+     * Obtém os eventos recentes de um namespace (ex: Pulling, Created, Started, Failed)
+     */
+    public function getEvents(string $namespace, ?string $objectName = null, int $limit = 20): array
+    {
+        $path = "/api/v1/namespaces/{$namespace}/events";
+        $res = $this->request('GET', $path);
+
+        if (!$res['success']) {
+            return $res;
+        }
+
+        $items = $res['data']['items'] ?? [];
+        $events = [];
+
+        foreach ($items as $item) {
+            $involved = $item['involvedObject'] ?? [];
+            if ($objectName !== null && ($involved['name'] ?? '') !== $objectName && strpos($involved['name'] ?? '', $objectName) === false) {
+                continue;
+            }
+
+            $events[] = [
+                'type' => $item['type'] ?? 'Normal', // Normal ou Warning
+                'reason' => $item['reason'] ?? '',
+                'message' => $item['message'] ?? '',
+                'object' => ($involved['kind'] ?? '') . '/' . ($involved['name'] ?? ''),
+                'count' => (int)($item['count'] ?? 1),
+                'first_timestamp' => $item['firstTimestamp'] ?? '',
+                'last_timestamp' => $item['lastTimestamp'] ?? ($item['eventTime'] ?? ($item['metadata']['creationTimestamp'] ?? ''))
+            ];
+        }
+
+        // Ordena pelos eventos mais recentes primeiro
+        usort($events, function($a, $b) {
+            return strtotime($b['last_timestamp']) <=> strtotime($a['last_timestamp']);
+        });
+
+        if ($limit > 0 && count($events) > $limit) {
+            $events = array_slice($events, 0, $limit);
+        }
+
+        return [
+            'success' => true,
+            'events' => $events
         ];
     }
 

@@ -468,4 +468,113 @@ class SaasProvisionerHelper
 
         return ['success' => false, 'message' => 'Erro ao alterar réplicas no cluster: ' . ($scaleRes['error'] ?? '')];
     }
+
+    /**
+     * Consulta os detalhes e status ao vivo do Tenant direto no K3s
+     * (Versão real da imagem, prontidão das réplicas, pods ativos e eventos de rollout)
+     */
+    public static function getTenantLiveDetails(int $idTenant, $link): array
+    {
+        $idSafe = (int)$idTenant;
+        $q = "SELECT T.*, C.nome AS nome_cliente 
+              FROM saas_tenants T 
+              LEFT JOIN Clientes C ON T.id_cliente = C.id_cliente 
+              WHERE T.id_tenant = '$idSafe' LIMIT 1";
+        $res = DBExecute($link, $q);
+        if (!$res || mysqli_num_rows($res) === 0) {
+            return ['success' => false, 'message' => 'Tenant não encontrado.'];
+        }
+        $t = mysqli_fetch_assoc($res);
+
+        $k3s = new K3sClientHelper();
+        $namespace = $t['namespace_k8s'];
+        $appName = "app-{$t['slug_instancia']}";
+
+        // 1. Consulta o Deployment no K3s
+        $depRes = $k3s->getDeployment($namespace, $appName);
+        $k8sImage = $depRes['success'] ? ($depRes['image'] ?? '') : '';
+        $replicas = $depRes['success'] ? ($depRes['replicas'] ?? 0) : 0;
+        $readyReplicas = $depRes['success'] ? ($depRes['ready_replicas'] ?? 0) : 0;
+        $updatedReplicas = $depRes['success'] ? ($depRes['updated_replicas'] ?? 0) : 0;
+
+        // 2. Consulta os Pods reais no Namespace
+        $podsRes = $k3s->listPods($namespace);
+        $pods = $podsRes['pods'] ?? [];
+
+        // 3. Consulta Eventos recentes de Rollout / K3s
+        $eventsRes = $k3s->getEvents($namespace, null, 15);
+        $events = $eventsRes['events'] ?? [];
+
+        // 4. Determina o estado real do Rollout
+        $rolloutState = 'PENDING';
+        $rolloutLabel = 'Pendente';
+        if (!$depRes['success']) {
+            $rolloutState = 'NOT_DEPLOYED';
+            $rolloutLabel = 'Não Provisionado';
+        } elseif ($replicas === 0) {
+            $rolloutState = 'SUSPENDED';
+            $rolloutLabel = 'Suspenso (0 Réplicas)';
+        } elseif ($readyReplicas >= $replicas && $updatedReplicas >= $replicas) {
+            $rolloutState = 'RUNNING';
+            $rolloutLabel = "Ativo ({$readyReplicas}/{$replicas} Ready)";
+        } elseif ($updatedReplicas < $replicas || $readyReplicas < $replicas) {
+            $rolloutState = 'UPDATING';
+            $rolloutLabel = 'Rollout em Andamento...';
+        }
+
+        // 5. Sincroniza status no banco se necessário
+        $syncDbStatus = $t['status_pod'];
+        if ($rolloutState === 'RUNNING' && $t['status_pod'] !== 'RUNNING') {
+            $syncDbStatus = 'RUNNING';
+            DBExecute($link, "UPDATE saas_tenants SET status_pod = 'RUNNING' WHERE id_tenant = '$idSafe'");
+        } elseif ($rolloutState === 'SUSPENDED' && $t['status_pod'] !== 'SUSPENDED') {
+            $syncDbStatus = 'SUSPENDED';
+            DBExecute($link, "UPDATE saas_tenants SET status_pod = 'SUSPENDED' WHERE id_tenant = '$idSafe'");
+        }
+
+        return [
+            'success' => true,
+            'id_tenant' => $idSafe,
+            'nome_cliente' => $t['nome_cliente'] ?? 'Cliente',
+            'slug' => $t['slug_instancia'],
+            'namespace' => $namespace,
+            'subdominio' => $t['subdominio'],
+            'db_image' => $t['versao_imagem'],
+            'k8s_image' => $k8sImage ?: $t['versao_imagem'],
+            'is_image_sync' => empty($k8sImage) || ($t['versao_imagem'] === $k8sImage),
+            'replicas' => $replicas,
+            'ready_replicas' => $readyReplicas,
+            'updated_replicas' => $updatedReplicas,
+            'rollout_state' => $rolloutState,
+            'rollout_label' => $rolloutLabel,
+            'status_pod' => $syncDbStatus,
+            'pods' => $pods,
+            'events' => $events
+        ];
+    }
+
+    /**
+     * Sincroniza o status de todos os tenants cadastrados contra o K3s de uma só vez
+     */
+    public static function syncAllTenants($link): array
+    {
+        $q = "SELECT id_tenant FROM saas_tenants ORDER BY id_tenant DESC";
+        $res = DBExecute($link, $q);
+        $results = [];
+
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $details = self::getTenantLiveDetails((int)$row['id_tenant'], $link);
+                if ($details['success']) {
+                    $results[] = $details;
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'count' => count($results),
+            'tenants' => $results
+        ];
+    }
 }

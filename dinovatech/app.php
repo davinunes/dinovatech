@@ -2556,6 +2556,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
             break;
 
+        case 'saas_get_live_details':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            if ($id_tenant <= 0) {
+                $response['message'] = "ID do tenant inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $details = SaasProvisionerHelper::getTenantLiveDetails($id_tenant, $link);
+                $response['success'] = $details['success'];
+                $response['message'] = $details['message'] ?? '';
+                $response['data'] = $details;
+            }
+            break;
+
+        case 'saas_sync_all_tenants':
+            require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+            $syncRes = SaasProvisionerHelper::syncAllTenants($link);
+            $response['success'] = $syncRes['success'];
+            $response['message'] = "Sincronização concluída para {$syncRes['count']} instâncias.";
+            $response['data'] = $syncRes;
+            break;
+
         case 'incorporar_recorrencias_na_fatura': // Incorporar recorrências em uma fatura
             $id_fatura = $_POST['id_fatura'] ?? '';
             $id_cliente = $_POST['id_cliente'] ?? '';

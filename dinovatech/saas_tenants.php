@@ -129,6 +129,10 @@ $initialNodes = $k3s->getNodes();
                     <span class="material-icons text-sm">add</span>
                     <span>Novo Contrato SaaS</span>
                 </a>
+                <button type="button" id="btnSyncAllTenants" onclick="sincronizarStatusAoVivo()" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg shadow-sm transition text-sm">
+                    <span class="material-icons text-sm" id="iconSyncAll">autorenew</span>
+                    <span>Sincronizar Pods</span>
+                </button>
                 <button type="button" id="btnTestarK3s" onclick="testarConexaoCluster()" class="inline-flex items-center gap-2 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-sm transition text-sm">
                     <span class="material-icons text-sm" id="iconBtnTest">sync</span>
                     <span>Testar Cluster</span>
@@ -212,9 +216,9 @@ $initialNodes = $k3s->getNodes();
                                 <th class="py-3 px-4 font-semibold">Cliente / Contrato</th>
                                 <th class="py-3 px-4 font-semibold">Subdomínio & Acesso</th>
                                 <th class="py-3 px-4 font-semibold">Recursos Elásticos</th>
-                                <th class="py-3 px-4 font-semibold">Versão Imagem</th>
+                                <th class="py-3 px-4 font-semibold">Versão Imagem & Rollout</th>
                                 <th class="py-3 px-4 font-semibold">Banco de Dados</th>
-                                <th class="py-3 px-4 font-semibold">Status Pod</th>
+                                <th class="py-3 px-4 font-semibold">Status Pod (Ao Vivo)</th>
                                 <th class="py-3 px-4 font-semibold text-right">Ações Rápidas</th>
                             </tr>
                         </thead>
@@ -235,10 +239,10 @@ $initialNodes = $k3s->getNodes();
                                         $dot = 'bg-rose-500';
                                     }
                                 ?>
-                                    <tr class="hover:bg-slate-50/70 transition" id="row-tenant-<?= $t['id_tenant'] ?>">
+                                    <tr class="hover:bg-slate-50/70 transition" id="row-tenant-<?= $t['id_tenant'] ?>" data-tenant-id="<?= $t['id_tenant'] ?>">
                                         <!-- Cliente / Contrato -->
                                         <td class="py-3.5 px-4 font-medium text-slate-900">
-                                            <div class="flex items-center gap-2.5">
+                                             <div class="flex items-center gap-2.5">
                                                 <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-xs border border-purple-100">
                                                     <?= strtoupper(substr($t['nome_cliente'] ?? 'C', 0, 2)) ?>
                                                 </div>
@@ -283,11 +287,17 @@ $initialNodes = $k3s->getNodes();
                                             </div>
                                         </td>
 
-                                        <!-- Versão da Imagem Docker -->
+                                        <!-- Versão da Imagem Docker & Rollout -->
                                         <td class="py-3.5 px-4">
-                                            <div class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded font-mono text-[11px]" title="<?= htmlspecialchars($t['versao_imagem']) ?>">
-                                                <span class="material-icons text-[11px] text-purple-600">tag</span>
-                                                <span id="img-tag-<?= $t['id_tenant'] ?>"><?= htmlspecialchars($t['versao_imagem']) ?></span>
+                                            <div class="space-y-1">
+                                                <div class="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded font-mono text-[11px] max-w-[200px] truncate" title="<?= htmlspecialchars($t['versao_imagem']) ?>">
+                                                    <span class="material-icons text-[11px] text-purple-600">tag</span>
+                                                    <span id="img-tag-<?= $t['id_tenant'] ?>" class="truncate"><?= htmlspecialchars($t['versao_imagem']) ?></span>
+                                                </div>
+                                                <div id="rollout-badge-<?= $t['id_tenant'] ?>" class="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                                                    <span>Aguardando sync...</span>
+                                                </div>
                                             </div>
                                         </td>
 
@@ -297,33 +307,42 @@ $initialNodes = $k3s->getNodes();
                                             <div class="text-[11px] text-slate-400">usr: <?= htmlspecialchars($t['db_user']) ?></div>
                                         </td>
 
-                                        <!-- Status Pod -->
+                                        <!-- Status Pod (Ao Vivo) -->
                                         <td class="py-3.5 px-4">
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border <?= $badge ?>">
-                                                <span class="w-2 h-2 rounded-full <?= $dot ?>"></span>
-                                                <span><?= htmlspecialchars($status) ?></span>
-                                            </span>
+                                            <div id="status-container-<?= $t['id_tenant'] ?>">
+                                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border <?= $badge ?>">
+                                                    <span class="w-2 h-2 rounded-full <?= $dot ?>"></span>
+                                                    <span id="status-label-<?= $t['id_tenant'] ?>"><?= htmlspecialchars($status) ?></span>
+                                                </span>
+                                            </div>
                                         </td>
 
                                         <!-- Ações Rápidas -->
                                         <td class="py-3.5 px-4 text-right">
                                             <div class="flex items-center justify-end gap-1.5">
-                                                <?php if ($status === 'PENDING' || $status === 'ERROR'): ?>
-                                                    <!-- Botão Deploy / Provisionar -->
-                                                    <button type="button" onclick="provisionarTenant(<?= $t['id_tenant'] ?>)" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-xs transition" title="Provisionar Pod no K3s">
-                                                        <span class="material-icons text-xs">rocket_launch</span> Deploy
-                                                    </button>
-                                                <?php elseif ($status === 'RUNNING'): ?>
-                                                    <!-- Botão Suspender -->
-                                                    <button type="button" onclick="alterarEscala(<?= $t['id_tenant'] ?>, 0)" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Suspender Pod (Escalar para 0)">
-                                                        <span class="material-icons text-base">pause_circle_filled</span>
-                                                    </button>
-                                                <?php elseif ($status === 'SUSPENDED'): ?>
-                                                    <!-- Botão Reativar -->
-                                                    <button type="button" onclick="alterarEscala(<?= $t['id_tenant'] ?>, 1)" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Reativar Pod (Escalar para 1)">
-                                                        <span class="material-icons text-base">play_circle_filled</span>
-                                                    </button>
-                                                <?php endif; ?>
+                                                <!-- Ver Detalhes do Rollout e Eventos K3s -->
+                                                <button type="button" onclick="abrirModalRollout(<?= $t['id_tenant'] ?>, '<?= htmlspecialchars(addslashes($t['nome_cliente'] ?? '')) ?>')" class="p-1.5 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 rounded-lg transition" title="Detalhes do Rollout, Pods e Eventos">
+                                                    <span class="material-icons text-base">visibility</span>
+                                                </button>
+
+                                                <span id="action-btn-container-<?= $t['id_tenant'] ?>">
+                                                    <?php if ($status === 'PENDING' || $status === 'ERROR'): ?>
+                                                        <!-- Botão Deploy / Provisionar -->
+                                                        <button type="button" onclick="provisionarTenant(<?= $t['id_tenant'] ?>)" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-xs transition" title="Provisionar Pod no K3s">
+                                                            <span class="material-icons text-xs">rocket_launch</span> Deploy
+                                                        </button>
+                                                    <?php elseif ($status === 'RUNNING'): ?>
+                                                        <!-- Botão Suspender -->
+                                                        <button type="button" onclick="alterarEscala(<?= $t['id_tenant'] ?>, 0)" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Suspender Pod (Escalar para 0)">
+                                                            <span class="material-icons text-base">pause_circle_filled</span>
+                                                        </button>
+                                                    <?php elseif ($status === 'SUSPENDED'): ?>
+                                                        <!-- Botão Reativar -->
+                                                        <button type="button" onclick="alterarEscala(<?= $t['id_tenant'] ?>, 1)" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Reativar Pod (Escalar para 1)">
+                                                            <span class="material-icons text-base">play_circle_filled</span>
+                                                        </button>
+                                                    <?php endif; ?>
+                                                </span>
 
                                                 <!-- Atualizar Versão (RollingUpdate) -->
                                                 <button type="button" onclick="abrirModalUpdate(<?= $t['id_tenant'] ?>, '<?= htmlspecialchars(addslashes($t['nome_cliente'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($t['versao_imagem'])) ?>')" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition" title="Atualizar Versão (RollingUpdate)">
@@ -420,9 +439,12 @@ $initialNodes = $k3s->getNodes();
                                     <tr>
                                         <th class="py-2.5 px-3">Namespace</th>
                                         <th class="py-2.5 px-3">Nome do Pod</th>
+                                        <th class="py-2.5 px-3">Imagem Docker</th>
                                         <th class="py-2.5 px-3">Fase</th>
+                                        <th class="py-2.5 px-3">Pronto</th>
+                                        <th class="py-2.5 px-3">Restarts</th>
                                         <th class="py-2.5 px-3">IP Interno</th>
-                                        <th class="py-2.5 px-3">Data Criação</th>
+                                        <th class="py-2.5 px-3">Idade</th>
                                     </tr>
                                 </thead>
                                 <tbody id="listaPodsCorpo" class="divide-y divide-slate-100 font-mono text-slate-700"></tbody>
@@ -494,8 +516,112 @@ $initialNodes = $k3s->getNodes();
         </div>
     </div>
 
+    <!-- MODAL DE DETALHES DO ROLLOUT, VERSÃO E EVENTOS K3S -->
+    <div id="modalRolloutDetails" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[85vh]">
+            <!-- Header Modal -->
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-flex items-center justify-center p-2 bg-indigo-500/20 text-indigo-400 rounded-lg">
+                        <span class="material-icons text-xl">deployed_code</span>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                            <span id="modalRolloutCliente">Cliente</span>
+                            <span id="modalRolloutStateBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">Consultando...</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 font-mono mt-0.5" id="modalRolloutSub">Namespace: -</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="recarregarModalRollout()" class="text-xs text-slate-300 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 transition font-mono">
+                        <span class="material-icons text-xs" id="iconRefreshRollout">refresh</span> Atualizar
+                    </button>
+                    <button type="button" onclick="fecharModalRollout()" class="text-slate-400 hover:text-white">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Corpo Modal com Scroll -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-1 text-slate-700">
+                <!-- Cards de Resumo -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Card 1: Imagem Ativa -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs font-semibold uppercase text-slate-400">Imagem no K3s</span>
+                        <div class="font-mono text-xs font-bold text-slate-900 mt-1 truncate" id="modalRolloutImgLive">-</div>
+                        <div class="text-[11px] mt-1" id="modalRolloutImgSyncStatus">
+                            <span class="text-slate-400">Verificando...</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Prontidão / Réplicas -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs font-semibold uppercase text-slate-400">Prontidão das Réplicas</span>
+                        <div class="text-sm font-black text-slate-900 mt-1" id="modalRolloutReplicas">-</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5" id="modalRolloutUpdatedReplicas">-</div>
+                    </div>
+
+                    <!-- Card 3: Estratégia & Health -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <span class="text-xs font-semibold uppercase text-slate-400">Estratégia Zero-Downtime</span>
+                        <div class="text-xs font-bold text-indigo-700 mt-1">RollingUpdate (Surge: 1, Unavail: 0)</div>
+                        <div class="text-[11px] text-slate-500 mt-0.5">Readiness: GET /login.php:80</div>
+                    </div>
+                </div>
+
+                <!-- Seção Pods Ativos -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                        <span class="material-icons text-sm text-purple-600">view_in_ar</span>
+                        <span>Pods Ativos no Namespace</span>
+                    </h4>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-600 uppercase">
+                                <tr>
+                                    <th class="py-2.5 px-3">Nome do Pod</th>
+                                    <th class="py-2.5 px-3">Imagem do Container</th>
+                                    <th class="py-2.5 px-3">Fase</th>
+                                    <th class="py-2.5 px-3">Pronto</th>
+                                    <th class="py-2.5 px-3">Restarts</th>
+                                    <th class="py-2.5 px-3">Idade / IP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalRolloutPodsList" class="divide-y divide-slate-100 font-mono text-slate-700">
+                                <tr><td colspan="6" class="py-4 text-center text-slate-400 font-sans">Consultando pods...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Seção Linha do Tempo de Eventos -->
+                <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                        <span class="material-icons text-sm text-indigo-600">history</span>
+                        <span>Linha do Tempo de Eventos do K3s (Rollout & Ciclo de Vida)</span>
+                    </h4>
+                    <div id="modalRolloutEventsList" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <div class="text-xs text-slate-400 text-center py-4 font-sans">Consultando eventos...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                <span class="flex items-center gap-1">
+                    <span class="material-icons text-xs text-emerald-500">verified</span>
+                    <span>Dados obtidos via API REST nativa do Kubernetes (porta 6443)</span>
+                </span>
+                <button type="button" onclick="fecharModalRollout()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentLogTenantId = null;
+        let currentRolloutTenantId = null;
 
         function provisionarTenant(idTenant) {
             if (!confirm('Deseja iniciar o provisionamento desta instância no Cluster K3s agora?')) return;
@@ -552,7 +678,7 @@ $initialNodes = $k3s->getNodes();
                 if (res.success) {
                     alert(res.message);
                     fecharModalUpdate();
-                    window.location.reload();
+                    sincronizarStatusAoVivo();
                 } else {
                     alert('Erro: ' + res.message);
                 }
@@ -594,6 +720,178 @@ $initialNodes = $k3s->getNodes();
             });
         }
 
+        // ==========================================
+        // DETALHES DE ROLLOUT E EVENTOS K3S
+        // ==========================================
+        function abrirModalRollout(idTenant, cliente) {
+            currentRolloutTenantId = idTenant;
+            $('#modalRolloutCliente').text(cliente);
+            $('#modalRolloutSub').text('Consultando detalhes no K3s...');
+            $('#modalRolloutDetails').removeClass('hidden');
+            recarregarModalRollout();
+        }
+
+        function fecharModalRollout() {
+            $('#modalRolloutDetails').addClass('hidden');
+            currentRolloutTenantId = null;
+        }
+
+        function recarregarModalRollout() {
+            if (!currentRolloutTenantId) return;
+            const icon = $('#iconRefreshRollout');
+            icon.addClass('animate-spin');
+
+            $.post('app.php', { action: 'saas_get_live_details', id_tenant: currentRolloutTenantId }, function(res) {
+                icon.removeClass('animate-spin');
+                if (res.success && res.data) {
+                    const d = res.data;
+                    $('#modalRolloutSub').text('Namespace: ' + d.namespace + ' | Host: ' + d.subdominio);
+
+                    // Badge de Estado do Rollout
+                    let stateBadgeHtml = '';
+                    if (d.rollout_state === 'RUNNING') {
+                        stateBadgeHtml = '<span class="bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-bold border border-emerald-500/30">100% Ativo & Saudável</span>';
+                    } else if (d.rollout_state === 'UPDATING') {
+                        stateBadgeHtml = '<span class="bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full text-xs font-bold border border-indigo-500/30 animate-pulse">RollingUpdate em Progresso...</span>';
+                    } else if (d.rollout_state === 'SUSPENDED') {
+                        stateBadgeHtml = '<span class="bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full text-xs font-bold border border-amber-500/30">Suspenso (0 Réplicas)</span>';
+                    } else {
+                        stateBadgeHtml = '<span class="bg-slate-700 text-slate-300 px-2.5 py-0.5 rounded-full text-xs font-bold">Pendente de Deploy</span>';
+                    }
+                    $('#modalRolloutStateBadge').html(stateBadgeHtml);
+
+                    // Imagem Live vs DB
+                    $('#modalRolloutImgLive').text(d.k8s_image || '-').attr('title', d.k8s_image);
+                    if (d.is_image_sync) {
+                        $('#modalRolloutImgSyncStatus').html('<span class="text-emerald-600 font-semibold flex items-center gap-1"><span class="material-icons text-xs">check</span> Imagem sincronizada com o banco</span>');
+                    } else {
+                        $('#modalRolloutImgSyncStatus').html('<span class="text-indigo-600 font-semibold flex items-center gap-1"><span class="material-icons text-xs">sync</span> Banco: ' + d.db_image + '</span>');
+                    }
+
+                    // Réplicas
+                    $('#modalRolloutReplicas').text(d.ready_replicas + ' de ' + d.replicas + ' Pods Prontos');
+                    $('#modalRolloutUpdatedReplicas').text(d.updated_replicas + ' réplica(s) atualizada(s) para a nova versão');
+
+                    // Lista de Pods
+                    const tbody = $('#modalRolloutPodsList');
+                    tbody.empty();
+                    if (d.pods && d.pods.length > 0) {
+                        d.pods.forEach(function(p) {
+                            const readyBadge = p.ready 
+                                ? '<span class="inline-flex items-center gap-1 text-emerald-600 font-bold"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Sim (1/1)</span>'
+                                : '<span class="inline-flex items-center gap-1 text-amber-600 font-bold"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Não (0/1)</span>';
+                            const phaseBadge = (p.phase === 'Running') ? 'text-emerald-700 font-bold' : 'text-slate-600';
+
+                            tbody.append(`
+                                <tr class="hover:bg-slate-50">
+                                    <td class="py-2 px-3 font-semibold text-slate-900">${p.name}</td>
+                                    <td class="py-2 px-3 text-[11px] text-purple-700 max-w-[200px] truncate" title="${p.image}">${p.image}</td>
+                                    <td class="py-2 px-3 ${phaseBadge}">${p.phase}</td>
+                                    <td class="py-2 px-3">${readyBadge}</td>
+                                    <td class="py-2 px-3">${p.restart_count}</td>
+                                    <td class="py-2 px-3 text-slate-500">${p.age || '-'} / ${p.pod_ip || '-'}</td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        tbody.html('<tr><td colspan="6" class="py-4 text-center text-slate-400 font-sans">Nenhum pod encontrado em execução.</td></tr>');
+                    }
+
+                    // Lista de Eventos
+                    const eventsList = $('#modalRolloutEventsList');
+                    eventsList.empty();
+                    if (d.events && d.events.length > 0) {
+                        d.events.forEach(function(ev) {
+                            const isWarn = (ev.type === 'Warning');
+                            const typeBadge = isWarn 
+                                ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800">Alerta</span>'
+                                : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">Evento</span>';
+
+                            eventsList.append(`
+                                <div class="p-2.5 rounded-lg border border-slate-200 bg-slate-50 flex items-start gap-2.5 text-xs">
+                                    <div class="mt-0.5">${typeBadge}</div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center justify-between">
+                                            <span class="font-bold text-slate-800">${ev.reason} (${ev.object})</span>
+                                            <span class="text-[11px] text-slate-400 font-mono">${ev.last_timestamp || ''}</span>
+                                        </div>
+                                        <p class="text-slate-600 mt-0.5 text-xs font-mono">${ev.message}</p>
+                                    </div>
+                                </div>
+                            `);
+                        });
+                    } else {
+                        eventsList.html('<div class="text-xs text-slate-400 text-center py-4 font-sans">Nenhum evento registrado recentemente neste namespace.</div>');
+                    }
+                } else {
+                    alert('Erro ao carregar detalhes: ' + (res.message || 'Sem resposta.'));
+                }
+            }, 'json').fail(function() {
+                icon.removeClass('animate-spin');
+                alert('Falha de conexão com a API K3s.');
+            });
+        }
+
+        // ==========================================
+        // SINCRONIZAÇÃO AO VIVO DE TODOS OS TENANTS
+        // ==========================================
+        function sincronizarStatusAoVivo() {
+            const btn = $('#btnSyncAllTenants');
+            const icon = $('#iconSyncAll');
+            icon.addClass('animate-spin');
+            btn.prop('disabled', true);
+
+            $.post('app.php', { action: 'saas_sync_all_tenants' }, function(res) {
+                icon.removeClass('animate-spin');
+                btn.prop('disabled', false);
+
+                if (res.success && res.data && res.data.tenants) {
+                    res.data.tenants.forEach(function(t) {
+                        // Atualiza tag de imagem
+                        $('#img-tag-' + t.id_tenant).text(t.k8s_image);
+
+                        // Atualiza badge de rollout
+                        let rolloutHtml = '';
+                        if (t.rollout_state === 'RUNNING') {
+                            rolloutHtml = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="text-emerald-700 font-semibold">' + t.ready_replicas + '/' + t.replicas + ' Ready</span>';
+                        } else if (t.rollout_state === 'UPDATING') {
+                            rolloutHtml = '<span class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-ping"></span><span class="text-indigo-700 font-semibold">Atualizando...</span>';
+                        } else if (t.rollout_state === 'SUSPENDED') {
+                            rolloutHtml = '<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="text-amber-700 font-semibold">0/0 Suspenso</span>';
+                        } else {
+                            rolloutHtml = '<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span><span class="text-slate-400">Pendente</span>';
+                        }
+                        $('#rollout-badge-' + t.id_tenant).html(rolloutHtml);
+
+                        // Atualiza status do pod
+                        let statusBadgeHtml = '';
+                        if (t.rollout_state === 'RUNNING') {
+                            statusBadgeHtml = '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-800 border-emerald-200"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>RUNNING</span></span>';
+                        } else if (t.rollout_state === 'SUSPENDED') {
+                            statusBadgeHtml = '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border bg-amber-50 text-amber-800 border-amber-200"><span class="w-2 h-2 rounded-full bg-amber-500"></span><span>SUSPENDED</span></span>';
+                        } else {
+                            statusBadgeHtml = '<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border bg-slate-100 text-slate-700 border-slate-200"><span class="w-2 h-2 rounded-full bg-slate-400"></span><span>' + t.status_pod + '</span></span>';
+                        }
+                        $('#status-container-' + t.id_tenant).html(statusBadgeHtml);
+
+                        // Atualiza botões de ação
+                        let actionHtml = '';
+                        if (t.rollout_state === 'RUNNING') {
+                            actionHtml = '<button type="button" onclick="alterarEscala(' + t.id_tenant + ', 0)" class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition" title="Suspender Pod"><span class="material-icons text-base">pause_circle_filled</span></button>';
+                        } else if (t.rollout_state === 'SUSPENDED') {
+                            actionHtml = '<button type="button" onclick="alterarEscala(' + t.id_tenant + ', 1)" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition" title="Reativar Pod"><span class="material-icons text-base">play_circle_filled</span></button>';
+                        } else if (t.rollout_state === 'NOT_DEPLOYED' || t.rollout_state === 'PENDING') {
+                            actionHtml = '<button type="button" onclick="provisionarTenant(' + t.id_tenant + ')" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-xs transition" title="Provisionar Pod no K3s"><span class="material-icons text-xs">rocket_launch</span> Deploy</button>';
+                        }
+                        $('#action-btn-container-' + t.id_tenant).html(actionHtml);
+                    });
+                }
+            }, 'json').fail(function() {
+                icon.removeClass('animate-spin');
+                btn.prop('disabled', false);
+            });
+        }
+
         function testarConexaoCluster() {
             const btn = $('#btnTestarK3s');
             const icon = $('#iconBtnTest');
@@ -625,24 +923,31 @@ $initialNodes = $k3s->getNodes();
                 if (data.pods && data.pods.length > 0) {
                     data.pods.forEach(function(pod) {
                         const phaseClass = (pod.phase === 'Running') ? 'text-emerald-600 font-bold' : 'text-slate-500';
+                        const readyIcon = pod.ready 
+                            ? '<span class="text-emerald-600 font-bold">1/1</span>'
+                            : '<span class="text-amber-600 font-bold">0/1</span>';
                         const row = `
                             <tr class="hover:bg-slate-50">
                                 <td class="py-2 px-3 font-semibold text-slate-800">${pod.namespace}</td>
                                 <td class="py-2 px-3">${pod.name}</td>
+                                <td class="py-2 px-3 text-purple-700 max-w-[220px] truncate" title="${pod.image || ''}">${pod.image || '-'}</td>
                                 <td class="py-2 px-3 ${phaseClass}">${pod.phase}</td>
+                                <td class="py-2 px-3">${readyIcon}</td>
+                                <td class="py-2 px-3">${pod.restart_count || 0}</td>
                                 <td class="py-2 px-3">${pod.pod_ip || '-'}</td>
-                                <td class="py-2 px-3 text-slate-400">${pod.start_time || '-'}</td>
+                                <td class="py-2 px-3 text-slate-400">${pod.age || pod.start_time || '-'}</td>
                             </tr>
                         `;
                         tbody.append(row);
                     });
                 } else {
-                    tbody.html('<tr><td colspan="5" class="py-4 text-center text-slate-400">Nenhum pod encontrado.</td></tr>');
+                    tbody.html('<tr><td colspan="8" class="py-4 text-center text-slate-400">Nenhum pod encontrado.</td></tr>');
                 }
             }, 'json');
         }
 
         $(document).ready(function() {
+            sincronizarStatusAoVivo();
             carregarPodsCluster();
         });
     </script>
