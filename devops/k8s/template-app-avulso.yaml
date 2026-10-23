@@ -1,0 +1,113 @@
+# Template Modelo: Aplicação PHP Avulsa no Cluster K3s Dinovatech
+#
+# Para utilizar:
+# 1. Substitua 'meu-app' pelo nome do seu sistema (ex: financeiro, blog, crm).
+# 2. Ajuste as credenciais de banco no Secret.
+# 3. Se o sistema não usar upload em disco, pode remover o PersistentVolumeClaim e o volumeMount.
+# 4. Aplique com: kubectl apply -f template-app-avulso.yaml
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-meu-app
+  labels:
+    app.kubernetes.io/name: meu-app
+    app.kubernetes.io/part-of: sistemas-avulsos
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: meu-app-env
+  namespace: app-meu-app
+type: Opaque
+stringData:
+  # Configurações do Banco de Dados
+  DB_HOSTNAME: "137.131.208.19"
+  DB_PORT: "3306"
+  DB_DATABASE: "meu_banco_db"
+  DB_USERNAME: "meu_usuario"
+  DB_PASSWORD: "sua_senha_segura"
+  
+  # Fuso Horário e Variáveis de Runtime
+  TZ: "America/Sao_Paulo"
+  APP_ENV: "production"
+---
+# (Opcional) Volume persistente caso o sistema legado salve uploads ou logs em disco
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: meu-app-uploads-pvc
+  namespace: app-meu-app
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: meu-app-deployment
+  namespace: app-meu-app
+  labels:
+    app: meu-app
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: meu-app
+  template:
+    metadata:
+      labels:
+        app: meu-app
+    spec:
+      containers:
+        - name: php-app
+          image: meu-app:v1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          envFrom:
+            - secretRef:
+                name: meu-app-env
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          # Se o sistema usar uploads em disco, descomente as linhas abaixo:
+          # volumeMounts:
+          #   - name: uploads-storage
+          #     mountPath: /var/www/html/uploads
+      # volumes:
+      #   - name: uploads-storage
+      #     persistentVolumeClaim:
+      #       claimName: meu-app-uploads-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: meu-app-service
+  namespace: app-meu-app
+  labels:
+    app: meu-app
+spec:
+  type: ClusterIP
+  selector:
+    app: meu-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

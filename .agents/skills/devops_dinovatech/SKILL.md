@@ -90,4 +90,6 @@ Esta skill documenta a arquitetura de contêineres, as diretrizes de empacotamen
 * `dinovatech/saas_db_tool.php`: Ferramenta Web SaaS Master para provisionar novos bancos e auditar/migrar storage.
 * `scripts/provision_tenant_db.php`: Script CLI para provisionamento automatizado de bases de tenants.
 * `scripts/migrar_arquivos_locais_para_s3.php`: Script CLI para auditoria e migração de arquivos locais para Oracle S3.
+* `devops/k8s/TUTORIAL-MIGRACAO-PODS-AVULSOS.md`: Guia passo a passo para migrar sistemas bare-metal PHP para pods avulsos no K3s com SSL automático no Caddy.
+* `devops/k8s/template-app-avulso.yaml`: Template declarativo pronto (Namespace, Secret, PVC local-path, Deployment, Service) para novos sistemas.
 

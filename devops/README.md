@@ -60,3 +60,13 @@ docker push ilunne/php8.3-arm-base:latest
 | `DB_PASSWORD` | Senha do banco de dados | `********` |
 | `APP_MASTER_KEY` | Chave de criptografia AES-256 | Chave de 32/64 chars hex |
 | `WEASYPRINT_URL` | Endpoint do microserviço PDF | `http://weasyprint:9080/convert/html` |
+
+---
+
+## 5. Migração de Sistemas Bare-Metal PHP para Pods Avulsos no K3s
+
+Além das instâncias SaaS do Dinovatech, o cluster K3s (`137.131.208.19`) possui capacidade para rodar outros sistemas PHP avulsos em namespaces isolados com SSL automático no Caddy:
+
+* **Guia Completo**: [k8s/TUTORIAL-MIGRACAO-PODS-AVULSOS.md](file:///e:/DEV/dinovatech/devops/k8s/TUTORIAL-MIGRACAO-PODS-AVULSOS.md)
+* **Template Declarativo**: [k8s/template-app-avulso.yaml](file:///e:/DEV/dinovatech/devops/k8s/template-app-avulso.yaml)
+
