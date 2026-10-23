@@ -787,9 +787,10 @@ DBClose($link);
                 if (res.success && res.fotos.length > 0) {
                     let html = '';
                     res.fotos.forEach(f => {
+                        const fotoSrc = (f.foto_url && /^https?:\/\//i.test(f.foto_url)) ? f.foto_url : ('../../' + f.foto_url);
                         html += `
                             <div class="rounded-xl overflow-hidden border border-gray-200 shadow-sm bg-black flex items-center justify-center">
-                                <img src="../../${f.foto_url}" alt="Foto" class="max-h-48 w-full object-cover cursor-pointer" onclick="window.open('../../${f.foto_url}', '_blank')">
+                                <img src="${fotoSrc}" alt="Foto" class="max-h-48 w-full object-cover cursor-pointer" onclick="window.open('${fotoSrc}', '_blank')">
                             </div>
                         `;
                     });

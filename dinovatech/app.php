@@ -9,6 +9,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
 require_once __DIR__ . '/helpers/FiscalCatalogHelper.php';
 require_once __DIR__ . '/helpers/EncryptionHelper.php';
 require_once __DIR__ . '/helpers/ContaDevHelper.php';
+require_once __DIR__ . '/helpers/StorageMigrationHelper.php';
 
 // ACTION GET: Toggle Status Cliente (Direct Link)
 if (isset($_GET['action']) && $_GET['action'] === 'toggle_status_cliente') {
@@ -635,16 +636,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         // "logo_empresa" + ext. But then we have multiple.
                         // Cleanup: remove any glob('assets/logo_empresa.*')?
 
-                        // Let's try simple overwrite: 'assets/logo_empresa.' . $ext
-                        // And clean others? 
-                        // User: "sobrescrever o mesmo arquivo" -> implies one file.
-                        // I will clean old variations.
-                        $baseLogo = $uploadLogoDir . 'logo_empresa';
-                        array_map('unlink', glob($baseLogo . '.*'));
+                        $tmpLogo = $_FILES['arquivo_logo']['tmp_name'];
+                        $bucketUrl = StorageMigrationHelper::getBucketUrl($link);
+                        $uploadCloudOk = false;
 
-                        $destLogo = $baseLogo . '.' . $ext;
-                        if (move_uploaded_file($_FILES['arquivo_logo']['tmp_name'], $destLogo)) {
-                            $logo_url_update = 'assets/logo_empresa.' . $ext;
+                        if (!empty($bucketUrl)) {
+                            $cloudKey = 'logos/logo_empresa_' . time() . '.' . $ext;
+                            $upRes = StorageMigrationHelper::uploadToOracle($bucketUrl, $cloudKey, $tmpLogo);
+                            if ($upRes['success']) {
+                                $logo_url_update = $upRes['public_url'];
+                                $uploadCloudOk = true;
+                            }
+                        }
+
+                        if (!$uploadCloudOk) {
+                            $baseLogo = $uploadLogoDir . 'logo_empresa';
+                            array_map('unlink', glob($baseLogo . '.*'));
+                            $destLogo = $baseLogo . '.' . $ext;
+                            if (move_uploaded_file($tmpLogo, $destLogo)) {
+                                $logo_url_update = 'assets/logo_empresa.' . $ext;
+                            }
                         }
                     }
                 }
@@ -5859,7 +5870,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             $logo_url = '';
             if (!empty($empresa['logo_url'])) {
-                $logo_url = '../../' . $empresa['logo_url'];
+                $logo_url = (preg_match('/^https?:\/\//i', $empresa['logo_url'])) ? $empresa['logo_url'] : ('../../' . $empresa['logo_url']);
             } else {
                 $logo_url = '../../assets/img/logo_dino.png';
             }
@@ -7017,11 +7028,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                             $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
                             if (in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp'])) {
-                                $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
-                                $destPath = $uploadDir . $newFileName;
-                                if (move_uploaded_file($tmpName, $destPath)) {
-                                    $relPath = 'uploads/banho_fotos/' . $newFileName;
-                                    DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPath')");
+                                $bucketUrl = StorageMigrationHelper::getBucketUrl($link);
+                                $cloudOk = false;
+                                if (!empty($bucketUrl)) {
+                                    $cloudKey = 'banho_fotos/checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
+                                    $upRes = StorageMigrationHelper::uploadToOracle($bucketUrl, $cloudKey, $tmpName);
+                                    if ($upRes['success']) {
+                                        $relPath = $upRes['public_url'];
+                                        $relPathSafe = mysqli_real_escape_string($link, $relPath);
+                                        DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPathSafe')");
+                                        $cloudOk = true;
+                                    }
+                                }
+
+                                if (!$cloudOk) {
+                                    $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
+                                    $destPath = $uploadDir . $newFileName;
+                                    if (move_uploaded_file($tmpName, $destPath)) {
+                                        $relPath = 'uploads/banho_fotos/' . $newFileName;
+                                        DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPath')");
+                                    }
                                 }
                             }
                         }
@@ -7132,11 +7158,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         $ext = strtolower(pathinfo($origName, PATHINFO_EXTENSION));
 
                         if (in_array($ext, ['jpg', 'jpeg', 'jfif', 'png', 'webp'])) {
-                            $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
-                            $destPath = $uploadDir . $newFileName;
-                            if (move_uploaded_file($tmpName, $destPath)) {
-                                $relPath = 'uploads/banho_fotos/' . $newFileName;
-                                DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPath')");
+                            $bucketUrl = StorageMigrationHelper::getBucketUrl($link);
+                            $cloudOk = false;
+                            if (!empty($bucketUrl)) {
+                                $cloudKey = 'banho_fotos/checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
+                                $upRes = StorageMigrationHelper::uploadToOracle($bucketUrl, $cloudKey, $tmpName);
+                                if ($upRes['success']) {
+                                    $relPath = $upRes['public_url'];
+                                    $relPathSafe = mysqli_real_escape_string($link, $relPath);
+                                    DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPathSafe')");
+                                    $cloudOk = true;
+                                }
+                            }
+
+                            if (!$cloudOk) {
+                                $newFileName = 'checkin_' . $id_fila . '_' . time() . '_' . $i . '.' . $ext;
+                                $destPath = $uploadDir . $newFileName;
+                                if (move_uploaded_file($tmpName, $destPath)) {
+                                    $relPath = 'uploads/banho_fotos/' . $newFileName;
+                                    DBExecute($link, "INSERT INTO BanhoCheckinFotos (id_fila, id_pet, foto_url) VALUES ($id_fila, $id_pet, '$relPath')");
+                                }
                             }
                         }
                     }

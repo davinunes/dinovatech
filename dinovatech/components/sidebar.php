@@ -37,8 +37,9 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
                 <?php 
                 $logo = AppHelper::getCompanyLogo();
                 if ($logo): 
+                    $logoSrc = (preg_match('/^https?:\/\//i', $logo)) ? $logo : ($basePath . $logo);
                 ?>
-                    <img src="<?= $basePath . $logo ?>" alt="<?= AppHelper::getCompanyName() ?>" class="max-h-12 max-w-[180px] object-contain">
+                    <img src="<?= $logoSrc ?>" alt="<?= AppHelper::getCompanyName() ?>" class="max-h-12 max-w-[180px] object-contain">
                 <?php else: ?>
                     <?= strtoupper(AppHelper::getCompanyName()) ?>
                 <?php endif; ?>

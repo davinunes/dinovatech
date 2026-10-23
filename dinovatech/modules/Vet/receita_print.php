@@ -252,8 +252,10 @@ DBClose($link);
         <!-- Header -->
         <header class="border-b-2 border-cyan-800 pb-4 mb-4 flex items-center justify-between">
             <div>
-                <?php if (!empty($empresa['logo_url'])): ?>
-                    <img src="../../<?= $empresa['logo_url'] ?>" alt="Logo" class="h-20 object-contain" style="max-height: 75px; max-width: 220px; width: auto; object-fit: contain;">
+                <?php if (!empty($empresa['logo_url'])): 
+                    $logoSrc = (preg_match('/^https?:\/\//i', $empresa['logo_url'])) ? $empresa['logo_url'] : ('../../' . $empresa['logo_url']);
+                ?>
+                    <img src="<?= $logoSrc ?>" alt="Logo" class="h-20 object-contain" style="max-height: 75px; max-width: 220px; width: auto; object-fit: contain;">
                 <?php else: ?>
                     <h1 class="text-3xl font-bold text-cyan-800 tracking-tight">
                         <?= htmlspecialchars($empresa['razao_social'] ?? 'Clínica Veterinária') ?>

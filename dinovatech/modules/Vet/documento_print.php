@@ -127,7 +127,7 @@ $empresa = mysqli_fetch_assoc($r_conf);
 $basePath = '../../'; // Relative path to root from modules/Vet/
 $logo_url = '';
 if (!empty($empresa['logo_url'])) {
-    $logo_url = $basePath . $empresa['logo_url'];
+    $logo_url = (preg_match('/^https?:\/\//i', $empresa['logo_url'])) ? $empresa['logo_url'] : ($basePath . $empresa['logo_url']);
 } else {
     $logo_url = $basePath . 'assets/img/logo_dino.png'; // Fallback
 }
