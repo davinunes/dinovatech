@@ -6,16 +6,16 @@ Este diretório contém a especificação dos contêineres e o pipeline de empac
 
 ## 1. Arquitetura Atual e Resumo de Dependências
 
-* **Servidor Web & Runtime**: Apache 2.4 + PHP 8.2 (com extensões `mysqli`, `soap`, `mbstring`, `gd`, `zip`, `bcmath`, `curl`).
-* **SSH & Deploy no Host**: Pacotes `openssh-client`, `python3` e `python3-paramiko` instalados na imagem para permitir que a tela de atualização ([dinovatech/py/ssh.py](file:///e:/DEV/dinovatech/dinovatech/py/ssh.py)) execute comandos `git pull` na VPS host.
-  > **Nota de Transição para Kubernetes**: Na migração para Kubernetes, o container deixará de executar comandos SSH na máquina host; a imagem será imutável e conterá o código ou usará pipelines CI/CD do cluster.
+* **Servidor Web & Runtime**: Apache 2.4 + PHP 8.3 (com extensões `mysqli`, `pdo_mysql`, `soap`, `xml`, `mbstring`, `gd`, `zip`, `bcmath`, `opcache`, `curl`).
+* **SSH & Deploy no Host (Legado)**: Pacotes `openssh-client`, `python3`, `python3-pip` e `python3-paramiko` instalados na imagem para permitir que a tela de atualização ([dinovatech/py/ssh.py](file:///e:/DEV/dinovatech/dinovatech/py/ssh.py)) execute comandos `git pull` na VPS host.
+  > **Nota de Transição para Kubernetes**: No cluster K3s, os pods são imutáveis e stateless; atualizações de versão são feitas via RollingUpdate Zero-Downtime direto pela API do K3s, sem dependência de SSH.
 * **Geração de PDFs**: 
   * **NÃO** ocorre dentro do container do PHP (evitando instalar ferramentas pesadas de compilação gráfica ou WebKit/Chromium no runtime do PHP).
   * O PHP consome via HTTP `cURL` o microserviço sidecar **WeasyPrint REST** (`ghcr.io/schweizerischebundesbahnen/weasyprint-service:latest`), encapsulado por [PdfHelper.php](file:///e:/DEV/dinovatech/dinovatech/helpers/PdfHelper.php).
 
 ---
 
-## 2. Como Fazer Build e Publicar no Docker Hub
+## 2. Como Fazer Build e Publicar no Docker Hub / Containerd
 
 Execute a partir deste diretório `devops/`:
 
@@ -23,11 +23,18 @@ Execute a partir deste diretório `devops/`:
 # 1. Login no Docker Hub
 docker login
 
-# 2. Build da Imagem com tag para PHP 8.2
-docker build -t seu_usuario_dockerhub/dinovatech:php8.2 -f Dockerfile .
+# 2. Build da Imagem Base x86_64 (para servidores/VPS convencionais)
+docker buildx build -t ilunne/php8.3-x86-base:v1.0.0 -f Dockerfile .
 
-# 3. Enviar para o repositório remoto
-docker push seu_usuario_dockerhub/dinovatech:php8.2
+# 3. Build da Imagem Base ARM64 (para K3s OCI Ampere A1)
+docker buildx build --platform linux/arm64 -t ilunne/php8.3-arm-base:latest -f Dockerfile .
+
+# 4. Build da Imagem Release com o código para o K3s
+docker build -t ilunne/php8.3:v1.0.0 -f Dockerfile.release .
+
+# 5. Enviar para o repositório remoto (se aplicável)
+docker push ilunne/php8.3-x86-base:v1.0.0
+docker push ilunne/php8.3-arm-base:latest
 ```
 
 ---

@@ -2,7 +2,7 @@
 # Suporte a PHP 8.2+ com extensões necessárias e compatibilidade com o deploy atual (SSH/Python)
 # Preparado para execução em Docker / Portainer e transição para Kubernetes
 
-ARG PHP_VERSION=8.2
+ARG PHP_VERSION=8.3
 FROM php:${PHP_VERSION}-apache
 
 LABEL maintainer="Dinovatech Team"

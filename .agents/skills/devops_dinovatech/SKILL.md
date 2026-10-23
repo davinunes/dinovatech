@@ -11,11 +11,15 @@ Esta skill documenta a arquitetura de contêineres, as diretrizes de empacotamen
 
 ## 1. Runtime da Aplicação (Container Principal)
 
-* **Base**: Imagem baseada em `php:8.2-apache` (substituindo a legada `ilunne/php7.4-mysqli`).
+* **Base**: Imagem baseada em `php:8.3-apache` (substituindo a legada `ilunne/php7.4-mysqli`).
+* **Imagens Base Multi-Arquitetura**:
+  * **ARM64 (OCI Ampere A1 / K3s)**: `ilunne/php8.3-arm-base:latest` (usada no cluster K3s `137.131.208.19`).
+  * **x86_64 (VPS / Docker Compose)**: `ilunne/php8.3-x86-base:v1.0.0` (para servidores legados ou desenvolvimento x86).
+  * **Imagem Release com Código**: `ilunne/php8.3:vX.Y.Z` (empacota `dinovatech/` em `/var/www/html` para deploy imutável nos Pods).
 * **Extensões PHP Obrigatórias**:
   * `mysqli` e `pdo_mysql` (Acesso a dados MariaDB).
   * `soap` e `xml` (Integração com webservices da NFS-e / SEFAZ).
-  * `curl` e `openssl` (Comunicação com WeasyPrint, Banco Inter, InfinitePay e Google APIs).
+  * `curl` e `openssl` (Comunicação com WeasyPrint, Banco Inter, InfinitePay, Oracle Object Storage e Google APIs).
   * `mbstring`, `gd`, `zip`, `bcmath`, `opcache`.
 * **Configuração de Compatibilidade com PHP 8.x**:
   * Em `database.php`: Sempre manter `mysqli_report(MYSQLI_REPORT_OFF);` ativo na conexão para evitar exceções não capturadas em queries com retorno falso.
@@ -25,14 +29,14 @@ Esta skill documenta a arquitetura de contêineres, as diretrizes de empacotamen
 
 ## 2. Mecanismo de Deploy Atual (SSH / Git Pull)
 
-* **Funcionamento**:
+* **Funcionamento Legado**:
   * O painel web possui uma aba de atualização que dispara `dinovatech/py/ssh.py`.
   * O script conecta via SSH no IP do host Docker (`172.17.0.1:22` ou `localhost`) autenticando com chave PEM privada e executa `git pull` na pasta mapeada.
 * **Dependências do Container**:
-  * O container do PHP inclui `openssh-client`, `python3` e a biblioteca `python3-paramiko`.
+  * O container inclui `openssh-client`, `python3`, `python3-pip` e a biblioteca `python3-paramiko` para garantir total compatibilidade com o deploy SSH nos ambientes legados.
 * **Transição Ativa para Kubernetes (K3s SaaS)**:
   * No cluster K3s (`137.131.208.19`), cada cliente roda como um Deployment independente em um namespace próprio (`tenant-{slug}`).
-  * O código é empacotado na imagem Docker (ex: `dinovatech:latest` ou tags versionadas `dinovatech:vX.Y.Z`).
+  * O código é empacotado na imagem Docker (ex: `ilunne/php8.3:v1.0.0` ou tags versionadas `ilunne/php8.3:vX.Y.Z`).
   * Atualizações de versão são feitas via **RollingUpdate Zero-Downtime** diretamente pelo painel SaaS (`dinovatech/saas_tenants.php`), enviando um `PATCH` para a API REST do K3s (sem SSH e sem kubectl local).
 
 ---
@@ -72,7 +76,7 @@ Esta skill documenta a arquitetura de contêineres, as diretrizes de empacotamen
 
 ## 5. Localização dos Artefatos de DevOps & IaC
 
-* `devops/Dockerfile`: Especificação de build da imagem PHP 8.2+ para instâncias SaaS.
+* `devops/Dockerfile`: Especificação de build da imagem PHP 8.3+ (multi-arch com suporte a SSH/Python e K3s).
 * `devops/docker-compose.yml`: Compose para orquestração local/VPS com o sidecar WeasyPrint.
 * `devops/k8s/01-caddy-ingress.yaml`: Ingress Caddy (On-Demand TLS e roteamento dinâmico upstream).
 * `devops/k8s/02-weasyprint-shared.yaml`: WeasyPrint compartilhado em `shared-services`.
@@ -81,4 +85,9 @@ Esta skill documenta a arquitetura de contêineres, as diretrizes de empacotamen
 * `database/migrations/20261022_0003_add_env_fields_to_saas_tenants.sql`: Suporte a ENVs e chaves por cliente.
 * `dinovatech/helpers/K3sClientHelper.php`: Cliente REST cURL para API do Kubernetes.
 * `dinovatech/helpers/SaasProvisionerHelper.php`: Orquestrador de ciclo de vida de tenants (Deploy, Scale, Update, Logs).
+* `dinovatech/helpers/StorageMigrationHelper.php`: Auditoria orientada ao banco e upload de arquivos locais para Oracle S3 (Stateless).
+* `dinovatech/helpers/TenantDbProvisionerHelper.php`: Provisionador de schemas isolados no MariaDB e executor de migrações SQL.
+* `dinovatech/saas_db_tool.php`: Ferramenta Web SaaS Master para provisionar novos bancos e auditar/migrar storage.
+* `scripts/provision_tenant_db.php`: Script CLI para provisionamento automatizado de bases de tenants.
+* `scripts/migrar_arquivos_locais_para_s3.php`: Script CLI para auditoria e migração de arquivos locais para Oracle S3.
 

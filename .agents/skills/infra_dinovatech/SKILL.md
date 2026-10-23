@@ -14,7 +14,7 @@ Este documento registra as especificações da infraestrutura remota do Dinovate
 - **Gerenciamento de Containers**:
   - **Docker Engine** com **Portainer** para gestão gráfica.
   - **Servidor Web**: **Caddy** (Reverse Proxy & HTTPS automático).
-  - **Container PHP**: `ilunne/php7.4-mysqli`.
+  - **Container PHP**: Imagem moderna `ilunne/php8.3-x86-base` (substituindo a legada `ilunne/php7.4-mysqli`).
 
 ## 2. Banco de Dados (MariaDB Gerenciado)
 - **Instância**: Instância separada MariaDB (Free Tier na Oracle Cloud).
@@ -26,6 +26,10 @@ Este documento registra as especificações da infraestrutura remota do Dinovate
 ## 3. Armazenamento de Arquivos e Uploads (Oracle Object Storage / S3)
 - **Mecanismo**: Oracle Object Storage via **Pre-Authenticated Request (PAR) / URL Pré-configurada** com validade estendida.
 - **Upload**: Realizado via HTTP `PUT` com cURL direto para o endpoint preauth.
+- **Arquitetura Stateless dos Pods K3s & Migração Orientada ao Banco**:
+  - Os pods de clientes no Kubernetes são estritamente *stateless* (sem volumes persistentes para uploads).
+  - Toda a mídia (logos, fotos de pets, fotos de banho, comprovantes de despesas e assinaturas) é enviada diretamente para o OCI.
+  - Para migrar arquivos locais legados sem inflar o bucket com lixo acumulado no disco, a ferramenta `scripts/migrar_arquivos_locais_para_s3.php` e a interface `dinovatech/saas_db_tool.php` **varrem primeiro o banco de dados** (`NOT LIKE 'http%'`) e sobem apenas o que está em uso efetivo, ignorando arquivos órfãos em disco.
 - **Limitação Conhecida**:
   - Por utilizar URL pré-autenticada genérica sem credenciais completas de IAM SDK, **não há API direta para exclusão física de objetos obsoletos** (ex: imagens antigas substituídas).
   - Políticas de retenção ou scripts de expiração devem ser considerados caso o bucket precise de limpeza periódica.
