@@ -519,6 +519,24 @@ DBClose($link);
                                                     class="w-full p-2.5 text-xs font-mono border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white leading-relaxed"><?= htmlspecialchars($saas_tenant['custom_envs'] ?? '') ?></textarea>
                                                 <p class="text-[10px] text-gray-500 mt-0.5">Qualquer chave informada aqui será injetada no container do K3s para customizações avançadas do cliente.</p>
                                             </div>
+
+                                            <!-- Rotinas Agendadas & Automação (CronJobs K3s) -->
+                                            <div class="pt-3 border-t border-purple-200/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-white/70 p-3 rounded-xl border border-purple-100">
+                                                <div>
+                                                    <span class="text-xs font-bold text-purple-900 uppercase tracking-wider flex items-center gap-1">
+                                                        <span class="material-icons text-sm text-amber-600">schedule</span>
+                                                        Rotinas Agendadas & CronJobs K3s
+                                                    </span>
+                                                    <span class="text-[11px] text-gray-500 block mt-0.5">
+                                                        Configure e monitore scripts agendados (ex: faturamento de contratos recorrentes) na Central SaaS Master.
+                                                    </span>
+                                                </div>
+                                                <?php if (!empty($saas_tenant['id_tenant'])): ?>
+                                                    <a href="saas_tenants.php" class="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs transition whitespace-nowrap">
+                                                        <span class="material-icons text-xs">tune</span> Gerenciar na Central SaaS
+                                                    </a>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

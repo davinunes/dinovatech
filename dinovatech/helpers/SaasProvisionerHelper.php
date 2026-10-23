@@ -349,6 +349,11 @@ class SaasProvisionerHelper
         $erro = $depRes['success'] ? 'NULL' : "'" . mysqli_real_escape_string($link, $depRes['error'] ?? 'Erro desconhecido') . "'";
         DBExecute($link, "UPDATE saas_tenants SET status_pod = '$status', ultimo_erro = $erro WHERE id_tenant = '$idSafe'");
 
+        // 6. Sincroniza CronJobs configurados para o tenant no K3s
+        if ($depRes['success']) {
+            self::syncTenantCronJobs($idSafe, $link);
+        }
+
         return [
             'success' => $depRes['success'],
             'message' => $depRes['success'] ? 'Instância provisionada/atualizada com sucesso no K3s (RollingUpdate ativo)!' : 'Falha ao criar Pod: ' . ($depRes['error'] ?? ''),
@@ -463,6 +468,17 @@ class SaasProvisionerHelper
         if ($scaleRes['success']) {
             $newStatus = ($replicas === 0) ? 'SUSPENDED' : 'RUNNING';
             DBExecute($link, "UPDATE saas_tenants SET status_pod = '$newStatus' WHERE id_tenant = '$idSafe'");
+
+            // Suspende ou reativa os CronJobs do tenant no K3s
+            $suspendJobs = ($replicas === 0);
+            $qCrons = "SELECT nome_job FROM saas_tenant_crons WHERE id_tenant = '$idSafe' AND ativo = 1";
+            $resCrons = DBExecute($link, $qCrons);
+            if ($resCrons) {
+                while ($c = mysqli_fetch_assoc($resCrons)) {
+                    $k3s->setCronJobSuspend($t['namespace_k8s'], "cron-{$c['nome_job']}", $suspendJobs);
+                }
+            }
+
             return ['success' => true, 'message' => "Instância " . ($replicas === 0 ? 'suspensa' : 'reativada') . " com sucesso."];
         }
 
@@ -577,4 +593,327 @@ class SaasProvisionerHelper
             'tenants' => $results
         ];
     }
+
+    /**
+     * Retorna a lista de rotinas agendadas (crons) vinculadas ao tenant,
+     * combinando dados do banco de dados com o status ao vivo dos CronJobs no K3s.
+     */
+    public static function getTenantCrons(int $idTenant, $link): array
+    {
+        $idSafe = (int)$idTenant;
+        $qT = "SELECT id_tenant, slug_instancia, namespace_k8s, status_pod FROM saas_tenants WHERE id_tenant = '$idSafe' LIMIT 1";
+        $rT = DBExecute($link, $qT);
+        if (!$rT || mysqli_num_rows($rT) === 0) {
+            return ['success' => false, 'message' => 'Tenant não encontrado.', 'crons' => []];
+        }
+        $tenant = mysqli_fetch_assoc($rT);
+
+        // Consulta K3s para saber quais CronJobs existem no cluster
+        $k3s = new K3sClientHelper();
+        $k8sCronsRes = $k3s->listCronJobs($tenant['namespace_k8s']);
+        $k8sCrons = [];
+        if ($k8sCronsRes['success']) {
+            foreach ($k8sCronsRes['cronjobs'] as $kc) {
+                $k8sCrons[$kc['name']] = $kc;
+            }
+        }
+
+        // Busca registros da tabela relacional
+        $hasTable = false;
+        $chk = DBExecute($link, "SHOW TABLES LIKE 'saas_tenant_crons'");
+        if ($chk && mysqli_num_rows($chk) > 0) {
+            $hasTable = true;
+        }
+
+        $crons = [];
+        if ($hasTable) {
+            $qCrons = "SELECT * FROM saas_tenant_crons WHERE id_tenant = '$idSafe' ORDER BY id_cron ASC";
+            $resCrons = DBExecute($link, $qCrons);
+            if ($resCrons) {
+                while ($c = mysqli_fetch_assoc($resCrons)) {
+                    $jobK8sName = "cron-" . $c['nome_job'];
+                    $k8sInfo = $k8sCrons[$jobK8sName] ?? null;
+
+                    $c['k8s_job_name'] = $jobK8sName;
+                    $c['k8s_exists'] = ($k8sInfo !== null);
+                    $c['k8s_suspend'] = $k8sInfo['suspend'] ?? null;
+                    $c['k8s_last_schedule'] = $k8sInfo['last_schedule_time'] ?? null;
+                    $c['k8s_last_success'] = $k8sInfo['last_successful_time'] ?? null;
+
+                    $crons[] = $c;
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'tenant' => $tenant,
+            'crons' => $crons,
+            'k8s_online' => $k8sCronsRes['success']
+        ];
+    }
+
+    /**
+     * Salva ou atualiza uma rotina agendada (saas_tenant_crons) e sincroniza no K3s
+     */
+    public static function saveTenantCron(int $idTenant, array $data, $link): array
+    {
+        $idSafe = (int)$idTenant;
+        $qT = "SELECT id_tenant, slug_instancia, namespace_k8s, versao_imagem, status_pod FROM saas_tenants WHERE id_tenant = '$idSafe' LIMIT 1";
+        $rT = DBExecute($link, $qT);
+        if (!$rT || mysqli_num_rows($rT) === 0) {
+            return ['success' => false, 'message' => 'Tenant não encontrado.'];
+        }
+
+        $idCron = !empty($data['id_cron']) ? (int)$data['id_cron'] : 0;
+        $nomeJob = self::slugify($data['nome_job'] ?? 'job-' . time());
+        $descricao = mysqli_real_escape_string($link, trim($data['descricao'] ?? ''));
+        $scriptPath = mysqli_real_escape_string($link, trim($data['script_path'] ?? ''));
+        $argumentos = mysqli_real_escape_string($link, trim($data['argumentos'] ?? ''));
+        $cronExpr = mysqli_real_escape_string($link, trim($data['cron_expression'] ?? '0 6 1 * *'));
+        $ativo = isset($data['ativo']) ? (int)$data['ativo'] : 1;
+
+        if (empty($nomeJob)) {
+            return ['success' => false, 'message' => 'O identificador (nome) do job é obrigatório.'];
+        }
+        if (empty($scriptPath)) {
+            return ['success' => false, 'message' => 'O caminho do script PHP é obrigatório.'];
+        }
+        if (empty($cronExpr)) {
+            $cronExpr = '0 6 1 * *';
+        }
+
+        if ($idCron > 0) {
+            $q = "UPDATE saas_tenant_crons SET 
+                    nome_job = '$nomeJob',
+                    descricao = '$descricao',
+                    script_path = '$scriptPath',
+                    argumentos = '$argumentos',
+                    cron_expression = '$cronExpr',
+                    ativo = '$ativo'
+                  WHERE id_cron = '$idCron' AND id_tenant = '$idSafe'";
+            $res = DBExecute($link, $q);
+            $msg = $res ? 'Rotina agendada atualizada com sucesso.' : 'Erro ao atualizar rotina: ' . mysqli_error($link);
+        } else {
+            $q = "INSERT INTO saas_tenant_crons 
+                    (id_tenant, nome_job, descricao, script_path, argumentos, cron_expression, ativo)
+                  VALUES 
+                    ('$idSafe', '$nomeJob', '$descricao', '$scriptPath', '$argumentos', '$cronExpr', '$ativo')
+                  ON DUPLICATE KEY UPDATE 
+                    descricao = VALUES(descricao),
+                    script_path = VALUES(script_path),
+                    argumentos = VALUES(argumentos),
+                    cron_expression = VALUES(cron_expression),
+                    ativo = VALUES(ativo)";
+            $res = DBExecute($link, $q);
+            $idCron = mysqli_insert_id($link) ?: $idCron;
+            $msg = $res ? 'Rotina agendada cadastrada com sucesso.' : 'Erro ao cadastrar rotina: ' . mysqli_error($link);
+        }
+
+        if ($res) {
+            // Sincroniza imediatamente o CronJob no K3s
+            self::syncTenantCronJobs($idSafe, $link);
+        }
+
+        return [
+            'success' => (bool)$res,
+            'id_cron' => $idCron,
+            'message' => $msg
+        ];
+    }
+
+    /**
+     * Exclui uma rotina agendada do banco e remove o CronJob correspondente no K3s
+     */
+    public static function deleteTenantCron(int $idCron, $link): array
+    {
+        $idSafe = (int)$idCron;
+        $q = "SELECT C.*, T.namespace_k8s 
+              FROM saas_tenant_crons C 
+              JOIN saas_tenants T ON C.id_tenant = T.id_tenant 
+              WHERE C.id_cron = '$idSafe' LIMIT 1";
+        $r = DBExecute($link, $q);
+        if (!$r || mysqli_num_rows($r) === 0) {
+            return ['success' => false, 'message' => 'Rotina agendada não encontrada.'];
+        }
+        $cron = mysqli_fetch_assoc($r);
+
+        // Remove o CronJob no cluster Kubernetes
+        $k3s = new K3sClientHelper();
+        $cronJobName = "cron-" . $cron['nome_job'];
+        $k3s->deleteCronJob($cron['namespace_k8s'], $cronJobName);
+
+        // Remove do banco
+        $del = DBExecute($link, "DELETE FROM saas_tenant_crons WHERE id_cron = '$idSafe'");
+
+        return [
+            'success' => (bool)$del,
+            'message' => $del ? 'Rotina agendada e CronJob no cluster removidos com sucesso.' : 'Erro ao excluir do banco.'
+        ];
+    }
+
+    /**
+     * Alterna o status ativo/pausado de uma rotina agendada
+     */
+    public static function toggleTenantCron(int $idCron, int $ativo, $link): array
+    {
+        $idSafe = (int)$idCron;
+        $ativoSafe = $ativo ? 1 : 0;
+        $q = "SELECT C.*, T.namespace_k8s 
+              FROM saas_tenant_crons C 
+              JOIN saas_tenants T ON C.id_tenant = T.id_tenant 
+              WHERE C.id_cron = '$idSafe' LIMIT 1";
+        $r = DBExecute($link, $q);
+        if (!$r || mysqli_num_rows($r) === 0) {
+            return ['success' => false, 'message' => 'Rotina não encontrada.'];
+        }
+        $cron = mysqli_fetch_assoc($r);
+
+        DBExecute($link, "UPDATE saas_tenant_crons SET ativo = '$ativoSafe' WHERE id_cron = '$idSafe'");
+
+        // Aplica o suspend no K3s
+        $k3s = new K3sClientHelper();
+        $cronJobName = "cron-" . $cron['nome_job'];
+        if ($ativoSafe === 1) {
+            // Re-sincroniza caso não exista no K3s ou tira o suspend
+            self::syncTenantCronJobs((int)$cron['id_tenant'], $link);
+        } else {
+            $k3s->setCronJobSuspend($cron['namespace_k8s'], $cronJobName, true);
+        }
+
+        return [
+            'success' => true,
+            'message' => $ativoSafe ? 'Rotina agendada reativada com sucesso.' : 'Rotina agendada pausada com sucesso.'
+        ];
+    }
+
+    /**
+     * Sincroniza todos os CronJobs ativos de um tenant no Kubernetes K3s
+     */
+    public static function syncTenantCronJobs(int $idTenant, $link): array
+    {
+        $idSafe = (int)$idTenant;
+        $qT = "SELECT id_tenant, slug_instancia, namespace_k8s, versao_imagem, status_pod FROM saas_tenants WHERE id_tenant = '$idSafe' LIMIT 1";
+        $rT = DBExecute($link, $qT);
+        if (!$rT || mysqli_num_rows($rT) === 0) {
+            return ['success' => false, 'message' => 'Tenant não encontrado.'];
+        }
+        $t = mysqli_fetch_assoc($rT);
+
+        $chk = DBExecute($link, "SHOW TABLES LIKE 'saas_tenant_crons'");
+        if (!$chk || mysqli_num_rows($chk) === 0) {
+            return ['success' => false, 'message' => 'Tabela saas_tenant_crons ainda não criada.'];
+        }
+
+        $k3s = new K3sClientHelper();
+        $namespace = $t['namespace_k8s'];
+        $isTenantSuspended = ($t['status_pod'] === 'SUSPENDED');
+
+        $qCrons = "SELECT * FROM saas_tenant_crons WHERE id_tenant = '$idSafe'";
+        $resCrons = DBExecute($link, $qCrons);
+
+        $synced = 0;
+        $errors = [];
+
+        if ($resCrons) {
+            while ($c = mysqli_fetch_assoc($resCrons)) {
+                $cronJobName = "cron-" . $c['nome_job'];
+                $isAtivo = ((int)$c['ativo'] === 1);
+
+                // Se inativo, pausa no cluster
+                if (!$isAtivo) {
+                    $k3s->setCronJobSuspend($namespace, $cronJobName, true);
+                    continue;
+                }
+
+                $scriptPath = ltrim($c['script_path'], '/');
+                $cmd = ['php', "/var/www/html/{$scriptPath}"];
+                if (!empty($c['argumentos'])) {
+                    $argsList = preg_split('/\s+/', trim($c['argumentos']));
+                    foreach ($argsList as $arg) {
+                        if (!empty($arg)) $cmd[] = $arg;
+                    }
+                }
+
+                $cronPayload = [
+                    'apiVersion' => 'batch/v1',
+                    'kind' => 'CronJob',
+                    'metadata' => [
+                        'name' => $cronJobName,
+                        'namespace' => $namespace,
+                        'labels' => [
+                            'app' => "app-{$t['slug_instancia']}",
+                            'tenant' => $t['slug_instancia'],
+                            'job' => $c['nome_job']
+                        ]
+                    ],
+                    'spec' => [
+                        'schedule' => $c['cron_expression'],
+                        'concurrencyPolicy' => 'Forbid',
+                        'suspend' => ($isTenantSuspended || !$isAtivo),
+                        'successfulJobsHistoryLimit' => 3,
+                        'failedJobsHistoryLimit' => 3,
+                        'jobTemplate' => [
+                            'spec' => [
+                                'template' => [
+                                    'metadata' => [
+                                        'labels' => [
+                                            'app' => "app-{$t['slug_instancia']}",
+                                            'tenant' => $t['slug_instancia'],
+                                            'job' => $c['nome_job']
+                                        ]
+                                    ],
+                                    'spec' => [
+                                        'restartPolicy' => 'OnFailure',
+                                        'containers' => [
+                                            [
+                                                'name' => 'cron-worker',
+                                                'image' => $t['versao_imagem'],
+                                                'imagePullPolicy' => 'IfNotPresent',
+                                                'command' => $cmd,
+                                                'envFrom' => [
+                                                    ['secretRef' => ['name' => 'tenant-env']]
+                                                ],
+                                                'resources' => [
+                                                    'requests' => [
+                                                        'cpu' => '30m',
+                                                        'memory' => '48Mi'
+                                                    ],
+                                                    'limits' => [
+                                                        'cpu' => '200m',
+                                                        'memory' => '128Mi'
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ];
+
+                $rK8s = $k3s->createOrUpdateCronJob($namespace, $cronJobName, $cronPayload);
+                if ($rK8s['success']) {
+                    $synced++;
+                    DBExecute($link, "UPDATE saas_tenant_crons SET ultimo_status = 'SYNCED' WHERE id_cron = '{$c['id_cron']}'");
+                } else {
+                    $err = $rK8s['error'] ?? 'Falha ao sincronizar CronJob';
+                    $errors[] = "Job {$c['nome_job']}: $err";
+                    $errSafe = mysqli_real_escape_string($link, $err);
+                    DBExecute($link, "UPDATE saas_tenant_crons SET ultimo_status = 'ERROR', ultimo_log = '$errSafe' WHERE id_cron = '{$c['id_cron']}'");
+                }
+            }
+        }
+
+        return [
+            'success' => count($errors) === 0,
+            'synced' => $synced,
+            'errors' => $errors,
+            'message' => count($errors) === 0 
+                ? "Sincronizados {$synced} CronJob(s) com sucesso no K3s!" 
+                : "Sincronizados {$synced} job(s), mas com erros: " . implode('; ', $errors)
+        ];
+    }
 }
+

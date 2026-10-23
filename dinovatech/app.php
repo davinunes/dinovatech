@@ -2588,6 +2588,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $response['data'] = $syncRes;
             break;
 
+        case 'saas_get_tenant_crons':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            if ($id_tenant <= 0) {
+                $response['message'] = "ID do tenant inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $response = SaasProvisionerHelper::getTenantCrons($id_tenant, $link);
+            }
+            break;
+
+        case 'saas_save_tenant_cron':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            if ($id_tenant <= 0) {
+                $response['message'] = "ID do tenant inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $cronData = [
+                    'id_cron' => (int)($_POST['id_cron'] ?? 0),
+                    'nome_job' => $_POST['nome_job'] ?? '',
+                    'descricao' => $_POST['descricao'] ?? '',
+                    'script_path' => $_POST['script_path'] ?? '',
+                    'argumentos' => $_POST['argumentos'] ?? '',
+                    'cron_expression' => $_POST['cron_expression'] ?? '0 6 1 * *',
+                    'ativo' => isset($_POST['ativo']) ? (int)$_POST['ativo'] : 1
+                ];
+                $response = SaasProvisionerHelper::saveTenantCron($id_tenant, $cronData, $link);
+            }
+            break;
+
+        case 'saas_delete_tenant_cron':
+            $id_cron = (int)($_POST['id_cron'] ?? 0);
+            if ($id_cron <= 0) {
+                $response['message'] = "ID da rotina inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $response = SaasProvisionerHelper::deleteTenantCron($id_cron, $link);
+            }
+            break;
+
+        case 'saas_toggle_tenant_cron':
+            $id_cron = (int)($_POST['id_cron'] ?? 0);
+            $ativo = (int)($_POST['ativo'] ?? 0);
+            if ($id_cron <= 0) {
+                $response['message'] = "ID da rotina inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $response = SaasProvisionerHelper::toggleTenantCron($id_cron, $ativo, $link);
+            }
+            break;
+
+        case 'saas_sync_tenant_crons':
+            $id_tenant = (int)($_POST['id_tenant'] ?? 0);
+            if ($id_tenant <= 0) {
+                $response['message'] = "ID do tenant inválido.";
+            } else {
+                require_once __DIR__ . '/helpers/SaasProvisionerHelper.php';
+                $response = SaasProvisionerHelper::syncTenantCronJobs($id_tenant, $link);
+            }
+            break;
+
         case 'incorporar_recorrencias_na_fatura': // Incorporar recorrências em uma fatura
             $id_fatura = $_POST['id_fatura'] ?? '';
             $id_cliente = $_POST['id_cliente'] ?? '';

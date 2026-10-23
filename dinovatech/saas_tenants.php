@@ -363,6 +363,11 @@ $initialNodes = $k3s->getNodes();
                                                     <span class="material-icons text-base">terminal</span>
                                                 </button>
 
+                                                <!-- Rotinas Agendadas & CronJobs K3s -->
+                                                <button type="button" onclick="abrirModalCrons(<?= $t['id_tenant'] ?>, '<?= htmlspecialchars(addslashes($t['nome_cliente'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($t['namespace_k8s'] ?? '')) ?>')" class="p-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 rounded-lg transition" title="Rotinas Agendadas & CronJobs K3s">
+                                                    <span class="material-icons text-base">schedule</span>
+                                                </button>
+
                                                 <!-- Editar Contrato -->
                                                 <a href="contrato_form.php?id=<?= $t['id_recorrencia'] ?>" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="Editar Contrato">
                                                     <span class="material-icons text-base">settings</span>
@@ -628,7 +633,159 @@ $initialNodes = $k3s->getNodes();
         </div>
     </div>
 
+    <!-- MODAL DE GESTÃO DE ROTINAS AGENDADAS (CRONJOBS K3S) -->
+    <div id="modalCrons" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+            <!-- Header Modal -->
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-flex items-center justify-center p-2 bg-amber-500/20 text-amber-400 rounded-lg">
+                        <span class="material-icons text-xl">schedule</span>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-sm text-white flex items-center gap-2">
+                            <span>Rotinas Agendadas & CronJobs K3s</span>
+                            <span id="modalCronsClienteBadge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-700 text-slate-200">-</span>
+                        </h3>
+                        <p class="text-xs text-slate-400 font-mono mt-0.5" id="modalCronsSub">Namespace: -</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="sincronizarCronsTenant()" class="text-xs text-amber-300 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded bg-amber-950/60 border border-amber-800/60 hover:bg-amber-900 transition font-mono" title="Reconciliar todos os CronJobs no cluster K3s">
+                        <span class="material-icons text-xs" id="iconSyncCrons">sync</span> Reconciliar K3s
+                    </button>
+                    <button type="button" onclick="fecharModalCrons()" class="text-slate-400 hover:text-white">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Corpo Modal -->
+            <div class="p-6 overflow-y-auto space-y-6 flex-1 text-slate-700">
+                <input type="hidden" id="crons_id_tenant" value="">
+
+                <!-- Presets Rápidos -->
+                <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <div class="font-bold text-amber-950 text-xs flex items-center gap-1.5">
+                            <span class="material-icons text-amber-600 text-sm">auto_fix_high</span>
+                            <span>Preset Padrão de Faturamento</span>
+                        </div>
+                        <p class="text-[11px] text-amber-800 mt-0.5">
+                            Preenche os campos abaixo com a rotina de faturamento de contratos recorrentes e agendamento de débito Pix Automático.
+                        </p>
+                    </div>
+                    <button type="button" onclick="aplicarPresetFaturas()" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold shadow-xs transition whitespace-nowrap">
+                        <span class="material-icons text-xs">add_task</span> Carregar Preset de Faturas
+                    </button>
+                </div>
+
+                <!-- Formulário de Cadastro / Edição -->
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-3 flex items-center gap-1.5" id="formCronTitulo">
+                        <span class="material-icons text-sm text-purple-600">post_add</span>
+                        <span>Cadastrar / Editar Rotina Agendada</span>
+                    </h4>
+                    <form id="formCronTenant" onsubmit="salvarCronTenant(event)" class="space-y-3">
+                        <input type="hidden" id="cron_id_cron" value="0">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div class="md:col-span-4">
+                                <label for="cron_nome_job" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Identificador / Nome do Job <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="text" id="cron_nome_job" required placeholder="ex: faturas-recorrentes" class="w-full p-2 text-xs font-mono border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                <span class="text-[10px] text-slate-400">Nome do CronJob no K3s: <code>cron-{nome}</code></span>
+                            </div>
+                            <div class="md:col-span-8">
+                                <label for="cron_descricao" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Descrição Amigável
+                                </label>
+                                <input type="text" id="cron_descricao" placeholder="ex: Geração Mensal de Faturas e Pix Automático" class="w-full p-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div class="md:col-span-8">
+                                <label for="cron_script_path" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Caminho do Script PHP (no container) <span class="text-rose-500">*</span>
+                                </label>
+                                <div class="flex items-center">
+                                    <span class="inline-flex items-center px-2 py-2 bg-slate-200 border border-r-0 border-slate-300 rounded-l-lg text-[11px] font-mono text-slate-600">/var/www/html/</span>
+                                    <input type="text" id="cron_script_path" required placeholder="dinovatech/cron/gerar_faturas_recorrencias.php" class="w-full p-2 text-xs font-mono border border-slate-300 rounded-r-lg focus:ring-2 focus:ring-purple-500">
+                                </div>
+                            </div>
+                            <div class="md:col-span-4">
+                                <label for="cron_expression" class="block text-xs font-bold text-slate-700 mb-1">
+                                    Periodicidade (Expressão Cron) <span class="text-rose-500">*</span>
+                                </label>
+                                <input type="text" id="cron_expression" required value="0 6 1 * *" placeholder="0 6 1 * *" class="w-full p-2 text-xs font-mono font-bold border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                            </div>
+                        </div>
+
+                        <!-- Atalhos de Periodicidade -->
+                        <div class="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+                            <span class="text-slate-400 font-semibold">Atalhos:</span>
+                            <button type="button" onclick="setCronExpr('0 6 1 * *')" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-mono transition">Mensal (Dia 1 às 06h)</button>
+                            <button type="button" onclick="setCronExpr('0 6 * * *')" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-mono transition">Diário (06:00)</button>
+                            <button type="button" onclick="setCronExpr('0 20 * * *')" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-mono transition">Diário (20:00)</button>
+                            <button type="button" onclick="setCronExpr('0 * * * *')" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-mono transition">A cada 1 hora</button>
+                            <button type="button" onclick="setCronExpr('*/15 * * * *')" class="px-2 py-0.5 bg-slate-200 hover:bg-slate-300 rounded text-slate-700 font-mono transition">A cada 15 min</button>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-200">
+                            <button type="button" onclick="limparFormCron()" class="text-xs text-slate-500 hover:text-slate-800 font-medium">Limpar Campos</button>
+                            <button type="submit" id="btnSalvarCron" class="inline-flex items-center gap-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold shadow-xs transition">
+                                <span class="material-icons text-xs">save</span> Salvar Rotina & Sincronizar K3s
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tabela de Rotinas Cadastradas -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                            <span class="material-icons text-sm text-purple-600">format_list_bulleted</span>
+                            <span>Rotinas Cadastradas para este Tenant</span>
+                        </h4>
+                        <span id="cronsCountBadge" class="text-[11px] font-semibold bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full">0 rotinas</span>
+                    </div>
+
+                    <div class="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-slate-100 text-slate-600 uppercase">
+                                <tr>
+                                    <th class="py-2.5 px-3">Job / Descrição</th>
+                                    <th class="py-2.5 px-3">Script Executado</th>
+                                    <th class="py-2.5 px-3">Periodicidade</th>
+                                    <th class="py-2.5 px-3">Status K3s</th>
+                                    <th class="py-2.5 px-3 text-center">Ativo</th>
+                                    <th class="py-2.5 px-3 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaCronsCorpo" class="divide-y divide-slate-100">
+                                <tr>
+                                    <td colspan="6" class="py-6 text-center text-slate-400">Carregando rotinas agendadas...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Modal -->
+            <div class="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                <span class="flex items-center gap-1">
+                    <span class="material-icons text-xs text-amber-500">schedule</span>
+                    <span>CronJobs rodam em containers isolados no namespace do cliente com injeção do <code>tenant-env</code></span>
+                </span>
+                <button type="button" onclick="fecharModalCrons()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-lg transition">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+
         let currentLogTenantId = null;
         let currentRolloutTenantId = null;
 
@@ -955,10 +1112,223 @@ $initialNodes = $k3s->getNodes();
             }, 'json');
         }
 
+        // =========================================================================
+        // GESTÃO DE ROTINAS AGENDADAS & CRONJOBS K3S (MULTI-TENANT)
+        // =========================================================================
+        let currentCronsTenantId = null;
+
+        function abrirModalCrons(idTenant, cliente, namespace) {
+            currentCronsTenantId = idTenant;
+            $('#crons_id_tenant').val(idTenant);
+            $('#modalCronsClienteBadge').text(cliente);
+            $('#modalCronsSub').text('Namespace: ' + namespace);
+            limparFormCron();
+            $('#modalCrons').removeClass('hidden');
+            carregarCronsTenant(idTenant);
+        }
+
+        function fecharModalCrons() {
+            $('#modalCrons').addClass('hidden');
+            currentCronsTenantId = null;
+        }
+
+        function setCronExpr(expr) {
+            $('#cron_expression').val(expr);
+        }
+
+        function limparFormCron() {
+            $('#cron_id_cron').val(0);
+            $('#cron_nome_job').val('').prop('readonly', false);
+            $('#cron_descricao').val('');
+            $('#cron_script_path').val('');
+            $('#cron_expression').val('0 6 1 * *');
+            $('#formCronTitulo').html('<span class="material-icons text-sm text-purple-600">post_add</span><span>Cadastrar Nova Rotina Agendada</span>');
+            $('#btnSalvarCron').html('<span class="material-icons text-xs">save</span> Salvar Rotina & Sincronizar K3s');
+        }
+
+        function aplicarPresetFaturas() {
+            $('#cron_id_cron').val(0);
+            $('#cron_nome_job').val('faturas-recorrentes');
+            $('#cron_descricao').val('Geração Mensal de Faturas e Débito Pix Automático');
+            $('#cron_script_path').val('dinovatech/cron/gerar_faturas_recorrencias.php');
+            $('#cron_expression').val('0 6 1 * *');
+            $('#cron_nome_job').focus();
+        }
+
+        function carregarCronsTenant(idTenant) {
+            const tbody = $('#listaCronsCorpo');
+            tbody.html('<tr><td colspan="6" class="py-6 text-center text-slate-400"><span class="material-icons text-base animate-spin mr-1">sync</span> Consultando banco de dados e cluster K3s...</td></tr>');
+
+            $.post('app.php', { action: 'saas_get_tenant_crons', id_tenant: idTenant }, function(res) {
+                if (res.success) {
+                    const crons = res.crons || [];
+                    $('#cronsCountBadge').text(crons.length + ' rotina(s)');
+
+                    if (crons.length === 0) {
+                        tbody.html('<tr><td colspan="6" class="py-6 text-center text-slate-400">Nenhuma rotina agendada cadastrada para este tenant. Clique em "Carregar Preset de Faturas" acima para iniciar.</td></tr>');
+                        return;
+                    }
+
+                    tbody.empty();
+                    crons.forEach(function(c) {
+                        const ativo = (parseInt(c.ativo) === 1);
+                        const k8sExists = c.k8s_exists;
+                        const k8sSuspend = c.k8s_suspend;
+
+                        // Badge K3s
+                        let k8sBadge = '';
+                        if (k8sExists) {
+                            if (k8sSuspend) {
+                                k8sBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pausado no K3s</span>';
+                            } else {
+                                k8sBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Ativo no K3s</span>';
+                            }
+                        } else {
+                            k8sBadge = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200">Não criado no K3s</span>';
+                        }
+
+                        // Formatação cron legível
+                        let exprLegivel = c.cron_expression;
+                        if (c.cron_expression === '0 6 1 * *') exprLegivel = 'Todo dia 1º às 06h';
+                        else if (c.cron_expression === '0 6 * * *') exprLegivel = 'Diário às 06h';
+                        else if (c.cron_expression === '0 20 * * *') exprLegivel = 'Diário às 20h';
+
+                        const tr = `
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="py-2.5 px-3">
+                                    <div class="font-bold text-slate-800 font-mono text-xs">cron-${c.nome_job}</div>
+                                    <div class="text-[11px] text-slate-500">${c.descricao || 'Sem descrição'}</div>
+                                </td>
+                                <td class="py-2.5 px-3 font-mono text-[11px] text-purple-700 max-w-[220px] truncate" title="${c.script_path}">
+                                    ${c.script_path}
+                                </td>
+                                <td class="py-2.5 px-3">
+                                    <span class="font-mono font-bold text-slate-800">${c.cron_expression}</span>
+                                    <div class="text-[10px] text-slate-400">${exprLegivel}</div>
+                                </td>
+                                <td class="py-2.5 px-3">
+                                    ${k8sBadge}
+                                    ${c.k8s_last_schedule ? `<div class="text-[10px] text-slate-400 mt-0.5 font-mono">Último: ${c.k8s_last_schedule.substring(0, 16)}</div>` : ''}
+                                </td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <button type="button" onclick="alternarStatusCron(${c.id_cron}, ${ativo ? 0 : 1})" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold ${ativo ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'} transition">
+                                        ${ativo ? 'SIM' : 'NÃO'}
+                                    </button>
+                                </td>
+                                <td class="py-2.5 px-3 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button type="button" onclick='editarCron(${JSON.stringify(c)})' class="p-1 text-indigo-600 hover:bg-indigo-50 rounded" title="Editar">
+                                            <span class="material-icons text-sm">edit</span>
+                                        </button>
+                                        <button type="button" onclick="excluirCronTenant(${c.id_cron})" class="p-1 text-rose-600 hover:bg-rose-50 rounded" title="Excluir">
+                                            <span class="material-icons text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(tr);
+                    });
+                } else {
+                    tbody.html('<tr><td colspan="6" class="py-4 text-center text-rose-500">Erro ao carregar rotinas: ' + res.message + '</td></tr>');
+                }
+            }, 'json').fail(function() {
+                tbody.html('<tr><td colspan="6" class="py-4 text-center text-rose-500">Falha de conexão com o backend.</td></tr>');
+            });
+        }
+
+        function editarCron(c) {
+            $('#cron_id_cron').val(c.id_cron);
+            $('#cron_nome_job').val(c.nome_job).prop('readonly', true);
+            $('#cron_descricao').val(c.descricao || '');
+            $('#cron_script_path').val(c.script_path);
+            $('#cron_expression').val(c.cron_expression);
+            $('#formCronTitulo').html('<span class="material-icons text-sm text-indigo-600">edit</span><span>Editando Rotina: ' + c.nome_job + '</span>');
+            $('#btnSalvarCron').html('<span class="material-icons text-xs">save</span> Atualizar Rotina');
+            $('#cron_descricao').focus();
+        }
+
+        function salvarCronTenant(e) {
+            e.preventDefault();
+            if (!currentCronsTenantId) return;
+
+            const btn = $('#btnSalvarCron');
+            const orig = btn.html();
+            btn.prop('disabled', true).html('<span class="material-icons text-xs animate-spin mr-1">sync</span> Salvando no K3s...');
+
+            const payload = {
+                action: 'saas_save_tenant_cron',
+                id_tenant: currentCronsTenantId,
+                id_cron: $('#cron_id_cron').val(),
+                nome_job: $('#cron_nome_job').val().trim(),
+                descricao: $('#cron_descricao').val().trim(),
+                script_path: $('#cron_script_path').val().trim(),
+                cron_expression: $('#cron_expression').val().trim(),
+                ativo: 1
+            };
+
+            $.post('app.php', payload, function(res) {
+                btn.prop('disabled', false).html(orig);
+                if (res.success) {
+                    alert(res.message);
+                    limparFormCron();
+                    carregarCronsTenant(currentCronsTenantId);
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json').fail(function() {
+                btn.prop('disabled', false).html(orig);
+                alert('Falha de conexão ao salvar rotina.');
+            });
+        }
+
+        function alternarStatusCron(idCron, novoStatus) {
+            $.post('app.php', { action: 'saas_toggle_tenant_cron', id_cron: idCron, ativo: novoStatus }, function(res) {
+                if (res.success) {
+                    carregarCronsTenant(currentCronsTenantId);
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json').fail(function() {
+                alert('Falha ao alternar status da rotina.');
+            });
+        }
+
+        function excluirCronTenant(idCron) {
+            if (!confirm('Deseja realmente excluir esta rotina agendada? O CronJob correspondente será removido do K3s.')) return;
+
+            $.post('app.php', { action: 'saas_delete_tenant_cron', id_cron: idCron }, function(res) {
+                if (res.success) {
+                    alert(res.message);
+                    carregarCronsTenant(currentCronsTenantId);
+                } else {
+                    alert('Erro: ' + res.message);
+                }
+            }, 'json').fail(function() {
+                alert('Falha ao excluir rotina.');
+            });
+        }
+
+        function sincronizarCronsTenant() {
+            if (!currentCronsTenantId) return;
+            const icon = $('#iconSyncCrons');
+            icon.addClass('animate-spin');
+
+            $.post('app.php', { action: 'saas_sync_tenant_crons', id_tenant: currentCronsTenantId }, function(res) {
+                icon.removeClass('animate-spin');
+                alert(res.message);
+                carregarCronsTenant(currentCronsTenantId);
+            }, 'json').fail(function() {
+                icon.removeClass('animate-spin');
+                alert('Falha de comunicação ao sincronizar crons no cluster.');
+            });
+        }
+
         $(document).ready(function() {
             sincronizarStatusAoVivo();
             carregarPodsCluster();
         });
     </script>
+
 </body>
 </html>

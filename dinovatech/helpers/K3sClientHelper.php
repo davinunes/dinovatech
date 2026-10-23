@@ -380,4 +380,91 @@ class K3sClientHelper
         $path = "/api/v1/namespaces/{$namespace}/pods/{$podName}/log?tailLines={$lines}";
         return $this->request('GET', $path);
     }
+
+    /**
+     * Lista todos os CronJobs (batch/v1) em um namespace
+     */
+    public function listCronJobs(string $namespace): array
+    {
+        $path = "/apis/batch/v1/namespaces/{$namespace}/cronjobs";
+        $res = $this->request('GET', $path);
+        if (!$res['success']) {
+            return ['success' => false, 'cronjobs' => [], 'error' => $res['error']];
+        }
+
+        $items = $res['data']['items'] ?? [];
+        $cronjobs = [];
+
+        foreach ($items as $item) {
+            $metadata = $item['metadata'] ?? [];
+            $spec = $item['spec'] ?? [];
+            $status = $item['status'] ?? [];
+
+            $cronjobs[] = [
+                'name' => $metadata['name'] ?? '',
+                'namespace' => $metadata['namespace'] ?? $namespace,
+                'schedule' => $spec['schedule'] ?? '',
+                'suspend' => (bool)($spec['suspend'] ?? false),
+                'last_schedule_time' => $status['lastScheduleTime'] ?? null,
+                'last_successful_time' => $status['lastSuccessfulTime'] ?? null,
+                'active_jobs' => count($status['active'] ?? [])
+            ];
+        }
+
+        return [
+            'success' => true,
+            'cronjobs' => $cronjobs
+        ];
+    }
+
+    /**
+     * Obtém detalhes de um CronJob específico
+     */
+    public function getCronJob(string $namespace, string $cronJobName): array
+    {
+        $path = "/apis/batch/v1/namespaces/{$namespace}/cronjobs/{$cronJobName}";
+        return $this->request('GET', $path);
+    }
+
+    /**
+     * Cria ou atualiza um CronJob (batch/v1) no namespace
+     */
+    public function createOrUpdateCronJob(string $namespace, string $cronJobName, array $payload): array
+    {
+        $createPath = "/apis/batch/v1/namespaces/{$namespace}/cronjobs";
+        $res = $this->request('POST', $createPath, $payload);
+
+        // Se já existir (409 Conflict), atualiza via PUT ou PATCH
+        if (!$res['success'] && ($res['http_code'] ?? 0) === 409) {
+            $updatePath = "/apis/batch/v1/namespaces/{$namespace}/cronjobs/{$cronJobName}";
+            $res = $this->request('PUT', $updatePath, $payload);
+        }
+
+        return $res;
+    }
+
+    /**
+     * Remove um CronJob do namespace
+     */
+    public function deleteCronJob(string $namespace, string $cronJobName): array
+    {
+        $path = "/apis/batch/v1/namespaces/{$namespace}/cronjobs/{$cronJobName}";
+        return $this->request('DELETE', $path);
+    }
+
+    /**
+     * Pausa (suspend = true) ou reativa (suspend = false) um CronJob
+     */
+    public function setCronJobSuspend(string $namespace, string $cronJobName, bool $suspend): array
+    {
+        $path = "/apis/batch/v1/namespaces/{$namespace}/cronjobs/{$cronJobName}";
+        $payload = [
+            'spec' => [
+                'suspend' => $suspend
+            ]
+        ];
+
+        return $this->request('PATCH', $path, $payload, 'application/merge-patch+json');
+    }
 }
+
