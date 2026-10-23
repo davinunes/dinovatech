@@ -67,13 +67,15 @@ if ($link) {
     }
 
     if ($hasTable) {
-        $q = "SELECT T.*, C.nome AS nome_cliente, C.telefone, R.valor_sugerido_recorrencia, R.tipo_periodo, S.nome_servico 
+        $q = "SELECT T.*, C.nome AS nome_cliente, C.telefone, R.valor_sugerido_recorrencia, R.tipo_periodo, R.tipo_cobranca, R.motivo_cortesia, S.nome_servico 
               FROM saas_tenants T
               LEFT JOIN Clientes C ON T.id_cliente = C.id_cliente
               LEFT JOIN Recorrencias R ON T.id_recorrencia = R.id_recorrencia
               LEFT JOIN Servicos S ON R.id_servico = S.id_servico
               ORDER BY T.id_tenant DESC";
         $res = DBExecute($link, $q);
+        $countCortesiasSaas = 0;
+        $countTestesSaas = 0;
         if ($res) {
             while ($row = mysqli_fetch_assoc($res)) {
                 $tenants[] = $row;
@@ -86,8 +88,15 @@ if ($link) {
                     $countPending++;
                 }
 
-                if (!empty($row['valor_sugerido_recorrencia'])) {
-                    $totalMrr += (float)$row['valor_sugerido_recorrencia'];
+                $tipoCob = $row['tipo_cobranca'] ?? 'COMERCIAL';
+                if ($tipoCob === 'CORTESIA') {
+                    $countCortesiasSaas++;
+                } elseif ($tipoCob === 'TESTE') {
+                    $countTestesSaas++;
+                } else {
+                    if (!empty($row['valor_sugerido_recorrencia'])) {
+                        $totalMrr += (float)$row['valor_sugerido_recorrencia'];
+                    }
                 }
             }
         }
@@ -190,7 +199,7 @@ $initialNodes = $k3s->getNodes();
                     <div>
                         <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Receita Recorrente (MRR)</span>
                         <div class="text-2xl font-black text-purple-700 mt-1">R$ <?= number_format($totalMrr, 2, ',', '.') ?></div>
-                        <span class="text-[11px] text-purple-600 font-medium">Faturamento mensal</span>
+                        <span class="text-[11px] text-purple-600 font-medium">Faturamento mensal<?= ($countCortesiasSaas + $countTestesSaas > 0) ? " • +{$countCortesiasSaas} cortesia / +{$countTestesSaas} teste" : "" ?></span>
                     </div>
                     <div class="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-100">
                         <span class="material-icons text-2xl">payments</span>
@@ -254,10 +263,21 @@ $initialNodes = $k3s->getNodes();
                                                     <div class="font-bold text-slate-800 leading-tight">
                                                         <?= htmlspecialchars($t['nome_cliente'] ?? 'Cliente Desconhecido') ?>
                                                     </div>
-                                                    <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+                                                    <?php $tenantTipoCob = $t['tipo_cobranca'] ?? 'COMERCIAL'; ?>
+                                                    <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 flex-wrap">
                                                         <span><?= htmlspecialchars($t['nome_servico'] ?? 'SaaS') ?></span>
                                                         <span>•</span>
-                                                        <span class="font-semibold text-purple-700">R$ <?= number_format($t['valor_sugerido_recorrencia'] ?? 0, 2, ',', '.') ?></span>
+                                                        <?php if ($tenantTipoCob === 'CORTESIA'): ?>
+                                                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200" title="<?= htmlspecialchars($t['motivo_cortesia'] ?: 'Cortesia / Isento de cobrança') ?>">
+                                                                <span class="material-icons text-[11px]">card_giftcard</span> Cortesia
+                                                            </span>
+                                                        <?php elseif ($tenantTipoCob === 'TESTE'): ?>
+                                                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200" title="<?= htmlspecialchars($t['motivo_cortesia'] ?: 'Degustação / Homologação') ?>">
+                                                                <span class="material-icons text-[11px]">science</span> Teste
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="font-semibold text-purple-700">R$ <?= number_format($t['valor_sugerido_recorrencia'] ?? 0, 2, ',', '.') ?></span>
+                                                        <?php endif; ?>
                                                     </div>
                                                 </div>
                                             </div>

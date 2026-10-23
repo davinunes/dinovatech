@@ -45,7 +45,8 @@ class CronRecorrenciasHelper
 
         $dataEmissaoHoje = date('Y-m-d');
 
-        // Busca todas as recorrências ativas que ainda não possuem flag preenchida para esta competência
+        // Busca todas as recorrências comerciais ativas que ainda não possuem flag preenchida para esta competência
+        // Contratos classificados como CORTESIA ou TESTE são expressamente isentos de faturamento automático
         $query = "SELECT R.*, S.nome_servico, C.nome as nome_cliente 
                   FROM Recorrencias R
                   JOIN Servicos S ON R.id_servico = S.id_servico
@@ -53,6 +54,7 @@ class CronRecorrenciasHelper
                   WHERE R.data_inicio_cobranca <= '$ultimoDiaCompetencia'
                     AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= '$primeiroDiaCompetencia')
                     AND (R.ultima_fatura_gerada_mes_ano IS NULL OR R.ultima_fatura_gerada_mes_ano != '$mesAnoSafe')
+                    AND (R.tipo_cobranca = 'COMERCIAL' OR R.tipo_cobranca IS NULL)
                   ORDER BY R.id_cliente ASC, R.id_recorrencia ASC";
 
         $result = DBExecute($link, $query);

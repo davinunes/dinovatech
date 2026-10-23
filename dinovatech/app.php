@@ -2308,8 +2308,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $intervalo = $_POST['intervalo'] ?? '';
             $data_inicio_cobranca = $_POST['data_inicio_cobranca'] ?? '';
             $data_fim_cobranca = $_POST['data_fim_cobranca'] ?? NULL;
+            $tipo_cobranca = in_array($_POST['tipo_cobranca'] ?? '', ['COMERCIAL', 'CORTESIA', 'TESTE']) ? $_POST['tipo_cobranca'] : 'COMERCIAL';
+            $motivo_cortesia = mysqli_real_escape_string($link, trim($_POST['motivo_cortesia'] ?? ''));
 
-            if (empty($id_cliente) || empty($id_servico) || !is_numeric($quantidade) || $quantidade <= 0 || !is_numeric($valor_sugerido_recorrencia) || $valor_sugerido_recorrencia <= 0 || empty($tipo_periodo) || !is_numeric($intervalo) || $intervalo <= 0 || empty($data_inicio_cobranca)) {
+            // Validação de valor: se for CORTESIA ou TESTE, o valor pode ser 0 ou referencial. Se for COMERCIAL, deve ser > 0.
+            $valorValido = is_numeric($valor_sugerido_recorrencia) && ($tipo_cobranca !== 'COMERCIAL' ? $valor_sugerido_recorrencia >= 0 : $valor_sugerido_recorrencia > 0);
+
+            if (empty($id_cliente) || empty($id_servico) || !is_numeric($quantidade) || $quantidade <= 0 || !$valorValido || empty($tipo_periodo) || !is_numeric($intervalo) || $intervalo <= 0 || empty($data_inicio_cobranca)) {
                 $response['message'] = "Preencha todos os campos obrigatórios da recorrência corretamente.";
             } else {
                 $id_cliente = mysqli_real_escape_string($link, $id_cliente);
@@ -2340,8 +2345,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 $codigo_nbs = mysqli_real_escape_string($link, $_POST['codigo_nbs'] ?? '');
                 $codigo_tributacao_municipio = mysqli_real_escape_string($link, $_POST['codigo_tributacao_municipio'] ?? '');
 
-                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, intervalo, dia_vencimento, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada, descricao_fiscal, codigo_cnae, codigo_nbs, codigo_tributacao_municipio)
-                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$intervalo', $dia_vencimento, '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada', '$descricao_fiscal', '$codigo_cnae', '$codigo_nbs', '$codigo_tributacao_municipio')";
+                $query = "INSERT INTO Recorrencias (id_cliente, id_servico, quantidade, valor_sugerido_recorrencia, tipo_periodo, tipo_cobranca, motivo_cortesia, intervalo, dia_vencimento, data_inicio_cobranca, data_fim_cobranca, item_lista_servico, aliquota_iss, iss_retido, descricao_personalizada, descricao_fiscal, codigo_cnae, codigo_nbs, codigo_tributacao_municipio)
+                          VALUES ('$id_cliente', '$id_servico', '$quantidade', '$valor_sugerido_recorrencia', '$tipo_periodo', '$tipo_cobranca', '$motivo_cortesia', '$intervalo', $dia_vencimento, '$data_inicio_cobranca', $data_fim_cobranca, '$item_lista_servico', $aliquota_iss, $iss_retido, '$descricao_personalizada', '$descricao_fiscal', '$codigo_cnae', '$codigo_nbs', '$codigo_tributacao_municipio')";
 
                 $result = DBExecute($link, $query);
 
@@ -2439,8 +2444,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $intervalo = $_POST['intervalo'] ?? '';
             $data_inicio_cobranca = $_POST['data_inicio_cobranca'] ?? '';
             $data_fim_cobranca = $_POST['data_fim_cobranca'] ?? NULL;
+            $tipo_cobranca = in_array($_POST['tipo_cobranca'] ?? '', ['COMERCIAL', 'CORTESIA', 'TESTE']) ? $_POST['tipo_cobranca'] : 'COMERCIAL';
+            $motivo_cortesia = mysqli_real_escape_string($link, trim($_POST['motivo_cortesia'] ?? ''));
 
-            if (empty($id_recorrencia) || empty($id_cliente) || empty($id_servico) || !is_numeric($quantidade) || $quantidade <= 0 || !is_numeric($valor_sugerido_recorrencia) || $valor_sugerido_recorrencia <= 0 || empty($tipo_periodo) || !is_numeric($intervalo) || $intervalo <= 0 || empty($data_inicio_cobranca)) {
+            // Validação de valor: se for CORTESIA ou TESTE, o valor pode ser 0 ou referencial. Se for COMERCIAL, deve ser > 0.
+            $valorValido = is_numeric($valor_sugerido_recorrencia) && ($tipo_cobranca !== 'COMERCIAL' ? $valor_sugerido_recorrencia >= 0 : $valor_sugerido_recorrencia > 0);
+
+            if (empty($id_recorrencia) || empty($id_cliente) || empty($id_servico) || !is_numeric($quantidade) || $quantidade <= 0 || !$valorValido || empty($tipo_periodo) || !is_numeric($intervalo) || $intervalo <= 0 || empty($data_inicio_cobranca)) {
                 $response['message'] = "Preencha todos os campos obrigatórios da recorrência corretamente para edição.";
             } else {
                 $id_recorrencia = mysqli_real_escape_string($link, $id_recorrencia);
@@ -2471,7 +2481,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
                 $query = "UPDATE Recorrencias 
                           SET id_cliente='$id_cliente', id_servico='$id_servico', quantidade='$quantidade', valor_sugerido_recorrencia='$valor_sugerido_recorrencia', 
-                              tipo_periodo='$tipo_periodo', intervalo='$intervalo', dia_vencimento=$dia_vencimento, data_inicio_cobranca='$data_inicio_cobranca', data_fim_cobranca=$data_fim_cobranca,
+                              tipo_periodo='$tipo_periodo', tipo_cobranca='$tipo_cobranca', motivo_cortesia='$motivo_cortesia', intervalo='$intervalo', dia_vencimento=$dia_vencimento, data_inicio_cobranca='$data_inicio_cobranca', data_fim_cobranca=$data_fim_cobranca,
                               item_lista_servico='$item_lista_servico', aliquota_iss=$aliquota_iss, iss_retido=$iss_retido, descricao_personalizada='$descricao_personalizada', descricao_fiscal='$descricao_fiscal',
                               codigo_cnae='$codigo_cnae', codigo_nbs='$codigo_nbs', codigo_tributacao_municipio='$codigo_tributacao_municipio'
                           WHERE id_recorrencia='$id_recorrencia'";
@@ -2681,13 +2691,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $dataInicioMes = mysqli_real_escape_string($link, $dataInicioMes);
             $dataFimMes = mysqli_real_escape_string($link, $dataFimMes);
 
-            // 1. Buscar recorrências ativas para o cliente e para o mês/ano da fatura
+            // 1. Buscar recorrências ativas para o cliente e para o mês/ano da fatura (apenas contratos COMERCIAIS)
             $query_recorrencias = "SELECT R.id_recorrencia, R.id_servico, R.quantidade, R.valor_sugerido_recorrencia, S.nome_servico
 									   FROM Recorrencias R
 									   JOIN Servicos S ON R.id_servico = S.id_servico
 									   WHERE R.id_cliente = '$id_cliente'
 										 AND R.data_inicio_cobranca <= '$dataFimMes' 
 										 AND (R.data_fim_cobranca IS NULL OR R.data_fim_cobranca >= '$dataInicioMes')
+                                         AND (R.tipo_cobranca = 'COMERCIAL' OR R.tipo_cobranca IS NULL)
 										 AND NOT EXISTS (SELECT 1 FROM ItensFatura WHERE id_fatura = '$id_fatura' AND id_recorrencia = R.id_recorrencia)";
 
             $result_recorrencias = DBExecute($link, $query_recorrencias);

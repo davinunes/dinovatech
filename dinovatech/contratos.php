@@ -56,6 +56,17 @@ foreach ($contratos as $c) {
         $ativos[] = $c;
     }
 }
+
+// Contadores de modalidade
+$countComerciais = 0;
+$countCortesias = 0;
+$countTestes = 0;
+foreach ($ativos as $c) {
+    $tc = $c['tipo_cobranca'] ?? 'COMERCIAL';
+    if ($tc === 'CORTESIA') $countCortesias++;
+    elseif ($tc === 'TESTE') $countTestes++;
+    else $countComerciais++;
+}
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -108,16 +119,37 @@ foreach ($contratos as $c) {
                 </form>
             </div>
 
-            <!-- Tabs -->
-            <div class="flex border-b border-gray-200 mb-6">
-                <button onclick="switchTab('ativos')" id="btn-ativos"
-                    class="px-6 py-2 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors">
-                    Contratos Ativos
-                </button>
-                <button onclick="switchTab('expirados')" id="btn-expirados"
-                    class="px-6 py-2 text-gray-500 hover:text-gray-700 font-medium transition-colors">
-                    Expirados / Finalizados
-                </button>
+            <!-- Tabs e Filtros de Modalidade -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 mb-6 gap-3">
+                <div class="flex">
+                    <button onclick="switchTab('ativos')" id="btn-ativos"
+                        class="px-5 py-2.5 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors flex items-center gap-1.5">
+                        <span>Contratos Ativos</span>
+                        <span class="px-2 py-0.5 text-xs bg-cyan-100 text-cyan-800 rounded-full font-bold"><?= count($ativos) ?></span>
+                    </button>
+                    <button onclick="switchTab('expirados')" id="btn-expirados"
+                        class="px-5 py-2.5 text-gray-500 hover:text-gray-700 font-medium transition-colors flex items-center gap-1.5">
+                        <span>Expirados / Finalizados</span>
+                        <span class="px-2 py-0.5 text-xs bg-gray-200 text-gray-700 rounded-full font-bold"><?= count($expirados) ?></span>
+                    </button>
+                </div>
+
+                <!-- Filtros rápidos por modalidade -->
+                <div id="filtros-modalidade-container" class="flex items-center gap-1.5 flex-wrap pb-2 sm:pb-0">
+                    <span class="text-xs text-gray-500 font-medium mr-1">Filtro:</span>
+                    <button type="button" onclick="filtrarPorModalidade('TODOS')" id="flt-todos" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-800 text-white transition-all shadow-xs">
+                        Todos (<?= count($ativos) ?>)
+                    </button>
+                    <button type="button" onclick="filtrarPorModalidade('COMERCIAL')" id="flt-comercial" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-cyan-50 text-gray-700 hover:text-cyan-800 transition-all">
+                        💳 Comerciais (<?= $countComerciais ?>)
+                    </button>
+                    <button type="button" onclick="filtrarPorModalidade('CORTESIA')" id="flt-cortesia" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-emerald-50 text-gray-700 hover:text-emerald-800 transition-all">
+                        🎁 Cortesias (<?= $countCortesias ?>)
+                    </button>
+                    <button type="button" onclick="filtrarPorModalidade('TESTE')" id="flt-teste" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-amber-50 text-gray-700 hover:text-amber-800 transition-all">
+                        🧪 Testes (<?= $countTestes ?>)
+                    </button>
+                </div>
             </div>
 
             <!-- Content: ATIVOS -->
@@ -142,10 +174,22 @@ foreach ($contratos as $c) {
                                     <?php foreach ($ativos as $contrato): ?>
                                         <?php
                                         $diaVenc = !empty($contrato['dia_vencimento']) ? (int) $contrato['dia_vencimento'] : (int) date('d', strtotime($contrato['data_inicio_cobranca']));
+                                        $tipoCob = $contrato['tipo_cobranca'] ?? 'COMERCIAL';
                                         ?>
-                                        <tr class="hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0">
+                                        <tr class="item-contrato-row hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0" data-modalidade="<?= htmlspecialchars($tipoCob) ?>">
                                             <td class="p-4 font-medium text-gray-900">
-                                                <?= htmlspecialchars($contrato['nome_cliente']) ?>
+                                                <div class="flex items-center gap-2">
+                                                    <span><?= htmlspecialchars($contrato['nome_cliente']) ?></span>
+                                                    <?php if ($tipoCob === 'CORTESIA'): ?>
+                                                        <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200" title="<?= htmlspecialchars($contrato['motivo_cortesia'] ?: 'Cortesia / Isento de cobrança') ?>">
+                                                            <span class="material-icons text-[11px]">card_giftcard</span> Cortesia
+                                                        </span>
+                                                    <?php elseif ($tipoCob === 'TESTE'): ?>
+                                                        <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200" title="<?= htmlspecialchars($contrato['motivo_cortesia'] ?: 'Período de avaliação / Demonstração') ?>">
+                                                            <span class="material-icons text-[11px]">science</span> Teste
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </div>
                                             </td>
                                             <td class="p-4">
                                                 <div class="flex items-center gap-1.5 flex-wrap">
@@ -173,14 +217,34 @@ foreach ($contratos as $c) {
                                                     </div>
                                                 <?php endif; ?>
                                             </td>
-                                            <td class="p-4">R$
-                                                <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?>
+                                            <td class="p-4">
+                                                <?php if ($tipoCob === 'CORTESIA'): ?>
+                                                    <span class="font-bold text-emerald-700">R$ 0,00</span>
+                                                    <span class="text-[10px] text-emerald-600 block font-semibold">100% Isento</span>
+                                                <?php elseif ($tipoCob === 'TESTE'): ?>
+                                                    <span class="font-bold text-amber-700">
+                                                        <?= ((float)$contrato['valor_sugerido_recorrencia'] > 0) ? 'R$ ' . number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') : 'R$ 0,00' ?>
+                                                    </span>
+                                                    <span class="text-[10px] text-amber-600 block font-semibold">Trial (Isento)</span>
+                                                <?php else: ?>
+                                                    <span class="font-bold text-gray-900">R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
+                                                <?php endif; ?>
                                             </td>
                                             <td class="p-4 capitalize"><?= htmlspecialchars($contrato['tipo_periodo']) ?></td>
-                                            <td class="p-4 font-semibold text-cyan-700">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-cyan-50 border border-cyan-200">
-                                                    Dia <?= $diaVenc ?>
-                                                </span>
+                                            <td class="p-4">
+                                                <?php if ($tipoCob === 'CORTESIA'): ?>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium text-emerald-800 bg-emerald-50 border border-emerald-200">
+                                                        Dispensado
+                                                    </span>
+                                                <?php elseif ($tipoCob === 'TESTE'): ?>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200" title="<?= !empty($contrato['data_fim_cobranca']) ? 'Válido até ' . date('d/m/Y', strtotime($contrato['data_fim_cobranca'])) : 'Prazo de teste' ?>">
+                                                        <?= !empty($contrato['data_fim_cobranca']) ? 'Até ' . date('d/m/Y', strtotime($contrato['data_fim_cobranca'])) : 'Em Teste' ?>
+                                                    </span>
+                                                <?php else: ?>
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-cyan-700 bg-cyan-50 border border-cyan-200">
+                                                        Dia <?= $diaVenc ?>
+                                                    </span>
+                                                <?php endif; ?>
                                             </td>
                                             <td class="p-4"><?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?>
                                             </td>
@@ -205,11 +269,22 @@ foreach ($contratos as $c) {
                 <div class="md:hidden space-y-4">
                     <?php if (!empty($ativos)): ?>
                         <?php foreach ($ativos as $contrato): ?>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <?php $tipoCob = $contrato['tipo_cobranca'] ?? 'COMERCIAL'; ?>
+                            <div class="item-contrato-card bg-white p-4 rounded-xl shadow-sm border border-gray-100" data-modalidade="<?= htmlspecialchars($tipoCob) ?>">
                                 <div class="flex justify-between items-start mb-3">
                                     <div>
-                                        <h3 class="font-bold text-gray-900"><?= htmlspecialchars($contrato['nome_cliente']) ?>
-                                        </h3>
+                                        <div class="flex items-center gap-1.5 flex-wrap">
+                                            <h3 class="font-bold text-gray-900"><?= htmlspecialchars($contrato['nome_cliente']) ?></h3>
+                                            <?php if ($tipoCob === 'CORTESIA'): ?>
+                                                <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                                    <span class="material-icons text-[11px]">card_giftcard</span> Cortesia
+                                                </span>
+                                            <?php elseif ($tipoCob === 'TESTE'): ?>
+                                                <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                                    <span class="material-icons text-[11px]">science</span> Teste
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                         <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
                                             <span class="text-sm text-gray-600"><?= htmlspecialchars($contrato['nome_servico']) ?></span>
                                             <?php if (!empty($contrato['slug_instancia'])): 
@@ -229,14 +304,25 @@ foreach ($contratos as $c) {
                                         <?php endif; ?>
                                     </div>
                                     <div class="text-right">
-                                        <span class="block font-bold text-gray-900">R$
-                                            <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
-                                        <span
-                                            class="text-xs text-gray-500 uppercase"><?= htmlspecialchars($contrato['tipo_periodo']) ?></span>
+                                        <?php if ($tipoCob === 'CORTESIA'): ?>
+                                            <span class="block font-bold text-emerald-700">R$ 0,00</span>
+                                            <span class="text-[10px] text-emerald-600 uppercase font-semibold">Isento</span>
+                                        <?php elseif ($tipoCob === 'TESTE'): ?>
+                                            <span class="block font-bold text-amber-700">
+                                                <?= ((float)$contrato['valor_sugerido_recorrencia'] > 0) ? 'R$ ' . number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') : 'R$ 0,00' ?>
+                                            </span>
+                                            <span class="text-[10px] text-amber-600 uppercase font-semibold">Trial</span>
+                                        <?php else: ?>
+                                            <span class="block font-bold text-gray-900">R$ <?= number_format($contrato['valor_sugerido_recorrencia'], 2, ',', '.') ?></span>
+                                            <span class="text-xs text-gray-500 uppercase"><?= htmlspecialchars($contrato['tipo_periodo']) ?></span>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                                 <div class="text-sm text-gray-600 mb-4 flex justify-between">
                                     <span>Início: <?= date('d/m/Y', strtotime($contrato['data_inicio_cobranca'])) ?></span>
+                                    <?php if (!empty($contrato['data_fim_cobranca'])): ?>
+                                        <span class="text-xs text-amber-700 font-semibold">Término: <?= date('d/m/Y', strtotime($contrato['data_fim_cobranca'])) ?></span>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="pt-3 border-t border-gray-200/50 flex justify-end">
                                     <a href="contrato_form.php?id=<?= $contrato['id_recorrencia'] ?>"
@@ -351,16 +437,50 @@ foreach ($contratos as $c) {
                     if (tab === 'ativos') {
                         tabAtivos.classList.remove('hidden');
                         tabExpirados.classList.add('hidden');
+                        document.getElementById('filtros-modalidade-container')?.classList.remove('hidden');
 
-                        btnAtivos.className = 'px-6 py-2 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors';
-                        btnExpirados.className = 'px-6 py-2 text-gray-500 hover:text-gray-700 font-medium transition-colors';
+                        btnAtivos.className = 'px-5 py-2.5 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors flex items-center gap-1.5';
+                        btnExpirados.className = 'px-5 py-2.5 text-gray-500 hover:text-gray-700 font-medium transition-colors flex items-center gap-1.5';
                     } else {
                         tabAtivos.classList.add('hidden');
                         tabExpirados.classList.remove('hidden');
+                        document.getElementById('filtros-modalidade-container')?.classList.add('hidden');
 
-                        btnExpirados.className = 'px-6 py-2 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors';
-                        btnAtivos.className = 'px-6 py-2 text-gray-500 hover:text-gray-700 font-medium transition-colors';
+                        btnExpirados.className = 'px-5 py-2.5 text-cyan-600 border-b-2 border-cyan-600 font-bold transition-colors flex items-center gap-1.5';
+                        btnAtivos.className = 'px-5 py-2.5 text-gray-500 hover:text-gray-700 font-medium transition-colors flex items-center gap-1.5';
                     }
+                }
+
+                function filtrarPorModalidade(modalidade) {
+                    const botoes = {
+                        'TODOS': $('#flt-todos'),
+                        'COMERCIAL': $('#flt-comercial'),
+                        'CORTESIA': $('#flt-cortesia'),
+                        'TESTE': $('#flt-teste')
+                    };
+
+                    // Reseta estilos dos botões de filtro
+                    Object.values(botoes).forEach(btn => {
+                        btn.attr('class', 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 transition-all');
+                    });
+
+                    // Aplica estilo ativo no selecionado
+                    if (botoes[modalidade]) {
+                        if (modalidade === 'TODOS') botoes[modalidade].attr('class', 'px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-800 text-white transition-all shadow-xs');
+                        else if (modalidade === 'COMERCIAL') botoes[modalidade].attr('class', 'px-2.5 py-1 text-xs font-bold rounded-lg bg-cyan-600 text-white transition-all shadow-xs');
+                        else if (modalidade === 'CORTESIA') botoes[modalidade].attr('class', 'px-2.5 py-1 text-xs font-bold rounded-lg bg-emerald-600 text-white transition-all shadow-xs');
+                        else if (modalidade === 'TESTE') botoes[modalidade].attr('class', 'px-2.5 py-1 text-xs font-bold rounded-lg bg-amber-600 text-white transition-all shadow-xs');
+                    }
+
+                    // Filtra linhas da tabela desktop e cards mobile
+                    $('.item-contrato-row, .item-contrato-card').each(function() {
+                        const itemMod = $(this).data('modalidade') || 'COMERCIAL';
+                        if (modalidade === 'TODOS' || itemMod === modalidade) {
+                            $(this).removeClass('hidden');
+                        } else {
+                            $(this).addClass('hidden');
+                        }
+                    });
                 }
 
                 function executarCronRecorrenciasManual() {

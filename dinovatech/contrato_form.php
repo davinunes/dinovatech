@@ -50,6 +50,9 @@ if ($id_recorrencia) {
     }
 }
 
+$currentTipoCobranca = $contrato['tipo_cobranca'] ?? 'COMERCIAL';
+$currentMotivoCortesia = $contrato['motivo_cortesia'] ?? '';
+
 // Fetch Services for Dropdown (apenas serviços ativos ou o serviço vinculado ao contrato em edição)
 $servicos = [];
 $current_servico_id = $contrato['id_servico'] ?? 0;
@@ -212,20 +215,112 @@ DBClose($link);
                                     </select>
                                 </div>
 
+                                <!-- SELETOR DE MODALIDADE DE COBRANÇA (COMERCIAL / CORTESIA / TESTE) -->
+                                <div class="border border-slate-200 rounded-xl p-5 bg-gradient-to-br from-slate-50 to-white shadow-xs">
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                        <div>
+                                            <label class="block text-sm font-bold text-gray-800 flex items-center gap-1.5">
+                                                <span class="material-icons text-cyan-600 text-lg">verified_user</span>
+                                                Modalidade de Cobrança do Contrato
+                                            </label>
+                                            <p class="text-xs text-gray-500">Defina se este contrato gerará faturas financeiras normais ou se é uma cortesia/teste sem cobrança.</p>
+                                        </div>
+                                        <span id="badge-tipo-cobranca" class="self-start sm:self-auto px-2.5 py-1 text-xs font-bold rounded-full bg-cyan-100 text-cyan-800 border border-cyan-200">
+                                            <?= $currentTipoCobranca === 'CORTESIA' ? '🎁 Cortesia (Isento)' : ($currentTipoCobranca === 'TESTE' ? '🧪 Teste / Trial' : '💳 Comercial') ?>
+                                        </span>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                        <!-- COMERCIAL -->
+                                        <label class="cursor-pointer border-2 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-200 hover:border-cyan-400 bg-white" id="card-modalidade-comercial">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="p-2 rounded-lg bg-cyan-50 text-cyan-700">
+                                                        <span class="material-icons text-base">credit_card</span>
+                                                    </span>
+                                                    <div>
+                                                        <span class="block text-sm font-bold text-gray-900">Comercial</span>
+                                                        <span class="text-[11px] text-gray-500">Cobrança regular</span>
+                                                    </div>
+                                                </div>
+                                                <input type="radio" name="tipo_cobranca" value="COMERCIAL" <?= $currentTipoCobranca === 'COMERCIAL' ? 'checked' : '' ?> onchange="atualizarModalidadeCobranca(this.value)" class="text-cyan-600 focus:ring-cyan-500 mt-1">
+                                            </div>
+                                            <p class="text-[11px] text-gray-500 mt-2">Gera faturas mensais automáticas e integra ao faturamento e MRR.</p>
+                                        </label>
+
+                                        <!-- CORTESIA -->
+                                        <label class="cursor-pointer border-2 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-200 hover:border-emerald-400 bg-white" id="card-modalidade-cortesia">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="p-2 rounded-lg bg-emerald-50 text-emerald-700">
+                                                        <span class="material-icons text-base">card_giftcard</span>
+                                                    </span>
+                                                    <div>
+                                                        <span class="block text-sm font-bold text-gray-900">Cortesia 🎁</span>
+                                                        <span class="text-[11px] text-emerald-700 font-semibold">100% Isento</span>
+                                                    </div>
+                                                </div>
+                                                <input type="radio" name="tipo_cobranca" value="CORTESIA" <?= $currentTipoCobranca === 'CORTESIA' ? 'checked' : '' ?> onchange="atualizarModalidadeCobranca(this.value)" class="text-emerald-600 focus:ring-emerald-500 mt-1">
+                                            </div>
+                                            <p class="text-[11px] text-gray-500 mt-2">Sem faturas nem cobranças. Ideal para parceiros, SaaS cortesia ou permutas.</p>
+                                        </label>
+
+                                        <!-- TESTE / TRIAL -->
+                                        <label class="cursor-pointer border-2 rounded-xl p-3.5 flex flex-col justify-between transition-all duration-200 hover:border-amber-400 bg-white" id="card-modalidade-teste">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="p-2 rounded-lg bg-amber-50 text-amber-700">
+                                                        <span class="material-icons text-base">science</span>
+                                                    </span>
+                                                    <div>
+                                                        <span class="block text-sm font-bold text-gray-900">Teste / Trial 🧪</span>
+                                                        <span class="text-[11px] text-amber-700 font-semibold">Degustação</span>
+                                                    </div>
+                                                </div>
+                                                <input type="radio" name="tipo_cobranca" value="TESTE" <?= $currentTipoCobranca === 'TESTE' ? 'checked' : '' ?> onchange="atualizarModalidadeCobranca(this.value)" class="text-amber-600 focus:ring-amber-500 mt-1">
+                                            </div>
+                                            <p class="text-[11px] text-gray-500 mt-2">Demonstração de SaaS por tempo determinado sem gerar cobranças financeiras.</p>
+                                        </label>
+                                    </div>
+
+                                    <!-- CAMPO DE JUSTIFICATIVA E ALERTA CONTEXTUAL (CORTESIA / TESTE) -->
+                                    <div id="container-motivo-cortesia" class="<?= in_array($currentTipoCobranca, ['CORTESIA', 'TESTE']) ? '' : 'hidden' ?> mt-4 pt-4 border-t border-slate-200/80">
+                                        <div id="alerta-isencao-faturamento" class="p-3 rounded-lg text-xs flex items-start gap-2 mb-3 bg-emerald-50 border border-emerald-200 text-emerald-900">
+                                            <span class="material-icons text-emerald-600 text-sm mt-0.5">info</span>
+                                            <div>
+                                                <strong>Atenção à Isenção de Cobrança:</strong>
+                                                <span id="texto-explicacao-isencao">Este contrato está configurado como isento. O sistema NÃO gerará faturas financeiras nem débitos de Pix Automático para este cliente. Caso haja Pod SaaS K3s vinculado, ele funcionará normalmente sem bloqueio.</span>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label for="motivo_cortesia" class="block text-xs font-semibold text-gray-700 mb-1">
+                                                Justificativa / Motivo da Cortesia ou Teste (Opcional):
+                                            </label>
+                                            <input type="text" id="motivo_cortesia" name="motivo_cortesia" value="<?= htmlspecialchars($currentMotivoCortesia) ?>"
+                                                placeholder="Ex: Parceria comercial, Degustação piloto de 15 dias, Homologação SaaS K3s"
+                                                class="w-full p-2.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 bg-white">
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
-                                        <label for="valor_sugerido_recorrencia"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Valor Recorrente
-                                            (R$)</label>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label for="valor_sugerido_recorrencia"
+                                                class="block text-sm font-medium text-gray-700">Valor Recorrente (R$)</label>
+                                            <span id="label-aviso-valor" class="text-[11px] text-gray-500"></span>
+                                        </div>
                                         <input type="number" id="valor_sugerido_recorrencia"
-                                            name="valor_sugerido_recorrencia" step="0.01"
+                                            name="valor_sugerido_recorrencia" step="0.01" min="0"
                                             value="<?= $contrato['valor_sugerido_recorrencia'] ?? '' ?>" required
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <p class="text-[10px] text-gray-400 mt-1" id="dica-valor-cortesia">Para Cortesia/Teste, você pode informar 0,00 ou registrar o valor de tabela como referência.</p>
                                     </div>
                                     <div>
                                         <label for="quantidade"
                                             class="block text-sm font-medium text-gray-700 mb-1">Quantidade</label>
-                                        <input type="number" id="quantidade" name="quantidade"
+                                        <input type="number" id="quantidade" name="quantidade" min="1"
                                             value="<?= $contrato['quantidade'] ?? '1' ?>" required
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
@@ -247,7 +342,7 @@ DBClose($link);
                                         <label for="intervalo"
                                             class="block text-sm font-medium text-gray-700 mb-1">Intervalo (a
                                             cada)</label>
-                                        <input type="number" id="intervalo" name="intervalo"
+                                        <input type="number" id="intervalo" name="intervalo" min="1"
                                             value="<?= $contrato['intervalo'] ?? '1' ?>" required
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
@@ -262,12 +357,19 @@ DBClose($link);
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
                                     </div>
                                     <div>
-                                        <label for="data_fim_cobranca"
-                                            class="block text-sm font-medium text-gray-700 mb-1">Data Fim
-                                            (Opcional)</label>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <label for="data_fim_cobranca" class="block text-sm font-medium text-gray-700">Data Fim</label>
+                                            <span class="text-[10px] text-gray-400 font-normal">(Opcional)</span>
+                                        </div>
                                         <input type="date" id="data_fim_cobranca" name="data_fim_cobranca"
                                             value="<?= $contrato['data_fim_cobranca'] ?? '' ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition">
+                                        <div id="atalhos-dias-teste" class="<?= $currentTipoCobranca === 'TESTE' ? '' : 'hidden' ?> flex items-center gap-1.5 mt-1.5">
+                                            <span class="text-[10px] text-gray-400 font-semibold">Prazo:</span>
+                                            <button type="button" onclick="adicionarDiasFim(7)" class="px-2 py-0.5 text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded transition">+7 dias</button>
+                                            <button type="button" onclick="adicionarDiasFim(15)" class="px-2 py-0.5 text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded transition">+15 dias</button>
+                                            <button type="button" onclick="adicionarDiasFim(30)" class="px-2 py-0.5 text-[10px] font-bold bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded transition">+30 dias</button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label for="dia_vencimento"
@@ -277,6 +379,7 @@ DBClose($link);
                                             value="<?= $contrato['dia_vencimento'] ?? '' ?>"
                                             class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 transition"
                                             title="Dia do mês em que a fatura vencerá (1 a 31)">
+                                        <p class="text-[10px] text-gray-400 mt-1" id="aviso-vencimento-cortesia">Apenas para contratos com cobrança ativa.</p>
                                     </div>
                                 </div>
 
@@ -755,6 +858,16 @@ DBClose($link);
                 <?php if ($is_edit && AppHelper::isInterApiActive()): ?>
                 <div id="tab-pix_automatico" class="tab-content hidden">
                     <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6">
+                        <?php if (in_array($currentTipoCobranca, ['CORTESIA', 'TESTE'])): ?>
+                            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 flex items-center gap-3">
+                                <span class="material-icons text-amber-600 text-xl">info</span>
+                                <div>
+                                    <strong>Contrato Isento de Faturamento (<?= $currentTipoCobranca === 'CORTESIA' ? 'Cortesia 🎁' : 'Teste / Trial 🧪' ?>):</strong>
+                                    Este contrato não gera cobranças financeiras, logo a autorização de débito automático via Pix não é requerida.
+                                </div>
+                            </div>
+                        <?php endif; ?>
+
                         <div class="flex items-center justify-between border-b pb-4">
                             <div>
                                 <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -1170,8 +1283,74 @@ DBClose($link);
             const valorInput = document.getElementById('valor_sugerido_recorrencia');
             const selectedOption = select.options[select.selectedIndex];
             const valor = selectedOption.getAttribute('data-valor');
-            if (valor && !valorInput.value) { // Update only if empty
+            const tipoCobranca = $('input[name="tipo_cobranca"]:checked').val() || 'COMERCIAL';
+
+            if (tipoCobranca === 'CORTESIA') {
+                if (!valorInput.value) valorInput.value = '0.00';
+            } else if (valor && !valorInput.value) { // Update only if empty
                 valorInput.value = valor;
+            }
+        }
+
+        function adicionarDiasFim(dias) {
+            let dataBase = $('#data_inicio_cobranca').val();
+            let d = dataBase ? new Date(dataBase + 'T12:00:00') : new Date();
+            d.setDate(d.getDate() + dias);
+            let y = d.getFullYear();
+            let m = String(d.getMonth() + 1).padStart(2, '0');
+            let dia = String(d.getDate()).padStart(2, '0');
+            $('#data_fim_cobranca').val(`${y}-${m}-${dia}`);
+        }
+
+        function atualizarModalidadeCobranca(tipo) {
+            // Remove destaque ativo de todos os cards
+            $('#card-modalidade-comercial').removeClass('border-cyan-500 ring-2 ring-cyan-200 bg-cyan-50/20').addClass('border-gray-200');
+            $('#card-modalidade-cortesia').removeClass('border-emerald-500 ring-2 ring-emerald-200 bg-emerald-50/20').addClass('border-gray-200');
+            $('#card-modalidade-teste').removeClass('border-amber-500 ring-2 ring-amber-200 bg-amber-50/20').addClass('border-gray-200');
+
+            const badge = $('#badge-tipo-cobranca');
+            const containerMotivo = $('#container-motivo-cortesia');
+            const alerta = $('#alerta-isencao-faturamento');
+            const textoExplicacao = $('#texto-explicacao-isencao');
+            const valorInput = $('#valor_sugerido_recorrencia');
+            const atalhosTeste = $('#atalhos-dias-teste');
+            const avisoVenc = $('#aviso-vencimento-cortesia');
+            const dicaValor = $('#dica-valor-cortesia');
+
+            if (tipo === 'CORTESIA') {
+                $('#card-modalidade-cortesia').addClass('border-emerald-500 ring-2 ring-emerald-200 bg-emerald-50/20').removeClass('border-gray-200');
+                badge.attr('class', 'self-start sm:self-auto px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300').text('🎁 Cortesia (Isento)');
+                containerMotivo.removeClass('hidden');
+                alerta.attr('class', 'p-3 rounded-lg text-xs flex items-start gap-2 mb-3 bg-emerald-50 border border-emerald-200 text-emerald-900');
+                textoExplicacao.html('<strong>Cortesia 100% Isenta:</strong> O sistema <strong>NÃO gerará faturas</strong> nem débitos automáticos no Pix para este cliente. Caso haja Pod SaaS K3s vinculado, ele funcionará normalmente sem interrupção financeira.');
+                atalhosTeste.addClass('hidden');
+                avisoVenc.text('Vencimento dispensado (não gera fatura financeira).');
+                dicaValor.text('Valor 0,00 ou valor de tabela referencial da cortesia.');
+                if (!valorInput.val() || valorInput.val() === '') {
+                    valorInput.val('0.00');
+                }
+            } else if (tipo === 'TESTE') {
+                $('#card-modalidade-teste').addClass('border-amber-500 ring-2 ring-amber-200 bg-amber-50/20').removeClass('border-gray-200');
+                badge.attr('class', 'self-start sm:self-auto px-2.5 py-1 text-xs font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-300').text('🧪 Teste / Trial');
+                containerMotivo.removeClass('hidden');
+                alerta.attr('class', 'p-3 rounded-lg text-xs flex items-start gap-2 mb-3 bg-amber-50 border border-amber-200 text-amber-900');
+                textoExplicacao.html('<strong>Período de Demonstração / Teste (Trial):</strong> Nenhuma fatura será gerada durante o período de avaliação do SaaS. Recomendamos definir a <strong>Data Fim</strong> abaixo para controlar o prazo concedido ao cliente.');
+                atalhosTeste.removeClass('hidden');
+                avisoVenc.text('Não aplicável durante o período de testes.');
+                dicaValor.text('Valor 0,00 ou valor previsto que passará a ser cobrado após o teste.');
+                if (!valorInput.val() || valorInput.val() === '') {
+                    valorInput.val('0.00');
+                }
+            } else {
+                $('#card-modalidade-comercial').addClass('border-cyan-500 ring-2 ring-cyan-200 bg-cyan-50/20').removeClass('border-gray-200');
+                badge.attr('class', 'self-start sm:self-auto px-2.5 py-1 text-xs font-bold rounded-full bg-cyan-100 text-cyan-800 border border-cyan-200').text('💳 Comercial');
+                containerMotivo.addClass('hidden');
+                atalhosTeste.addClass('hidden');
+                avisoVenc.text('Dia do mês em que a fatura vencerá (1 a 31).');
+                dicaValor.text('Valor monetário faturado e cobrado a cada período.');
+                if (valorInput.val() === '0.00' || valorInput.val() === '0') {
+                    updateValorSugerido();
+                }
             }
         }
 
@@ -1400,6 +1579,8 @@ DBClose($link);
 
         $(document).ready(function() {
             verificarServicoSaas();
+            const tipoInicial = $('input[name="tipo_cobranca"]:checked').val() || 'COMERCIAL';
+            atualizarModalidadeCobranca(tipoInicial);
         });
     </script>
 </body>
