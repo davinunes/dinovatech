@@ -1,0 +1,865 @@
+{
+    "asn": "AS265138",
+    "objects": [
+        {
+            "type": "route",
+            "name": "143.208.72.0\/22",
+            "attributes": [
+                {
+                    "name": "route",
+                    "value": "143.208.72.0\/22"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "descr",
+                    "value": "ACESSO.COM"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-13T21:50:07Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route",
+            "name": "143.208.72.0\/23",
+            "attributes": [
+                {
+                    "name": "route",
+                    "value": "143.208.72.0\/23"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-15T03:30:31Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route",
+            "name": "143.208.72.0\/24",
+            "attributes": [
+                {
+                    "name": "route",
+                    "value": "143.208.72.0\/24"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-15T03:30:51Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route",
+            "name": "143.208.73.0\/24",
+            "attributes": [
+                {
+                    "name": "route",
+                    "value": "143.208.73.0\/24"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-15T03:31:04Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route",
+            "name": "143.208.74.0\/23",
+            "attributes": [
+                {
+                    "name": "route",
+                    "value": "143.208.74.0\/23"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-15T03:30:40Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route",
+            "name": "143.208.74.0\/24",
+            "attributes": [
+                {
+                    "name": "route",
+                    "value": "143.208.74.0\/24"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-15T03:31:19Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route",
+            "name": "143.208.75.0\/24",
+            "attributes": [
+                {
+                    "name": "route",
+                    "value": "143.208.75.0\/24"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-15T03:31:32Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route6",
+            "name": "2804:2b28::\/32",
+            "attributes": [
+                {
+                    "name": "route6",
+                    "value": "2804:2b28::\/32"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "descr",
+                    "value": "ACESSO.COM"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-13T21:57:00Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "valid"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "as-set",
+            "name": "AS265138:AS-ANNOUNCEMENTS",
+            "attributes": [
+                {
+                    "name": "as-set",
+                    "value": "AS265138:AS-ANNOUNCEMENTS"
+                },
+                {
+                    "name": "members",
+                    "value": "AS265138"
+                },
+                {
+                    "name": "members",
+                    "value": "AS265138:AS-CUSTOMERS"
+                },
+                {
+                    "name": "descr",
+                    "value": "as-set containing AS265138 and its downstream customers"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Auto-created by TC IRR"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2022-10-27T23:37:50Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "as-set",
+            "name": "AS265138:AS-CUSTOMERS",
+            "attributes": [
+                {
+                    "name": "as-set",
+                    "value": "AS265138:AS-CUSTOMERS"
+                },
+                {
+                    "name": "descr",
+                    "value": "as-set containing AS265138 downstream customers"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "members",
+                    "value": "AS269359"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-03-20T20:39:22Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "as-set",
+            "name": "AS265138:AS-UPSTREAMS",
+            "attributes": [
+                {
+                    "name": "as-set",
+                    "value": "AS265138:AS-UPSTREAMS"
+                },
+                {
+                    "name": "descr",
+                    "value": "as-set containing AS265138 upstream providers"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "members",
+                    "value": "AS28178"
+                },
+                {
+                    "name": "members",
+                    "value": "AS16753"
+                },
+                {
+                    "name": "members",
+                    "value": "AS269359"
+                },
+                {
+                    "name": "members",
+                    "value": "AS26162"
+                },
+                {
+                    "name": "members",
+                    "value": "AS61580"
+                },
+                {
+                    "name": "members",
+                    "value": "AS32934"
+                },
+                {
+                    "name": "members",
+                    "value": "AS28604"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                }
+            ],
+            "status": "enviado"
+        },
+        {
+            "type": "route-set",
+            "name": "AS265138:RS-SET",
+            "attributes": [
+                {
+                    "name": "route-set",
+                    "value": "AS265138:RS-SET"
+                },
+                {
+                    "name": "descr",
+                    "value": "route-sets"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "members",
+                    "value": "143.208.72.0\/22"
+                },
+                {
+                    "name": "members",
+                    "value": "143.208.72.0\/23"
+                },
+                {
+                    "name": "members",
+                    "value": "143.208.74.0\/23"
+                },
+                {
+                    "name": "members",
+                    "value": "143.208.72.0\/24"
+                },
+                {
+                    "name": "members",
+                    "value": "143.208.73.0\/24"
+                },
+                {
+                    "name": "members",
+                    "value": "143.208.74.0\/24"
+                },
+                {
+                    "name": "members",
+                    "value": "143.208.75.0\/24"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28::\/32"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28::\/33"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:8000::\/33"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28::\/34"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:4000::\/34"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:8000::\/34"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:c000::\/34"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:2000::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:4000::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:6000::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:8000::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:a000::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:c000::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:e000::\/35"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:1000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:2000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:3000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:4000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:5000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:6000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:7000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:8000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:9000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:a000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:b000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:c000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:d000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:e000::\/36"
+                },
+                {
+                    "name": "mp-members",
+                    "value": "2804:2b28:f000::\/36"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-03-20T20:44:37Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "person",
+            "name": "CLAUDIO LEVI DE OLIVEIRA LUSTOSA",
+            "attributes": [
+                {
+                    "name": "person",
+                    "value": "CLAUDIO LEVI DE OLIVEIRA LUSTOSA"
+                },
+                {
+                    "name": "address",
+                    "value": "Physical address not obtained"
+                },
+                {
+                    "name": "phone",
+                    "value": "5561999288911"
+                },
+                {
+                    "name": "e-mail",
+                    "value": "claudiolevi.01@gmail.com"
+                },
+                {
+                    "name": "nic-hdl",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-13T21:47:51Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "person",
+            "name": "DAVI NUNES DE FRANCA",
+            "attributes": [
+                {
+                    "name": "person",
+                    "value": "DAVI NUNES DE FRANCA"
+                },
+                {
+                    "name": "address",
+                    "value": "ACESSO.COM"
+                },
+                {
+                    "name": "address",
+                    "value": "Brazil"
+                },
+                {
+                    "name": "phone",
+                    "value": "+5561996757676"
+                },
+                {
+                    "name": "e-mail",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "nic-hdl",
+                    "value": "DANFR20-NICBR"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-02-13T21:46:23Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "mntner",
+            "name": "MAINT-AS265138",
+            "attributes": [
+                {
+                    "name": "mntner",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "descr",
+                    "value": "ACESSO.COM PROVEDOR DE INTERNET"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "CLLOL27-NICBR"
+                },
+                {
+                    "name": "upd-to",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-nfy",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "auth",
+                    "value": "CRYPT-PW DummyValue"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Created by TC IRR from NIC.br data"
+                },
+                {
+                    "name": "notify",
+                    "value": "davi.nunes@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS265138"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2022-10-27T23:37:50Z"
+                }
+            ],
+            "status": "importado"
+        }
+    ],
+    "asn_name": "ACESSO.COM",
+    "mnt_by": "MAINT-AS265138",
+    "mntner_password": "3s1c0ypBwlNTrxl5J3qg4A"
+}

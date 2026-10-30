@@ -1,0 +1,46 @@
+{
+    "request": {
+        "objects": [
+            {
+                "attributes": [
+                    {
+                        "name": "as-set",
+                        "value": "AS265138:AS-CUSTOMERS"
+                    },
+                    {
+                        "name": "descr",
+                        "value": "as-set containing AS265138 downstream customers"
+                    },
+                    {
+                        "name": "admin-c",
+                        "value": "CLLOL27-NICBR"
+                    },
+                    {
+                        "name": "tech-c",
+                        "value": "DANFR20-NICBR"
+                    },
+                    {
+                        "name": "mnt-by",
+                        "value": "DANFR20-NICBR"
+                    },
+                    {
+                        "name": "source",
+                        "value": "TC"
+                    },
+                    {
+                        "name": "members",
+                        "value": "AS269359"
+                    }
+                ]
+            }
+        ],
+        "passwords": [
+            "3s1c0ypBwlNTrxl5J3qg4A"
+        ]
+    },
+    "response": {
+        "success": false,
+        "http_code": 307,
+        "data": null
+    }
+}

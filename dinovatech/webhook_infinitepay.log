@@ -1,0 +1,21 @@
+[2026-09-10 01:38:49] [IP: 64.181.176.36] Webhook recebido:
+{"items":[{"price":100,"quantity":1,"description":"Pagamento da Fatura #93","product_reference":null}],"amount":100,"order_nsu":"fatura-93","paid_amount":100,"receipt_url":"https://recibo.infinitepay.io/b5a6b94c-3098-482e-b69c-8fa2fcc453c9","installments":1,"invoice_slug":"ytWaeiKKcB","capture_method":"pix","transaction_nsu":"b5a6b94c-3098-482e-b69c-8fa2fcc453c9"}
+
+[2026-09-10 02:04:21] [IP: 64.181.176.36] Webhook recebido:
+{"items":[{"price":100,"quantity":1,"description":"Pagamento da Fatura #94","product_reference":null}],"amount":100,"order_nsu":"fatura-94","paid_amount":100,"receipt_url":"https://recibo.infinitepay.io/f7d89465-0cf1-4d51-9166-5579cdcae7fc","installments":1,"invoice_slug":"pUFX2NjIZv","capture_method":"pix","transaction_nsu":"f7d89465-0cf1-4d51-9166-5579cdcae7fc"}
+
+[2026-09-10 02:15:25] [IP: 64.181.176.36] Webhook recebido:
+{"items":[{"price":100,"quantity":1,"description":"Pagamento da Fatura #95","product_reference":null}],"amount":100,"order_nsu":"fatura-95","paid_amount":100,"receipt_url":"https://recibo.infinitepay.io/b5e30602-59d7-431f-880b-03bb231857d8","installments":1,"invoice_slug":"dyneIyNL9z","capture_method":"pix","transaction_nsu":"b5e30602-59d7-431f-880b-03bb231857d8"}
+
+[2026-09-10 02:26:53] [IP: 64.181.176.36] Webhook recebido:
+{"items":[{"price":100,"quantity":1,"description":"Pagamento da Fatura #96","product_reference":null}],"amount":100,"order_nsu":"fatura-96","paid_amount":100,"receipt_url":"https://recibo.infinitepay.io/053ba24d-f0b5-4642-a901-946c09033ca3","installments":1,"invoice_slug":"obiT7OCShh","capture_method":"pix","transaction_nsu":"053ba24d-f0b5-4642-a901-946c09033ca3"}
+
+[2026-09-10 02:30:07] [IP: 64.181.176.36] Webhook recebido:
+{"items":[{"price":100,"quantity":1,"description":"Pagamento da Fatura #97","product_reference":null}],"amount":100,"order_nsu":"fatura-97","paid_amount":100,"receipt_url":"https://recibo.infinitepay.io/f893ff44-fa78-496f-affa-d85f8f42e779","installments":1,"invoice_slug":"nFe5tCq0gF","capture_method":"pix","transaction_nsu":"f893ff44-fa78-496f-affa-d85f8f42e779"}
+
+[2026-09-10 02:54:10] [IP: 34.85.129.219] Webhook recebido:
+{"items":[{"price":100,"quantity":1,"description":"Pagamento da Fatura #98","product_reference":null}],"amount":100,"order_nsu":"fatura-98","paid_amount":105,"receipt_url":"https://recibo.infinitepay.io/ee3a9fa5-9eb7-4277-89b5-c64217594fa2","installments":1,"invoice_slug":"WDTWpHm740","capture_method":"credit_card","transaction_nsu":"ee3a9fa5-9eb7-4277-89b5-c64217594fa2"}
+
+[2026-09-13 00:06:04] [IP: 8.235.29.17] Webhook recebido:
+
+

@@ -1,0 +1,223 @@
+{
+    "request": {
+        "objects": [
+            {
+                "attributes": [
+                    {
+                        "name": "route-set",
+                        "value": "AS265138:RS-SET"
+                    },
+                    {
+                        "name": "descr",
+                        "value": "route-sets"
+                    },
+                    {
+                        "name": "admin-c",
+                        "value": "CLLOL27-NICBR"
+                    },
+                    {
+                        "name": "tech-c",
+                        "value": "DANFR20-NICBR"
+                    },
+                    {
+                        "name": "mnt-by",
+                        "value": "MAINT-AS265138"
+                    },
+                    {
+                        "name": "source",
+                        "value": "TC"
+                    },
+                    {
+                        "name": "members",
+                        "value": "143.208.72.0\/22"
+                    },
+                    {
+                        "name": "members",
+                        "value": "143.208.72.0\/23"
+                    },
+                    {
+                        "name": "members",
+                        "value": "143.208.74.0\/23"
+                    },
+                    {
+                        "name": "members",
+                        "value": "143.208.72.0\/24"
+                    },
+                    {
+                        "name": "members",
+                        "value": "143.208.73.0\/24"
+                    },
+                    {
+                        "name": "members",
+                        "value": "143.208.74.0\/24"
+                    },
+                    {
+                        "name": "members",
+                        "value": "143.208.75.0\/24"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28::\/32"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28::\/33"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:8000::\/33"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28::\/34"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:4000::\/34"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:8000::\/34"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:c000::\/34"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:2000::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:4000::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:6000::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:8000::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:a000::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:c000::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:e000::\/35"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:1000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:2000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:3000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:4000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:5000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:6000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:7000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:8000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:9000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:a000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:b000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:c000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:d000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:e000::\/36"
+                    },
+                    {
+                        "name": "mp-members",
+                        "value": "2804:2b28:f000::\/36"
+                    }
+                ]
+            }
+        ],
+        "passwords": [
+            "3s1c0ypBwlNTrxl5J3qg4A"
+        ]
+    },
+    "response": {
+        "success": true,
+        "http_code": 200,
+        "data": {
+            "request_meta": {
+                "HTTP-Client-IP": "::ffff:127.0.0.1",
+                "HTTP-User-Agent": null
+            },
+            "summary": {
+                "objects_found": 1,
+                "successful": 1,
+                "successful_create": 0,
+                "successful_modify": 1,
+                "successful_delete": 0,
+                "failed": 0,
+                "failed_create": 0,
+                "failed_modify": 0,
+                "failed_delete": 0
+            },
+            "objects": [
+                {
+                    "successful": true,
+                    "type": "modify",
+                    "object_class": "route-set",
+                    "rpsl_pk": "AS265138:RS-SET",
+                    "info_messages": [],
+                    "error_messages": [],
+                    "new_object_text": "route-set:      AS265138:RS-SET\ndescr:          route-sets\nadmin-c:        CLLOL27-NICBR\ntech-c:         DANFR20-NICBR\nmnt-by:         MAINT-AS265138\nsource:         TC\nmembers:        143.208.72.0\/22\nmembers:        143.208.72.0\/23\nmembers:        143.208.74.0\/23\nmembers:        143.208.72.0\/24\nmembers:        143.208.73.0\/24\nmembers:        143.208.74.0\/24\nmembers:        143.208.75.0\/24\nmp-members:     2804:2b28::\/32\nmp-members:     2804:2b28::\/33\nmp-members:     2804:2b28:8000::\/33\nmp-members:     2804:2b28::\/34\nmp-members:     2804:2b28:4000::\/34\nmp-members:     2804:2b28:8000::\/34\nmp-members:     2804:2b28:c000::\/34\nmp-members:     2804:2b28::\/35\nmp-members:     2804:2b28:2000::\/35\nmp-members:     2804:2b28:4000::\/35\nmp-members:     2804:2b28:6000::\/35\nmp-members:     2804:2b28:8000::\/35\nmp-members:     2804:2b28:a000::\/35\nmp-members:     2804:2b28:c000::\/35\nmp-members:     2804:2b28:e000::\/35\nmp-members:     2804:2b28::\/36\nmp-members:     2804:2b28:1000::\/36\nmp-members:     2804:2b28:2000::\/36\nmp-members:     2804:2b28:3000::\/36\nmp-members:     2804:2b28:4000::\/36\nmp-members:     2804:2b28:5000::\/36\nmp-members:     2804:2b28:6000::\/36\nmp-members:     2804:2b28:7000::\/36\nmp-members:     2804:2b28:8000::\/36\nmp-members:     2804:2b28:9000::\/36\nmp-members:     2804:2b28:a000::\/36\nmp-members:     2804:2b28:b000::\/36\nmp-members:     2804:2b28:c000::\/36\nmp-members:     2804:2b28:d000::\/36\nmp-members:     2804:2b28:e000::\/36\nmp-members:     2804:2b28:f000::\/36\n",
+                    "submitted_object_text": "route-set: AS265138:RS-SET\ndescr: route-sets\nadmin-c: CLLOL27-NICBR\ntech-c: DANFR20-NICBR\nmnt-by: MAINT-AS265138\nsource: TC\nmembers: 143.208.72.0\/22\nmembers: 143.208.72.0\/23\nmembers: 143.208.74.0\/23\nmembers: 143.208.72.0\/24\nmembers: 143.208.73.0\/24\nmembers: 143.208.74.0\/24\nmembers: 143.208.75.0\/24\nmp-members: 2804:2b28::\/32\nmp-members: 2804:2b28::\/33\nmp-members: 2804:2b28:8000::\/33\nmp-members: 2804:2b28::\/34\nmp-members: 2804:2b28:4000::\/34\nmp-members: 2804:2b28:8000::\/34\nmp-members: 2804:2b28:c000::\/34\nmp-members: 2804:2b28::\/35\nmp-members: 2804:2b28:2000::\/35\nmp-members: 2804:2b28:4000::\/35\nmp-members: 2804:2b28:6000::\/35\nmp-members: 2804:2b28:8000::\/35\nmp-members: 2804:2b28:a000::\/35\nmp-members: 2804:2b28:c000::\/35\nmp-members: 2804:2b28:e000::\/35\nmp-members: 2804:2b28::\/36\nmp-members: 2804:2b28:1000::\/36\nmp-members: 2804:2b28:2000::\/36\nmp-members: 2804:2b28:3000::\/36\nmp-members: 2804:2b28:4000::\/36\nmp-members: 2804:2b28:5000::\/36\nmp-members: 2804:2b28:6000::\/36\nmp-members: 2804:2b28:7000::\/36\nmp-members: 2804:2b28:8000::\/36\nmp-members: 2804:2b28:9000::\/36\nmp-members: 2804:2b28:a000::\/36\nmp-members: 2804:2b28:b000::\/36\nmp-members: 2804:2b28:c000::\/36\nmp-members: 2804:2b28:d000::\/36\nmp-members: 2804:2b28:e000::\/36\nmp-members: 2804:2b28:f000::\/36\n"
+                }
+            ]
+        }
+    },
+    "local_status_update": "enviado"
+}

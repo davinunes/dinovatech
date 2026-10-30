@@ -1,0 +1,329 @@
+{
+    "asn": "AS273475",
+    "objects": [
+        {
+            "type": "aut-num",
+            "name": "AS273475",
+            "attributes": [
+                {
+                    "name": "aut-num",
+                    "value": "AS273475"
+                },
+                {
+                    "name": "as-name",
+                    "value": "AS-UNIX"
+                },
+                {
+                    "name": "descr",
+                    "value": "UNIX TELECOM"
+                },
+                {
+                    "name": "member-of",
+                    "value": "AS273475:AS-ALL"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-04-08T12:38:11Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "route6",
+            "name": "2804:8f34::\/32",
+            "attributes": [
+                {
+                    "name": "route6",
+                    "value": "2804:8f34::\/32"
+                },
+                {
+                    "name": "origin",
+                    "value": "AS273475"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Auto-created by TC IRR from NIC.br and RIPE RIS data"
+                },
+                {
+                    "name": "notify",
+                    "value": "cassiodsn@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-04-08T12:38:11Z"
+                },
+                {
+                    "name": "rpki-ov-state",
+                    "value": "not_found"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "as-set",
+            "name": "AS273475:AS-ALL",
+            "attributes": [
+                {
+                    "name": "as-set",
+                    "value": "AS273475:AS-ALL"
+                },
+                {
+                    "name": "members",
+                    "value": "AS273475"
+                },
+                {
+                    "name": "members",
+                    "value": "AS273475:AS-CUSTOMERS"
+                },
+                {
+                    "name": "descr",
+                    "value": "as-set containing AS273475 and its downstream customers"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Auto-created by TC IRR"
+                },
+                {
+                    "name": "notify",
+                    "value": "cassiodsn@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-04-08T12:38:11Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "as-set",
+            "name": "AS273475:AS-CUSTOMERS",
+            "attributes": [
+                {
+                    "name": "as-set",
+                    "value": "AS273475:AS-CUSTOMERS"
+                },
+                {
+                    "name": "descr",
+                    "value": "as-set containing AS273475 downstream customers"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Auto-created by TC IRR"
+                },
+                {
+                    "name": "notify",
+                    "value": "cassiodsn@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-04-08T12:38:11Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "as-set",
+            "name": "AS273475:AS-UPSTREAMS",
+            "attributes": [
+                {
+                    "name": "as-set",
+                    "value": "AS273475:AS-UPSTREAMS"
+                },
+                {
+                    "name": "descr",
+                    "value": "as-set containing AS273475 upstream providers"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Auto-created by TC IRR"
+                },
+                {
+                    "name": "notify",
+                    "value": "cassiodsn@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-04-08T12:38:11Z"
+                }
+            ],
+            "status": "importado"
+        },
+        {
+            "type": "person",
+            "name": "EDUARDO FERREIRA DE ALMEIDA",
+            "attributes": [
+                {
+                    "name": "person",
+                    "value": "EDUARDO FERREIRA DE ALMEIDA"
+                },
+                {
+                    "name": "address",
+                    "value": "Physical address not obtained"
+                },
+                {
+                    "name": "phone",
+                    "value": "55 11 999999999"
+                },
+                {
+                    "name": "e-mail",
+                    "value": "eduardoferreiralmeida@gmail.com"
+                },
+                {
+                    "name": "nic-hdl",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Created by TC IRR from NIC.br data"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Phone number not obtained, number above is not valid"
+                },
+                {
+                    "name": "notify",
+                    "value": "cassiodsn@gmail.com"
+                }
+            ],
+            "status": "editado"
+        },
+        {
+            "type": "mntner",
+            "name": "MAINT-AS273475",
+            "attributes": [
+                {
+                    "name": "mntner",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "descr",
+                    "value": "UNIX TELECOM"
+                },
+                {
+                    "name": "admin-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "tech-c",
+                    "value": "EDFAL214-NICBR"
+                },
+                {
+                    "name": "upd-to",
+                    "value": "cassiodsn@gmail.com"
+                },
+                {
+                    "name": "mnt-nfy",
+                    "value": "cassiodsn@gmail.com"
+                },
+                {
+                    "name": "auth",
+                    "value": "BCRYPT-PW DummyValue"
+                },
+                {
+                    "name": "remarks",
+                    "value": "Created by TC IRR from NIC.br data"
+                },
+                {
+                    "name": "notify",
+                    "value": "cassiodsn@gmail.com"
+                },
+                {
+                    "name": "mnt-by",
+                    "value": "MAINT-AS273475"
+                },
+                {
+                    "name": "source",
+                    "value": "TC"
+                },
+                {
+                    "name": "last-modified",
+                    "value": "2026-04-08T12:38:11Z"
+                }
+            ],
+            "status": "importado"
+        }
+    ],
+    "asn_name": "Unix Telecom",
+    "mnt_by": "MAINT-AS273475",
+    "mntner_password": "XRPjMBEv8kv-nA6leLuaRQ"
+}
