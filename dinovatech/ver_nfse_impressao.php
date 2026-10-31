@@ -76,6 +76,12 @@ if (preg_match('/<xDescServ>(.*?)<\/xDescServ>/i', $xmlContent, $m)) {
     $data['discriminacao'] = trim($m[1]);
 }
 
+$cleanChave = preg_replace('/^NFS/i', '', trim($data['chave_nfse'] ?: ''));
+$formattedChave = !empty($cleanChave) ? trim(chunk_split($cleanChave, 4, ' ')) : '5326 1061 7337 1400 0101 0000 0000 0000 0054 2609 1788 5689 00';
+$urlConsultaNacional = (!empty($cleanChave) && strlen($cleanChave) >= 40)
+    ? "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}"
+    : "https://nfse.fazenda.df.gov.br/NfseTax/";
+
 DBClose($link);
 ?>
 <!DOCTYPE html>
@@ -83,6 +89,7 @@ DBClose($link);
 <head>
     <meta charset="UTF-8">
     <title>DANFSE - Nota Fiscal Eletrônica nº <?= htmlspecialchars($data['numero_nota']) ?></title>
+    <script src="https://cdn.jsdelivr.net/npm/kjua@0.9.0/dist/kjua.min.js"></script>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif;
@@ -214,24 +221,31 @@ DBClose($link);
             </tr>
         </table>
 
-        <!-- CHAVE DE ACESSO & PROTESTO -->
+        <!-- CHAVE DE ACESSO & AUTENTICIDADE (COM QR CODE) -->
         <div class="section-box">
-            <div class="row">
-                <div class="col">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                <div style="flex: 1;">
                     <span class="label">Chave de Acesso Nacional (50 dígitos)</span>
-                    <span class="value" style="font-family: monospace; font-size: 12px; color: #1e293b;">
-                        <?= htmlspecialchars($data['chave_nfse'] ?: 'NFS53001081261733714000101000000000005426091788568900') ?>
+                    <span class="value" style="font-family: monospace; font-size: 13px; color: #1e293b; letter-spacing: 0.5px; display: block; margin-top: 2px;">
+                        <?= htmlspecialchars($formattedChave) ?>
                     </span>
+                    <div class="row" style="margin-top: 8px; margin-bottom: 0;">
+                        <div class="col">
+                            <span class="label">DPS Origem</span>
+                            <span class="value">Série <?= htmlspecialchars($data['dps_serie']) ?> — Nº <?= htmlspecialchars($data['dps_numero']) ?></span>
+                        </div>
+                        <div class="col">
+                            <span class="label">Código de Verificação</span>
+                            <span class="value"><?= htmlspecialchars($data['codigo_verificacao'] ?: 'Autorizado SEFAZ-DF') ?></span>
+                        </div>
+                    </div>
+                    <div style="font-size: 10px; color: #64748b; margin-top: 8px; line-height: 1.3;">
+                        Aponte a câmera do celular para o QR Code ao lado ou acesse <strong>www.nfse.gov.br</strong> para conferir a autenticidade deste documento no Sistema Nacional.
+                    </div>
                 </div>
-            </div>
-            <div class="row" style="margin-top: 6px;">
-                <div class="col">
-                    <span class="label">DPS Origem</span>
-                    <span class="value">Série <?= htmlspecialchars($data['dps_serie']) ?> — Nº <?= htmlspecialchars($data['dps_numero']) ?></span>
-                </div>
-                <div class="col">
-                    <span class="label">Código de Verificação</span>
-                    <span class="value"><?= htmlspecialchars($data['codigo_verificacao'] ?: 'Autorizado SEFAZ-DF') ?></span>
+                <div style="text-align: center; min-width: 95px;">
+                    <div id="qrcodeNfse" style="display: inline-block; padding: 3px; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px;"></div>
+                    <div style="font-size: 8px; font-weight: bold; color: #64748b; margin-top: 3px; text-transform: uppercase;">Autenticidade</div>
                 </div>
             </div>
         </div>
@@ -309,5 +323,22 @@ DBClose($link);
         </div>
     </div>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const qrUrl = <?= json_encode($urlConsultaNacional) ?>;
+            const container = document.getElementById('qrcodeNfse');
+            if (container && qrUrl && typeof kjua === 'function') {
+                const qrElement = kjua({
+                    text: qrUrl,
+                    size: 88,
+                    fill: '#000',
+                    back: '#fff',
+                    quiet: 1,
+                    render: 'image'
+                });
+                container.appendChild(qrElement);
+            }
+        });
+    </script>
 </body>
 </html>
