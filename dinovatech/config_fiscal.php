@@ -461,7 +461,7 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                             <div class="pt-2">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Senha do Certificado</label>
                                 <div class="relative">
-                                    <input type="password" name="senha_certificado" id="senha_certificado"
+                                    <input type="password" name="senha_certificado" id="senha_certificado" autocomplete="new-password"
                                         placeholder="Preencha apenas se fez novo upload ou deseja alterar"
                                         class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 pr-10">
                                     <button type="button" onclick="togglePass('senha_certificado')"

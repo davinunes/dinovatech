@@ -1167,7 +1167,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                     $certStatus['message'] = $certStatus['valid'] ? "Válido (Vence em " . date('d/m/Y', $validTo) . ")" : "Expirado em " . date('d/m/Y', $validTo);
                                     $certStatus['expiration_date'] = date('d/m/Y', $validTo);
                                 } else {
-                                    $certStatus['message'] = "Senha incorreta ou arquivo corrompido.";
+                                    $osslErrors = [];
+                                    while ($msg = openssl_error_string()) {
+                                        $osslErrors[] = $msg;
+                                    }
+                                    $allOsslErr = implode('; ', $osslErrors);
+                                    if (stripos($allOsslErr, 'unsupported') !== false) {
+                                        $certStatus['message'] = "OpenSSL 3.0: provider legacy desabilitado no servidor.";
+                                    } elseif (stripos($allOsslErr, 'mac verify failure') !== false) {
+                                        $certStatus['message'] = "Senha do certificado incorreta (verifique preenchimento automático).";
+                                    } else {
+                                        $certStatus['message'] = "Senha incorreta ou arquivo corrompido" . ($allOsslErr ? " ({$allOsslErr})" : ".");
+                                    }
                                 }
                             } else {
                                 $certStatus['message'] = "Erro ao descriptografar senha.";

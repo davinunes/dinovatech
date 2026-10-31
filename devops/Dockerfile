@@ -40,8 +40,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         opcache \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2. Habilitação de módulos do Apache
-RUN a2enmod rewrite headers ssl
+# 2. Habilitação de módulos do Apache e compatibilidade com certificados digitais A1/PFX no OpenSSL 3.0
+RUN a2enmod rewrite headers ssl \
+    && sed -i 's/\[provider_sect\]/\[provider_sect\]\nlegacy = legacy_sect/' /etc/ssl/openssl.cnf \
+    && sed -i 's/\[default_sect\]/\[default_sect\]\nactivate = 1\n\[legacy_sect\]\nactivate = 1/' /etc/ssl/openssl.cnf
 
 # 3. Configurações recomendadas do PHP (php.ini)
 RUN { \
