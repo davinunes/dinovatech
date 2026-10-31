@@ -574,7 +574,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $serie_rps = $_POST['serie_rps'] ?? '8';
             $ultimo_rps_homologacao = $_POST['ultimo_rps_homologacao'] ?? 0;
             $ultimo_rps_producao = $_POST['ultimo_rps_producao'] ?? 0;
-            $nfse_provider = in_array($_POST['nfse_provider'] ?? '', ['legacy', 'nacional']) ? $_POST['nfse_provider'] : 'legacy';
+            $nfse_provider = in_array($_POST['nfse_provider'] ?? '', ['legacy', 'nacional', 'sefin_nacional']) ? $_POST['nfse_provider'] : 'nacional';
             $serie_dps = preg_replace('/\D/', '', $_POST['serie_dps'] ?? '1') ?: '1';
             $ultimo_dps_homologacao = (int)($_POST['ultimo_dps_homologacao'] ?? 0);
             $ultimo_dps_producao = (int)($_POST['ultimo_dps_producao'] ?? 0);
@@ -4087,7 +4087,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $configEmissor = $resConfProv ? mysqli_fetch_assoc($resConfProv) : null;
             $activeProvider = $configEmissor['nfse_provider'] ?? 'nacional';
 
-            if ($activeProvider === 'nacional') {
+            if ($activeProvider === 'nacional' || $activeProvider === 'sefin_nacional') {
                 try {
                     $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
                     $userId = $_SESSION['usuario_id'] ?? null;

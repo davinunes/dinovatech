@@ -5,10 +5,12 @@ require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/DpsIdGeneratorTest.php';
 require_once __DIR__ . '/DpsXmlBuilderTest.php';
 require_once __DIR__ . '/NacionalResponseParserTest.php';
+require_once __DIR__ . '/SefinNacionalRestProviderTest.php';
 
 use Dinovatech\Modules\Fiscal\Tests\DpsIdGeneratorTest;
 use Dinovatech\Modules\Fiscal\Tests\DpsXmlBuilderTest;
 use Dinovatech\Modules\Fiscal\Tests\NacionalResponseParserTest;
+use Dinovatech\Modules\Fiscal\Tests\SefinNacionalRestProviderTest;
 
 echo "====================================================\n";
 echo "  BATERIA DE TESTES - NOVO PADRÃO NACIONAL (NFS-e)  \n";
@@ -26,7 +28,11 @@ $t3 = new NacionalResponseParserTest();
 $r3 = $t3->run();
 echo "\n";
 
-$allPassed = ($r1 && $r2 && $r3);
+$t4 = new SefinNacionalRestProviderTest();
+$r4 = $t4->run();
+echo "\n";
+
+$allPassed = ($r1 && $r2 && $r3 && $r4);
 
 echo "====================================================\n";
 if ($allPassed) {

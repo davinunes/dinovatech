@@ -4,6 +4,7 @@ namespace Dinovatech\Modules\Fiscal\Services;
 use Dinovatech\Modules\Fiscal\Contracts\NfseProviderInterface;
 use Dinovatech\Modules\Fiscal\Providers\LegacyAbrasfProvider;
 use Dinovatech\Modules\Fiscal\Providers\NacionalProvider;
+use Dinovatech\Modules\Fiscal\Providers\SefinNacionalRestProvider;
 use Dinovatech\Modules\Fiscal\DTOs\NfseData;
 use Dinovatech\Modules\Fiscal\DTOs\EmissionResult;
 use Dinovatech\Modules\Fiscal\DTOs\QueryResult;
@@ -43,6 +44,10 @@ class NfseService
     {
         $configuredProvider = $this->config['nfse_provider'] ?? 'nacional';
 
+        if ($configuredProvider === 'sefin_nacional' || $configuredProvider === 'nacional_rest') {
+            return new SefinNacionalRestProvider($this->config, $this->link);
+        }
+
         if ($configuredProvider === 'nacional') {
             return new NacionalProvider($this->config, $this->link);
         }
@@ -77,7 +82,7 @@ class NfseService
         }
 
         $ambiente = $calcData['ambiente'];
-        $isNacional = ($this->provider->getProviderName() === 'nacional');
+        $isNacional = in_array($this->provider->getProviderName(), ['nacional', 'sefin_nacional']);
 
         // 2. Determina a série e a numeração do documento provisório (DPS ou RPS)
         if ($isNacional) {
@@ -238,7 +243,7 @@ class NfseService
         $urlNacional = mysqli_real_escape_string($this->link, $result->urlVisualizacaoNacional ?: '');
 
         // Formatação da URL do Portal Nacional se for emissão pelo provedor nacional
-        if ($this->provider->getProviderName() === 'nacional') {
+        if (in_array($this->provider->getProviderName(), ['nacional', 'sefin_nacional'])) {
             $rawChave = $result->chaveNfse ?: $result->codigoVerificacao;
             $cleanChave = preg_replace('/^NFS/i', '', trim($rawChave ?: ''));
             if (!empty($cleanChave) && strlen($cleanChave) >= 40) {

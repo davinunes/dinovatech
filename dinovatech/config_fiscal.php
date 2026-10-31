@@ -340,7 +340,8 @@ require_once __DIR__ . '/helpers/AppHelper.php';
                                             <select name="nfse_provider" id="nfse_provider"
                                                 class="w-full rounded-lg border-gray-300 focus:border-cyan-500 focus:ring-cyan-500 text-sm font-bold bg-white">
                                                 <option value="legacy">ABRASF 2.04 (Provedor Legado ISS.net / DF)</option>
-                                                <option value="nacional">Padrão Nacional (Nota Control / SPED Fazenda DF)</option>
+                                                <option value="nacional">Padrão Nacional (Nota Control / SPED Fazenda DF - SOAP)</option>
+                                                <option value="sefin_nacional">Emissor Público Nacional REST (Sefin Nacional / RFB - Direto)</option>
                                             </select>
                                             <p class="text-[11px] text-gray-500 mt-1">Permite alternar entre a emissão antiga e o novo padrão nacional sem alterar código.</p>
                                         </div>
