@@ -40,8 +40,16 @@ class DpsXmlBuilder
 
         // Prestador
         $prestCnpj = preg_replace('/\D/', '', $data->prestadorCnpj);
-        $prestIm = preg_replace('/\D/', '', $data->prestadorInscricaoMunicipal);
+        $prestIm = preg_replace('/\D/', '', $data->prestadorInscricaoMunicipal ?? '');
         $opSimpNac = $data->prestadorOptanteSimples ? '3' : '1'; // 3=Optante ME/EPP, 1=Não Optante
+
+        // Regra E0120 (Sefin Nacional / CNC NFS-e):
+        // Se o emitente for o prestador (tpEmit=1) e não houver registro complementar no CNC (ex: Brasília 5300108),
+        // o IM NÃO deve ser informado na DPS.
+        $prestImXml = '';
+        if (!empty($prestIm) && $cLocEmi !== '5300108') {
+            $prestImXml = "\n                <IM>{$prestIm}</IM>";
+        }
 
         // Tomador
         $tomaXml = '';
@@ -179,8 +187,7 @@ class DpsXmlBuilder
             <tpEmit>1</tpEmit>
             <cLocEmi>{$cLocEmi}</cLocEmi>
             <prest>
-                <CNPJ>{$prestCnpj}</CNPJ>
-                <IM>{$prestIm}</IM>
+                <CNPJ>{$prestCnpj}</CNPJ>{$prestImXml}
                 <regTrib>
                     <opSimpNac>{$opSimpNac}</opSimpNac>
                     {$regApTribSNXml}
