@@ -21,6 +21,8 @@ class DpsXmlBuilder
      */
     public function build(NfseData $data, string $dpsId, bool $wrapGerarNfseEnvio = true): string
     {
+        $tpAmb = ($data->ambiente === 'producao') ? '1' : '2';
+
         // Tolerância de clock skew com Sefin Nacional / SEFAZ (evita rejeição E0008).
         // Se dhEmi estiver mesmo frações de segundo à frente do relógio do servidor fiscal, a nota é rejeitada.
         // Recua 120 segundos para garantir margem segura de processamento.
