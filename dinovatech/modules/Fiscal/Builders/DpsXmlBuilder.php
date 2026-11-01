@@ -87,14 +87,24 @@ class DpsXmlBuilder
         $cTribNac = preg_replace('/\D/', '', $data->codigoTributacaoNacional ?: '010701');
         $cTribNac = str_pad($cTribNac, 6, '0', STR_PAD_LEFT);
 
-        $cTribMun = preg_replace('/\D/', '', $data->codigoTributacaoMunicipal ?: '0107001');
         $xDescServ = htmlspecialchars($this->sanitizeText($data->discriminacao), ENT_XML1, 'UTF-8');
+
+        // cTribMun é opcional no Padrão Nacional (minOccurs=0 no XSD da DPS).
+        // Em Brasília (5300108), o DF não administra desdobros municipais no ADN (Sefin Nacional rejeita com E0314 se informado).
+        // Deve ser omitido para DF e só enviado em outros municípios se explicitamente informado e válido.
+        $cTribMunXml = '';
+        if (!empty($data->codigoTributacaoMunicipal) && $cLocPrestacao !== '5300108') {
+            $cTribMunClean = preg_replace('/\D/', '', (string)$data->codigoTributacaoMunicipal);
+            if (!empty($cTribMunClean) && $cTribMunClean !== '0107001') {
+                $cTribMunXml = "\n                    <cTribMun>{$cTribMunClean}</cTribMun>";
+            }
+        }
 
         $nbsXml = '';
         if (!empty($data->codigoNbs)) {
             $nbsClean = preg_replace('/\D/', '', $data->codigoNbs);
             if (strlen($nbsClean) === 9) {
-                $nbsXml = "<cNBS>{$nbsClean}</cNBS>";
+                $nbsXml = "\n                    <cNBS>{$nbsClean}</cNBS>";
             }
         }
 
@@ -174,10 +184,8 @@ class DpsXmlBuilder
                     <cLocPrestacao>{$cLocPrestacao}</cLocPrestacao>
                 </locPrest>
                 <cServ>
-                    <cTribNac>{$cTribNac}</cTribNac>
-                    <cTribMun>{$cTribMun}</cTribMun>
-                    <xDescServ>{$xDescServ}</xDescServ>
-                    {$nbsXml}
+                    <cTribNac>{$cTribNac}</cTribNac>{$cTribMunXml}
+                    <xDescServ>{$xDescServ}</xDescServ>{$nbsXml}
                 </cServ>
             </serv>
             <valores>

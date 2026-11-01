@@ -45,7 +45,7 @@ class NfseData
     public string $discriminacao;
     public string $itemListaServico; // Ex: '01.07' ou '1.07'
     public string $codigoTributacaoNacional; // Ex: '010701' (6 dígitos)
-    public string $codigoTributacaoMunicipal; // Ex: '0107001'
+    public ?string $codigoTributacaoMunicipal = null; // Opcional no Padrão Nacional (minOccurs=0)
     public ?string $codigoCnae = null;
     public ?string $codigoNbs = null; // Ex: '114032110' (9 dígitos)
     public string $municipioPrestacaoIbge; // Ex: '5300108'

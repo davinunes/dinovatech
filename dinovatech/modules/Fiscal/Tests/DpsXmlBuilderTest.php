@@ -87,8 +87,9 @@ class DpsXmlBuilderTest
         $hasNoGerarNfse = (strpos($xml, '<GerarNfseEnvio') === false);
         $hasDpsRoot = (strpos($xml, '<DPS versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">') !== false);
         $hasClosingDps = str_ends_with(trim($xml), '</DPS>');
+        $hasNoCTribMunForBrasilia = (strpos($xml, '<cTribMun') === false);
 
-        $passed = ($hasNoGerarNfse && $hasDpsRoot && $hasClosingDps);
+        $passed = ($hasNoGerarNfse && $hasDpsRoot && $hasClosingDps && $hasNoCTribMunForBrasilia);
         echo $passed ? "[PASS] testBuildDpsXmlStructure\n" : "[FAIL] testBuildDpsXmlStructure\n";
         return $passed;
     }

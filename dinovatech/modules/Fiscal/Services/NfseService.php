@@ -146,7 +146,7 @@ class NfseService
             $dto->codigoTributacaoNacional = str_pad($itemDigits, 4, '0', STR_PAD_LEFT) . '01';
         }
 
-        $dto->codigoTributacaoMunicipal = $taxSettings['codigo_tributacao_municipio'] ?? '0107001';
+        $dto->codigoTributacaoMunicipal = $taxSettings['codigo_tributacao_municipio'] ?? null;
         $dto->codigoCnae = $taxSettings['codigo_cnae'] ?? null;
         $dto->codigoNbs = $taxSettings['codigo_nbs'] ?? null;
         $dto->municipioPrestacaoIbge = '5300108';
