@@ -12,6 +12,7 @@ class NfseData
     public string $serie;
     public int $numero;
     public string $dataCompetencia; // YYYY-MM-DD
+    public ?string $dataHoraEmissao = null; // YYYY-MM-DDTHH:MM:SS-03:00 (opcional, defaults to safe timestamp)
     public float $valorServico;
     public float $aliquotaIss; // Ex: 2.00
     public bool $issRetido;

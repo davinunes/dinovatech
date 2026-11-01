@@ -21,8 +21,15 @@ class DpsXmlBuilder
      */
     public function build(NfseData $data, string $dpsId, bool $wrapGerarNfseEnvio = true): string
     {
-        $tpAmb = ($data->ambiente === 'producao') ? '1' : '2';
-        $dhEmi = date('Y-m-d\TH:i:sP');
+        // Tolerância de clock skew com Sefin Nacional / SEFAZ (evita rejeição E0008).
+        // Se dhEmi estiver mesmo frações de segundo à frente do relógio do servidor fiscal, a nota é rejeitada.
+        // Recua 120 segundos para garantir margem segura de processamento.
+        if (!empty($data->dataHoraEmissao)) {
+            $ts = strtotime($data->dataHoraEmissao);
+            $dhEmi = ($ts && $ts > (time() - 60)) ? date('Y-m-d\TH:i:sP', time() - 120) : $data->dataHoraEmissao;
+        } else {
+            $dhEmi = date('Y-m-d\TH:i:sP', time() - 120);
+        }
         $verAplic = 'Dinovatech_1.0';
         $serie = $data->serie;
         $nDPS = $data->numero;
