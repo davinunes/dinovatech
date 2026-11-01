@@ -56,4 +56,7 @@ define('K3S_API_TOKEN', getenv('K3S_API_TOKEN') ?: '');
 define('K3S_INSECURE_SKIP_TLS', getenv('K3S_INSECURE_SKIP_TLS') === 'true' || getenv('K3S_INSECURE_SKIP_TLS') === '1' || getenv('K3S_INSECURE_SKIP_TLS') === null);
 define('K3S_DEFAULT_IMAGE', getenv('K3S_DEFAULT_IMAGE') ?: 'dinovatech:latest');
 define('SAAS_DEFAULT_DB_HOST', getenv('SAAS_DEFAULT_DB_HOST') ?: (defined('DB_HOSTNAME') ? DB_HOSTNAME : '127.0.0.1'));
+if (file_exists(__DIR__ . '/modules/Fiscal/bootstrap.php')) {
+    require_once __DIR__ . '/modules/Fiscal/bootstrap.php';
+}
 

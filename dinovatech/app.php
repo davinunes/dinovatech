@@ -10,6 +10,7 @@ require_once __DIR__ . '/helpers/FiscalCatalogHelper.php';
 require_once __DIR__ . '/helpers/EncryptionHelper.php';
 require_once __DIR__ . '/helpers/ContaDevHelper.php';
 require_once __DIR__ . '/helpers/StorageMigrationHelper.php';
+require_once __DIR__ . '/modules/Fiscal/bootstrap.php';
 
 // ACTION GET: Toggle Status Cliente (Direct Link)
 if (isset($_GET['action']) && $_GET['action'] === 'toggle_status_cliente') {
@@ -5198,7 +5199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $id_fatura = $_POST['id_fatura'] ?? '';
             $numero_nota = trim($_POST['numero_nota'] ?? '');
             $codigo_verificacao = trim($_POST['codigo_verificacao'] ?? '');
-            $chave_nfse = trim($_POST['chave_nfse'] ?? '');
+            $chave_nfse = trim($_POST['chave_nfse'] ?? ($_POST['chave_acesso'] ?? ''));
             $numero_rps = trim($_POST['numero_rps'] ?? '');
             $serie_rps = trim($_POST['serie_rps'] ?? '');
             $url_pdf = trim($_POST['url_pdf'] ?? '');
