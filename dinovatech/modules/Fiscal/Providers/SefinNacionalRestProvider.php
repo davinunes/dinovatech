@@ -63,6 +63,11 @@ class SefinNacionalRestProvider implements NfseProviderInterface
 
             // 3. Assina o nó <infDPS Id="..."> com XMLDSig (RSA-SHA1 + C14N)
             $signedXml = $signer->sign($rawXml, $dpsId);
+
+            // Garante o prólogo XML com codificação UTF-8 obrigatório pela Sefin Nacional (Regra E1229)
+            if (!str_starts_with(trim($signedXml), '<?xml')) {
+                $signedXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" . trim($signedXml);
+            }
             $result->xmlEnvio = $signedXml;
 
             // 4. Compacta o XML em GZip e codifica em Base64
@@ -340,6 +345,11 @@ class SefinNacionalRestProvider implements NfseProviderInterface
 XML;
 
             $signedXml = $signer->sign($rawPedEventoXml, $preId);
+
+            // Garante o prólogo XML com codificação UTF-8 obrigatório pela Sefin Nacional (Regra E1229)
+            if (!str_starts_with(trim($signedXml), '<?xml')) {
+                $signedXml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" . trim($signedXml);
+            }
             $c->xmlEnvio = $signedXml;
 
             $gzipped = gzencode($signedXml, 9);

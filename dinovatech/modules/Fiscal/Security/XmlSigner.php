@@ -26,6 +26,10 @@ class XmlSigner
      */
     public function sign(string $xmlString, string $targetId): string
     {
+        if (!mb_check_encoding($xmlString, 'UTF-8')) {
+            $xmlString = mb_convert_encoding($xmlString, 'UTF-8', 'ISO-8859-1, Windows-1252, UTF-8');
+        }
+
         $dom = new DOMDocument('1.0', 'UTF-8');
         $dom->preserveWhiteSpace = false;
         $dom->formatOutput = false;

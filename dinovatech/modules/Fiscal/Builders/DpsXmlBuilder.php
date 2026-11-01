@@ -199,16 +199,21 @@ class DpsXmlBuilder
 XML;
 
         if (!$wrapGerarNfseEnvio) {
-            return trim($dpsXml);
-        }
-
-        $xml = <<<XML
+            $out = trim($dpsXml);
+        } else {
+            $out = trim(<<<XML
 <GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
 {$dpsXml}
 </GerarNfseEnvio>
-XML;
+XML
+            );
+        }
 
-        return trim($xml);
+        if (!mb_check_encoding($out, 'UTF-8')) {
+            $out = mb_convert_encoding($out, 'UTF-8', 'ISO-8859-1, Windows-1252, UTF-8');
+        }
+
+        return $out;
     }
 
     /**
@@ -225,8 +230,17 @@ XML;
 
     private function sanitizeText(string $str): string
     {
-        // Remove caracteres de controle mantendo texto puro
+        // 1. Decodifica entidades HTML pré-existentes (ex: &#xED; -> í, &iacute; -> í)
+        $str = html_entity_decode($str, ENT_QUOTES | ENT_XML1, 'UTF-8');
+
+        // 2. Garante que a codificação da string seja rigorosamente UTF-8 válida
+        if (!mb_check_encoding($str, 'UTF-8')) {
+            $str = mb_convert_encoding($str, 'UTF-8', 'ISO-8859-1, Windows-1252, UTF-8');
+        }
+
+        // 3. Remove caracteres de controle mantendo texto puro e quebras de linha normais
         $str = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $str);
+
         return trim($str);
     }
 }
