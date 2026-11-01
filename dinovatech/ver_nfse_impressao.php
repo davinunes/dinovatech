@@ -27,6 +27,27 @@ if (!$result) {
 }
 $emissao = mysqli_fetch_assoc($result);
 
+$confRes = DBExecute($link, "SELECT logo_url, nome_fantasia, razao_social, cnpj, inscricao_municipal FROM ConfiguracoesEmissor LIMIT 1");
+$confEmissor = $confRes ? mysqli_fetch_assoc($confRes) : [];
+
+$logoUrl = '';
+if (!empty($confEmissor['logo_url'])) {
+    $rawLogo = $confEmissor['logo_url'];
+    if (preg_match('/^https?:\/\//i', $rawLogo)) {
+        $logoUrl = $rawLogo;
+    } elseif (file_exists(__DIR__ . '/' . ltrim($rawLogo, '/'))) {
+        $logoUrl = ltrim($rawLogo, '/');
+    } elseif (file_exists(dirname(__DIR__) . '/' . ltrim($rawLogo, '/'))) {
+        $logoUrl = '../' . ltrim($rawLogo, '/');
+    } else {
+        $logoUrl = $rawLogo;
+    }
+} elseif (file_exists(__DIR__ . '/../media/logo.png')) {
+    $logoUrl = '../media/logo.png';
+} elseif (file_exists(__DIR__ . '/assets/img/logo_dino.png')) {
+    $logoUrl = 'assets/img/logo_dino.png';
+}
+
 if (!$emissao || empty($emissao['xml_retorno'])) {
     die("XML de retorno não encontrado para esta emissão fiscal.");
 }
@@ -41,8 +62,8 @@ $data = [
     'codigo_verificacao' => '',
     'dps_numero' => $emissao['numero_rps'] ?: '1',
     'dps_serie' => $emissao['serie_rps'] ?: '15',
-    'prestador_nome' => 'LD TECNOLOGIA DA INFORMACAO LTDA',
-    'prestador_cnpj' => '61.733.714/0001-01',
+    'prestador_nome' => $confEmissor['nome_fantasia'] ?: $confEmissor['razao_social'] ?: 'LD TECNOLOGIA DA INFORMACAO LTDA',
+    'prestador_cnpj' => $confEmissor['cnpj'] ?: '61.733.714/0001-01',
     'prestador_im' => '0841147200111',
     'prestador_endereco' => 'Brasília / DF',
     'tomador_nome' => $emissao['cliente_nome'] ?: 'DAVI NUNES DE FRANCA',
@@ -201,18 +222,26 @@ DBClose($link);
     </div>
 
     <div class="page">
-        <!-- CABEÇALHO -->
+        <!-- CABEÇALHO COM LOGO -->
         <table class="header-table">
             <tr>
-                <td style="width: 25%; text-align: center;">
-                    <div style="font-weight: bold; font-size: 16px;">SEFAZ / DF</div>
-                    <div style="font-size: 10px;">ISS-DF / Nota Control</div>
+                <td style="width: 28%; text-align: center; vertical-align: middle; padding: 6px;">
+                    <?php if (!empty($logoUrl)): ?>
+                        <img src="<?= htmlspecialchars($logoUrl) ?>" alt="Logo Prestador" style="max-height: 52px; max-width: 140px; object-fit: contain; display: block; margin: 0 auto 4px auto;">
+                    <?php else: ?>
+                        <div style="font-weight: bold; font-size: 15px; color: #1e293b;">SEFAZ / DF</div>
+                        <div style="font-size: 10px; color: #64748b;">Sistema Nacional NFS-e</div>
+                    <?php endif; ?>
+                    <div style="font-weight: bold; font-size: 11px; color: #1e293b; line-height: 1.2;">
+                        <?= htmlspecialchars($confEmissor['nome_fantasia'] ?: $confEmissor['razao_social'] ?: $data['prestador_nome']) ?>
+                    </div>
                 </td>
-                <td style="width: 50%; text-align: center;">
+                <td style="width: 44%; text-align: center; vertical-align: middle;">
                     <div class="box-title">DANFSE - Documento Auxiliar da NFS-e</div>
-                    <div style="font-size: 11px; margin-top: 4px;">Nota Fiscal de Serviços Eletrônica — Padrão Nacional</div>
+                    <div style="font-size: 11px; margin-top: 4px; color: #475569;">Nota Fiscal de Serviços Eletrônica — Padrão Nacional</div>
+                    <div style="font-size: 9px; color: #94a3b8; margin-top: 2px;">Emissão em conformidade com o Sistema Nacional (SNNFSe)</div>
                 </td>
-                <td style="width: 25%;">
+                <td style="width: 28%; vertical-align: middle;">
                     <span class="label">Número da NFS-e</span>
                     <span class="value" style="font-size: 16px; color: #0284c7;"><?= htmlspecialchars($data['numero_nota']) ?></span>
                     <span class="label" style="margin-top: 4px;">Data de Emissão</span>
