@@ -101,6 +101,7 @@ class SefinNacionalRestProvider implements NfseProviderInterface
                 $result->status = 'concluido';
                 $result->message = 'NFS-e emitida com sucesso no Emissor Público Nacional (REST).';
                 $result->chaveNfse = $json['chaveAcesso'] ?? $json['ChaveAcesso'] ?? '';
+                $result->idDps = $dpsId;
 
                 $nfseGzipB64 = $json['nfseXmlGZipB64'] ?? $json['NfseXmlGZipB64'] ?? '';
                 if (!empty($nfseGzipB64)) {
@@ -124,6 +125,14 @@ class SefinNacionalRestProvider implements NfseProviderInterface
                     }
                 } else {
                     $result->xmlRetorno = $res['response_body'];
+                }
+
+                // Fallback para número da nota caso não esteja explícito no XML (dígitos 26-38 da chave de 50 dígitos)
+                if (empty($result->numeroNota) && !empty($result->chaveNfse)) {
+                    $cleanChaveTemp = preg_replace('/\D/', '', $result->chaveNfse);
+                    if (strlen($cleanChaveTemp) === 50) {
+                        $result->numeroNota = (string)(int)substr($cleanChaveTemp, 25, 13);
+                    }
                 }
 
                 // URLs oficiais de visualização
@@ -225,6 +234,7 @@ class SefinNacionalRestProvider implements NfseProviderInterface
                 $q->success = true;
                 $q->encontrada = true;
                 $q->chaveNfse = $res['json']['chaveAcesso'] ?? $res['json']['ChaveAcesso'] ?? '';
+                $q->idDps = $dpsId;
 
                 // Se obteve a chave de acesso, busca a NFS-e completa para obter número e dados
                 if (!empty($q->chaveNfse)) {
@@ -242,6 +252,13 @@ class SefinNacionalRestProvider implements NfseProviderInterface
                             if (preg_match('/<(?:\w+:)?cVerif\b[^>]*>(.*?)<\/(?:\w+:)?cVerif>/si', $decompressedXml, $m)) {
                                 $q->codigoVerificacao = trim($m[1]);
                             }
+                        }
+                    }
+                    // Fallback para número da nota caso não esteja explícito no XML (dígitos 26-38 da chave de 50 dígitos)
+                    if (empty($q->numeroNota) && !empty($q->chaveNfse)) {
+                        $cleanChaveTemp = preg_replace('/\D/', '', $q->chaveNfse);
+                        if (strlen($cleanChaveTemp) === 50) {
+                            $q->numeroNota = (string)(int)substr($cleanChaveTemp, 25, 13);
                         }
                     }
                     $q->urlVisualizacao = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";

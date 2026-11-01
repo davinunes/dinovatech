@@ -4671,7 +4671,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
 
             if ($isNacional) {
                 try {
-                    $provider = new \Dinovatech\Modules\Fiscal\Providers\NacionalProvider($config);
+                    $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
+                    $provider = $nfseService->getActiveProvider();
                     $urlRes = $provider->consultarUrl(
                         $emissao['numero_nota'] ?: '0',
                         $emissao['serie_rps'] ?? null,
@@ -4681,7 +4682,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                     if ($urlRes->success && !empty($urlRes->urlVisualizacao)) {
                         $urlFinal = $urlRes->urlVisualizacao;
                     } elseif (!empty($emissao['codigo_verificacao']) && strpos($emissao['codigo_verificacao'], 'NFS') === 0) {
-                        $urlFinal = "https://nfse.fazenda.df.gov.br/NfseTax/Nfse/VisualizarNfse?chave=" . trim($emissao['codigo_verificacao']);
+                        $cleanChave = preg_replace('/^NFS/i', '', trim($emissao['codigo_verificacao']));
+                        $urlFinal = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";
                     }
 
                     if (!empty($urlFinal)) {
@@ -4833,7 +4835,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                 }
 
                 try {
-                    $provider = new \Dinovatech\Modules\Fiscal\Providers\NacionalProvider($config, $link);
+                    $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
+                    $provider = $nfseService->getActiveProvider();
                     $queryRes = $provider->consultarPorDocumento($serie_dps, $numero_dps);
 
                     if ($queryRes->encontrada && !empty($queryRes->numeroNota)) {
@@ -4851,7 +4854,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                         // Checa colunas extras do Padrão Nacional
                         $chkProvCol = DBExecute($link, "SHOW COLUMNS FROM NfseEmissoes LIKE 'provider'");
                         $hasExtraCols = ($chkProvCol && mysqli_num_rows($chkProvCol) > 0);
-                        $extraUpdate = $hasExtraCols ? ", provider = 'nacional', chave_nfse = '$chaveEsc', url_visualizacao_nacional = '$urlPdfEsc'" : "";
+                        $xmlRetornoEsc = mysqli_real_escape_string($link, $queryRes->xmlNfse ?: '');
+                        $activeProvName = mysqli_real_escape_string($link, $provider->getProviderName());
+                        $idDps = \Dinovatech\Modules\Fiscal\Formatters\DpsIdGenerator::generateDpsId(
+                            $config['codigo_municipio'] ?: '5300108',
+                            $config['cnpj'] ?? '',
+                            $serie_dps,
+                            $numero_dps
+                        );
+                        $idDpsEsc = mysqli_real_escape_string($link, $idDps);
+                        @mysqli_query($link, "ALTER TABLE NfseEmissoes MODIFY COLUMN provider VARCHAR(50) NOT NULL DEFAULT 'legacy'");
+                        @mysqli_query($link, "ALTER TABLE NfseEmissoes MODIFY COLUMN codigo_verificacao VARCHAR(100) NULL");
+                        @mysqli_query($link, "ALTER TABLE NfseEmissoes MODIFY COLUMN numero_nota VARCHAR(50) NULL");
+                        $calcData = AppHelper::calculateNfseData($link, $id_fatura);
+                        $valServ = $calcData['success'] ? number_format((float)$calcData['total_servicos'], 2, '.', '') : '0.00';
+                        $aliqIss = $calcData['success'] ? number_format((float)($calcData['tax_settings']['aliquota_iss'] ?: '0.00'), 2, '.', '') : '0.00';
+                        $issRet = ($calcData['success'] && !empty($calcData['tax_settings']['iss_retido'])) ? '1' : '0';
+                        $itemLista = mysqli_real_escape_string($link, $calcData['tax_settings']['item_lista_servico'] ?? '01.07');
+                        $discrim = mysqli_real_escape_string($link, $calcData['discriminacao'] ?? 'Serviços Prestados');
+                        $extraUpdate = $hasExtraCols ? ", provider = '$activeProvName', id_dps = '$idDpsEsc', chave_nfse = '$chaveEsc', url_visualizacao_nacional = '$urlPdfEsc'" : "";
 
                         $resExist = DBExecute($link, "SELECT id_emissao FROM NfseEmissoes WHERE id_fatura = '$id_fatura_esc' ORDER BY id_emissao DESC LIMIT 1");
                         if ($resExist && mysqli_num_rows($resExist) > 0) {
@@ -4865,15 +4886,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
                                 {$extraUpdate}
                                 WHERE id_emissao = '$idEm'";
                         } else {
-                            $extraCols = $hasExtraCols ? ", provider, chave_nfse, url_visualizacao_nacional" : "";
-                            $extraVals = $hasExtraCols ? ", 'nacional', '$chaveEsc', '$urlPdfEsc'" : "";
+                            $extraCols = $hasExtraCols ? ", provider, id_dps, chave_nfse, url_visualizacao_nacional" : "";
+                            $extraVals = $hasExtraCols ? ", '$activeProvName', '$idDpsEsc', '$chaveEsc', '$urlPdfEsc'" : "";
                             $qSave = "INSERT INTO NfseEmissoes (
                                 id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
                                 valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
                                 url_pdf, xml_retorno, status, data_emissao {$extraCols}
                             ) VALUES (
                                 '$id_fatura_esc', '$numDpsEsc', '$serieDpsEsc', '$numNotaEsc', '$chaveEsc', 'producao',
-                                '10.00', '2.00', '0', '01.06', 'Importacao de NFS-e Padrão Nacional',
+                                '$valServ', '$aliqIss', '$issRet', '$itemLista', '$discrim',
                                 '$urlPdfEsc', '$xmlRetornoEsc', 'concluido', NOW() {$extraVals}
                             )";
                         }

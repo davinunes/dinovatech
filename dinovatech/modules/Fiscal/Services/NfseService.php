@@ -84,6 +84,75 @@ class NfseService
         $ambiente = $calcData['ambiente'];
         $isNacional = in_array($this->provider->getProviderName(), ['nacional', 'sefin_nacional']);
 
+        // 1.1 Se a fatura já possui status de emitida ou histórico pendente, verifica se a última DPS já foi autorizada no Sefin Nacional
+        // para auto-recuperar os dados fiscais e evitar emitir nota duplicada no fisco
+        $resFat = DBExecute($this->link, "SELECT possui_nfse FROM Faturas WHERE id_fatura = '$idFatura'");
+        $fatRow = $resFat ? mysqli_fetch_assoc($resFat) : null;
+        $isFatPossuiNfse = !empty($fatRow['possui_nfse']);
+
+        $resEmCheck = DBExecute($this->link, "SELECT id_emissao FROM NfseEmissoes WHERE id_fatura = '$idFatura' AND status = 'concluido' LIMIT 1");
+        $hasEmissaoConcluida = ($resEmCheck && mysqli_num_rows($resEmCheck) > 0);
+
+        if ($hasEmissaoConcluida) {
+            $err = new EmissionResult();
+            $err->success = true;
+            $err->status = 'concluido';
+            $err->message = "Esta fatura já possui uma NFS-e autorizada e vinculada localmente.";
+            return $err;
+        }
+
+        // Auto-recuperação prévia: se a fatura já constava como emitida ou se estamos no padrão nacional,
+        // checa se o último DPS gravado nos contadores já foi autorizado na SEFIN
+        if ($isNacional) {
+            $serieDps = (string)($this->config['serie_dps'] ?? '15');
+            $currentDpsNum = ($ambiente === 'producao')
+                ? (int)($this->config['ultimo_dps_producao'] ?? 0)
+                : (int)($this->config['ultimo_dps_homologacao'] ?? 0);
+
+            if ($isFatPossuiNfse && $currentDpsNum > 0) {
+                try {
+                    $queryRecup = $this->provider->consultarPorDocumento($serieDps, $currentDpsNum);
+                    if ($queryRecup->encontrada && !empty($queryRecup->chaveNfse)) {
+                        $dtoRecup = new NfseData();
+                        $dtoRecup->idFatura = $idFatura;
+                        $dtoRecup->ambiente = $ambiente;
+                        $dtoRecup->serie = $serieDps;
+                        $dtoRecup->numero = $currentDpsNum;
+                        $dtoRecup->dataCompetencia = date('Y-m-d');
+                        $dtoRecup->valorServico = (float)$calcData['total_servicos'];
+                        $dtoRecup->aliquotaIss = (float)($calcData['tax_settings']['aliquota_iss'] ?: '0.00');
+                        $dtoRecup->issRetido = ($calcData['tax_settings']['iss_retido'] == '1');
+                        $dtoRecup->itemListaServico = $calcData['tax_settings']['item_lista_servico'] ?? '01.07';
+                        $dtoRecup->discriminacao = $calcData['discriminacao'];
+
+                        $recupResult = new EmissionResult();
+                        $recupResult->success = true;
+                        $recupResult->status = 'concluido';
+                        $recupResult->message = "NFS-e Nacional recuperada e sincronizada com sucesso do Portal Nacional!";
+                        $recupResult->numeroNota = $queryRecup->numeroNota;
+                        $recupResult->chaveNfse = $queryRecup->chaveNfse;
+                        $recupResult->codigoVerificacao = $queryRecup->codigoVerificacao ?: $queryRecup->chaveNfse;
+                        $recupResult->urlVisualizacao = $queryRecup->urlVisualizacao;
+                        $recupResult->urlVisualizacaoNacional = $queryRecup->urlVisualizacaoNacional;
+                        $recupResult->xmlRetorno = $queryRecup->xmlNfse;
+                        $recupResult->idDps = \Dinovatech\Modules\Fiscal\Formatters\DpsIdGenerator::generateDpsId(
+                            $this->config['codigo_municipio'] ?: '5300108',
+                            $this->config['cnpj'] ?? '',
+                            $serieDps,
+                            $currentDpsNum
+                        );
+
+                        $this->persistirEmissao($dtoRecup, $recupResult, $idUsuarioResponsavel);
+                        DBExecute($this->link, "UPDATE Faturas SET possui_nfse = 1, data_emissao_nfse = NOW() WHERE id_fatura = '$idFatura'");
+
+                        return $recupResult;
+                    }
+                } catch (\Throwable $tRecup) {
+                    error_log("Tentativa de recuperação prévia de NFS-e na SEFIN retornou: " . $tRecup->getMessage());
+                }
+            }
+        }
+
         // 2. Determina a série e a numeração do documento provisório (DPS ou RPS)
         if ($isNacional) {
             $serie = $this->config['serie_dps'] ?? '1';
@@ -257,11 +326,32 @@ class NfseService
         $xmlEnvio = mysqli_real_escape_string($this->link, $result->xmlEnvio ?: '');
         $xmlRetorno = mysqli_real_escape_string($this->link, $result->xmlRetorno ?: '');
 
+        // Auto-migração/cura defensiva do schema de NfseEmissoes (caso a migration SQL ainda não tenha rodado)
+        static $schemaChecked = false;
+        if (!$schemaChecked) {
+            $resProvCol = @mysqli_query($this->link, "SHOW COLUMNS FROM NfseEmissoes LIKE 'provider'");
+            if ($resProvCol && $rowCol = mysqli_fetch_assoc($resProvCol)) {
+                $type = strtolower($rowCol['Type'] ?? '');
+                if (strpos($type, 'enum') !== false) {
+                    @mysqli_query($this->link, "ALTER TABLE NfseEmissoes MODIFY COLUMN provider VARCHAR(50) NOT NULL DEFAULT 'legacy'");
+                    @mysqli_query($this->link, "ALTER TABLE NfseEmissoes MODIFY COLUMN codigo_verificacao VARCHAR(100) NULL");
+                    @mysqli_query($this->link, "ALTER TABLE NfseEmissoes MODIFY COLUMN numero_nota VARCHAR(50) NULL");
+                }
+            } else {
+                @mysqli_query($this->link, "ALTER TABLE NfseEmissoes 
+                    ADD COLUMN IF NOT EXISTS provider VARCHAR(50) NOT NULL DEFAULT 'legacy',
+                    ADD COLUMN IF NOT EXISTS id_dps VARCHAR(50) NULL AFTER provider,
+                    ADD COLUMN IF NOT EXISTS chave_nfse VARCHAR(50) NULL AFTER id_dps,
+                    ADD COLUMN IF NOT EXISTS url_visualizacao_nacional VARCHAR(255) NULL AFTER chave_nfse");
+            }
+            $schemaChecked = true;
+        }
+
         $colunasExtras = "";
         $valoresExtras = "";
 
         // Checa se as novas colunas já existem na tabela para evitar erros antes da migration
-        $resCols = DBExecute($this->link, "SHOW COLUMNS FROM NfseEmissoes LIKE 'provider'");
+        $resCols = @mysqli_query($this->link, "SHOW COLUMNS FROM NfseEmissoes LIKE 'provider'");
         if ($resCols && mysqli_num_rows($resCols) > 0) {
             $colunasExtras = ", provider, id_dps, chave_nfse, url_visualizacao_nacional";
             $valoresExtras = ", '$provider', '$idDps', '$chaveNfse', '$urlNacional'";
@@ -279,7 +369,48 @@ class NfseService
             '{$status}', '{$msgErro}', '{$xmlEnvio}', '{$xmlRetorno}' {$valoresExtras}
         )";
 
-        DBExecute($this->link, $query);
+        $ok = @mysqli_query($this->link, $query);
+        if (!$ok) {
+            $errNo = mysqli_errno($this->link);
+            $errMsg = mysqli_error($this->link);
+            error_log("Aviso: Falha ao persistir em NfseEmissoes (Erro {$errNo}: {$errMsg}). Tentando fallback...");
+
+            // Se for erro de ENUM ou truncamento na coluna provider, tenta com 'nacional'
+            if (in_array($provider, ['sefin_nacional', 'nacional_rest'])) {
+                $valoresFallback = ", 'nacional', '$idDps', '$chaveNfse', '$urlNacional'";
+                $queryFallback = "INSERT INTO NfseEmissoes (
+                    id_fatura, id_usuario_responsavel, data_emissao, ambiente,
+                    valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
+                    numero_rps, serie_rps, numero_nota, codigo_verificacao, url_pdf,
+                    status, mensagem_erro, xml_envio, xml_retorno {$colunasExtras}
+                ) VALUES (
+                    '{$idFatura}', " . ($idUsuario ? "'$idUsuario'" : "NULL") . ", NOW(), '{$ambiente}',
+                    '{$valorServico}', '{$aliquota}', '{$issRetido}', '{$itemLista}', '{$discriminacao}',
+                    '{$dto->numero}', '{$dto->serie}', '{$numeroNota}', '{$codigoVerif}', '{$urlPdf}',
+                    '{$status}', '{$msgErro}', '{$xmlEnvio}', '{$xmlRetorno}' {$valoresFallback}
+                )";
+                $ok = @mysqli_query($this->link, $queryFallback);
+            }
+
+            // Se ainda não gravou, tenta inserção básica sem colunas extras
+            if (!$ok) {
+                $queryBasica = "INSERT INTO NfseEmissoes (
+                    id_fatura, id_usuario_responsavel, data_emissao, ambiente,
+                    valor_servico, aliquota_iss, iss_retido, item_lista_servico, discriminacao,
+                    numero_rps, serie_rps, numero_nota, codigo_verificacao, url_pdf,
+                    status, mensagem_erro, xml_envio, xml_retorno
+                ) VALUES (
+                    '{$idFatura}', " . ($idUsuario ? "'$idUsuario'" : "NULL") . ", NOW(), '{$ambiente}',
+                    '{$valorServico}', '{$aliquota}', '{$issRetido}', '{$itemLista}', '{$discriminacao}',
+                    '{$dto->numero}', '{$dto->serie}', '{$numeroNota}', '{$codigoVerif}', '{$urlPdf}',
+                    '{$status}', '{$msgErro}', '{$xmlEnvio}', '{$xmlRetorno}'
+                )";
+                $ok = @mysqli_query($this->link, $queryBasica);
+                if (!$ok) {
+                    error_log("Erro CRÍTICO ao salvar NfseEmissoes: " . mysqli_error($this->link));
+                }
+            }
+        }
     }
 
     private function incrementarContador(string $ambiente, bool $isNacional, int $numero): void

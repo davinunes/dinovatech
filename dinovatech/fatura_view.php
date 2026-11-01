@@ -493,7 +493,7 @@ if ($id_fatura) {
 
                                         if ($statusLower == 'concluido') {
                                             // Identifica se a emissão pertence ao Padrão Nacional
-                                            $isNacional = (!empty($nfse['provider']) && $nfse['provider'] === 'nacional') ||
+                                            $isNacional = (!empty($nfse['provider']) && in_array($nfse['provider'], ['nacional', 'sefin_nacional', 'nacional_rest'])) ||
                                                           (!empty($nfse['chave_nfse'])) ||
                                                           (isset($nfse['codigo_verificacao']) && preg_match('/^NFS[0-9A-Z]{40,}/i', $nfse['codigo_verificacao'])) ||
                                                           (!empty($nfse['url_visualizacao_nacional']));
@@ -546,7 +546,24 @@ if ($id_fatura) {
 
                                 // Render Active
                                 if (empty($nfse_list)) {
-                                    echo "<p class='text-xs text-gray-400 mb-2 italic'>Nenhuma nota emitida.</p>";
+                                    if ($hasCompletedNfse) {
+                                        $dpsSugerida = (int)($config_emissor['ultimo_dps_producao'] ?? 1);
+                                        $serieSugerida = htmlspecialchars($config_emissor['serie_dps'] ?? '15');
+                                        echo '<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-xs text-amber-800">';
+                                        echo '<div class="flex items-center gap-1.5 font-bold mb-1">';
+                                        echo '<span class="material-icons text-sm text-amber-600">sync_problem</span>';
+                                        echo 'Nota fiscal autorizada aguardando sincronização local';
+                                        echo '</div>';
+                                        echo '<p class="text-[11px] mb-2 leading-relaxed text-amber-700">';
+                                        echo 'Esta fatura consta como emitida no Portal Nacional, mas o registro local não foi salvo. Clique abaixo para sincronizar a DPS ' . $dpsSugerida . ' (Série ' . $serieSugerida . ') diretamente da SEFIN Nacional.';
+                                        echo '</p>';
+                                        echo '<button type="button" onclick="sincronizarDpsDireto(' . $id_fatura . ', \'' . $serieSugerida . '\', ' . $dpsSugerida . ')" id="btnSincronizarDps" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-sm">';
+                                        echo '<span class="material-icons text-xs">sync</span> Sincronizar DPS ' . $dpsSugerida . ' Agora';
+                                        echo '</button>';
+                                        echo '</div>';
+                                    } else {
+                                        echo "<p class='text-xs text-gray-400 mb-2 italic'>Nenhuma nota emitida.</p>";
+                                    }
                                 } else {
                                     foreach ($activeNfse as $nfse)
                                         echo renderNfseItem($nfse);
@@ -1256,7 +1273,7 @@ if ($id_fatura) {
                         </div>
                         <div class="col-span-2">
                             <label class="block text-xs font-bold text-gray-700 mb-1">Número da DPS *</label>
-                            <input type="number" name="numero_dps" id="inputNumeroDps" required placeholder="Ex: 1"
+                            <input type="number" name="numero_dps" id="inputNumeroDps" required placeholder="Ex: 1" value="<?= htmlspecialchars($config_emissor['ultimo_dps_producao'] ?? '') ?>"
                                 class="w-full p-2 border rounded-lg text-sm font-semibold">
                         </div>
                     </div>
@@ -1746,6 +1763,29 @@ if ($id_fatura) {
             }, 'json');
         }
 
+
+        function sincronizarDpsDireto(idFatura, serie, numero) {
+            const btn = $('#btnSincronizarDps');
+            btn.prop('disabled', true).html('<span class="material-icons animate-spin text-xs mr-1">refresh</span> Sincronizando com SEFIN Nacional...');
+            $.post('app.php', {
+                action: 'consultar_e_vincular_nfse',
+                id_fatura: idFatura,
+                modelo_provedor: 'nacional',
+                serie_dps: serie,
+                numero_dps: numero
+            }, function(res) {
+                if (res.success) {
+                    showToast(res.message, 'success');
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showToast(res.message || 'Erro ao sincronizar.', 'error');
+                    btn.prop('disabled', false).html('<span class="material-icons text-xs mr-1">sync</span> Tentar Novamente');
+                }
+            }, 'json').fail(function() {
+                showToast('Falha na comunicação com o servidor.', 'error');
+                btn.prop('disabled', false).html('<span class="material-icons text-xs mr-1">sync</span> Tentar Novamente');
+            });
+        }
 
         function gerarNfse() {
             if (!confirm('Deseja iniciar a geração da NFS-e para esta fatura?')) return;
