@@ -77,21 +77,32 @@ $data = [
     'item_lista' => $emissao['item_lista_servico'] ?: '01.06'
 ];
 
-// Extração dinâmica do XML retornado pela SEFAZ
+// Extração dinâmica do XML retornado pela SEFAZ / Sefin Nacional
 if (preg_match('/<nNFSe>(.*?)<\/nNFSe>/i', $xmlContent, $m) || preg_match('/<nDFSe>(.*?)<\/nDFSe>/i', $xmlContent, $m)) {
     $data['numero_nota'] = trim($m[1]);
 }
 if (preg_match('/Id="NFS([0-9A-Z]{50})"/i', $xmlContent, $m) || preg_match('/<chNFSe>(.*?)<\/chNFSe>/i', $xmlContent, $m)) {
     $data['chave_nfse'] = trim($m[1]);
 }
-if (preg_match('/<cVerifNFSeMun>(.*?)<\/cVerifNFSeMun>/i', $xmlContent, $m)) {
+if (preg_match('/<cVerifNFSeMun>(.*?)<\/cVerifNFSeMun>/i', $xmlContent, $m) || preg_match('/<cVerif>(.*?)<\/cVerif>/i', $xmlContent, $m)) {
     $data['codigo_verificacao'] = trim($m[1]);
 }
 if (preg_match('/<dhProc>(.*?)<\/dhProc>/i', $xmlContent, $m) || preg_match('/<dhEmi>(.*?)<\/dhEmi>/i', $xmlContent, $m)) {
     $data['data_emissao'] = date('d/m/Y H:i:s', strtotime(trim($m[1])));
 }
-if (preg_match('/<xNome>(.*?)<\/xNome>/i', $xmlContent, $m)) {
+if (preg_match('/<prest\b[^>]*>.*?<xNome>(.*?)<\/xNome>/si', $xmlContent, $m)) {
     $data['prestador_nome'] = trim($m[1]);
+} elseif (preg_match('/<xNome>(.*?)<\/xNome>/i', $xmlContent, $m)) {
+    $data['prestador_nome'] = trim($m[1]);
+}
+if (preg_match('/<toma\b[^>]*>.*?<xNome>(.*?)<\/xNome>/si', $xmlContent, $m)) {
+    $data['tomador_nome'] = trim($m[1]);
+}
+if (preg_match('/<nDPS>(.*?)<\/nDPS>/i', $xmlContent, $m)) {
+    $data['dps_numero'] = trim($m[1]);
+}
+if (preg_match('/<serie>(.*?)<\/serie>/i', $xmlContent, $m)) {
+    $data['dps_serie'] = trim($m[1]);
 }
 if (preg_match('/<xDescServ>(.*?)<\/xDescServ>/i', $xmlContent, $m)) {
     $data['discriminacao'] = trim($m[1]);
