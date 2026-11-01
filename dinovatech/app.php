@@ -4797,6 +4797,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
         case 'consultar_e_vincular_nfse':
             $id_fatura = $_POST['id_fatura'] ?? '';
             $modelo_provedor = $_POST['modelo_provedor'] ?? 'nacional';
+            $chave_acesso = trim($_POST['chave_acesso'] ?? '');
             $numero_dps = (int)($_POST['numero_dps'] ?? 0);
             $serie_dps = trim($_POST['serie_dps'] ?? '15');
             $tipo_busca = $_POST['tipo_busca'] ?? 'numero_nota';
@@ -4827,17 +4828,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             }
 
             // CONSULTA PADRÃO NACIONAL (SÉRIE / DPS)
-            if ($modelo_provedor === 'nacional' || ($numero_dps > 0 && empty($numero_busca))) {
-                if (!$numero_dps) {
+            if ($modelo_provedor === 'nacional' || !empty($chave_acesso) || ($numero_dps > 0 && empty($numero_busca))) {
+                if (empty($chave_acesso) && !$numero_dps) {
                     $response['success'] = false;
-                    $response['message'] = "Informe o Número da DPS para consulta no Padrão Nacional.";
+                    $response['message'] = "Informe o Número da DPS ou a Chave de Acesso (50 dígitos) para consulta no Padrão Nacional.";
                     break;
                 }
 
                 try {
                     $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
                     $provider = $nfseService->getActiveProvider();
-                    $queryRes = $provider->consultarPorDocumento($serie_dps, $numero_dps);
+                    if (!empty($chave_acesso) && method_exists($provider, 'consultarPorChave')) {
+                        $queryRes = $provider->consultarPorChave($chave_acesso);
+                        if (!empty($queryRes->numeroDps)) {
+                            $numero_dps = $queryRes->numeroDps;
+                            $serie_dps = $queryRes->serieDps ?: $serie_dps;
+                        }
+                    } else {
+                        $queryRes = $provider->consultarPorDocumento($serie_dps, $numero_dps);
+                    }
 
                     if ($queryRes->encontrada && !empty($queryRes->numeroNota)) {
                         $numNotaEsc = mysqli_real_escape_string($link, $queryRes->numeroNota);
@@ -5145,10 +5154,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             ];
             break;
 
+        case 'importar_nfse_xml':
+            $id_fatura = $_POST['id_fatura'] ?? '';
+            if (empty($id_fatura)) {
+                $response['success'] = false;
+                $response['message'] = "ID da Fatura é obrigatório.";
+                break;
+            }
+
+            $xmlContent = '';
+            if (isset($_FILES['xml_file']) && $_FILES['xml_file']['error'] === UPLOAD_ERR_OK) {
+                $xmlContent = file_get_contents($_FILES['xml_file']['tmp_name']);
+            } elseif (!empty($_POST['xml_content'])) {
+                $xmlContent = trim($_POST['xml_content']);
+            }
+
+            if (empty($xmlContent)) {
+                $response['success'] = false;
+                $response['message'] = "Selecione um arquivo .xml ou cole o conteúdo do XML da NFS-e.";
+                break;
+            }
+
+            try {
+                $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
+                $userId = $_SESSION['usuario_id'] ?? null;
+                $importRes = $nfseService->importarXmlNfse((int)$id_fatura, $xmlContent, $userId);
+
+                $response['success'] = $importRes['success'];
+                $response['message'] = $importRes['message'];
+                if (!empty($importRes['numero_nota'])) {
+                    $response['numero_nota'] = $importRes['numero_nota'];
+                }
+                if (!empty($importRes['chave_nfse'])) {
+                    $response['chave_nfse'] = $importRes['chave_nfse'];
+                }
+            } catch (\Throwable $e) {
+                $response['success'] = false;
+                $response['message'] = "Erro ao processar e vincular o XML da NFS-e: " . $e->getMessage();
+            }
+            break;
+
         case 'vincular_nfse_manual':
             $id_fatura = $_POST['id_fatura'] ?? '';
             $numero_nota = trim($_POST['numero_nota'] ?? '');
             $codigo_verificacao = trim($_POST['codigo_verificacao'] ?? '');
+            $chave_nfse = trim($_POST['chave_nfse'] ?? '');
             $numero_rps = trim($_POST['numero_rps'] ?? '');
             $serie_rps = trim($_POST['serie_rps'] ?? '');
             $url_pdf = trim($_POST['url_pdf'] ?? '');
@@ -5183,12 +5233,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $urlPdf_esc = mysqli_real_escape_string($link, $url_pdf);
             $valServ_esc = number_format((float)($fatura['valor_total'] ?? 0), 2, '.', '');
 
+            if (empty($chave_nfse) && preg_match('/^[0-9A-Z]{40,50}$/i', $codigo_verificacao)) {
+                $chave_nfse = $codigo_verificacao;
+            }
+
+            $isNacional = !empty($chave_nfse) || in_array($config['nfse_provider'] ?? '', ['nacional', 'sefin_nacional']);
+            $providerVal = $isNacional ? ($config['nfse_provider'] ?? 'sefin_nacional') : 'legacy';
+
+            if (!empty($chave_nfse) && empty($url_pdf)) {
+                $cleanChave = preg_replace('/^NFS/i', '', trim($chave_nfse));
+                $url_pdf = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";
+                $urlPdf_esc = mysqli_real_escape_string($link, $url_pdf);
+            }
+
+            @mysqli_query($link, "ALTER TABLE NfseEmissoes MODIFY COLUMN provider VARCHAR(50) NOT NULL DEFAULT 'legacy'");
+            @mysqli_query($link, "ALTER TABLE NfseEmissoes MODIFY COLUMN codigo_verificacao VARCHAR(100) NULL");
+            @mysqli_query($link, "ALTER TABLE NfseEmissoes MODIFY COLUMN numero_nota VARCHAR(50) NULL");
+
+            $chkProvCol = DBExecute($link, "SHOW COLUMNS FROM NfseEmissoes LIKE 'provider'");
+            $hasExtraCols = ($chkProvCol && mysqli_num_rows($chkProvCol) > 0);
+            $idDpsVal = (!empty($numero_rps) && $isNacional)
+                ? \Dinovatech\Modules\Fiscal\Formatters\DpsIdGenerator::generateDpsId($config['codigo_municipio'] ?: '5300108', $config['cnpj'] ?? '', $serieFinal, (int)$numero_rps)
+                : '';
+            $idDpsEsc = mysqli_real_escape_string($link, $idDpsVal);
+            $chaveEsc = mysqli_real_escape_string($link, $chave_nfse);
+            $extraCols = $hasExtraCols ? ", provider, id_dps, chave_nfse, url_visualizacao_nacional" : "";
+            $extraVals = $hasExtraCols ? ", '$providerVal', '$idDpsEsc', '$chaveEsc', '$urlPdf_esc'" : "";
+
             $queryIns = "INSERT INTO NfseEmissoes (
                 id_fatura, numero_rps, serie_rps, numero_nota, codigo_verificacao, ambiente,
-                valor_servico, aliquota_iss, iss_retido, url_pdf, status, data_emissao
+                valor_servico, aliquota_iss, iss_retido, url_pdf, status, data_emissao {$extraCols}
             ) VALUES (
                 '$id_fatura_esc', $numRps_esc, '$serieRps_esc', '$numNota_esc', '$codVerif_esc', '$ambiente',
-                '$valServ_esc', '0.00', 0, '$urlPdf_esc', 'concluido', '$dataEmissaoFinal'
+                '$valServ_esc', '0.00', 0, '$urlPdf_esc', 'concluido', '$dataEmissaoFinal' {$extraVals}
             )";
             $resIns = DBExecute($link, $queryIns);
 

@@ -12,6 +12,8 @@ class QueryResult
     public ?string $urlVisualizacao = null;
     public ?string $xmlRetorno = null;
     public ?string $idDps = null;
+    public ?int $numeroDps = null;
+    public ?string $serieDps = null;
     public ?string $urlVisualizacaoNacional = null;
     public ?string $xmlNfse = null;
     public array $erros = [];

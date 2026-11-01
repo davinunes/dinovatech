@@ -546,24 +546,27 @@ if ($id_fatura) {
 
                                 // Render Active
                                 if (empty($nfse_list)) {
-                                    if ($hasCompletedNfse) {
-                                        $dpsSugerida = (int)($config_emissor['ultimo_dps_producao'] ?? 1);
-                                        $serieSugerida = htmlspecialchars($config_emissor['serie_dps'] ?? '15');
-                                        echo '<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-xs text-amber-800">';
-                                        echo '<div class="flex items-center gap-1.5 font-bold mb-1">';
-                                        echo '<span class="material-icons text-sm text-amber-600">sync_problem</span>';
-                                        echo 'Nota fiscal autorizada aguardando sincronização local';
-                                        echo '</div>';
-                                        echo '<p class="text-[11px] mb-2 leading-relaxed text-amber-700">';
-                                        echo 'Esta fatura consta como emitida no Portal Nacional, mas o registro local não foi salvo. Clique abaixo para sincronizar a DPS ' . $dpsSugerida . ' (Série ' . $serieSugerida . ') diretamente da SEFIN Nacional.';
-                                        echo '</p>';
-                                        echo '<button type="button" onclick="sincronizarDpsDireto(' . $id_fatura . ', \'' . $serieSugerida . '\', ' . $dpsSugerida . ')" id="btnSincronizarDps" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-3 rounded text-xs transition flex items-center justify-center gap-1 shadow-sm">';
-                                        echo '<span class="material-icons text-xs">sync</span> Sincronizar DPS ' . $dpsSugerida . ' Agora';
-                                        echo '</button>';
-                                        echo '</div>';
-                                    } else {
-                                        echo "<p class='text-xs text-gray-400 mb-2 italic'>Nenhuma nota emitida.</p>";
-                                    }
+                                    $dpsSugerida = (int)($config_emissor['ultimo_dps_producao'] ?? 1);
+                                    $serieSugerida = htmlspecialchars($config_emissor['serie_dps'] ?? '15');
+                                    echo '<div class="bg-blue-50/70 border border-blue-200/80 rounded-xl p-3 mb-3 text-xs text-blue-900">';
+                                    echo '<div class="flex items-center justify-between mb-1.5">';
+                                    echo '<span class="font-bold flex items-center gap-1.5 text-blue-950">';
+                                    echo '<span class="material-icons text-sm text-cyan-600">sync_alt</span> Sincronização / Vínculo Fiscal';
+                                    echo '</span>';
+                                    echo '<span class="text-[10px] bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded-full">SEFIN Nacional</span>';
+                                    echo '</div>';
+                                    echo '<p class="text-[11px] mb-2.5 leading-relaxed text-blue-800/90">';
+                                    echo 'Já autorizou a nota no Portal Nacional ou deseja consultar a DPS ' . $dpsSugerida . ' (Série ' . $serieSugerida . ') na SEFIN? Sincronize abaixo ou importe o XML da nota:';
+                                    echo '</p>';
+                                    echo '<div class="grid grid-cols-2 gap-2">';
+                                    echo '<button type="button" onclick="sincronizarDpsDireto(' . $id_fatura . ', \'' . $serieSugerida . '\', ' . $dpsSugerida . ')" id="btnSincronizarDps" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 px-2.5 rounded-lg text-xs transition flex items-center justify-center gap-1 shadow-xs truncate">';
+                                    echo '<span class="material-icons text-xs">sync</span> Sincronizar DPS ' . $dpsSugerida;
+                                    echo '</button>';
+                                    echo '<button type="button" onclick="openImportarNfseModal()" class="bg-white hover:bg-blue-50 text-cyan-700 font-bold py-2 px-2.5 rounded-lg text-xs border border-cyan-300 transition flex items-center justify-center gap-1 shadow-xs truncate">';
+                                    echo '<span class="material-icons text-xs">upload_file</span> Importar XML / Chave';
+                                    echo '</button>';
+                                    echo '</div>';
+                                    echo '</div>';
                                 } else {
                                     foreach ($activeNfse as $nfse)
                                         echo renderNfseItem($nfse);
@@ -1211,7 +1214,7 @@ if ($id_fatura) {
     <!-- Modal Importar / Vincular NFS-e -->
     <div id="modalImportarNfse"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden no-print">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-xl p-6 relative max-h-[90vh] overflow-y-auto">
             <div class="flex items-center justify-between border-b pb-3 mb-4">
                 <div class="flex items-center space-x-2">
                     <span class="material-icons text-cyan-600">receipt_long</span>
@@ -1226,27 +1229,27 @@ if ($id_fatura) {
             <!-- Tabs de Navegação -->
             <div class="flex border-b border-gray-200 mb-4">
                 <button type="button" id="tabBtnConsulta" onclick="switchNfseImportTab('consulta')"
-                    class="py-2 px-4 text-xs font-bold border-b-2 border-cyan-600 text-cyan-600 flex items-center gap-1">
-                    <span class="material-icons text-sm">travel_explore</span> Consultar no ISS DF
+                    class="py-2 px-3 text-xs font-bold border-b-2 border-cyan-600 text-cyan-600 flex items-center gap-1 transition-colors">
+                    <span class="material-icons text-sm">travel_explore</span> Consultar SEFIN
+                </button>
+                <button type="button" id="tabBtnXml" onclick="switchNfseImportTab('xml')"
+                    class="py-2 px-3 text-xs font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent flex items-center gap-1 transition-colors">
+                    <span class="material-icons text-sm">upload_file</span> Enviar XML
                 </button>
                 <button type="button" id="tabBtnManual" onclick="switchNfseImportTab('manual')"
-                    class="py-2 px-4 text-xs font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent flex items-center gap-1">
-                    <span class="material-icons text-sm">edit_note</span> Vínculo Manual
+                    class="py-2 px-3 text-xs font-medium text-gray-500 hover:text-gray-700 border-b-2 border-transparent flex items-center gap-1 transition-colors">
+                    <span class="material-icons text-sm">edit_note</span> Digitação Manual
                 </button>
             </div>
 
-            <!-- Aba 1: Consulta Automática no ISS -->
+            <!-- Aba 1: Consulta Automática na SEFIN / ISS -->
             <div id="tabContentConsulta">
                 <form id="formConsultaNfse">
                     <input type="hidden" name="action" value="consultar_e_vincular_nfse">
                     <input type="hidden" name="id_fatura" value="<?= $id_fatura ?>">
 
                     <div class="bg-cyan-50 p-3 rounded-lg border border-cyan-100 mb-4 text-xs text-cyan-900 leading-relaxed">
-                        <span class="font-bold">Como funciona:</span> O sistema usará o certificado digital para consultar a nota no ISS DF (ISSNet), baixará os dados fiscais e o XML assinado, vinculando-a diretamente a esta fatura.
-                    </div>
-
-                    <div class="bg-cyan-50 p-3 rounded-lg border border-cyan-100 mb-4 text-xs text-cyan-900 leading-relaxed">
-                        <span class="font-bold">Como funciona:</span> O sistema usará o certificado digital para consultar a nota na SEFAZ-DF (Padrão Nacional) ou no ISS-DF (Legado), baixará os dados fiscais e o XML assinado, vinculando-a diretamente a esta fatura.
+                        <span class="font-bold">Como funciona:</span> O sistema consultará a nota na SEFIN Nacional (ou ISS-DF Legado) via certificado digital A1, baixará os dados fiscais e o XML autorizado, vinculando-a automaticamente a esta fatura.
                     </div>
 
                     <!-- Toggle Modelo de Integração -->
@@ -1255,7 +1258,7 @@ if ($id_fatura) {
                         <div class="grid grid-cols-2 gap-2">
                             <label class="flex items-center p-2.5 border-2 rounded-lg cursor-pointer hover:bg-cyan-50/50 text-xs font-bold text-cyan-900 border-cyan-500 bg-cyan-50/30" id="lblProvNacional">
                                 <input type="radio" name="modelo_provedor" value="nacional" checked class="mr-2 text-cyan-600" onchange="toggleModeloProvedor(this.value)">
-                                <span>Padrão Nacional (Série / DPS)</span>
+                                <span>Padrão Nacional (Série / DPS / Chave)</span>
                             </label>
                             <label class="flex items-center p-2.5 border rounded-lg cursor-pointer hover:bg-gray-50 text-xs font-medium text-gray-700 border-gray-200" id="lblProvLegado">
                                 <input type="radio" name="modelo_provedor" value="legado" class="mr-2 text-cyan-600" onchange="toggleModeloProvedor(this.value)">
@@ -1265,16 +1268,31 @@ if ($id_fatura) {
                     </div>
 
                     <!-- Campos Padrão Nacional -->
-                    <div id="divNacionalFields" class="grid grid-cols-3 gap-3 mb-4">
+                    <div id="divNacionalFields" class="space-y-3 mb-4">
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Série DPS *</label>
-                            <input type="text" name="serie_dps" value="<?= htmlspecialchars($config_emissor['serie_dps'] ?? '15') ?>"
-                                class="w-full p-2 border rounded-lg text-sm font-semibold">
+                            <label class="block text-xs font-bold text-gray-700 mb-1">Chave de Acesso Nacional (50 dígitos)</label>
+                            <input type="text" name="chave_acesso" maxlength="50" placeholder="Ex: 5326116173371400010100015000000000000008..."
+                                class="w-full p-2 border border-gray-300 rounded-lg text-xs font-mono focus:border-cyan-500">
+                            <p class="text-[10px] text-gray-500 mt-0.5">Se informada a chave de 50 dígitos, a consulta é direta e prioritária.</p>
                         </div>
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-gray-700 mb-1">Número da DPS *</label>
-                            <input type="number" name="numero_dps" id="inputNumeroDps" required placeholder="Ex: 1" value="<?= htmlspecialchars($config_emissor['ultimo_dps_producao'] ?? '') ?>"
-                                class="w-full p-2 border rounded-lg text-sm font-semibold">
+
+                        <div class="relative flex py-1 items-center">
+                            <div class="flex-grow border-t border-gray-200"></div>
+                            <span class="flex-shrink mx-2 text-[10px] text-gray-400 uppercase font-semibold">OU POR SÉRIE / NÚMERO DPS</span>
+                            <div class="flex-grow border-t border-gray-200"></div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Série DPS</label>
+                                <input type="text" name="serie_dps" value="<?= htmlspecialchars($config_emissor['serie_dps'] ?? '15') ?>"
+                                    class="w-full p-2 border rounded-lg text-sm font-semibold">
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-xs font-bold text-gray-700 mb-1">Número da DPS</label>
+                                <input type="number" name="numero_dps" id="inputNumeroDps" placeholder="Ex: 8" value="<?= htmlspecialchars($config_emissor['ultimo_dps_producao'] ?? '') ?>"
+                                    class="w-full p-2 border rounded-lg text-sm font-semibold">
+                            </div>
                         </div>
                     </div>
 
@@ -1319,20 +1337,65 @@ if ($id_fatura) {
                 </form>
             </div>
 
-            <!-- Aba 2: Vínculo Manual Direto -->
+            <!-- Aba 2: Importar Arquivo XML -->
+            <div id="tabContentXml" class="hidden">
+                <form id="formUploadXmlNfse" enctype="multipart/form-data">
+                    <input type="hidden" name="action" value="importar_nfse_xml">
+                    <input type="hidden" name="id_fatura" value="<?= $id_fatura ?>">
+
+                    <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100 mb-4 text-xs text-emerald-900 leading-relaxed">
+                        <span class="font-bold">Importação Automática via XML:</span> Carregue o arquivo XML baixado do Emissor Nacional ou cole o código XML. Todos os dados (número, chave de acesso, DPS, data, tomador e valores) serão extraídos e validados automaticamente.
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Selecione o Arquivo XML (.xml)</label>
+                        <input type="file" name="xml_file" id="inputXmlFile" accept=".xml,text/xml"
+                            class="w-full p-2 border border-gray-300 rounded-lg text-xs file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                    </div>
+
+                    <div class="relative flex py-1 items-center my-3">
+                        <div class="flex-grow border-t border-gray-200"></div>
+                        <span class="flex-shrink mx-2 text-[10px] text-gray-400 uppercase font-semibold">OU COLE O CONTEÚDO XML</span>
+                        <div class="flex-grow border-t border-gray-200"></div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Conteúdo XML da NFS-e</label>
+                        <textarea name="xml_content" id="inputXmlContent" rows="6" placeholder="Cole o XML completo aqui (<NFSe xmlns=... ou <DPS xmlns=...)"
+                            class="w-full p-2 border border-gray-300 rounded-lg text-xs font-mono leading-tight focus:ring-2 focus:ring-emerald-500"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-3 border-t">
+                        <button type="button" onclick="$('#modalImportarNfse').addClass('hidden')"
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium rounded-lg">Cancelar</button>
+                        <button type="submit" id="btnSubmitXmlNfse"
+                            class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg flex items-center gap-1 shadow">
+                            <span class="material-icons text-sm">upload_file</span> Processar e Vincular XML
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Aba 3: Vínculo Manual Direto -->
             <div id="tabContentManual" class="hidden">
                 <form id="formManualNfse">
                     <input type="hidden" name="action" value="vincular_nfse_manual">
                     <input type="hidden" name="id_fatura" value="<?= $id_fatura ?>">
 
                     <div class="bg-amber-50 p-3 rounded-lg border border-amber-100 mb-4 text-xs text-amber-900 leading-relaxed">
-                        <span class="font-bold">Vínculo Direto:</span> Utilize esta opção caso o WebService da prefeitura esteja offline ou com instabilidade.
+                        <span class="font-bold">Digitação Manual:</span> Utilize esta opção para vincular os dados manualmente caso não tenha o XML ou a consulta automática não esteja disponível.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="block text-xs font-bold text-gray-700 mb-1">Chave de Acesso Nacional (50 dígitos)</label>
+                        <input type="text" name="chave_acesso" maxlength="50" placeholder="Ex: 5326116173371400010100015000000000000008..."
+                            class="w-full p-2 border rounded-lg text-xs font-mono">
                     </div>
 
                     <div class="grid grid-cols-2 gap-3 mb-3">
                         <div>
                             <label class="block text-xs font-bold text-gray-700 mb-1">Número da NFS-e *</label>
-                            <input type="text" name="numero_nota" required placeholder="Ex: 53"
+                            <input type="text" name="numero_nota" required placeholder="Ex: 1"
                                 class="w-full p-2 border rounded-lg text-sm font-semibold">
                         </div>
                         <div>
@@ -1344,13 +1407,13 @@ if ($id_fatura) {
 
                     <div class="grid grid-cols-3 gap-3 mb-3">
                         <div class="col-span-2">
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Número do RPS</label>
-                            <input type="number" name="numero_rps" placeholder="Ex: 60"
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Número da DPS / RPS</label>
+                            <input type="number" name="numero_rps" value="<?= htmlspecialchars($config_emissor['ultimo_dps_producao'] ?? '') ?>" placeholder="Ex: 8"
                                 class="w-full p-2 border rounded-lg text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Série RPS</label>
-                            <input type="text" name="serie_rps" value="<?= htmlspecialchars($config_emissor['serie_rps'] ?? '3') ?>"
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Série DPS</label>
+                            <input type="text" name="serie_rps" value="<?= htmlspecialchars($config_emissor['serie_dps'] ?? '15') ?>"
                                 class="w-full p-2 border rounded-lg text-sm">
                         </div>
                     </div>
@@ -1362,7 +1425,7 @@ if ($id_fatura) {
                                 class="w-full p-2 border rounded-lg text-sm">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-gray-700 mb-1">Link do PDF (Opcional)</label>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">Link do PDF / Visualização</label>
                             <input type="url" name="url_pdf" placeholder="https://..."
                                 class="w-full p-2 border rounded-lg text-sm">
                         </div>
@@ -1541,16 +1604,20 @@ if ($id_fatura) {
         function openImportarNfseModal() { $('#modalImportarNfse').removeClass('hidden'); }
 
         function switchNfseImportTab(tab) {
+            $('#tabBtnConsulta, #tabBtnXml, #tabBtnManual')
+                .removeClass('border-cyan-600 text-cyan-600 font-bold')
+                .addClass('border-transparent text-gray-500 font-medium');
+            $('#tabContentConsulta, #tabContentXml, #tabContentManual').addClass('hidden');
+
             if (tab === 'consulta') {
                 $('#tabBtnConsulta').addClass('border-cyan-600 text-cyan-600 font-bold').removeClass('border-transparent text-gray-500 font-medium');
-                $('#tabBtnManual').removeClass('border-cyan-600 text-cyan-600 font-bold').addClass('border-transparent text-gray-500 font-medium');
                 $('#tabContentConsulta').removeClass('hidden');
-                $('#tabContentManual').addClass('hidden');
+            } else if (tab === 'xml') {
+                $('#tabBtnXml').addClass('border-cyan-600 text-cyan-600 font-bold').removeClass('border-transparent text-gray-500 font-medium');
+                $('#tabContentXml').removeClass('hidden');
             } else {
                 $('#tabBtnManual').addClass('border-cyan-600 text-cyan-600 font-bold').removeClass('border-transparent text-gray-500 font-medium');
-                $('#tabBtnConsulta').removeClass('border-cyan-600 text-cyan-600 font-bold').addClass('border-transparent text-gray-500 font-medium');
                 $('#tabContentManual').removeClass('hidden');
-                $('#tabContentConsulta').addClass('hidden');
             }
         }
 
@@ -1560,14 +1627,12 @@ if ($id_fatura) {
                 $('#divLegadoFields').addClass('hidden');
                 $('#lblProvNacional').addClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').removeClass('border-gray-200 font-medium text-gray-700 border');
                 $('#lblProvLegado').removeClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').addClass('border-gray-200 font-medium text-gray-700 border');
-                $('#inputNumeroDps').prop('required', true);
                 $('#inputNumeroBusca').prop('required', false);
             } else {
                 $('#divLegadoFields').removeClass('hidden');
                 $('#divNacionalFields').addClass('hidden');
                 $('#lblProvLegado').addClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').removeClass('border-gray-200 font-medium text-gray-700 border');
                 $('#lblProvNacional').removeClass('border-cyan-500 bg-cyan-50/30 text-cyan-900 font-bold border-2').addClass('border-gray-200 font-medium text-gray-700 border');
-                $('#inputNumeroDps').prop('required', false);
                 $('#inputNumeroBusca').prop('required', true);
             }
         }
@@ -1897,6 +1962,38 @@ if ($id_fatura) {
                 }, 'json').fail(function () {
                     showToast('Erro de comunicação com o servidor.', 'error');
                     btn.prop('disabled', false).html(origHtml);
+                });
+            });
+
+            $('#formUploadXmlNfse').on('submit', function (e) {
+                e.preventDefault();
+                const btn = $('#btnSubmitXmlNfse');
+                const origHtml = btn.html();
+                btn.prop('disabled', true).html('<span class="material-icons animate-spin text-sm">refresh</span> Processando XML...');
+
+                const formData = new FormData(this);
+
+                $.ajax({
+                    url: 'app.php',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function (res) {
+                        if (res.success) {
+                            showToast(res.message, 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showToast(res.message || 'Erro ao importar XML', 'error');
+                            alert(res.message || 'Erro ao importar XML.');
+                            btn.prop('disabled', false).html(origHtml);
+                        }
+                    },
+                    error: function () {
+                        showToast('Erro de comunicação com o servidor ao enviar XML.', 'error');
+                        btn.prop('disabled', false).html(origHtml);
+                    }
                 });
             });
 

@@ -285,6 +285,78 @@ class SefinNacionalRestProvider implements NfseProviderInterface
         return $q;
     }
 
+    public function consultarPorChave(string $chaveAcesso): QueryResult
+    {
+        $q = new QueryResult();
+
+        try {
+            $cleanChave = preg_replace('/^NFS/i', '', trim($chaveAcesso));
+            $cleanChave = preg_replace('/\D/', '', $cleanChave);
+            if (strlen($cleanChave) !== 50) {
+                $q->success = false;
+                $q->message = "Chave de acesso inválida. A chave da NFS-e Nacional deve conter exatamente 50 dígitos numéricos.";
+                return $q;
+            }
+
+            $certManager = $this->getCertificateManager();
+            $ambiente = $this->config['ambiente_padrao'] ?? 'homologacao';
+            $baseUrl = $this->getBaseUrl($ambiente);
+            $client = new RestClient($certManager, $baseUrl);
+
+            $nfseRes = $client->request('GET', "/nfse/{$cleanChave}");
+
+            if ($nfseRes['http_code'] === 200 && is_array($nfseRes['json'])) {
+                $q->success = true;
+                $q->encontrada = true;
+                $q->chaveNfse = $cleanChave;
+
+                $nfseB64 = $nfseRes['json']['nfseXmlGZipB64'] ?? $nfseRes['json']['NfseXmlGZipB64'] ?? '';
+                if (!empty($nfseB64)) {
+                    $decompressedXml = @gzdecode(base64_decode($nfseB64));
+                    if ($decompressedXml) {
+                        $q->xmlNfse = $decompressedXml;
+                        if (preg_match('/<(?:\w+:)?nNFSe\b[^>]*>(.*?)<\/(?:\w+:)?nNFSe>/si', $decompressedXml, $m) ||
+                            preg_match('/<(?:\w+:)?nDFSe\b[^>]*>(.*?)<\/(?:\w+:)?nDFSe>/si', $decompressedXml, $m)) {
+                            $q->numeroNota = trim($m[1]);
+                        }
+                        if (preg_match('/<(?:\w+:)?cVerif\b[^>]*>(.*?)<\/(?:\w+:)?cVerif>/si', $decompressedXml, $m)) {
+                            $q->codigoVerificacao = trim($m[1]);
+                        }
+                        if (preg_match('/<(?:\w+:)?nDPS\b[^>]*>(.*?)<\/(?:\w+:)?nDPS>/si', $decompressedXml, $m)) {
+                            $q->numeroDps = (int)trim($m[1]);
+                        }
+                        if (preg_match('/<(?:\w+:)?serie\b[^>]*>(.*?)<\/(?:\w+:)?serie>/si', $decompressedXml, $m)) {
+                            $q->serieDps = trim($m[1]);
+                        }
+                    }
+                }
+
+                if (empty($q->numeroNota)) {
+                    $q->numeroNota = (string)(int)substr($cleanChave, 25, 13);
+                }
+
+                $q->urlVisualizacao = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";
+                $q->urlVisualizacaoNacional = $q->urlVisualizacao;
+                $q->message = "NFS-e localizada com sucesso na SEFIN Nacional.";
+            } else {
+                $q->success = false;
+                $q->encontrada = false;
+                $q->message = ($nfseRes['http_code'] === 404)
+                    ? "NFS-e não encontrada na base da SEFIN Nacional para a chave informada."
+                    : "Erro na consulta da NFS-e na SEFIN (HTTP {$nfseRes['http_code']}).";
+            }
+        } catch (\Throwable $e) {
+            $q->success = false;
+            $q->message = "Erro ao consultar NFS-e por chave na SEFIN: " . $e->getMessage();
+        } finally {
+            if (isset($certManager)) {
+                $certManager->cleanup();
+            }
+        }
+
+        return $q;
+    }
+
     public function consultarUrl(string $numeroNota, ?string $serie = null, ?int $numeroDocumento = null): UrlResult
     {
         $res = new UrlResult();

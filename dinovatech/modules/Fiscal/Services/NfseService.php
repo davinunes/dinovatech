@@ -609,4 +609,134 @@ class NfseService
             'divergencias_empresa' => $divergenciasEmpresa
         ];
     }
+
+    /**
+     * Importa diretamente um arquivo ou string XML da NFS-e e vincula à fatura
+     */
+    public function importarXmlNfse(int $idFatura, string $xmlContent, ?int $idUsuario = null): array
+    {
+        $xmlContent = trim($xmlContent);
+        if (empty($xmlContent)) {
+            return ['success' => false, 'message' => 'Conteúdo XML vazio ou inválido.'];
+        }
+
+        // Remove BOM se presente
+        $cleanXml = preg_replace('/^\xEF\xBB\xBF/', '', $xmlContent);
+
+        // Extrai Chave de Acesso (50 dígitos)
+        $chave = null;
+        if (preg_match('/<(?:\w+:)?chNFSe\b[^>]*>(.*?)<\/(?:\w+:)?chNFSe>/si', $cleanXml, $m)) {
+            $chave = trim($m[1]);
+        } elseif (preg_match('/Id=["\']NFS([0-9A-Z]{40,50})["\']/si', $cleanXml, $m)) {
+            $chave = trim($m[1]);
+        }
+
+        // Extrai Número da Nota
+        $numeroNota = null;
+        if (preg_match('/<(?:\w+:)?nNFSe\b[^>]*>(.*?)<\/(?:\w+:)?nNFSe>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?nDFSe\b[^>]*>(.*?)<\/(?:\w+:)?nDFSe>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?Numero\b[^>]*>(.*?)<\/(?:\w+:)?Numero>/si', $cleanXml, $m)) {
+            $numeroNota = trim($m[1]);
+        }
+
+        // Fallback da chave de 50 dígitos
+        if (empty($numeroNota) && !empty($chave)) {
+            $cleanChaveTemp = preg_replace('/\D/', '', $chave);
+            if (strlen($cleanChaveTemp) === 50) {
+                $numeroNota = (string)(int)substr($cleanChaveTemp, 25, 13);
+            }
+        }
+
+        // Extrai Código de Verificação
+        $codigoVerificacao = null;
+        if (preg_match('/<(?:\w+:)?cVerif\b[^>]*>(.*?)<\/(?:\w+:)?cVerif>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?cVerifNFSeMun\b[^>]*>(.*?)<\/(?:\w+:)?cVerifNFSeMun>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?CodigoVerificacao\b[^>]*>(.*?)<\/(?:\w+:)?CodigoVerificacao>/si', $cleanXml, $m)) {
+            $codigoVerificacao = trim($m[1]);
+        }
+
+        // Extrai DPS (número e série)
+        $numeroDps = null;
+        if (preg_match('/<(?:\w+:)?nDPS\b[^>]*>(.*?)<\/(?:\w+:)?nDPS>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?NumeroRps\b[^>]*>(.*?)<\/(?:\w+:)?NumeroRps>/si', $cleanXml, $m)) {
+            $numeroDps = (int)trim($m[1]);
+        }
+        $serieDps = '15';
+        if (preg_match('/<(?:\w+:)?serie\b[^>]*>(.*?)<\/(?:\w+:)?serie>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?SerieRps\b[^>]*>(.*?)<\/(?:\w+:)?SerieRps>/si', $cleanXml, $m)) {
+            $serieDps = trim($m[1]);
+        }
+
+        // Extrai Data de Emissão
+        $dataEmissao = date('Y-m-d H:i:s');
+        if (preg_match('/<(?:\w+:)?dhProc\b[^>]*>(.*?)<\/(?:\w+:)?dhProc>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?dhEmi\b[^>]*>(.*?)<\/(?:\w+:)?dhEmi>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?DataEmissao\b[^>]*>(.*?)<\/(?:\w+:)?DataEmissao>/si', $cleanXml, $m)) {
+            $dataEmissao = date('Y-m-d H:i:s', strtotime(trim($m[1])));
+        }
+
+        // Extrai Valores
+        $calcData = AppHelper::calculateNfseData($this->link, $idFatura);
+        $valorServico = $calcData['success'] ? (float)$calcData['total_servicos'] : 0.00;
+        if (preg_match('/<(?:\w+:)?vServ\b[^>]*>(.*?)<\/(?:\w+:)?vServ>/si', $cleanXml, $m)) {
+            $valorServico = (float)trim($m[1]);
+        }
+        $aliquotaIss = (float)($calcData['tax_settings']['aliquota_iss'] ?? '0.00');
+        if (preg_match('/<(?:\w+:)?pAliq\b[^>]*>(.*?)<\/(?:\w+:)?pAliq>/si', $cleanXml, $m) ||
+            preg_match('/<(?:\w+:)?Aliquota\b[^>]*>(.*?)<\/(?:\w+:)?Aliquota>/si', $cleanXml, $m)) {
+            $aliquotaIss = (float)trim($m[1]);
+        }
+
+        $idDps = null;
+        if ($numeroDps) {
+            $idDps = \Dinovatech\Modules\Fiscal\Formatters\DpsIdGenerator::generateDpsId(
+                $this->config['codigo_municipio'] ?: '5300108',
+                $this->config['cnpj'] ?? '',
+                (string)$serieDps,
+                $numeroDps
+            );
+        }
+
+        $urlVisualizacao = null;
+        if (!empty($chave)) {
+            $cleanChave = preg_replace('/^NFS/i', '', trim($chave));
+            $urlVisualizacao = "https://www.nfse.gov.br/EmissorNacional/Notas/Visualizar/Index/{$cleanChave}";
+        }
+
+        // Monta DTO e EmissionResult
+        $dto = new NfseData();
+        $dto->idFatura = $idFatura;
+        $dto->ambiente = $this->config['ambiente_padrao'] ?? 'producao';
+        $dto->serie = (string)$serieDps;
+        $dto->numero = $numeroDps ?: (int)($numeroNota ?: 1);
+        $dto->dataCompetencia = date('Y-m-d', strtotime($dataEmissao));
+        $dto->valorServico = $valorServico;
+        $dto->aliquotaIss = $aliquotaIss;
+        $dto->issRetido = ($calcData['tax_settings']['iss_retido'] ?? '0') == '1';
+        $dto->itemListaServico = $calcData['tax_settings']['item_lista_servico'] ?? '01.07';
+        $dto->discriminacao = $calcData['discriminacao'] ?? 'Serviço Prestado';
+
+        $res = new EmissionResult();
+        $res->success = true;
+        $res->status = 'concluido';
+        $res->message = "NFS-e importada e vinculada com sucesso a partir de arquivo XML.";
+        $res->numeroNota = $numeroNota;
+        $res->codigoVerificacao = $codigoVerificacao ?: $chave;
+        $res->chaveNfse = $chave;
+        $res->idDps = $idDps;
+        $res->urlVisualizacao = $urlVisualizacao;
+        $res->urlVisualizacaoNacional = $urlVisualizacao;
+        $res->xmlRetorno = $cleanXml;
+
+        $this->persistirEmissao($dto, $res, $idUsuario);
+
+        DBExecute($this->link, "UPDATE Faturas SET possui_nfse = 1, data_emissao_nfse = '$dataEmissao' WHERE id_fatura = '$idFatura'");
+
+        return [
+            'success' => true,
+            'message' => "NFS-e " . ($numeroNota ? "Nº $numeroNota " : "") . "importada e vinculada com SUCESSO à Fatura #{$idFatura}!",
+            'numero_nota' => $numeroNota,
+            'chave_nfse' => $chave
+        ];
+    }
 }
