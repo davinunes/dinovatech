@@ -7,7 +7,7 @@ use Dinovatech\Modules\Fiscal\Formatters\DpsIdGenerator;
 class DpsXmlBuilder
 {
     /**
-     * Monta o XML da DPS para o método GerarNfse.
+     * Monta o XML da DPS para o método GerarNfse (SOAP) ou para a API REST Sefin Nacional.
      *
      * Versão da DPS:
      *  - 1.00: sem o grupo IBS/CBS — compatível com todos os ambientes.
@@ -16,9 +16,10 @@ class DpsXmlBuilder
      *
      * @param NfseData $data
      * @param string $dpsId ID de 45 chars
+     * @param bool $wrapGerarNfseEnvio Se true, envolve com <GerarNfseEnvio> (SOAP / SEFAZ-DF). Se false, gera raiz <DPS> (REST / Sefin Nacional).
      * @return string XML não-assinado
      */
-    public function build(NfseData $data, string $dpsId): string
+    public function build(NfseData $data, string $dpsId, bool $wrapGerarNfseEnvio = true): string
     {
         $tpAmb = ($data->ambiente === 'producao') ? '1' : '2';
         $dhEmi = date('Y-m-d\TH:i:sP');
@@ -143,9 +144,12 @@ class DpsXmlBuilder
             ? "<totTrib><pTotTribSN>{$pAliq}</pTotTribSN></totTrib>"
             : "<totTrib><indTotTrib>0</indTotTrib></totTrib>";
 
-        $xml = <<<XML
-<GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
-    <DPS versao="{$versaoDps}">
+        $dpsRootTag = $wrapGerarNfseEnvio
+            ? "<DPS versao=\"{$versaoDps}\">"
+            : "<DPS versao=\"{$versaoDps}\" xmlns=\"http://www.sped.fazenda.gov.br/nfse\">";
+
+        $dpsXml = <<<XML
+    {$dpsRootTag}
         <infDPS Id="{$dpsId}">
             <tpAmb>{$tpAmb}</tpAmb>
             <dhEmi>{$dhEmi}</dhEmi>
@@ -192,10 +196,31 @@ class DpsXmlBuilder
             {$ibsCbsXml}
         </infDPS>
     </DPS>
+XML;
+
+        if (!$wrapGerarNfseEnvio) {
+            return trim($dpsXml);
+        }
+
+        $xml = <<<XML
+<GerarNfseEnvio xmlns="http://www.sped.fazenda.gov.br/nfse">
+{$dpsXml}
 </GerarNfseEnvio>
 XML;
 
         return trim($xml);
+    }
+
+    /**
+     * Monta o XML puro da DPS com raiz <DPS> (exigido para a API REST da Sefin Nacional).
+     *
+     * @param NfseData $data
+     * @param string $dpsId ID de 45 chars
+     * @return string XML puro da DPS não-assinado
+     */
+    public function buildDps(NfseData $data, string $dpsId): string
+    {
+        return $this->build($data, $dpsId, false);
     }
 
     private function sanitizeText(string $str): string

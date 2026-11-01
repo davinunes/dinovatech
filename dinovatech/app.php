@@ -4098,7 +4098,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' || $_SERVER['REQUEST_METHOD'] === 'GET
             $configEmissor = $resConfProv ? mysqli_fetch_assoc($resConfProv) : null;
             $activeProvider = $configEmissor['nfse_provider'] ?? 'nacional';
 
-            if ($activeProvider === 'nacional' || $activeProvider === 'sefin_nacional') {
+            if ($activeProvider === 'nacional' || $activeProvider === 'sefin_nacional' || $activeProvider === 'nacional_rest') {
                 try {
                     $nfseService = new \Dinovatech\Modules\Fiscal\Services\NfseService($link);
                     $userId = $_SESSION['usuario_id'] ?? null;

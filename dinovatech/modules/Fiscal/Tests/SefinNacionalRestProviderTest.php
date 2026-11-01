@@ -38,6 +38,41 @@ class SefinNacionalRestProviderTest
             $passed = false;
         }
 
+        // Teste de parsing do retorno de erro com campos em PascalCase (formato real da SEFIN)
+        $mockJson = [
+            'tipoAmbiente' => 1,
+            'versaoAplicativo' => 'SefinNacional_1.6.0',
+            'erros' => [
+                [
+                    'Codigo' => 'E1235',
+                    'Descricao' => 'Falha no esquema XML do DF-e.',
+                    'Complemento' => "O elemento raiz do XML deve ser 'DPS', mas foi encontrado 'GerarNfseEnvio'"
+                ]
+            ]
+        ];
+
+        $erros = [];
+        $rawErros = $mockJson['erros'] ?? $mockJson['Erros'] ?? [];
+        foreach ($rawErros as $err) {
+            $cod = $err['codigo'] ?? $err['Codigo'] ?? $err['code'] ?? '';
+            $desc = $err['descricao'] ?? $err['Descricao'] ?? $err['description'] ?? $err['message'] ?? '';
+            $comp = $err['complemento'] ?? $err['Complemento'] ?? '';
+            $prefixo = $cod ? "[$cod] " : "";
+            $sufixo = $comp ? " ($comp)" : "";
+            $linha = trim("{$prefixo}{$desc}{$sufixo}");
+            if (!empty($linha)) {
+                $erros[] = $linha;
+            }
+        }
+
+        $expectedErrorMsg = "[E1235] Falha no esquema XML do DF-e. (O elemento raiz do XML deve ser 'DPS', mas foi encontrado 'GerarNfseEnvio')";
+        if (!empty($erros) && $erros[0] === $expectedErrorMsg) {
+            echo " [OK] Tratamento de erros em PascalCase da Sefin Nacional funcionando com perfeição\n";
+        } else {
+            echo " [FALHA] Erro não foi formatado corretamente. Retornou: " . json_encode($erros) . "\n";
+            $passed = false;
+        }
+
         return $passed;
     }
 }

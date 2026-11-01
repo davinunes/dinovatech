@@ -14,7 +14,7 @@ class DpsXmlBuilderTest
     {
         $dto = new NfseData();
         $dto->idFatura = 123;
-        $dto->ambiente = 'homologacao';
+        $dto->ambiente = 'producao';
         $dto->serie = '1';
         $dto->numero = 1;
         $dto->dataCompetencia = '2026-09-03';
@@ -64,10 +64,41 @@ class DpsXmlBuilderTest
         return $passed;
     }
 
+    public function testBuildDpsXmlStructure(): bool
+    {
+        $dto = new NfseData();
+        $dto->idFatura = 123;
+        $dto->ambiente = 'producao';
+        $dto->serie = '1';
+        $dto->numero = 1;
+        $dto->dataCompetencia = '2026-11-01';
+        $dto->valorServico = 150.00;
+        $dto->aliquotaIss = 2.00;
+        $dto->prestadorCnpj = '61733714000101';
+        $dto->prestadorInscricaoMunicipal = '0841147200111';
+        $dto->prestadorRazaoSocial = 'Dinovatech Ltda';
+        $dto->prestadorOptanteSimples = true;
+        $dto->prestadorMunicipioIbge = '5300108';
+
+        $dpsId = DpsIdGenerator::generateDpsId('5300108', $dto->prestadorCnpj, $dto->serie, $dto->numero);
+        $builder = new DpsXmlBuilder();
+        $xml = $builder->buildDps($dto, $dpsId);
+
+        $hasNoGerarNfse = (strpos($xml, '<GerarNfseEnvio') === false);
+        $hasDpsRoot = (strpos($xml, '<DPS versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse">') !== false);
+        $hasClosingDps = str_ends_with(trim($xml), '</DPS>');
+
+        $passed = ($hasNoGerarNfse && $hasDpsRoot && $hasClosingDps);
+        echo $passed ? "[PASS] testBuildDpsXmlStructure\n" : "[FAIL] testBuildDpsXmlStructure\n";
+        return $passed;
+    }
+
     public function run(): bool
     {
         echo "=== Executando Testes de DpsXmlBuilder ===\n";
-        return $this->testBuildXmlStructure();
+        $ok1 = $this->testBuildXmlStructure();
+        $ok2 = $this->testBuildDpsXmlStructure();
+        return $ok1 && $ok2;
     }
 }
 

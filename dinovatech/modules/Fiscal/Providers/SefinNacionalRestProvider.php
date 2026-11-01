@@ -58,8 +58,8 @@ class SefinNacionalRestProvider implements NfseProviderInterface
             );
             $result->idDps = $dpsId;
 
-            // 2. Monta o XML da DPS
-            $rawXml = $builder->build($data, $dpsId);
+            // 2. Monta o XML da DPS puro com raiz <DPS> (sem wrapper SOAP <GerarNfseEnvio>)
+            $rawXml = $builder->buildDps($data, $dpsId);
 
             // 3. Assina o nó <infDPS Id="..."> com XMLDSig (RSA-SHA1 + C14N)
             $signedXml = $signer->sign($rawXml, $dpsId);
@@ -95,10 +95,11 @@ class SefinNacionalRestProvider implements NfseProviderInterface
                 $result->success = true;
                 $result->status = 'concluido';
                 $result->message = 'NFS-e emitida com sucesso no Emissor Público Nacional (REST).';
-                $result->chaveNfse = $json['chaveAcesso'] ?? '';
+                $result->chaveNfse = $json['chaveAcesso'] ?? $json['ChaveAcesso'] ?? '';
 
-                if (!empty($json['nfseXmlGZipB64'])) {
-                    $decodedNfse = base64_decode($json['nfseXmlGZipB64']);
+                $nfseGzipB64 = $json['nfseXmlGZipB64'] ?? $json['NfseXmlGZipB64'] ?? '';
+                if (!empty($nfseGzipB64)) {
+                    $decodedNfse = base64_decode($nfseGzipB64);
                     $decompressedXml = @gzdecode($decodedNfse);
                     if ($decompressedXml !== false) {
                         $result->xmlRetorno = $decompressedXml;
@@ -133,13 +134,30 @@ class SefinNacionalRestProvider implements NfseProviderInterface
                 $result->xmlRetorno = $res['response_body'];
 
                 $erros = [];
-                if (is_array($json) && !empty($json['erros'])) {
-                    foreach ($json['erros'] as $err) {
-                        $cod = $err['codigo'] ?? '';
-                        $desc = $err['descricao'] ?? '';
-                        $comp = $err['complemento'] ?? '';
-                        $linha = trim("[$cod] $desc " . ($comp ? "($comp)" : ""));
-                        $erros[] = $linha;
+                $rawErros = [];
+                if (is_array($json)) {
+                    if (!empty($json['erros']) && is_array($json['erros'])) {
+                        $rawErros = $json['erros'];
+                    } elseif (!empty($json['Erros']) && is_array($json['Erros'])) {
+                        $rawErros = $json['Erros'];
+                    }
+                }
+
+                if (!empty($rawErros)) {
+                    foreach ($rawErros as $err) {
+                        if (is_string($err)) {
+                            $erros[] = $err;
+                            continue;
+                        }
+                        $cod = $err['codigo'] ?? $err['Codigo'] ?? $err['code'] ?? '';
+                        $desc = $err['descricao'] ?? $err['Descricao'] ?? $err['description'] ?? $err['message'] ?? '';
+                        $comp = $err['complemento'] ?? $err['Complemento'] ?? '';
+                        $prefixo = $cod ? "[$cod] " : "";
+                        $sufixo = $comp ? " ($comp)" : "";
+                        $linha = trim("{$prefixo}{$desc}{$sufixo}");
+                        if (!empty($linha)) {
+                            $erros[] = $linha;
+                        }
                     }
                 }
 
@@ -201,14 +219,15 @@ class SefinNacionalRestProvider implements NfseProviderInterface
             if ($res['http_code'] === 200 && is_array($res['json'])) {
                 $q->success = true;
                 $q->encontrada = true;
-                $q->chaveNfse = $res['json']['chaveAcesso'] ?? '';
+                $q->chaveNfse = $res['json']['chaveAcesso'] ?? $res['json']['ChaveAcesso'] ?? '';
 
                 // Se obteve a chave de acesso, busca a NFS-e completa para obter número e dados
                 if (!empty($q->chaveNfse)) {
                     $cleanChave = preg_replace('/^NFS/i', '', trim($q->chaveNfse));
                     $nfseRes = $client->request('GET', "/nfse/{$cleanChave}");
-                    if ($nfseRes['http_code'] === 200 && is_array($nfseRes['json']) && !empty($nfseRes['json']['nfseXmlGZipB64'])) {
-                        $decompressedXml = @gzdecode(base64_decode($nfseRes['json']['nfseXmlGZipB64']));
+                    $nfseB64 = $nfseRes['json']['nfseXmlGZipB64'] ?? $nfseRes['json']['NfseXmlGZipB64'] ?? '';
+                    if ($nfseRes['http_code'] === 200 && is_array($nfseRes['json']) && !empty($nfseB64)) {
+                        $decompressedXml = @gzdecode(base64_decode($nfseB64));
                         if ($decompressedXml) {
                             $q->xmlNfse = $decompressedXml;
                             if (preg_match('/<(?:\w+:)?nNFSe\b[^>]*>(.*?)<\/(?:\w+:)?nNFSe>/si', $decompressedXml, $m) ||
@@ -347,9 +366,30 @@ XML;
                 $c->success = false;
                 $c->cancelada = false;
                 $erros = [];
-                if (is_array($res['json']) && !empty($res['json']['erros'])) {
-                    foreach ($res['json']['erros'] as $err) {
-                        $erros[] = "[" . ($err['codigo'] ?? '') . "] " . ($err['descricao'] ?? '');
+                $rawErros = [];
+                if (is_array($res['json'])) {
+                    if (!empty($res['json']['erros']) && is_array($res['json']['erros'])) {
+                        $rawErros = $res['json']['erros'];
+                    } elseif (!empty($res['json']['Erros']) && is_array($res['json']['Erros'])) {
+                        $rawErros = $res['json']['Erros'];
+                    }
+                }
+
+                if (!empty($rawErros)) {
+                    foreach ($rawErros as $err) {
+                        if (is_string($err)) {
+                            $erros[] = $err;
+                            continue;
+                        }
+                        $cod = $err['codigo'] ?? $err['Codigo'] ?? '';
+                        $desc = $err['descricao'] ?? $err['Descricao'] ?? '';
+                        $comp = $err['complemento'] ?? $err['Complemento'] ?? '';
+                        $prefixo = $cod ? "[$cod] " : "";
+                        $sufixo = $comp ? " ($comp)" : "";
+                        $linha = trim("{$prefixo}{$desc}{$sufixo}");
+                        if (!empty($linha)) {
+                            $erros[] = $linha;
+                        }
                     }
                 }
                 $c->message = !empty($erros) ? implode("; ", $erros) : "Falha ao registrar cancelamento (HTTP {$res['http_code']}).";
