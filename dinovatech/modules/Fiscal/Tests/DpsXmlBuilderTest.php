@@ -89,8 +89,14 @@ class DpsXmlBuilderTest
         $hasClosingDps = str_ends_with(trim($xml), '</DPS>');
         $hasNoCTribMunForBrasilia = (strpos($xml, '<cTribMun') === false);
         $hasNoImForBrasilia = (strpos($xml, '<IM>') === false);
+        $hasNoPAliqSemRetencao = (strpos($xml, '<pAliq>') === false);
 
-        $passed = ($hasNoGerarNfse && $hasDpsRoot && $hasClosingDps && $hasNoCTribMunForBrasilia && $hasNoImForBrasilia);
+        // Teste com retenção
+        $dto->issRetido = true;
+        $xmlComRet = $builder->buildDps($dto, $dpsId);
+        $hasPAliqComRetencao = (strpos($xmlComRet, '<pAliq>2.00</pAliq>') !== false);
+
+        $passed = ($hasNoGerarNfse && $hasDpsRoot && $hasClosingDps && $hasNoCTribMunForBrasilia && $hasNoImForBrasilia && $hasNoPAliqSemRetencao && $hasPAliqComRetencao);
         echo $passed ? "[PASS] testBuildDpsXmlStructure\n" : "[FAIL] testBuildDpsXmlStructure\n";
         return $passed;
     }

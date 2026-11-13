@@ -117,6 +117,7 @@ O XML da DPS assinado é idêntico para emissão REST ou SOAP:
 | **`E1229`** | *Xml não está utilizando codificação UTF-8.* | Presença de caracteres ISO-8859-1, acentuação mal convertida ou BOM UTF-8 (`\xEF\xBB\xBF`). | Remover BOM e garantir sanitização UTF-8 pura antes da compactação e assinatura. |
 | **`E0314`** | *O código de tributação municipal informado não existe ou não está administrado pelo município...* | Preenchimento indevido da tag `<cTribMun>` com código fictício que o município não administra. | Preencher estritamente `<cTribNac>` (6 dígitos, ex: `010501`). Se não houver correspondência municipal oficial, omitir `<cTribMun>`. |
 | **`E1235`** | *Falha no esquema XML do DF-e.* | Tag fora de ordem no XSD versão 1.01 (ex: `tpAmb`, `dhEmi`, `verAplic`, `serie`, `nDPS`). | Seguir rigidamente a ordem sequencial estrita dos elementos estipulada pelo schema `DPS_v1.01.xsd`. |
+| **`E0625`** | *Não é permitido informar alíquota quando não há indicação de retenção do ISSQN (tpRetISSQN = 1) para o prestador de serviço ME/EPP...* | Regra 509/511 do Sefin Nacional proíbe preencher `<pAliq>` em `<tribMun>` para optantes do Simples Nacional quando não houver retenção de ISS (`tpRetISSQN = 1`). A alíquota do Simples é apurada mensalmente no PGDAS-D. | No `DpsXmlBuilder.php`, incluir `<pAliq>` dentro de `<tribMun>` apenas quando houver retenção (`tpRetISSQN !== '1'`). Mantém `<totTrib><pTotTribSN>` para transparência fiscal. |
 
 ---
 

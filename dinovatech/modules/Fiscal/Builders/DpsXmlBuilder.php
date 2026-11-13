@@ -131,6 +131,16 @@ class DpsXmlBuilder
         $pAliq = number_format($data->aliquotaIss, 2, '.', '');
         $tribISSQN = (string)($data->tributacaoIssqn ?: 1);
 
+        // Alíquota ISSQN (pAliq) no grupo tribMun:
+        // Conforme regras de validação da SEFIN Nacional:
+        // - E0625 / E0631: Optante ME/EPP do Simples Nacional (opSimpNac = 3) SEM retenção (tpRetISSQN = 1) NÃO PODE informar <pAliq>.
+        // - E0621 / E0628: Optante ME/EPP do Simples Nacional (opSimpNac = 3) COM retenção (tpRetISSQN = 2 ou 3) DEVE informar <pAliq>.
+        // - E0617: Prestador Regime Normal (opSimpNac = 1) em município conveniado Ativo NÃO PODE informar <pAliq>.
+        $pAliqXml = '';
+        if ($data->issRetido || $tpRetISSQN !== '1') {
+            $pAliqXml = "\n                        <pAliq>{$pAliq}</pAliq>";
+        }
+
         // Em homologação usamos v1.00 (sem grupo IBS/CBS); em produção usamos v1.01 (com IBS/CBS) conforme página 108 do manual.
         $usarIbsCbs = ($data->ambiente === 'producao');
         $versaoDps  = $usarIbsCbs ? '1.01' : '1.00';
@@ -211,8 +221,7 @@ class DpsXmlBuilder
                 <trib>
                     <tribMun>
                         <tribISSQN>{$tribISSQN}</tribISSQN>
-                        <tpRetISSQN>{$tpRetISSQN}</tpRetISSQN>
-                        <pAliq>{$pAliq}</pAliq>
+                        <tpRetISSQN>{$tpRetISSQN}</tpRetISSQN>{$pAliqXml}
                     </tribMun>
                     {$totTribXml}
                 </trib>
