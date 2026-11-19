@@ -5,9 +5,8 @@ require_once dirname(__DIR__) . '/helpers/AppHelper.php';
 
 // Determine base path for links
 // If we are deep in modules, we need to go up.
-// Simple check: are we in modules/Vet or modules/Agenda?
 $basePath = './';
-if (strpos($_SERVER['PHP_SELF'], '/modules/Vet/') !== false || strpos($_SERVER['PHP_SELF'], '/modules/Agenda/') !== false) {
+if (strpos($_SERVER['PHP_SELF'], '/modules/') !== false) {
     $basePath = '../../';
 }
 
@@ -302,7 +301,7 @@ $hasSecurityIssue = !defined('APP_MASTER_KEY') || empty(APP_MASTER_KEY);
         $.post('<?= $basePath ?>app.php', { action: 'fazer_backup' }, function (res) {
             if (res.success) {
                 if (res.download_url) {
-                    window.location.href = res.download_url;
+                    window.location.href = '<?= $basePath ?>' + res.download_url;
                 } else {
                     alert(res.message);
                 }
