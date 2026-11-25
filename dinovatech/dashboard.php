@@ -38,7 +38,7 @@ if (AppHelper::isVetMode()) {
     $hojeVacina = date('Y-m-d');
     $daqui30Vacina = date('Y-m-d', strtotime('+30 days'));
     $queryVaccines = "
-        SELECT cv.data_vencimento, v.nome as vacina_nome, p.nome as pet_nome, c.nome as cliente_nome, c.telefone
+        SELECT cv.data_vencimento, v.nome as vacina_nome, p.id_pet, p.nome as pet_nome, c.nome as cliente_nome, c.telefone
         FROM CarteiraVacinas cv
         JOIN Vacinas v ON cv.id_vacina = v.id_vacina
         JOIN Pets p ON cv.id_pet = p.id_pet
@@ -265,11 +265,15 @@ DBClose($linkDB);
                                     <?php foreach ($vacinasProximas as $vac):
                                         $dataBR = date('d/m/Y', strtotime($vac['data_vencimento']));
                                         ?>
-                                        <li class="flex flex-col text-sm border-b pb-2 border-gray-50 last:border-0 last:pb-0">
+                                        <li class="flex flex-col text-sm border-b pb-2 border-gray-50 last:border-0 last:pb-0 p-1.5 -mx-1.5 rounded-lg hover:bg-green-50/50 transition-colors group">
                                             <div class="flex justify-between items-center mb-1">
-                                                <span class="font-medium text-gray-800">Pet:
-                                                    <?= htmlspecialchars($vac['pet_nome']) ?>
-                                                    (<?= htmlspecialchars($vac['cliente_nome']) ?>)</span>
+                                                <a href="modules/Vet/pet_detalhes.php?id=<?= (int)$vac['id_pet'] ?>#vacinas"
+                                                   class="font-medium text-gray-800 hover:text-green-700 flex items-center gap-1.5 transition-colors"
+                                                   title="Abrir prontuário do pet <?= htmlspecialchars($vac['pet_nome']) ?>">
+                                                    <span class="material-icons text-green-600 text-sm">pets</span>
+                                                    <span>Pet: <strong class="text-green-950 group-hover:text-green-700 underline decoration-green-300 underline-offset-2 hover:decoration-green-600"><?= htmlspecialchars($vac['pet_nome']) ?></strong></span>
+                                                    <span class="text-gray-500 text-xs font-normal">(<?= htmlspecialchars($vac['cliente_nome']) ?>)</span>
+                                                </a>
                                                 <span
                                                     class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-bold"><?= $dataBR ?></span>
                                             </div>
@@ -277,10 +281,17 @@ DBClose($linkDB);
                                                 class="flex justify-between items-center text-gray-500 text-xs text-left w-full gap-2 mt-1">
                                                 <span>Vacina: <strong
                                                         class="text-gray-600"><?= htmlspecialchars($vac['vacina_nome']) ?></strong></span>
-                                                <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $vac['telefone']) ?>"
-                                                    target="_blank"
-                                                    class="text-green-600 hover:underline flex items-center gap-1"><span
-                                                        class="material-icons" style="font-size: 14px;">chat</span> Avisar</a>
+                                                <div class="flex items-center gap-3">
+                                                    <a href="modules/Vet/pet_detalhes.php?id=<?= (int)$vac['id_pet'] ?>#vacinas"
+                                                       class="text-teal-700 hover:text-teal-900 hover:underline flex items-center gap-0.5 font-medium"
+                                                       title="Abrir prontuário do pet">
+                                                        <span class="material-icons" style="font-size: 14px;">assignment</span> Prontuário
+                                                    </a>
+                                                    <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $vac['telefone']) ?>"
+                                                        target="_blank"
+                                                        class="text-green-600 hover:underline flex items-center gap-1"><span
+                                                            class="material-icons" style="font-size: 14px;">chat</span> Avisar</a>
+                                                </div>
                                             </div>
                                         </li>
                                     <?php endforeach; ?>
