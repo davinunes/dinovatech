@@ -255,19 +255,29 @@ $initialNodes = $k3s->getNodes();
                                     <tr class="hover:bg-slate-50/70 transition" id="row-tenant-<?= $t['id_tenant'] ?>" data-tenant-id="<?= $t['id_tenant'] ?>">
                                         <!-- Cliente / Contrato -->
                                         <td class="py-3.5 px-4 font-medium text-slate-900">
+                                            <?php
+                                                $isRustDesk = ($t['slug_instancia'] ?? '') === 'rustdesk';
+                                                $nomeExibicao = $isRustDesk ? 'Dinovatech (Infra / Uso Próprio)' : ($t['nome_cliente'] ?? 'Cliente Desconhecido');
+                                                $badgeIniciais = $isRustDesk ? 'RD' : strtoupper(substr($nomeExibicao, 0, 2));
+                                                $servicoNome = $isRustDesk ? 'Acesso Remoto (RustDesk)' : ($t['nome_servico'] ?? 'SaaS');
+                                            ?>
                                              <div class="flex items-center gap-2.5">
-                                                <div class="w-9 h-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold text-xs border border-purple-100">
-                                                    <?= strtoupper(substr($t['nome_cliente'] ?? 'C', 0, 2)) ?>
+                                                <div class="w-9 h-9 rounded-lg <?= $isRustDesk ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-purple-50 text-purple-700 border-purple-100' ?> flex items-center justify-center font-bold text-xs border">
+                                                    <?= $badgeIniciais ?>
                                                 </div>
                                                 <div>
                                                     <div class="font-bold text-slate-800 leading-tight">
-                                                        <?= htmlspecialchars($t['nome_cliente'] ?? 'Cliente Desconhecido') ?>
+                                                        <?= htmlspecialchars($nomeExibicao) ?>
                                                     </div>
                                                     <?php $tenantTipoCob = $t['tipo_cobranca'] ?? 'COMERCIAL'; ?>
                                                     <div class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                                        <span><?= htmlspecialchars($t['nome_servico'] ?? 'SaaS') ?></span>
+                                                        <span><?= htmlspecialchars($servicoNome) ?></span>
                                                         <span>•</span>
-                                                        <?php if ($tenantTipoCob === 'CORTESIA'): ?>
+                                                        <?php if ($isRustDesk || $tenantTipoCob === 'CORTESIA'): ?>
+                                                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200" title="Serviço interno de infraestrutura">
+                                                                <span class="material-icons text-[11px]">shield</span> Infra Interna
+                                                            </span>
+                                                        <?php elseif ($tenantTipoCob === 'TESTE'): ?>
                                                             <span class="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200" title="<?= htmlspecialchars($t['motivo_cortesia'] ?: 'Cortesia / Isento de cobrança') ?>">
                                                                 <span class="material-icons text-[11px]">card_giftcard</span> Cortesia
                                                             </span>
@@ -388,10 +398,12 @@ $initialNodes = $k3s->getNodes();
                                                     <span class="material-icons text-base">schedule</span>
                                                 </button>
 
-                                                <!-- Editar Contrato -->
-                                                <a href="contrato_form.php?id=<?= $t['id_recorrencia'] ?>" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="Editar Contrato">
-                                                    <span class="material-icons text-base">settings</span>
-                                                </a>
+                                                <!-- Editar Contrato (se houver contrato comercial vinculado) -->
+                                                <?php if (!empty($t['id_recorrencia'])): ?>
+                                                    <a href="contrato_form.php?id=<?= $t['id_recorrencia'] ?>" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition" title="Editar Contrato">
+                                                        <span class="material-icons text-base">settings</span>
+                                                    </a>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
