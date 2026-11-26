@@ -12,11 +12,11 @@ SET @columnname = "id_recorrencia";
 ALTER TABLE `saas_tenants` MODIFY COLUMN `id_recorrencia` INT NULL COMMENT 'Vínculo com o contrato/recorrência (NULL para serviços de infraestrutura interna)';
 
 -- 2. Registra a instância de infraestrutura RustDesk (apenas se ainda não existir)
--- O campo app_mode_vet é definido como 0 estritamente para o RustDesk, preservando o modo vet (1) de todos os outros tenants
+-- O nome do cliente é obtido via JOIN com a tabela Clientes (id_cliente).
+-- O campo app_mode_vet é definido como 0 estritamente para o RustDesk, preservando o modo vet (1) de todos os outros tenants.
 INSERT INTO `saas_tenants` (
     `id_cliente`,
     `id_recorrencia`,
-    `nome_cliente`,
     `slug_instancia`,
     `subdominio`,
     `dominio_customizado`,
@@ -34,7 +34,6 @@ INSERT INTO `saas_tenants` (
 ) VALUES (
     1,
     NULL,
-    'RustDesk Server Privado',
     'rustdesk',
     'remote.dinovatech.com.br',
     NULL,
@@ -50,7 +49,6 @@ INSERT INTO `saas_tenants` (
     '384Mi',
     '500m'
 ) ON DUPLICATE KEY UPDATE
-    `nome_cliente` = 'RustDesk Server Privado',
     `namespace_k8s` = 'app-rustdesk',
     `versao_imagem` = 'rustdesk/rustdesk-server:latest',
     `app_mode_vet` = 0;

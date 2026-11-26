@@ -43,17 +43,16 @@ DBExecute($link, "ALTER TABLE saas_tenants MODIFY COLUMN id_recorrencia INT NULL
 // Insere ou atualiza o registro do RustDesk preservando app_mode_vet = 0 apenas nele
 $sqlTenant = "
 INSERT INTO saas_tenants (
-    id_cliente, id_recorrencia, nome_cliente, slug_instancia, 
+    id_cliente, id_recorrencia, slug_instancia, 
     subdominio, namespace_k8s, db_name, db_user, db_password, 
     db_host, db_port, app_mode_vet, versao_imagem, status_pod, 
     limite_memoria, limite_cpu
 ) VALUES (
-    1, NULL, 'RustDesk Server Privado', 'rustdesk', 
+    1, NULL, 'rustdesk', 
     'remote.dinovatech.com.br', 'app-rustdesk', 'sqlite', 'root', '', 
     '127.0.0.1', 3306, 0, 'rustdesk/rustdesk-server:latest', 'PENDING', 
     '384Mi', '500m'
 ) ON DUPLICATE KEY UPDATE 
-    nome_cliente = 'RustDesk Server Privado',
     namespace_k8s = 'app-rustdesk',
     versao_imagem = 'rustdesk/rustdesk-server:latest',
     app_mode_vet = 0";
