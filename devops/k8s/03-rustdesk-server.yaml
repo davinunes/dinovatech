@@ -1,0 +1,164 @@
+# ==============================================================================
+# Manifesto Kubernetes: RustDesk Server OSS no K3s (Oracle Cloud ARM64)
+# ==============================================================================
+# Contém:
+#   1. Namespace dedicado (app-rustdesk)
+#   2. PersistentVolumeClaim (local-path) para persistência do par de chaves e SQLite
+#   3. Deployment com estratégia Recreate rodando hbbs e hbbr juntos no mesmo pod
+#   4. Service LoadBalancer expondo as portas TCP e UDP necessárias via Klipper LB
+#
+# Para aplicar no cluster:
+#   kubectl apply -f devops/k8s/03-rustdesk-server.yaml
+#
+# Para obter a chave pública (id_ed25519.pub) após o pod subir:
+#   kubectl -n app-rustdesk exec -it deploy/rustdesk-server -c hbbs -- cat /root/id_ed25519.pub
+# ==============================================================================
+
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-rustdesk
+  labels:
+    app.kubernetes.io/name: rustdesk-server
+    app.kubernetes.io/part-of: infra-servicos
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: rustdesk-pvc
+  namespace: app-rustdesk
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rustdesk-server
+  namespace: app-rustdesk
+  labels:
+    app: rustdesk-server
+spec:
+  replicas: 1
+  # Estratégia Recreate é fundamental para evitar conflito de acesso ao SQLite e chaves
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rustdesk-server
+  template:
+    metadata:
+      labels:
+        app: rustdesk-server
+    spec:
+      containers:
+        # ----------------------------------------------------------------------
+        # Container 1: hbbs (ID Server & Rendezvous / Descoberta NAT)
+        # ----------------------------------------------------------------------
+        - name: hbbs
+          image: rustdesk/rustdesk-server:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - hbbs
+            - -r
+            - 137.131.208.19:21117   # Host/IP do servidor de Relay
+            - -k
+            - _                      # Exige autenticação por chave pública do cliente
+          ports:
+            - name: nat-test
+              containerPort: 21115
+              protocol: TCP
+            - name: hbbs-tcp
+              containerPort: 21116
+              protocol: TCP
+            - name: hbbs-udp
+              containerPort: 21116
+              protocol: UDP
+            - name: hbbs-ws
+              containerPort: 21118
+              protocol: TCP
+          volumeMounts:
+            - name: rustdesk-storage
+              mountPath: /root
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 300m
+              memory: 128Mi
+
+        # ----------------------------------------------------------------------
+        # Container 2: hbbr (Relay Server para conexões com NAT restrito)
+        # ----------------------------------------------------------------------
+        - name: hbbr
+          image: rustdesk/rustdesk-server:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - hbbr
+            - -k
+            - _                      # Valida a chave contra /root/id_ed25519.pub
+          ports:
+            - name: hbbr-tcp
+              containerPort: 21117
+              protocol: TCP
+            - name: hbbr-ws
+              containerPort: 21119
+              protocol: TCP
+          volumeMounts:
+            - name: rustdesk-storage
+              mountPath: /root
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+
+      volumes:
+        - name: rustdesk-storage
+          persistentVolumeClaim:
+            claimName: rustdesk-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rustdesk-service
+  namespace: app-rustdesk
+  labels:
+    app: rustdesk-server
+spec:
+  type: LoadBalancer
+  selector:
+    app: rustdesk-server
+  ports:
+    - name: nat-test
+      port: 21115
+      targetPort: 21115
+      protocol: TCP
+    - name: hbbs-tcp
+      port: 21116
+      targetPort: 21116
+      protocol: TCP
+    - name: hbbs-udp
+      port: 21116
+      targetPort: 21116
+      protocol: UDP
+    - name: hbbr-tcp
+      port: 21117
+      targetPort: 21117
+      protocol: TCP
+    - name: hbbs-ws
+      port: 21118
+      targetPort: 21118
+      protocol: TCP
+    - name: hbbr-ws
+      port: 21119
+      targetPort: 21119
+      protocol: TCP
