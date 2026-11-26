@@ -1,4 +1,4 @@
-# Raciocínio Diagnóstico e Arquitetural: RustDesk Server no Cluster K3s ARM64
+# Raciocínio Diagnóstico e Arquitetural: RustDesk Server no Cluster K3s ARM64 e Automação Dinovatech
 
 - **Data**: 2026-11-26
 - **Ambiente**: OCI Ampere A1 (ARM64), 2 vCPUs, 11 GB RAM, K3s v1.36.5, Caddy Ingress, Ubuntu 26.04.
@@ -27,15 +27,30 @@
 - Rodar `hbbs` e `hbbr` no mesmo Pod compartilha o volume de dados das chaves de forma direta, garantindo que o `hbbr` com `-k _` consiga ler `/root/id_ed25519.pub` gerado pelo `hbbs`.
 - A estratégia de Deployment deve ser `type: Recreate` para evitar concorrência no volume e SQLite local durante eventuais reinicializações.
 
-### 2.3 Roteamento de Portas e Firewall
-- Como o RustDesk requer portas TCP (21115, 21116, 21117, 21118, 21119) e porta UDP crítica (21116), ele não passa pelo Ingress Caddy (HTTP/HTTPS 80/443).
-- O Service `type: LoadBalancer` utiliza o Klipper LB nativo do K3s, ligando as portas diretamente no IP público do nó (`137.131.208.19`).
-- O usuário confirmou que o firewall (Security List) da OCI já está liberado, eliminando o principal gargalo de bloqueio UDP.
+---
+
+## 3. Automação via API do K3s e Migração no Dinovatech
+
+### 3.1 Provisionamento Direto via API REST do K3s (Porta 6443)
+- O Dinovatech já possui o `K3sClientHelper` conectado à API do K3s via token Bearer.
+- Adicionamos o método `SaasProvisionerHelper::provisionRustDesk`:
+  - Envia requisições HTTP REST para a API do K3s criando:
+    1. Namespace `app-rustdesk`
+    2. PVC `rustdesk-pvc` (1Gi, local-path)
+    3. Deployment `rustdesk-server` (hbbs + hbbr)
+    4. Service `rustdesk-service` (LoadBalancer TCP/UDP 21115-21119)
+- Se o usuário clicar no botão roxo **"Deploy"** na linha do RustDesk dentro de `saas_tenants.php`, o Dinovatech dispara essa rotina nativamente.
+
+### 3.2 Migração de Banco de Dados (`database/migrations/20261126_0001_register_rustdesk_service.sql`)
+- Torna a coluna `id_recorrencia` na tabela `saas_tenants` opcional (`NULL`), viabilizando o registro de serviços de infraestrutura internos sem necessidade de um contrato de venda falso.
+- Insere o registro em `saas_tenants` com `slug_instancia = 'rustdesk'`.
 
 ---
 
-## 3. Integração com Dinovatech (`saas_tenants.php`)
-- O usuário optou pela abordagem de manifesto dedicado (`devops/k8s/03-rustdesk-server.yaml`).
-- Caso deseje monitorar o pod via Dinovatech:
-  - Pode-se registrar uma linha na tabela `saas_tenants` com `namespace_k8s = 'app-rustdesk'` e `slug_instancia = 'rustdesk'`.
-  - Isso ativa os botões de status (Running), ver logs e restart na UI do Dinovatech sem poluir o fluxo de deploy dos tenants PHP.
+## 4. Garantia Mandatória de Isolamento do "Modo Vet" (`app_mode_vet`)
+
+### Por que o Modo Veterinário NÃO é Afetado?
+1. **Configuração por Tenant**: No Dinovatech, a flag `app_mode_vet` é armazenada individualmente para cada linha da tabela `saas_tenants`.
+2. **Valor Estrito**: A migração e o script definem `app_mode_vet = 0` **estritamente na linha do RustDesk**, pois se trata de um utilitário de acesso remoto.
+3. **Clínicas Existentes Intocadas**: Nenhum registro existente de clientes de clínicas veterinárias tem seu `app_mode_vet` (valor 1) alterado.
+4. **Isolamento de Pods**: Os pods de clínicas PHP rodam com a variável `APP_MODE_VET=true` em seus respectivos secrets `tenant-env`. O pod do RustDesk roda a imagem oficial Rust (`rustdesk/rustdesk-server`), sem PHP, sem ler os segredos das clínicas e em um namespace completamente separado (`app-rustdesk`).

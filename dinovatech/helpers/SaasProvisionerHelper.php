@@ -161,6 +161,11 @@ class SaasProvisionerHelper
             return ['success' => false, 'message' => 'Cluster K3s indisponível: ' . ($health['error'] ?? 'Sem conexão')];
         }
 
+        // Roteamento para serviços especializados de infraestrutura (ex: RustDesk Server)
+        if ($t['slug_instancia'] === 'rustdesk' || strpos($t['versao_imagem'] ?? '', 'rustdesk') !== false) {
+            return self::provisionRustDesk($t, $k3s, $link);
+        }
+
         $namespace = $t['namespace_k8s'];
         $appName = "app-{$t['slug_instancia']}";
 
@@ -358,6 +363,176 @@ class SaasProvisionerHelper
             'success' => $depRes['success'],
             'message' => $depRes['success'] ? 'Instância provisionada/atualizada com sucesso no K3s (RollingUpdate ativo)!' : 'Falha ao criar Pod: ' . ($depRes['error'] ?? ''),
             'data' => $depRes['data'] ?? null
+        ];
+    }
+
+    /**
+     * Provisiona a infraestrutura do RustDesk Server OSS no K3s via API REST:
+     * - Namespace (app-rustdesk)
+     * - PVC (rustdesk-pvc com storage local-path de 1Gi)
+     * - Deployment com hbbs e hbbr montando o volume em /root
+     * - Service LoadBalancer com portas TCP (21115-21119) e UDP (21116)
+     * 
+     * Atenção: Esta função NÃO afeta nem altera as configurações de nenhum outro tenant ou modo veterinário.
+     */
+    public static function provisionRustDesk(array $t, K3sClientHelper $k3s, $link): array
+    {
+        $idSafe = (int)$t['id_tenant'];
+        $namespace = !empty($t['namespace_k8s']) ? $t['namespace_k8s'] : 'app-rustdesk';
+        $appName = 'rustdesk-server';
+
+        // 1. Cria o Namespace (se já existir, a API retorna sucesso ou 409 normal)
+        $k3s->createNamespace($namespace);
+
+        // 2. Cria PVC (PersistentVolumeClaim) para guardar chaves id_ed25519 e banco SQLite
+        $pvcPayload = [
+            'apiVersion' => 'v1',
+            'kind' => 'PersistentVolumeClaim',
+            'metadata' => [
+                'name' => 'rustdesk-pvc',
+                'namespace' => $namespace
+            ],
+            'spec' => [
+                'accessModes' => ['ReadWriteOnce'],
+                'storageClassName' => 'local-path',
+                'resources' => [
+                    'requests' => [
+                        'storage' => '1Gi'
+                    ]
+                ]
+            ]
+        ];
+        $k3s->request('POST', "/api/v1/namespaces/{$namespace}/persistentvolumeclaims", $pvcPayload);
+
+        // 3. Cria ou atualiza o Deployment com containers hbbs e hbbr
+        $image = !empty($t['versao_imagem']) && strpos($t['versao_imagem'], 'rustdesk') !== false 
+            ? $t['versao_imagem'] 
+            : 'rustdesk/rustdesk-server:latest';
+
+        $relayHost = '137.131.208.19:21117';
+        if (!empty($t['subdominio'])) {
+            $relayHost = "{$t['subdominio']}:21117";
+        }
+
+        $deployPayload = [
+            'apiVersion' => 'apps/v1',
+            'kind' => 'Deployment',
+            'metadata' => [
+                'name' => $appName,
+                'namespace' => $namespace,
+                'labels' => [
+                    'app' => $appName,
+                    'tenant' => 'rustdesk'
+                ]
+            ],
+            'spec' => [
+                'replicas' => 1,
+                'strategy' => [
+                    'type' => 'Recreate'
+                ],
+                'selector' => [
+                    'matchLabels' => [
+                        'app' => $appName
+                    ]
+                ],
+                'template' => [
+                    'metadata' => [
+                        'labels' => [
+                            'app' => $appName
+                        ]
+                    ],
+                    'spec' => [
+                        'containers' => [
+                            [
+                                'name' => 'hbbs',
+                                'image' => $image,
+                                'imagePullPolicy' => 'IfNotPresent',
+                                'command' => ['hbbs', '-r', $relayHost, '-k', '_'],
+                                'ports' => [
+                                    ['name' => 'nat-test', 'containerPort' => 21115, 'protocol' => 'TCP'],
+                                    ['name' => 'hbbs-tcp', 'containerPort' => 21116, 'protocol' => 'TCP'],
+                                    ['name' => 'hbbs-udp', 'containerPort' => 21116, 'protocol' => 'UDP'],
+                                    ['name' => 'hbbs-ws', 'containerPort' => 21118, 'protocol' => 'TCP']
+                                ],
+                                'volumeMounts' => [
+                                    ['name' => 'rustdesk-storage', 'mountPath' => '/root']
+                                ],
+                                'resources' => [
+                                    'requests' => ['cpu' => '20m', 'memory' => '32Mi'],
+                                    'limits' => ['cpu' => '300m', 'memory' => '128Mi']
+                                ]
+                            ],
+                            [
+                                'name' => 'hbbr',
+                                'image' => $image,
+                                'imagePullPolicy' => 'IfNotPresent',
+                                'command' => ['hbbr', '-k', '_'],
+                                'ports' => [
+                                    ['name' => 'hbbr-tcp', 'containerPort' => 21117, 'protocol' => 'TCP'],
+                                    ['name' => 'hbbr-ws', 'containerPort' => 21119, 'protocol' => 'TCP']
+                                ],
+                                'volumeMounts' => [
+                                    ['name' => 'rustdesk-storage', 'mountPath' => '/root']
+                                ],
+                                'resources' => [
+                                    'requests' => ['cpu' => '20m', 'memory' => '32Mi'],
+                                    'limits' => ['cpu' => '500m', 'memory' => '256Mi']
+                                ]
+                            ]
+                        ],
+                        'volumes' => [
+                            [
+                                'name' => 'rustdesk-storage',
+                                'persistentVolumeClaim' => ['claimName' => 'rustdesk-pvc']
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        $depRes = $k3s->request('POST', "/apis/apps/v1/namespaces/{$namespace}/deployments", $deployPayload);
+        if (!$depRes['success'] && ($depRes['http_code'] ?? 0) === 409) {
+            $depRes = $k3s->request('PUT', "/apis/apps/v1/namespaces/{$namespace}/deployments/{$appName}", $deployPayload);
+        }
+
+        // 4. Cria ou atualiza Service LoadBalancer
+        $svcPayload = [
+            'apiVersion' => 'v1',
+            'kind' => 'Service',
+            'metadata' => [
+                'name' => 'rustdesk-service',
+                'namespace' => $namespace,
+                'labels' => ['app' => $appName]
+            ],
+            'spec' => [
+                'type' => 'LoadBalancer',
+                'selector' => ['app' => $appName],
+                'ports' => [
+                    ['name' => 'nat-test', 'port' => 21115, 'targetPort' => 21115, 'protocol' => 'TCP'],
+                    ['name' => 'hbbs-tcp', 'port' => 21116, 'targetPort' => 21116, 'protocol' => 'TCP'],
+                    ['name' => 'hbbs-udp', 'port' => 21116, 'targetPort' => 21116, 'protocol' => 'UDP'],
+                    ['name' => 'hbbr-tcp', 'port' => 21117, 'targetPort' => 21117, 'protocol' => 'TCP'],
+                    ['name' => 'hbbs-ws', 'port' => 21118, 'targetPort' => 21118, 'protocol' => 'TCP'],
+                    ['name' => 'hbbr-ws', 'port' => 21119, 'targetPort' => 21119, 'protocol' => 'TCP']
+                ]
+            ]
+        ];
+        $svcRes = $k3s->request('POST', "/api/v1/namespaces/{$namespace}/services", $svcPayload);
+
+        // 5. Atualiza o status no banco de dados do Dinovatech
+        $isOk = ($depRes['success'] || ($depRes['http_code'] ?? 0) === 409);
+        $status = $isOk ? 'RUNNING' : 'ERROR';
+        $erro = $isOk ? 'NULL' : "'" . mysqli_real_escape_string($link, $depRes['error'] ?? 'Erro no deployment do RustDesk') . "'";
+        DBExecute($link, "UPDATE saas_tenants SET status_pod = '$status', ultimo_erro = $erro WHERE id_tenant = '$idSafe'");
+
+        return [
+            'success' => $isOk,
+            'message' => $isOk 
+                ? 'Servidor RustDesk provisionado com sucesso via API no K3s (Namespace, PVC, Pods hbbs/hbbr e LoadBalancer ativos)!' 
+                : 'Erro ao provisionar RustDesk no K3s: ' . ($depRes['error'] ?? 'Falha desconhecida'),
+            'deployment' => $depRes,
+            'service' => $svcRes
         ];
     }
 
