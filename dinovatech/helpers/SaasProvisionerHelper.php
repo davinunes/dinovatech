@@ -614,12 +614,36 @@ class SaasProvisionerHelper
 
         $podName = $podsRes['pods'][0]['name'];
         $logsRes = $k3s->getPodLogs($namespace, $podName, $lines);
+        $logsText = '';
+
+        if ($logsRes['success']) {
+            $logsText = is_string($logsRes['data']) ? $logsRes['data'] : json_encode($logsRes['data']);
+        } else {
+            // Se falhar porque há múltiplos containers (ex: hbbs e hbbr), busca de ambos
+            $err = $logsRes['error'] ?? '';
+            if (strpos($err, 'container name must be specified') !== false || ($logsRes['http_code'] ?? 0) === 400) {
+                $logsHbbs = $k3s->getPodLogs($namespace, $podName, $lines, 'hbbs');
+                $logsHbbr = $k3s->getPodLogs($namespace, $podName, $lines, 'hbbr');
+                $combined = '';
+                if ($logsHbbs['success'] && !empty($logsHbbs['data'])) {
+                    $combined .= "=== [CONTAINER: hbbs (ID Server)] ===\n" . (is_string($logsHbbs['data']) ? $logsHbbs['data'] : '') . "\n\n";
+                }
+                if ($logsHbbr['success'] && !empty($logsHbbr['data'])) {
+                    $combined .= "=== [CONTAINER: hbbr (Relay Server)] ===\n" . (is_string($logsHbbr['data']) ? $logsHbbr['data'] : '') . "\n";
+                }
+                if (!empty($combined)) {
+                    $logsRes['success'] = true;
+                    $logsText = $combined;
+                }
+            }
+        }
 
         return [
             'success' => $logsRes['success'],
             'pod_name' => $podName,
             'namespace' => $namespace,
-            'logs' => $logsRes['logs'] ?? ($logsRes['error'] ?? 'Sem logs disponíveis.')
+            'message' => $logsRes['error'] ?? '',
+            'logs' => !empty($logsText) ? $logsText : ($logsRes['error'] ?? 'Nenhum log gerado pelo container até o momento.')
         ];
     }
 

@@ -28,10 +28,11 @@ class K3sClientHelper
         $url = $this->apiUrl . '/' . ltrim($path, '/');
         $ch = curl_init($url);
 
+        $accept = ($contentType === 'text/plain') ? 'text/plain, */*' : 'application/json';
         $headers = [
             'Authorization: Bearer ' . $this->token,
             'Content-Type: ' . $contentType,
-            'Accept: application/json'
+            'Accept: ' . $accept
         ];
 
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
@@ -373,12 +374,15 @@ class K3sClientHelper
     }
 
     /**
-     * Obtém as últimas linhas de log de um Pod
+     * Obtém as últimas linhas de log de um Pod (com suporte a container específico)
      */
-    public function getPodLogs(string $namespace, string $podName, int $lines = 100): array
+    public function getPodLogs(string $namespace, string $podName, int $lines = 100, ?string $container = null): array
     {
         $path = "/api/v1/namespaces/{$namespace}/pods/{$podName}/log?tailLines={$lines}";
-        return $this->request('GET', $path);
+        if (!empty($container)) {
+            $path .= "&container={$container}";
+        }
+        return $this->request('GET', $path, null, 'text/plain');
     }
 
     /**
